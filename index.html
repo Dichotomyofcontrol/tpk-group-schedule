@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPK Group — Campaign Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --frostmaiden-primary: #4fc3f7;
+            --frostmaiden-bg: #0d2137;
+            --frostmaiden-accent: #81d4fa;
+            --strahd-primary: #ef5350;
+            --strahd-bg: #2d1016;
+            --strahd-accent: #e57373;
+            --rokugan-primary: #f0a500;
+            --rokugan-bg: #2a1f0a;
+            --rokugan-accent: #ffc947;
+            --special-primary: #ce93d8;
+            --special-bg: #1f0f24;
+            --special-accent: #e1bee7;
+            --bg: #0e0e12;
+            --surface: #1a1a24;
+            --surface-hover: #22222e;
+            --text: #e8e6e3;
+            --text-dim: #8a8a9a;
+            --border: #2a2a38;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(79, 195, 247, 0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(239, 83, 80, 0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 50%, rgba(240, 165, 0, 0.02) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Password Gate */
+        #password-gate {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #password-gate h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        #password-gate .subtitle {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .pass-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .pass-form input {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            padding: 12px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            outline: none;
+            width: 240px;
+            transition: border-color 0.2s;
+        }
+
+        .pass-form input:focus {
+            border-color: var(--frostmaiden-primary);
+        }
+
+        .pass-form button {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg));
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pass-form button:hover {
+            background: var(--surface-hover);
+            border-color: var(--frostmaiden-primary);
+        }
+
+        .pass-error {
+            color: var(--strahd-primary);
+            font-size: 0.8rem;
+            min-height: 1.2em;
+        }
+
+        .pass-hint {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            margin-top: 24px;
+            opacity: 0.5;
+        }
+
+        /* Main App (hidden until auth) */
+        #app { display: none; }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+
+        header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .location {
+            margin-top: 16px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            opacity: 0.7;
+        }
+
+        .location a {
+            color: var(--text-dim);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--text-dim);
+        }
+
+        .user-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .user-bar span {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .user-bar button {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.72rem;
+            padding: 4px 12px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-bar button:hover {
+            color: var(--text);
+            border-color: var(--text-dim);
+        }
+
+        /* Stats bar */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 24px 0;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat { text-align: center; }
+
+        .stat-number {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        .stat.frostmaiden .stat-number { color: var(--frostmaiden-primary); }
+        .stat.strahd .stat-number { color: var(--strahd-primary); }
+        .stat.rokugan .stat-number { color: var(--rokugan-primary); }
+        .stat.special .stat-number { color: var(--special-primary); }
+
+        /* Filter tabs */
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 36px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 10px 22px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: 0.04em;
+        }
+
+        .filter-btn:hover { background: var(--surface); color: var(--text); }
+
+        .filter-btn.active { color: #fff; border-color: transparent; }
+        .filter-btn.active[data-filter="all"] { background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg)); border-color: var(--border); color: var(--text); }
+        .filter-btn.active[data-filter="frostmaiden"] { background: var(--frostmaiden-bg); border-color: var(--frostmaiden-primary); color: var(--frostmaiden-primary); }
+        .filter-btn.active[data-filter="strahd"] { background: var(--strahd-bg); border-color: var(--strahd-primary); color: var(--strahd-primary); }
+        .filter-btn.active[data-filter="rokugan"] { background: var(--rokugan-bg); border-color: var(--rokugan-primary); color: var(--rokugan-primary); }
+        .filter-btn.active[data-filter="special"] { background: var(--special-bg); border-color: var(--special-primary); color: var(--special-primary); }
+
+        /* View toggle */
+        .view-toggle { display: flex; justify-content: center; gap: 4px; margin-bottom: 32px; }
+
+        .view-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            padding: 6px 16px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn:first-child { border-radius: 6px 0 0 6px; }
+        .view-btn:last-child { border-radius: 0 6px 6px 0; }
+        .view-btn.active { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
+
+        /* Month group */
+        .month-group { margin-bottom: 40px; }
+
+        .month-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Session cards */
+        .sessions-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .session-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.25s ease;
+            cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .session-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .session-card:hover {
+            background: var(--surface-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .session-card.frostmaiden::before { background: var(--frostmaiden-primary); }
+        .session-card.strahd::before { background: var(--strahd-primary); }
+        .session-card.rokugan::before { background: var(--rokugan-primary); }
+        .session-card.special::before { background: var(--special-primary); }
+
+        .session-card.frostmaiden:hover { border-color: rgba(79, 195, 247, 0.2); }
+        .session-card.strahd:hover { border-color: rgba(239, 83, 80, 0.2); }
+        .session-card.rokugan:hover { border-color: rgba(240, 165, 0, 0.2); }
+        .session-card.special:hover { border-color: rgba(206, 147, 216, 0.2); }
+
+        /* Cancelled sessions */
+        .session-card.cancelled { color: var(--text-dim); opacity: 0.6; }
+        .session-card.cancelled::before { background: var(--text-dim); }
+        .session-card.cancelled .session-campaign { text-decoration: line-through; }
+
+        .session-date { flex-shrink: 0; width: 54px; text-align: center; }
+        .session-date .day-num { font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: 700; line-height: 1; }
+        .session-date .day-name { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-top: 2px; }
+
+        .session-card.frostmaiden .day-num { color: var(--frostmaiden-primary); }
+        .session-card.strahd .day-num { color: var(--strahd-primary); }
+        .session-card.rokugan .day-num { color: var(--rokugan-primary); }
+        .session-card.special .day-num { color: var(--special-primary); }
+
+        .session-card.cancelled .day-num { color: var(--text-dim); }
+
+        .session-divider { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+
+        .session-info { flex: 1; min-width: 0; }
+        .session-campaign { font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
+        .session-meta { font-size: 0.78rem; color: var(--text-dim); }
+
+        .session-action {
+            flex-shrink: 0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .cancel-btn, .cancel-confirm, .undo-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cancel-btn:hover { color: var(--strahd-primary); border-color: var(--strahd-primary); }
+        .undo-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+
+        .cancel-confirm {
+            display: inline-block;
+            font-size: 0.75rem;
+            color: var(--strahd-primary);
+            white-space: nowrap;
+            margin-right: 6px;
+        }
+
+        .session-badge {
+            flex-shrink: 0;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 5px 12px;
+            border-radius: 100px;
+        }
+
+        .session-card.frostmaiden .session-badge { background: rgba(79, 195, 247, 0.1); color: var(--frostmaiden-accent); }
+        .session-card.strahd .session-badge { background: rgba(239, 83, 80, 0.1); color: var(--strahd-accent); }
+        .session-card.rokugan .session-badge { background: rgba(240, 165, 0, 0.1); color: var(--rokugan-accent); }
+        .session-card.special .session-badge { background: rgba(206, 147, 216, 0.1); color: var(--special-accent); }
+
+        /* Attendance section in card */
+        .session-attendance {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .att-chip {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(102, 187, 106, 0.3);
+            background: rgba(102, 187, 106, 0.12);
+            color: #66bb6a;
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+
+        .att-chip:hover { filter: brightness(1.2); transform: scale(1.05); }
+
+        .att-chip.out { background: rgba(239, 83, 80, 0.12); color: #ef5350; border-color: rgba(239, 83, 80, 0.3); text-decoration: line-through; opacity: 0.7; }
+
+        /* Calendar view */
+        .cal-month { margin-bottom: 32px; }
+
+        .cal-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 4px;
+        }
+
+        .cal-header span {
+            text-align: center;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            padding: 8px 0;
+        }
+
+        .cal-body {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            position: relative;
+            min-height: 48px;
+        }
+
+        .cal-day.empty { opacity: 0; }
+        .cal-day.has-session { cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .cal-day.has-session:hover { transform: scale(1.1); }
+
+        .cal-day.has-session.frostmaiden { background: var(--frostmaiden-bg); color: var(--frostmaiden-primary); border: 1px solid rgba(79, 195, 247, 0.3); }
+        .cal-day.has-session.strahd { background: var(--strahd-bg); color: var(--strahd-primary); border: 1px solid rgba(239, 83, 80, 0.3); }
+        .cal-day.has-session.rokugan { background: var(--rokugan-bg); color: var(--rokugan-primary); border: 1px solid rgba(240, 165, 0, 0.3); }
+        .cal-day.has-session.special { background: var(--special-bg); color: var(--special-primary); border: 1px solid rgba(206, 147, 216, 0.3); }
+
+        .cal-day .cal-dot { width: 4px; height: 4px; border-radius: 50%; margin-top: 3px; }
+        .cal-day.frostmaiden .cal-dot { background: var(--frostmaiden-primary); }
+        .cal-day.strahd .cal-dot { background: var(--strahd-primary); }
+        .cal-day.rokugan .cal-dot { background: var(--rokugan-primary); }
+        .cal-day.special .cal-dot { background: var(--special-primary); }
+
+        .cal-day.today { box-shadow: inset 0 0 0 1px var(--text-dim); }
+
+        /* Tooltip */
+        .tooltip {
+            display: none;
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px;
+            z-index: 100;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            font-size: 0.82rem;
+            max-width: 260px;
+            pointer-events: none;
+        }
+
+        .tooltip.show { display: block; }
+        .tooltip-campaign { font-family: 'Cinzel', serif; font-weight: 600; margin-bottom: 4px; }
+        .tooltip-detail { color: var(--text-dim); font-size: 0.75rem; }
+
+        /* Next session highlight */
+        .next-session-banner {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 32px;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .next-session-banner .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim); margin-bottom: 6px; }
+
+        .next-session-banner .campaign-name {
+            font-family: 'Cinzel', serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .next-session-banner .countdown {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+        .empty-state .icon { font-size: 2rem; margin-bottom: 12px; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0 60px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        footer a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dotted var(--text-dim); }
+
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: var(--text-dim); }
+        .loading-spinner {
+            display: inline-block;
+            width: 24px; height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--frostmaiden-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            header { padding: 40px 0 24px; }
+            .stats { gap: 24px; }
+            .session-card { padding: 12px 14px; gap: 12px; }
+            .session-date { width: 44px; }
+            .session-date .day-num { font-size: 1.3rem; }
+            .session-badge { display: none; }
+            .cal-day { min-height: 36px; font-size: 0.72rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div id="password-gate">
+    <h1>TPK Group</h1>
+    <div class="subtitle">Campaign Schedule</div>
+    <div class="pass-form">
+        <input type="password" id="pass-input" placeholder="Enter passphrase" autocomplete="off">
+        <button onclick="checkPassword()">Enter</button>
+    </div>
+    <div class="pass-error" id="pass-error"></div>
+    <div class="pass-hint">Ask your GM for the passphrase</div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+    <div class="container">
+        <header>
+            <h1>TPK Group</h1>
+            <p>Campaign Schedule</p>
+            <div class="location">
+                <a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; 5051 SE Hawthorne Blvd, Portland
+            </div>
+            <div class="user-bar">
+                <button onclick="logout()">Sign Out</button>
+            </div>
+        </header>
+
+        <div id="next-session"></div>
+        <div class="stats" id="stats"></div>
+
+        <div class="filters" id="filters">
+            <button class="filter-btn active" data-filter="all">All Sessions</button>
+            <button class="filter-btn" data-filter="frostmaiden">Frostmaiden</button>
+            <button class="filter-btn" data-filter="strahd">Strahd</button>
+            <button class="filter-btn" data-filter="rokugan">Rokugan</button>
+            <button class="filter-btn" data-filter="special">Special</button>
+        </div>
+
+        <div class="view-toggle">
+            <button class="view-btn active" data-view="list">List</button>
+            <button class="view-btn" data-view="calendar">Calendar</button>
+        </div>
+
+        <div id="list-view"><div class="loading"><div class="loading-spinner"></div><br>Loading sessions...</div></div>
+        <div id="calendar-view" style="display:none"></div>
+        <div id="tooltip" class="tooltip"></div>
+    </div>
+
+    <footer>
+        <a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; An Ale for Every Tale
+    </footer>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyC8BMINrSjKyvHnjNEDlW7iFpURt_8Lx7I",
+    authDomain: "tpk-group-8cdc8.firebaseapp.com",
+    projectId: "tpk-group-8cdc8",
+    storageBucket: "tpk-group-8cdc8.firebasestorage.app",
+    messagingSenderId: "645205749861",
+    appId: "1:645205749861:web:c9ee21ad9d66ab1b43168c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ==================== CONFIG ====================
+
+const PASSPHRASE = "tpkdice";
+
+const campaignNames = {
+    frostmaiden: "Rime of the Frostmaiden",
+    strahd: "Curse of Strahd",
+    rokugan: "Adventures in Rokugan",
+    special: "Special"
+};
+
+const campaignIcons = {
+    frostmaiden: "\u2744\uFE0F",
+    strahd: "\uD83E\uDDDB",
+    rokugan: "\u2694\uFE0F",
+    special: "\u2728"
+};
+
+const campaignRosters = {
+    frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
+    rokugan: ["Ryn", "Cooter", "Rosie", "Gordo"],
+    strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
+    special: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"]
+};
+
+const seedSessions = [
+    { date: "2026-04-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-04-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-04-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-04-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
+    { date: "2026-04-29", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-05-06", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-05-13", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-05-20", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-05-27", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-06-03", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-06-10", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-06-17", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-06-20", time: "5:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "special" },
+    { date: "2026-06-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-06-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
+    { date: "2026-07-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-07-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-07-15", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-07-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-07-29", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-08-05", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-08-12", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-08-19", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
+    { date: "2026-08-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-09-02", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-09-09", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-09-16", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-09-23", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+    { date: "2026-09-30", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
+];
+
+// ==================== STATE ====================
+
+let sessions = [];
+let activeFilter = "all";
+let activeView = "list";
+let cancelPendingSession = null;
+
+const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// ==================== AUTH ====================
+
+window.checkPassword = function() {
+    const input = document.getElementById('pass-input').value.trim().toLowerCase();
+    if (input === PASSPHRASE) {
+        sessionStorage.setItem('tpk_auth', 'true');
+        showApp();
+    } else {
+        document.getElementById('pass-error').textContent = "Wrong passphrase. Try again.";
+    }
+};
+
+window.logout = function() {
+    sessionStorage.removeItem('tpk_auth');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('password-gate').style.display = 'flex';
+};
+
+document.getElementById('pass-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') window.checkPassword();
+});
+
+function showApp() {
+    document.getElementById('password-gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initApp();
+}
+
+// Check if already authed
+if (sessionStorage.getItem('tpk_auth') === 'true') {
+    showApp();
+}
+
+// ==================== FIREBASE DATA ====================
+
+async function seedFirestore() {
+    const snap = await getDocs(collection(db, "sessions"));
+    if (snap.size > 0) return; // Already seeded
+
+    for (const s of seedSessions) {
+        const roster = campaignRosters[s.campaign] || [];
+        const attendance = {};
+        roster.forEach(p => { attendance[p] = "in"; });
+
+        await setDoc(doc(db, "sessions", s.date), {
+            ...s,
+            attendance,
+            roster,
+            status: "active"
+        });
+    }
+    console.log("Firestore seeded with", seedSessions.length, "sessions");
+}
+
+async function initApp() {
+    await seedFirestore();
+
+    // Real-time listener
+    const q = query(collection(db, "sessions"), orderBy("date"));
+    let firstLoad = true;
+    onSnapshot(q, (snapshot) => {
+        sessions = [];
+        snapshot.forEach(d => {
+            sessions.push({ id: d.id, ...d.data() });
+        });
+        if (firstLoad) {
+            renderAll();
+            firstLoad = false;
+        } else {
+            // Update attendance chips and cancel states in-place
+            updateAttendanceChips();
+            updateCancelStates();
+        }
+    });
+
+    // Filter logic
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+            renderList();
+            renderCalendar();
+        });
+    });
+
+    // View toggle
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeView = btn.dataset.view;
+            document.getElementById('list-view').style.display = activeView === 'list' ? 'block' : 'none';
+            document.getElementById('calendar-view').style.display = activeView === 'calendar' ? 'block' : 'none';
+        });
+    });
+}
+
+// ==================== ATTENDANCE & CANCEL ====================
+
+function updateAttendanceChips() {
+    document.querySelectorAll('.att-chip').forEach(chip => {
+        const onclick = chip.getAttribute('onclick');
+        if (!onclick) return;
+        const match = onclick.match(/toggleAttendance\('([^']+)',\s*'([^']+)'\)/);
+        if (!match) return;
+        const [, date, player] = match;
+        const s = sessions.find(x => x.date === date);
+        if (!s) return;
+        const status = (s.attendance && s.attendance[player]) || "in";
+        chip.className = `att-chip ${status}`;
+    });
+}
+
+function updateCancelStates() {
+    document.querySelectorAll('.session-card').forEach(card => {
+        const dateAttr = card.getAttribute('data-session-date');
+        if (!dateAttr) return;
+        const s = sessions.find(x => x.date === dateAttr);
+        if (!s) return;
+
+        const isCancelled = s.status === "cancelled";
+        card.classList.toggle('cancelled', isCancelled);
+
+        const actionEl = card.querySelector('.session-action');
+        if (actionEl) {
+            if (isCancelled) {
+                actionEl.innerHTML = `<button class="undo-btn" onclick="undoCancelSession('${dateAttr}')">Undo</button>`;
+            } else {
+                actionEl.innerHTML = `<button class="cancel-btn" onclick="initiateCancelSession('${dateAttr}')">✕</button>`;
+            }
+        }
+    });
+}
+
+window.initiateCancelSession = function(sessionDate) {
+    cancelPendingSession = sessionDate;
+    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
+    const actionEl = card.querySelector('.session-action');
+    actionEl.innerHTML = `
+        <span class="cancel-confirm">Cancel?</span>
+        <button class="cancel-btn" onclick="confirmCancelSession('${sessionDate}')">Yes</button>
+        <button class="cancel-btn" onclick="cancelCancelSession()">No</button>
+    `;
+};
+
+window.confirmCancelSession = async function(sessionDate) {
+    try {
+        await updateDoc(doc(db, "sessions", sessionDate), { status: "cancelled" });
+        cancelPendingSession = null;
+    } catch (err) {
+        console.error("Error cancelling session:", err);
+    }
+};
+
+window.cancelCancelSession = function() {
+    if (cancelPendingSession) {
+        const card = document.querySelector(`[data-session-date="${cancelPendingSession}"]`);
+        const actionEl = card.querySelector('.session-action');
+        actionEl.innerHTML = `<button class="cancel-btn" onclick="initiateCancelSession('${cancelPendingSession}')">✕</button>`;
+        cancelPendingSession = null;
+    }
+};
+
+window.undoCancelSession = async function(sessionDate) {
+    try {
+        await updateDoc(doc(db, "sessions", sessionDate), { status: "active" });
+    } catch (err) {
+        console.error("Error uncancelling session:", err);
+    }
+};
+
+window.toggleAttendance = async function(sessionDate, playerName) {
+    const s = sessions.find(x => x.date === sessionDate);
+    if (!s) return;
+
+    const current = (s.attendance && s.attendance[playerName]) || "in";
+    const next = current === "in" ? "out" : "in";
+
+    const update = {};
+    update[`attendance.${playerName}`] = next;
+    await updateDoc(doc(db, "sessions", sessionDate), update);
+};
+
+// ==================== RENDER ====================
+
+function renderAll() {
+    renderNextSession();
+    renderStats();
+    renderList();
+    renderCalendar();
+}
+
+function parseDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+}
+
+function formatDate(dateStr) {
+    const d = parseDate(dateStr);
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function getMonthKey(dateStr) {
+    const d = parseDate(dateStr);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getMonthLabel(key) {
+    const [y, m] = key.split('-');
+    return `${monthNames[parseInt(m) - 1]} ${y}`;
+}
+
+function renderNextSession() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
+    if (!next) return;
+
+    const d = parseDate(next.date);
+    const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+    let countdownText = diff === 0 ? "Today!" : diff === 1 ? "Tomorrow" : `${diff} days away`;
+
+    document.getElementById('next-session').innerHTML = `
+        <div class="next-session-banner ${next.campaign}">
+            <div class="label">Next Session</div>
+            <div class="campaign-name">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div>
+            <div class="countdown">${formatDate(next.date)} at ${next.time} \u2014 ${countdownText}</div>
+        </div>
+    `;
+}
+
+function renderStats() {
+    const counts = { frostmaiden: 0, strahd: 0, rokugan: 0, special: 0 };
+    sessions.forEach(s => {
+        if (s.status !== "cancelled") {
+            counts[s.campaign]++;
+        }
+    });
+    document.getElementById('stats').innerHTML = `
+        <div class="stat frostmaiden"><div class="stat-number">${counts.frostmaiden}</div><div class="stat-label">Frostmaiden</div></div>
+        <div class="stat strahd"><div class="stat-number">${counts.strahd}</div><div class="stat-label">Strahd</div></div>
+        <div class="stat rokugan"><div class="stat-number">${counts.rokugan}</div><div class="stat-label">Rokugan</div></div>
+        <div class="stat special"><div class="stat-number">${counts.special}</div><div class="stat-label">Special</div></div>
+    `;
+}
+
+function renderSessionCard(s, groupIndex, cardIndex) {
+    const d = parseDate(s.date);
+    const dayNum = d.getDate();
+    const dayName = dayNames[d.getDay()];
+    const roster = s.roster || campaignRosters[s.campaign] || [];
+    const attendance = s.attendance || {};
+    const isCancelled = s.status === "cancelled";
+
+    let attHtml = '';
+    roster.forEach(p => {
+        const status = attendance[p] || "in";
+        attHtml += `<button class="att-chip ${status}" onclick="toggleAttendance('${s.date}', '${p}')" title="Click to toggle">${p}</button>`;
+    });
+
+    const actionHtml = isCancelled
+        ? `<button class="undo-btn" onclick="undoCancelSession('${s.date}')">Undo</button>`
+        : `<button class="cancel-btn" onclick="initiateCancelSession('${s.date}')">✕</button>`;
+
+    return `
+        <div class="session-card ${s.campaign}${isCancelled ? ' cancelled' : ''}" data-session-date="${s.date}" style="animation-delay: ${(groupIndex * 0.05) + (cardIndex * 0.03)}s">
+            <div class="session-date">
+                <div class="day-num">${dayNum}</div>
+                <div class="day-name">${dayName}</div>
+            </div>
+            <div class="session-divider"></div>
+            <div class="session-info">
+                <div class="session-campaign">${campaignNames[s.campaign]}</div>
+                <div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div>
+                <div class="session-attendance">${attHtml}</div>
+            </div>
+            <div class="session-action">${actionHtml}</div>
+        </div>
+    `;
+}
+
+function renderList() {
+    const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
+
+    if (filtered.length === 0) {
+        document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">\uD83C\uDFB2</div><div>No sessions for this campaign yet.</div></div>`;
+        return;
+    }
+
+    const grouped = {};
+    filtered.forEach(s => {
+        const key = getMonthKey(s.date);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(s);
+    });
+
+    let html = '';
+    Object.keys(grouped).sort().forEach((key, gi) => {
+        html += `<div class="month-group" style="animation-delay: ${gi * 0.05}s">`;
+        html += `<div class="month-label">${getMonthLabel(key)}</div>`;
+        html += `<div class="sessions-list">`;
+        grouped[key].forEach((s, i) => {
+            html += renderSessionCard(s, gi, i);
+        });
+        html += `</div></div>`;
+    });
+
+    document.getElementById('list-view').innerHTML = html;
+}
+
+function renderCalendar() {
+    const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    const sessionMap = {};
+    filtered.forEach(s => { sessionMap[s.date] = s; });
+
+    const allMonths = new Set();
+    sessions.forEach(s => allMonths.add(getMonthKey(s.date)));
+    const months = [...allMonths].sort();
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    let html = '';
+    months.forEach(key => {
+        const [year, month] = key.split('-').map(Number);
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const daysInMonth = new Date(year, month, 0).getDate();
+
+        html += `<div class="cal-month">`;
+        html += `<div class="month-label">${getMonthLabel(key)}</div>`;
+        html += `<div class="cal-header">${dayNames.map(d => `<span>${d}</span>`).join('')}</div>`;
+        html += `<div class="cal-body">`;
+
+        for (let i = 0; i < firstDay; i++) {
+            html += `<div class="cal-day empty"></div>`;
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const session = sessionMap[dateStr];
+            const isToday = dateStr === todayStr;
+            const todayClass = isToday ? ' today' : '';
+
+            if (session) {
+                html += `<div class="cal-day has-session ${session.campaign}${todayClass}" data-date="${dateStr}"
+                    onmouseenter="showTooltip(event, '${dateStr}')" onmouseleave="hideTooltip()">
+                    <span>${day}</span><div class="cal-dot"></div>
+                </div>`;
+            } else {
+                html += `<div class="cal-day${todayClass}"><span>${day}</span></div>`;
+            }
+        }
+
+        html += `</div></div>`;
+    });
+
+    document.getElementById('calendar-view').innerHTML = html;
+}
+
+// Tooltip
+window.showTooltip = function(event, dateStr) {
+    const session = sessions.find(s => s.date === dateStr);
+    if (!session) return;
+    const tip = document.getElementById('tooltip');
+
+    const roster = session.roster || [];
+    const attendance = session.attendance || {};
+    const inList = roster.filter(p => (attendance[p] || "in") === "in");
+    const outList = roster.filter(p => attendance[p] === "out");
+    let attLine = '';
+    if (inList.length) attLine += `<br>\u2705 ${inList.join(', ')}`;
+    if (outList.length) attLine += `<br>\u274C ${outList.join(', ')}`;
+
+    tip.innerHTML = `
+        <div class="tooltip-campaign" style="color: var(--${session.campaign}-primary)">${campaignIcons[session.campaign]} ${campaignNames[session.campaign]}</div>
+        <div class="tooltip-detail">${formatDate(session.date)}<br>GM: ${session.gm} \u00b7 ${session.time} \u00b7 ${session.duration}${attLine}</div>
+    `;
+    tip.classList.add('show');
+
+    const rect = event.target.getBoundingClientRect();
+    tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
+    tip.style.top = (rect.bottom + 8) + 'px';
+};
+
+window.hideTooltip = function() {
+    document.getElementById('tooltip').classList.remove('show');
+};
+
+</script>
+
+</body>
+</html>
