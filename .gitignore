@@ -1,0 +1,7 @@
+# Never commit env files
+.env
+.env.local
+.env.production
+
+# Build backup
+index.html.bak
