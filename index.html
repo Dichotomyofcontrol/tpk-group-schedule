@@ -579,6 +579,116 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
 
+        /* Add Session Form */
+        .add-session-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+        .add-session-btn:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+        .add-session-btn .plus { font-size: 1.1rem; line-height: 1; }
+
+        .add-session-form {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.2s ease forwards;
+        }
+        .add-session-form.open { display: block; }
+        .add-session-form h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 140px;
+        }
+        .form-group label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .form-group input,
+        .form-group select {
+            padding: 8px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--frostmaiden-primary);
+        }
+        .customize-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px 0;
+            margin-bottom: 8px;
+        }
+        .customize-toggle:hover { color: var(--text); }
+        .customize-fields { display: none; }
+        .customize-fields.open { display: block; }
+        .form-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .form-buttons button {
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .form-buttons .submit-btn {
+            background: var(--frostmaiden-primary);
+            color: #000;
+            border: none;
+        }
+        .form-buttons .submit-btn:hover { opacity: 0.9; }
+        .form-buttons .cancel-form-btn {
+            background: transparent;
+            color: var(--text-dim);
+        }
+        .form-buttons .cancel-form-btn:hover { color: var(--text); background: var(--surface-hover); }
+
         /* Responsive */
         @media (max-width: 600px) {
             header { padding: 40px 0 24px; }
@@ -618,6 +728,48 @@
                 <button onclick="logout()">Sign Out</button>
             </div>
         </header>
+
+        <button class="add-session-btn" onclick="toggleAddSessionForm()"><span class="plus">+</span> Add Session</button>
+
+        <div class="add-session-form" id="add-session-form">
+            <h3>Add New Session</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="new-session-date">
+                </div>
+                <div class="form-group">
+                    <label>Campaign</label>
+                    <select id="new-session-campaign">
+                        <option value="frostmaiden">Rime of the Frostmaiden</option>
+                        <option value="strahd">Curse of Strahd</option>
+                        <option value="rokugan">Adventures in Rokugan</option>
+                        <option value="special">Special</option>
+                    </select>
+                </div>
+            </div>
+            <button class="customize-toggle" onclick="toggleCustomizeFields()"><span id="customize-arrow">&#9654;</span>&nbsp;Customize details</button>
+            <div class="customize-fields" id="customize-fields">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="text" id="new-session-time" placeholder="6:00 PM">
+                    </div>
+                    <div class="form-group">
+                        <label>GM</label>
+                        <input type="text" id="new-session-gm" placeholder="Max Hobbs">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration</label>
+                        <input type="text" id="new-session-duration" placeholder="4 hrs">
+                    </div>
+                </div>
+            </div>
+            <div class="form-buttons">
+                <button class="submit-btn" onclick="submitAddSession()">Add Session</button>
+                <button class="cancel-form-btn" onclick="toggleAddSessionForm()">Cancel</button>
+            </div>
+        </div>
 
         <div id="next-session"></div>
         <div class="stats" id="stats"></div>
@@ -789,6 +941,7 @@ async function initApp() {
     // Real-time listener
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true;
+    let prevCount = 0;
     onSnapshot(q, (snapshot) => {
         sessions = [];
         snapshot.forEach(d => {
@@ -796,7 +949,12 @@ async function initApp() {
         });
         if (firstLoad) {
             renderAll();
+            prevCount = sessions.length;
             firstLoad = false;
+        } else if (sessions.length !== prevCount) {
+            // Session added or removed — full re-render
+            renderAll();
+            prevCount = sessions.length;
         } else {
             // Update attendance chips and cancel states in-place
             updateAttendanceChips();
@@ -898,6 +1056,73 @@ window.undoCancelSession = async function(sessionDate) {
         await updateDoc(doc(db, "sessions", sessionDate), { status: "active" });
     } catch (err) {
         console.error("Error uncancelling session:", err);
+    }
+};
+
+// ==================== ADD SESSION ====================
+
+window.toggleAddSessionForm = function() {
+    const form = document.getElementById('add-session-form');
+    form.classList.toggle('open');
+    if (form.classList.contains('open')) {
+        // Default date to tomorrow
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('new-session-date').value = tomorrow.toISOString().split('T')[0];
+    }
+};
+
+window.toggleCustomizeFields = function() {
+    const fields = document.getElementById('customize-fields');
+    const arrow = document.getElementById('customize-arrow');
+    fields.classList.toggle('open');
+    arrow.innerHTML = fields.classList.contains('open') ? '&#9660;' : '&#9654;';
+};
+
+window.submitAddSession = async function() {
+    const dateVal = document.getElementById('new-session-date').value;
+    const campaign = document.getElementById('new-session-campaign').value;
+
+    if (!dateVal) {
+        alert('Please select a date.');
+        return;
+    }
+
+    // Check for duplicate
+    if (sessions.find(s => s.date === dateVal)) {
+        alert('A session already exists on that date.');
+        return;
+    }
+
+    const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
+    const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
+    const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
+    const roster = campaignRosters[campaign] || [];
+    const attendance = {};
+    roster.forEach(p => { attendance[p] = "in"; });
+
+    try {
+        await setDoc(doc(db, "sessions", dateVal), {
+            date: dateVal,
+            time,
+            gm,
+            duration,
+            campaign,
+            attendance,
+            roster,
+            status: "active"
+        });
+        // Close form and reset
+        document.getElementById('add-session-form').classList.remove('open');
+        document.getElementById('new-session-time').value = '';
+        document.getElementById('new-session-gm').value = '';
+        document.getElementById('new-session-duration').value = '';
+        document.getElementById('customize-fields').classList.remove('open');
+        document.getElementById('customize-arrow').innerHTML = '&#9654;';
+        // Re-render since onSnapshot will fire
+    } catch (err) {
+        console.error("Error adding session:", err);
+        alert('Error adding session. Check console.');
     }
 };
 
@@ -1122,4 +1347,3 @@ window.hideTooltip = function() {
 
 </body>
 </html>
-
