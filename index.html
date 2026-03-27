@@ -399,6 +399,23 @@
 
         .cancel-btn:hover { color: var(--strahd-primary); border-color: var(--strahd-primary); }
         .undo-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+        .delete-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(239, 83, 80, 0.3);
+            background: rgba(239, 83, 80, 0.1);
+            color: var(--strahd-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .delete-btn:hover { background: rgba(239, 83, 80, 0.25); border-color: var(--strahd-primary); }
+        .delete-confirm-text {
+            font-size: 0.7rem;
+            color: var(--strahd-primary);
+            white-space: nowrap;
+        }
 
         .cancel-confirm {
             display: inline-block;
@@ -800,7 +817,7 @@
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC8BMINrSjKyvHnjNEDlW7iFpURt_8Lx7I",
@@ -1014,7 +1031,7 @@ function updateCancelStates() {
         const actionEl = card.querySelector('.session-action');
         if (actionEl) {
             if (isCancelled) {
-                actionEl.innerHTML = `<button class="undo-btn" onclick="undoCancelSession('${dateAttr}')">Undo</button>`;
+                actionEl.innerHTML = `<button class="undo-btn" onclick="undoCancelSession('${dateAttr}')">Undo</button><button class="delete-btn" onclick="initiateDeleteSession('${dateAttr}')">Delete</button>`;
             } else {
                 actionEl.innerHTML = `<button class="cancel-btn" onclick="initiateCancelSession('${dateAttr}')">✕</button>`;
             }
@@ -1057,6 +1074,32 @@ window.undoCancelSession = async function(sessionDate) {
     } catch (err) {
         console.error("Error uncancelling session:", err);
     }
+};
+
+window.initiateDeleteSession = function(sessionDate) {
+    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
+    const actionEl = card.querySelector('.session-action');
+    actionEl.innerHTML = `
+        <span class="delete-confirm-text">Remove permanently?</span>
+        <button class="delete-btn" onclick="confirmDeleteSession('${sessionDate}')">Yes</button>
+        <button class="undo-btn" onclick="cancelDeleteSession('${sessionDate}')">No</button>
+    `;
+};
+
+window.confirmDeleteSession = async function(sessionDate) {
+    try {
+        await deleteDoc(doc(db, "sessions", sessionDate));
+    } catch (err) {
+        console.error("Error deleting session:", err);
+    }
+};
+
+window.cancelDeleteSession = function(sessionDate) {
+    // Revert to cancelled state buttons
+    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
+    if (!card) return;
+    const actionEl = card.querySelector('.session-action');
+    actionEl.innerHTML = `<button class="undo-btn" onclick="undoCancelSession('${sessionDate}')">Undo</button><button class="delete-btn" onclick="initiateDeleteSession('${sessionDate}')">Delete</button>`;
 };
 
 // ==================== ADD SESSION ====================
@@ -1216,7 +1259,7 @@ function renderSessionCard(s, groupIndex, cardIndex) {
     });
 
     const actionHtml = isCancelled
-        ? `<button class="undo-btn" onclick="undoCancelSession('${s.date}')">Undo</button>`
+        ? `<button class="undo-btn" onclick="undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="initiateDeleteSession('${s.date}')">Delete</button>`
         : `<button class="cancel-btn" onclick="initiateCancelSession('${s.date}')">✕</button>`;
 
     return `
