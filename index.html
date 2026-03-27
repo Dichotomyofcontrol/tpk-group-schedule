@@ -794,7 +794,7 @@ let activeTimeFilter = "all";
 let cancelPendingSession = null;
 let currentPage = "home";
 let pastSessionsVisible = false;
-let campaignSortNewest = true;
+let campaignSortNewest = false;
 let activeQuills = {};
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -823,7 +823,7 @@ window.navigateTo = function(page) {
     else if (page === 'rokugan') items[3].classList.add('active');
     else if (page === 'special') items[4].classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); }
-    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = true; renderCampaignPage(page); }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; renderCampaignPage(page); }
 };
 window.openAddSession = function() {
     closeNav();
@@ -1248,7 +1248,7 @@ function renderCampaignPage(campaign) {
 
     // Sort toggle for all sessions
     if (cs.length > 0) {
-        html += `<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px"><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? 'Newest First' : 'Oldest First'}</button></div>`;
+        html += `<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px"><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button></div>`;
         // Combine all sessions into one sorted list
         const allSorted = [...cs].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
         const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
