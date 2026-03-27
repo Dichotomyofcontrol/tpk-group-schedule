@@ -940,10 +940,18 @@ function renderHero() {
     const pastForCampaign = sessions.filter(s => s.campaign === next.campaign && parseDate(s.date) < today && s.status !== "cancelled");
     const lastSession = pastForCampaign.length > 0 ? pastForCampaign[pastForCampaign.length - 1] : null;
     let recapBlock = '';
-    if (lastSession && (lastSession.recapHtml || lastSession.recap)) {
-        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-recap" style="cursor:pointer" onclick="openReaderModal('${lastSession.date}')">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
-    } else if (lastSession) {
-        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-no-recap" style="cursor:pointer" onclick="goToSession('${lastSession.date}')">No recap yet — tap to add one</div>`;
+    if (lastSession) {
+        recapBlock += `<div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px">`;
+        recapBlock += `<div class="hero-label">Last Time — ${formatDateShort(lastSession.date)}</div>`;
+        if (lastSession.recapHtml || lastSession.recap) {
+            recapBlock += `<div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
+            recapBlock += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastSession.date}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastSession.date}')">Edit</button>`;
+            if (lastSession.pdfUrl) { recapBlock += `<a class="lsc-pdf" href="${escapeHtml(lastSession.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
+            recapBlock += `</div>`;
+        } else {
+            recapBlock += `<div class="lsc-no-recap" onclick="goToSession('${lastSession.date}')">No recap yet — tap to add one</div>`;
+        }
+        recapBlock += `</div>`;
     }
     document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
 }
@@ -967,9 +975,9 @@ function renderRecentRecaps() {
     });
     if (lastSessions.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
 
-    // Primary card = same campaign as next session; others go in collapsible
-    const primary = lastSessions.find(x => x.campaign === primaryCampaign) || lastSessions[0];
-    const others = lastSessions.filter(x => x !== primary);
+    // Exclude the primary campaign (already shown in hero), keep only others
+    const others = lastSessions.filter(x => x.campaign !== primaryCampaign);
+    if (others.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
 
     function buildCard(item) {
         const s = item.session; const c = item.campaign;
@@ -990,15 +998,11 @@ function renderRecentRecaps() {
         return `<div class="last-session-card ${c}"><div class="lsc-top"><div class="lsc-campaign">${campaignIcons[c]} ${campaignNames[c]}</div><div class="lsc-date">${formatDateShort(s.date)}</div></div>${recapBlock}${actions}</div>`;
     }
 
+    // Always collapsed by default — just the header toggle with all other campaigns inside
     let html = '<div class="last-sessions-section">';
-    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-arrow">&#9654;</span> Last Sessions</button>`;
-    html += '<div class="last-sessions-list">';
-    html += buildCard(primary);
-    if (others.length > 0) {
-        html += `<div class="last-sessions-extra${lastSessionsExpanded ? ' open' : ''}" id="last-sessions-extra">`;
-        others.forEach(item => { html += buildCard(item); });
-        html += '</div>';
-    }
+    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-arrow">&#9654;</span> Other Campaigns</button>`;
+    html += `<div class="last-sessions-extra${lastSessionsExpanded ? ' open' : ''}" id="last-sessions-extra">`;
+    others.forEach(item => { html += buildCard(item); });
     html += '</div></div>';
     document.getElementById('recent-recaps').innerHTML = html;
 }
