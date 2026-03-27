@@ -542,6 +542,24 @@
         body.light .top-bar-logo {
             -webkit-text-fill-color: transparent;
         }
+        /* Light mode: force recap text color over Quill inline styles */
+        body.light .recap-display,
+        body.light .recap-display *,
+        body.light .reader-body *,
+        body.light .campaign-last-recap-text,
+        body.light .campaign-last-recap-text *,
+        body.light .hero-recap,
+        body.light .hero-recap *,
+        body.light .lsc-recap,
+        body.light .lsc-recap * {
+            color: var(--text) !important;
+        }
+        /* Light mode: soften active filter backgrounds */
+        body.light .stat-filter.active.frostmaiden { background: rgba(79,195,247,0.15); }
+        body.light .stat-filter.active.strahd { background: rgba(239,83,80,0.15); }
+        body.light .stat-filter.active.rokugan { background: rgba(240,165,0,0.15); }
+        body.light .stat-filter.active.special { background: rgba(206,147,216,0.15); }
+        body.light .stat-filter.active.all-filter { background: rgba(0,0,0,0.06); }
 
         footer { text-align: center; padding: 48px 0 24px; font-size: 0.7rem; color: var(--text-dim); opacity: 0.3; }
         footer a { color: var(--text-dim); text-decoration: none; }
@@ -1124,7 +1142,7 @@ window.openReaderModal = function(ds) {
     document.getElementById('reader-title').textContent = campaignNames[s.campaign];
     document.getElementById('reader-date').textContent = formatDate(s.date);
     document.getElementById('reader-body').innerHTML = s.recapHtml || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
-    let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">&#128203; Copy</button>`;
+    let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">Copy</button>`;
     footer += `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
     if (s.pdfUrl) { footer += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF Recap</a>`; }
     document.getElementById('reader-footer').innerHTML = footer;
@@ -1145,13 +1163,13 @@ window.copyRecapText = function(sd, btn) {
     navigator.clipboard.writeText(text).then(() => {
         btn.innerHTML = '&#10003; Copied';
         btn.classList.add('copied');
-        setTimeout(() => { btn.innerHTML = '&#128203; Copy'; btn.classList.remove('copied'); }, 2000);
+        setTimeout(() => { btn.innerHTML = 'Copy'; btn.classList.remove('copied'); }, 2000);
     }).catch(() => {
         // Fallback for older browsers
         const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
         document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
         btn.innerHTML = '&#10003; Copied'; btn.classList.add('copied');
-        setTimeout(() => { btn.innerHTML = '&#128203; Copy'; btn.classList.remove('copied'); }, 2000);
+        setTimeout(() => { btn.innerHTML = 'Copy'; btn.classList.remove('copied'); }, 2000);
     });
 };
 
@@ -1235,7 +1253,7 @@ function renderSessionCard(s, gi, ci) {
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
         recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
-        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${s.date}', this)">&#128203; Copy</button><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
+        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${s.date}', this)">Copy</button><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
         else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`; }
         recapHtml += `</div><div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
         if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${s.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
@@ -1318,7 +1336,7 @@ function renderCampaignPage(campaign) {
         html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         if (lastPast.recapHtml || lastPast.recap) {
             html += `<div class="campaign-last-recap"><div class="campaign-last-recap-text">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div></div>`;
-            html += `<div class="recap-actions" style="margin-top:8px"><button class="copy-recap-btn" onclick="copyRecapText('${lastPast.date}', this)">&#128203; Copy</button><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
+            html += `<div class="recap-actions" style="margin-top:8px"><button class="copy-recap-btn" onclick="copyRecapText('${lastPast.date}', this)">Copy</button><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
         } else {
             html += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.date}"></div></div>`;
             html += `<div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-overview-${lastPast.date}">Saved!</span></div>`;
