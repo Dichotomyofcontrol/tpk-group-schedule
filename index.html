@@ -297,11 +297,19 @@
         .past-sessions-container { display: none; }
         .past-sessions-container.open { display: block; }
         .past-sessions-container .session-card { opacity: 0.7; }
-        .recent-past-list .session-card { opacity: 1; }
-        .recent-past-list .session-card .day-num { color: var(--text-dim) !important; }
-        .recent-past-list .session-card .session-campaign { color: var(--text-dim); }
-        .recent-past-list .session-card .session-meta { color: var(--border); }
-        .recent-past-list .session-card::before { opacity: 0.4; }
+        .recent-past-wrap .session-card .day-num { color: var(--text-dim) !important; }
+        .recent-past-wrap .session-card .session-campaign { color: var(--text-dim); }
+        .recent-past-wrap .session-card .session-meta { color: var(--border); }
+        .recent-past-wrap .session-card::before { opacity: 0.4; }
+        .recap-cta {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500;
+            padding: 3px 10px; border-radius: 100px;
+            border: 1px solid rgba(79,195,247,0.25); background: rgba(79,195,247,0.08);
+            color: var(--frostmaiden-primary); cursor: pointer; transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .recap-cta:hover { background: rgba(79,195,247,0.18); border-color: var(--frostmaiden-primary); }
         .sort-toggle {
             font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 4px 10px;
             border-radius: 5px; border: 1px solid var(--border); background: transparent;
@@ -1091,8 +1099,20 @@ function renderSessionCard(s, gi, ci) {
     const roster = s.roster || campaignRosters[s.campaign] || [];
     const att = s.attendance || {}; const isCancelled = s.status === "cancelled";
     let attHtml = ''; roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.date}','${p}')" title="Toggle">${p}</button>`; });
-    const isPast = d < getToday();
+    const today = getToday();
+    const isPast = d < today;
+    const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const isRecentPast = isPast && d >= twoWeeksAgo;
     const actionHtml = isCancelled ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : isPast ? `<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">&#10005;</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
+    // CTA for recent past sessions missing recap or PDF
+    let ctaHtml = '';
+    if (isRecentPast && !isCancelled) {
+        const needsRecap = !(s.recapHtml || s.recap);
+        const needsPdf = !s.pdfUrl;
+        if (needsRecap && needsPdf) ctaHtml = `<span class="recap-cta">+ Add Recap</span>`;
+        else if (needsRecap) ctaHtml = `<span class="recap-cta">+ Add Recap</span>`;
+        else if (needsPdf) ctaHtml = `<span class="recap-cta">+ Add PDF</span>`;
+    }
     let recapHtml = '';
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
@@ -1104,7 +1124,7 @@ function renderSessionCard(s, gi, ci) {
         else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
         recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span></div></div>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div><div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}</div></div>`;
 }
 
 function renderList() {
@@ -1112,21 +1132,23 @@ function renderList() {
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
     if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
-    const upcoming = filtered.filter(s => parseDate(s.date) >= today);
-    const recentPast = filtered.filter(s => { const d = parseDate(s.date); return d < today && d >= twoWeeksAgo; });
+    // Merge recent past (last 2 weeks) with upcoming into one chronological list
+    const mainList = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
     const olderPast = filtered.filter(s => parseDate(s.date) < twoWeeksAgo);
+    const recentPastDates = new Set(filtered.filter(s => { const d = parseDate(s.date); return d < today && d >= twoWeeksAgo; }).map(s => s.date));
     activeQuills = {};
     let html = '';
-    // Recent past (last 2 weeks) — shown inline, dimmed
-    if (recentPast.length > 0) {
-        html += `<div class="month-group"><div class="month-label">Recent Sessions</div><div class="sessions-list recent-past-list">`;
-        recentPast.sort((a,b) => b.date.localeCompare(a.date)).forEach((s,i) => { html += renderSessionCard(s, 0, i); });
-        html += `</div></div>`;
-    }
-    if (upcoming.length > 0) {
-        const g = {}; upcoming.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-        Object.keys(g).sort().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
-    } else if (recentPast.length === 0) { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
+    if (mainList.length > 0) {
+        const g = {}; mainList.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        Object.keys(g).sort().forEach((k, gi) => {
+            html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`;
+            g[k].forEach((s,i) => {
+                const isRecentPast = recentPastDates.has(s.date);
+                html += isRecentPast ? `<div class="recent-past-wrap">${renderSessionCard(s, gi, i)}</div>` : renderSessionCard(s, gi, i);
+            });
+            html += `</div></div>`;
+        });
+    } else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
     if (olderPast.length > 0) {
         html += `<button class="past-sessions-toggle${pastSessionsVisible?' open':''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${olderPast.length})</button>`;
         html += `<div class="past-sessions-container${pastSessionsVisible?' open':''}">`;
