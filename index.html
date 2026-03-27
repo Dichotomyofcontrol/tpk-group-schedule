@@ -1872,6 +1872,7 @@ function renderCampaignPage(campaign) {
     const cs = sessions.filter(s => s.campaign === campaign);
     const upcoming = cs.filter(s => parseDate(s.date) >= today);
     const past = cs.filter(s => parseDate(s.date) < today);
+    const nonCancelled = cs.filter(s => s.status !== 'cancelled').length;
     activeQuills = {};
     let html = '';
 
@@ -1930,18 +1931,25 @@ function renderCampaignPage(campaign) {
         html += `</div>`;
     }
 
-    // Controls row: time filters + sort + collapse all
+    // Stats bar — single campaign pill (mirrors home page stats bar)
     if (cs.length > 0) {
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">`;
-        html += `<div style="display:flex;gap:0">`;
+        html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
+
+        // Controls row — mirrors home page layout exactly
+        html += `<div class="controls-row">`;
+        html += `<div class="controls-left">`;
         html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
         html += `</div>`;
-        html += `<div style="display:flex;gap:8px;align-items:center">`;
-        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
-        html += `<button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
-        html += `</div></div>`;
+        html += `<div class="controls-left">`;
+        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')" style="margin-left:0">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        html += `</div>`;
+        html += `</div>`;
+
+        // Collapse all + session list (mirrors home page list view)
+        html += `<div class="collapse-all-row"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button></div>`;
+
         // Filter sessions based on time filter
         let displaySessions = cs;
         if (campaignTimeFilter === 'upcoming') displaySessions = upcoming;
