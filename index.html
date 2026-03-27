@@ -358,9 +358,14 @@
         .hero-countdown strong { color: var(--text); font-weight: 600; }
         .hero-date { font-size: 0.85rem; color: var(--text); margin-bottom: 12px; }
         .hero-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
-        .hero-recap { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .hero-recap p { margin-bottom: 0; display: inline; }
-        .hero-recap p::after { content: ' '; }
+        .hero-recap { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; max-height: 4.8em; overflow: hidden; position: relative; }
+        .hero-recap p { margin-bottom: 4px; }
+        .hero-recap p:last-child { margin-bottom: 0; }
+        .hero-recap strong { font-weight: 600; color: var(--text); }
+        .hero-recap em { font-style: italic; }
+        .hero-recap u { text-decoration: underline; }
+        .hero-recap ul, .hero-recap ol { margin-left: 16px; margin-bottom: 4px; }
+        .hero-recap::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1.6em; background: linear-gradient(transparent, var(--surface)); pointer-events: none; }
         .hero-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
 
         /* ===== LAST SESSIONS (collapsible) ===== */
@@ -818,7 +823,7 @@ async function initApp() {
     onSnapshot(q, (snapshot) => {
         sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
         if (firstLoad) { renderAll(); prevCount = sessions.length; firstLoad = false; }
-        else if (sessions.length !== prevCount) { renderAll(); prevCount = sessions.length; }
+        else if (sessions.length !== prevCount) { renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); prevCount = sessions.length; }
         else { updateAttendanceChips(); updateCancelStates(); }
     });
     document.querySelectorAll('.view-btn').forEach(btn => {
