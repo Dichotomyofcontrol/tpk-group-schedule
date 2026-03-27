@@ -320,14 +320,13 @@
 
         .session-card {
             display: flex;
-            align-items: center;
-            gap: 16px;
+            flex-direction: column;
             padding: 16px 20px;
             background: var(--surface);
             border-radius: 12px;
             border: 1px solid var(--border);
             transition: all 0.25s ease;
-            cursor: default;
+            cursor: pointer;
             position: relative;
             overflow: hidden;
         }
@@ -465,6 +464,165 @@
         .att-chip:hover { filter: brightness(1.2); transform: scale(1.05); }
 
         .att-chip.out { background: rgba(239, 83, 80, 0.12); color: #ef5350; border-color: rgba(239, 83, 80, 0.3); text-decoration: line-through; opacity: 0.7; }
+
+        /* Expandable session detail */
+        .session-card { cursor: pointer; }
+        .session-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+        .session-expand-icon {
+            flex-shrink: 0;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            transition: transform 0.2s;
+            margin-left: auto;
+        }
+        .session-card.expanded .session-expand-icon { transform: rotate(90deg); }
+        .session-detail {
+            display: none;
+            width: 100%;
+            padding-top: 14px;
+            margin-top: 14px;
+            border-top: 1px solid var(--border);
+            animation: fadeIn 0.2s ease forwards;
+        }
+        .session-card.expanded .session-detail { display: block; }
+        .session-detail-section {
+            margin-bottom: 14px;
+        }
+        .session-detail-section:last-child { margin-bottom: 0; }
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .recap-text {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            resize: vertical;
+        }
+        .recap-text:focus { outline: none; border-color: var(--frostmaiden-primary); }
+        .recap-text::placeholder { color: var(--text-dim); }
+        .recap-display {
+            padding: 10px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: var(--text);
+            white-space: pre-wrap;
+        }
+        .recap-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .recap-save-btn, .recap-edit-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            padding: 5px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .recap-save-btn:hover { color: #66bb6a; border-color: #66bb6a; }
+        .recap-edit-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+        .recap-saved-msg {
+            font-size: 0.72rem;
+            color: #66bb6a;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .recap-saved-msg.show { opacity: 1; }
+        .pdf-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(79, 195, 247, 0.08);
+            border: 1px solid rgba(79, 195, 247, 0.2);
+            border-radius: 6px;
+            color: var(--frostmaiden-primary);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .pdf-link:hover { background: rgba(79, 195, 247, 0.15); border-color: var(--frostmaiden-primary); }
+        .pdf-url-input {
+            flex: 1;
+            padding: 6px 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+        }
+        .pdf-url-input:focus { outline: none; border-color: var(--frostmaiden-primary); }
+        .pdf-url-input::placeholder { color: var(--text-dim); }
+        .pdf-save-btn {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pdf-save-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+
+        /* Past/Upcoming split */
+        .past-sessions-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 0;
+            margin-top: 24px;
+            border: none;
+            background: none;
+            color: var(--text-dim);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.2s;
+            width: 100%;
+        }
+        .past-sessions-toggle:hover { color: var(--text); }
+        .past-sessions-toggle .toggle-arrow {
+            transition: transform 0.2s;
+            font-size: 0.7rem;
+        }
+        .past-sessions-toggle.open .toggle-arrow { transform: rotate(90deg); }
+        .past-sessions-container { display: none; }
+        .past-sessions-container.open { display: block; }
+        .past-sessions-container .session-card { opacity: 0.7; }
+        .past-sessions-container .session-card:hover { opacity: 1; }
+        .past-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 0;
+        }
 
         /* Calendar view */
         .cal-month { margin-bottom: 32px; }
@@ -1251,35 +1409,147 @@ function renderSessionCard(s, groupIndex, cardIndex) {
     const roster = s.roster || campaignRosters[s.campaign] || [];
     const attendance = s.attendance || {};
     const isCancelled = s.status === "cancelled";
+    const isPast = parseDate(s.date) < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
 
     let attHtml = '';
     roster.forEach(p => {
         const status = attendance[p] || "in";
-        attHtml += `<button class="att-chip ${status}" onclick="toggleAttendance('${s.date}', '${p}')" title="Click to toggle">${p}</button>`;
+        attHtml += `<button class="att-chip ${status}" onclick="event.stopPropagation(); toggleAttendance('${s.date}', '${p}')" title="Click to toggle">${p}</button>`;
     });
 
     const actionHtml = isCancelled
-        ? `<button class="undo-btn" onclick="undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="initiateDeleteSession('${s.date}')">Delete</button>`
-        : `<button class="cancel-btn" onclick="initiateCancelSession('${s.date}')">✕</button>`;
+        ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>`
+        : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
+
+    // Recap section — show textarea for editing or display for reading
+    const recapText = s.recap || '';
+    const pdfUrl = s.pdfUrl || '';
+    let recapHtml = '';
+    if (isPast && !isCancelled) {
+        recapHtml += `<div class="session-detail-section">`;
+        recapHtml += `<div class="detail-label">Session Recap</div>`;
+        if (recapText) {
+            recapHtml += `<div class="recap-display" id="recap-display-${s.date}">${escapeHtml(recapText)}</div>`;
+            recapHtml += `<div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`;
+        } else {
+            recapHtml += `<textarea class="recap-text" id="recap-${s.date}" placeholder="Paste session recap here..." onclick="event.stopPropagation()"></textarea>`;
+            recapHtml += `<div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`;
+        }
+        recapHtml += `</div>`;
+
+        // PDF section
+        recapHtml += `<div class="session-detail-section">`;
+        recapHtml += `<div class="detail-label">Archivist PDF</div>`;
+        if (pdfUrl) {
+            recapHtml += `<a class="pdf-link" href="${escapeHtml(pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; Download Recap PDF</a>`;
+            recapHtml += `<div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editPdfUrl('${s.date}')">Change Link</button></div>`;
+        } else {
+            recapHtml += `<div style="display:flex;gap:8px;align-items:center">`;
+            recapHtml += `<input class="pdf-url-input" id="pdf-url-${s.date}" placeholder="Paste PDF link..." onclick="event.stopPropagation()">`;
+            recapHtml += `<button class="pdf-save-btn" onclick="event.stopPropagation(); savePdfUrl('${s.date}')">Save</button>`;
+            recapHtml += `</div>`;
+        }
+        recapHtml += `</div>`;
+    }
 
     return `
-        <div class="session-card ${s.campaign}${isCancelled ? ' cancelled' : ''}" data-session-date="${s.date}" style="animation-delay: ${(groupIndex * 0.05) + (cardIndex * 0.03)}s">
-            <div class="session-date">
-                <div class="day-num">${dayNum}</div>
-                <div class="day-name">${dayName}</div>
+        <div class="session-card ${s.campaign}${isCancelled ? ' cancelled' : ''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}')" style="animation-delay: ${(groupIndex * 0.05) + (cardIndex * 0.03)}s">
+            <div class="session-card-header">
+                <div class="session-date">
+                    <div class="day-num">${dayNum}</div>
+                    <div class="day-name">${dayName}</div>
+                </div>
+                <div class="session-divider"></div>
+                <div class="session-info">
+                    <div class="session-campaign">${campaignNames[s.campaign]}</div>
+                    <div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div>
+                </div>
+                <div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div>
+                <div class="session-expand-icon">&#9654;</div>
             </div>
-            <div class="session-divider"></div>
-            <div class="session-info">
-                <div class="session-campaign">${campaignNames[s.campaign]}</div>
-                <div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div>
-                <div class="session-attendance">${attHtml}</div>
+            <div class="session-detail">
+                <div class="session-detail-section">
+                    <div class="detail-label">Attendance</div>
+                    <div class="session-attendance">${attHtml}</div>
+                </div>
+                ${recapHtml}
             </div>
-            <div class="session-action">${actionHtml}</div>
         </div>
     `;
 }
 
+function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+window.toggleSessionExpand = function(sessionDate) {
+    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
+    if (card) card.classList.toggle('expanded');
+};
+
+// ==================== RECAP & PDF ====================
+
+window.saveRecap = async function(sessionDate) {
+    const textarea = document.getElementById(`recap-${sessionDate}`);
+    if (!textarea) return;
+    const text = textarea.value.trim();
+    if (!text) return;
+    try {
+        await updateDoc(doc(db, "sessions", sessionDate), { recap: text });
+        const msg = document.getElementById(`recap-msg-${sessionDate}`);
+        if (msg) { msg.classList.add('show'); setTimeout(() => msg.classList.remove('show'), 2000); }
+    } catch (err) {
+        console.error("Error saving recap:", err);
+    }
+};
+
+window.editRecap = function(sessionDate) {
+    const s = sessions.find(x => x.date === sessionDate);
+    if (!s) return;
+    const container = document.getElementById(`recap-display-${sessionDate}`);
+    if (!container) return;
+    const parent = container.parentElement;
+    parent.innerHTML = `
+        <div class="detail-label">Session Recap</div>
+        <textarea class="recap-text" id="recap-${sessionDate}" onclick="event.stopPropagation()">${escapeHtml(s.recap || '')}</textarea>
+        <div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sessionDate}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${sessionDate}">Saved!</span></div>
+    `;
+};
+
+window.savePdfUrl = async function(sessionDate) {
+    const input = document.getElementById(`pdf-url-${sessionDate}`);
+    if (!input) return;
+    const url = input.value.trim();
+    if (!url) return;
+    try {
+        await updateDoc(doc(db, "sessions", sessionDate), { pdfUrl: url });
+    } catch (err) {
+        console.error("Error saving PDF URL:", err);
+    }
+};
+
+window.editPdfUrl = function(sessionDate) {
+    const s = sessions.find(x => x.date === sessionDate);
+    if (!s) return;
+    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
+    const sections = card.querySelectorAll('.session-detail-section');
+    const pdfSection = sections[sections.length - 1];
+    pdfSection.innerHTML = `
+        <div class="detail-label">Archivist PDF</div>
+        <div style="display:flex;gap:8px;align-items:center">
+            <input class="pdf-url-input" id="pdf-url-${sessionDate}" value="${escapeHtml(s.pdfUrl || '')}" onclick="event.stopPropagation()">
+            <button class="pdf-save-btn" onclick="event.stopPropagation(); savePdfUrl('${sessionDate}')">Save</button>
+        </div>
+    `;
+};
+
+// ==================== LIST RENDER ====================
+
+let pastSessionsVisible = false;
+
 function renderList() {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
 
     if (filtered.length === 0) {
@@ -1287,26 +1557,65 @@ function renderList() {
         return;
     }
 
-    const grouped = {};
-    filtered.forEach(s => {
-        const key = getMonthKey(s.date);
-        if (!grouped[key]) grouped[key] = [];
-        grouped[key].push(s);
-    });
+    const upcoming = filtered.filter(s => parseDate(s.date) >= today);
+    const past = filtered.filter(s => parseDate(s.date) < today);
 
+    // Render upcoming
     let html = '';
-    Object.keys(grouped).sort().forEach((key, gi) => {
-        html += `<div class="month-group" style="animation-delay: ${gi * 0.05}s">`;
-        html += `<div class="month-label">${getMonthLabel(key)}</div>`;
-        html += `<div class="sessions-list">`;
-        grouped[key].forEach((s, i) => {
-            html += renderSessionCard(s, gi, i);
+    if (upcoming.length > 0) {
+        const grouped = {};
+        upcoming.forEach(s => {
+            const key = getMonthKey(s.date);
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(s);
         });
-        html += `</div></div>`;
-    });
+        Object.keys(grouped).sort().forEach((key, gi) => {
+            html += `<div class="month-group" style="animation-delay: ${gi * 0.05}s">`;
+            html += `<div class="month-label">${getMonthLabel(key)}</div>`;
+            html += `<div class="sessions-list">`;
+            grouped[key].forEach((s, i) => {
+                html += renderSessionCard(s, gi, i);
+            });
+            html += `</div></div>`;
+        });
+    } else {
+        html += `<div class="empty-state"><div class="icon">\uD83C\uDFB2</div><div>No upcoming sessions.</div></div>`;
+    }
+
+    // Render past sessions toggle
+    if (past.length > 0) {
+        html += `<button class="past-sessions-toggle${pastSessionsVisible ? ' open' : ''}" onclick="togglePastSessions()">
+            <span class="toggle-arrow">&#9654;</span> Past Sessions (${past.length})
+        </button>`;
+        html += `<div class="past-sessions-container${pastSessionsVisible ? ' open' : ''}">`;
+        const grouped = {};
+        past.forEach(s => {
+            const key = getMonthKey(s.date);
+            if (!grouped[key]) grouped[key] = [];
+            grouped[key].push(s);
+        });
+        Object.keys(grouped).sort().reverse().forEach((key, gi) => {
+            html += `<div class="month-group" style="animation-delay: ${gi * 0.05}s">`;
+            html += `<div class="month-label">${getMonthLabel(key)}</div>`;
+            html += `<div class="sessions-list">`;
+            grouped[key].forEach((s, i) => {
+                html += renderSessionCard(s, gi, i);
+            });
+            html += `</div></div>`;
+        });
+        html += `</div>`;
+    }
 
     document.getElementById('list-view').innerHTML = html;
 }
+
+window.togglePastSessions = function() {
+    pastSessionsVisible = !pastSessionsVisible;
+    const toggle = document.querySelector('.past-sessions-toggle');
+    const container = document.querySelector('.past-sessions-container');
+    if (toggle) toggle.classList.toggle('open', pastSessionsVisible);
+    if (container) container.classList.toggle('open', pastSessionsVisible);
+};
 
 function renderCalendar() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
