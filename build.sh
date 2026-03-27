@@ -10,5 +10,6 @@ sed -i "s|__FIREBASE_PROJECT_ID__|${FIREBASE_PROJECT_ID}|g" index.html
 sed -i "s|__FIREBASE_STORAGE_BUCKET__|${FIREBASE_STORAGE_BUCKET}|g" index.html
 sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|${FIREBASE_MESSAGING_SENDER_ID}|g" index.html
 sed -i "s|__FIREBASE_APP_ID__|${FIREBASE_APP_ID}|g" index.html
+sed -i "s|__SITE_PASSPHRASE__|${SITE_PASSPHRASE}|g" index.html
 
 echo "Build complete — env vars injected into index.html"

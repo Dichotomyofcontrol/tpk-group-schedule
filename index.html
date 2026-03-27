@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TPK Group — Campaign Schedule</title>
+    <title>Six in the TPK — Campaign Schedule</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
     <style>
@@ -165,7 +165,11 @@
         }
         .nav-item:hover { background: var(--surface-hover); }
         .nav-item.active { border-color: var(--border); background: var(--bg); }
-        .nav-item .nav-icon { font-size: 1.1rem; }
+        .nav-campaign-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .nav-campaign-dot.frostmaiden { background: var(--frostmaiden-primary); }
+        .nav-campaign-dot.strahd { background: var(--strahd-primary); }
+        .nav-campaign-dot.rokugan { background: var(--rokugan-primary); }
+        .nav-campaign-dot.special { background: var(--special-primary); }
         .nav-item .nav-label { font-size: 0.85rem; font-weight: 500; color: var(--text); }
         .nav-item .nav-sub { font-size: 0.7rem; color: var(--text-dim); }
         .nav-item-info { display: flex; flex-direction: column; gap: 2px; }
@@ -249,7 +253,7 @@
         .cancel-confirm { font-size: 0.7rem; color: var(--strahd-primary); white-space: nowrap; margin-right: 4px; }
 
         /* ===== EXPANDED DETAIL ===== */
-        .session-detail { display: none; width: 100%; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border); }
+        .session-detail { display: none; width: 100%; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border); cursor: default; }
         .session-card.expanded .session-detail { display: block; }
         .session-detail-section { margin-bottom: 14px; }
         .session-detail-section:last-child { margin-bottom: 0; }
@@ -348,16 +352,44 @@
         .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
 
         @media (max-width: 600px) {
-            .stats-bar { gap: 4px; }
+            .container { padding: 0 12px; }
+            .top-bar { padding: 12px 0 10px; margin-bottom: 10px; }
+            .top-bar-logo { font-size: 1rem; }
+            .stats-bar { gap: 4px; padding: 8px 0; }
             .stat-filter { padding: 6px 10px; }
             .stat-filter .sf-count { font-size: 0.9rem; }
             .stat-filter .sf-label { font-size: 0.6rem; }
-            .session-card { padding: 12px 14px; }
-            .session-date { width: 40px; }
-            .session-date .day-num { font-size: 1.2rem; }
-            .cal-day { min-height: 34px; font-size: 0.7rem; }
-            .nav-menu { width: 260px; }
+            .controls-row { padding: 0 0 10px; }
+            .session-card { padding: 10px 12px; }
+            .session-date { width: 36px; }
+            .session-date .day-num { font-size: 1.15rem; }
+            .session-date .day-name { font-size: 0.55rem; }
+            .session-divider { height: 26px; }
+            .session-campaign { font-size: 0.8rem; }
+            .session-meta { font-size: 0.7rem; }
+            .session-detail { padding-top: 10px; margin-top: 10px; }
+            .detail-label { font-size: 0.65rem; }
+            .att-chip { font-size: 0.68rem; padding: 3px 8px; }
+            .recap-editor-wrap .ql-container { font-size: 0.78rem; min-height: 60px; }
+            .recap-editor-wrap .ql-editor { min-height: 60px; }
+            .recap-display { font-size: 0.78rem; padding: 8px 10px; }
+            .cal-day { min-height: 34px; font-size: 0.7rem; padding: 3px; }
+            .cal-header span { font-size: 0.55rem; }
+            .month-label { font-size: 0.72rem; }
+            .nav-menu { width: 85vw; max-width: 300px; }
             .next-session-pill { display: none; }
+            .add-session-modal { padding: 18px; width: 95%; }
+            .form-group input, .form-group select { font-size: 0.82rem; padding: 10px; }
+            .campaign-page-title { font-size: 1rem; }
+            .campaign-back-btn { font-size: 0.72rem; padding: 4px 10px; }
+            .tooltip { max-width: 220px; padding: 10px 12px; }
+            .tooltip-campaign { font-size: 0.82rem; }
+            .tooltip-detail { font-size: 0.72rem; }
+            .pdf-upload-btn { font-size: 0.72rem; padding: 5px 10px; }
+            .pdf-link { font-size: 0.72rem; padding: 5px 10px; }
+            #password-gate h1 { font-size: clamp(1.6rem, 5vw, 2.5rem); }
+            .pass-form input { width: 180px; padding: 10px 14px; font-size: 0.85rem; }
+            .pass-form button { padding: 10px 18px; font-size: 0.82rem; }
         }
     </style>
 </head>
@@ -365,41 +397,40 @@
 
 <!-- Password Gate -->
 <div id="password-gate">
-    <h1>TPK Group</h1>
+    <h1>Six in the TPK</h1>
     <div class="subtitle">Campaign Schedule</div>
     <div class="pass-form">
         <input type="password" id="pass-input" placeholder="Enter passphrase" autocomplete="off">
         <button onclick="checkPassword()">Enter</button>
     </div>
     <div class="pass-error" id="pass-error"></div>
-    <div class="pass-hint">Ask your GM for the passphrase</div>
+    <div class="pass-hint">Password Available in Discord</div>
 </div>
 
 <!-- Nav Overlay + Slide Menu -->
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 <div class="nav-menu" id="nav-menu">
     <button class="nav-close" onclick="closeNav()">&times;</button>
-    <h2>TPK Group</h2>
+    <h2>Six in the TPK</h2>
     <div class="nav-subtitle"><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; Portland</div>
     <div class="nav-item active" onclick="navigateTo('home')">
-        <span class="nav-icon">&#127968;</span>
         <div class="nav-item-info"><span class="nav-label">Home</span><span class="nav-sub">Schedule overview</span></div>
     </div>
     <div class="nav-divider"></div>
     <div class="nav-item" onclick="navigateTo('frostmaiden')">
-        <span class="nav-icon">&#10052;&#65039;</span>
+        <div class="nav-campaign-dot frostmaiden"></div>
         <div class="nav-item-info"><span class="nav-label">Rime of the Frostmaiden</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
     <div class="nav-item" onclick="navigateTo('strahd')">
-        <span class="nav-icon">&#129499;</span>
+        <div class="nav-campaign-dot strahd"></div>
         <div class="nav-item-info"><span class="nav-label">Curse of Strahd</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
     <div class="nav-item" onclick="navigateTo('rokugan')">
-        <span class="nav-icon">&#9876;&#65039;</span>
+        <div class="nav-campaign-dot rokugan"></div>
         <div class="nav-item-info"><span class="nav-label">Adventures in Rokugan</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
     <div class="nav-item" onclick="navigateTo('special')">
-        <span class="nav-icon">&#10024;</span>
+        <div class="nav-campaign-dot special"></div>
         <div class="nav-item-info"><span class="nav-label">Special Sessions</span><span class="nav-sub">One-shots &amp; events</span></div>
     </div>
     <div class="nav-divider"></div>
@@ -443,7 +474,7 @@
         <div class="top-bar">
             <div class="top-bar-left">
                 <button class="hamburger" onclick="openNav()">&#9776;</button>
-                <div class="top-bar-logo">TPK Group</div>
+                <div class="top-bar-logo">Six in the TPK</div>
             </div>
             <button class="sign-out-btn" onclick="logout()">Sign Out</button>
         </div>
@@ -499,7 +530,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-const PASSPHRASE = "tpkdice";
+const PASSPHRASE = "__SITE_PASSPHRASE__";
 const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", rokugan: "Adventures in Rokugan", special: "Special" };
 const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", rokugan: "\u2694\uFE0F", special: "\u2728" };
 const campaignRosters = {
@@ -651,10 +682,11 @@ window.undoCancelSession = async function(sd) { try { await updateDoc(doc(db, "s
 window.initiateDeleteSession = function(sd) { const a = document.querySelector(`[data-session-date="${sd}"]`).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
 window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
 window.cancelDeleteSession = function(sd) { const c = document.querySelector(`[data-session-date="${sd}"]`); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
-window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const u = {}; u[`attendance.${p}`] = cur === "in" ? "out" : "in"; await updateDoc(doc(db, "sessions", sd), u); };
+window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const chip = document.querySelector(`[data-session-date="${sd}"] .att-chip[onclick*="'${p}'"]`); if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
 
 // ===== RECAP & PDF =====
-window.toggleSessionExpand = function(sd) {
+window.toggleSessionExpand = function(sd, ev) {
+    if (ev && ev.target.closest('.session-detail')) return;
     const card = document.querySelector(`[data-session-date="${sd}"]`); if (!card) return;
     const was = card.classList.contains('expanded'); card.classList.toggle('expanded');
     if (!was) {
@@ -730,12 +762,12 @@ function renderSessionCard(s, gi, ci) {
         recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
         if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
         else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`; }
-        recapHtml += `</div><div class="session-detail-section"><div class="detail-label">Archivist PDF</div><div class="pdf-upload-area">`;
+        recapHtml += `</div><div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
         if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
         else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
         recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span></div></div>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}')" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div><div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div><div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}</div></div>`;
 }
 
 function renderList() {
@@ -789,7 +821,7 @@ function renderCalendar() {
         for (let day = 1; day <= dim; day++) {
             const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const s = sm[ds]; const tc = ds === ts ? ' today' : '';
-            if (s) html += `<div class="cal-day has-session ${s.campaign}${tc}" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div class="cal-dot"></div></div>`;
+            if (s) html += `<div class="cal-day has-session ${s.campaign}${tc}" onclick="calendarGoToSession('${ds}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div class="cal-dot"></div></div>`;
             else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
         }
         html += `</div></div>`;
@@ -807,6 +839,22 @@ window.showTooltip = function(ev, ds) {
     tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px'; tip.style.top = (rect.bottom + 8) + 'px';
 };
 window.hideTooltip = function() { document.getElementById('tooltip').classList.remove('show'); };
+window.calendarGoToSession = function(ds) {
+    hideTooltip();
+    // Switch to list view
+    activeView = 'list';
+    document.querySelectorAll('.view-btn').forEach(b => { b.classList.toggle('active', b.dataset.view === 'list'); });
+    document.getElementById('list-view').style.display = 'block';
+    document.getElementById('calendar-view').style.display = 'none';
+    // Check if session is in the past and show past sessions if needed
+    const s = sessions.find(x => x.date === ds);
+    if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) { pastSessionsVisible = true; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.add('open'); if (c) c.classList.add('open'); }
+    // Scroll to card and expand it
+    setTimeout(() => {
+        const card = document.querySelector(`[data-session-date="${ds}"]`);
+        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
+    }, 100);
+};
 </script>
 </body>
 </html>
