@@ -297,6 +297,8 @@
         .past-sessions-container { display: none; }
         .past-sessions-container.open { display: block; }
         .past-sessions-container .session-card { opacity: 0.7; }
+        .recent-past-list .session-card { opacity: 0.6; }
+        .recent-past-list .session-card:hover { opacity: 1; }
         .sort-toggle {
             font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 4px 10px;
             border-radius: 5px; border: 1px solid var(--border); background: transparent;
@@ -1104,20 +1106,28 @@ function renderSessionCard(s, gi, ci) {
 
 function renderList() {
     const today = getToday();
+    const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
     if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
     const upcoming = filtered.filter(s => parseDate(s.date) >= today);
-    const past = filtered.filter(s => parseDate(s.date) < today);
+    const recentPast = filtered.filter(s => { const d = parseDate(s.date); return d < today && d >= twoWeeksAgo; });
+    const olderPast = filtered.filter(s => parseDate(s.date) < twoWeeksAgo);
     activeQuills = {};
     let html = '';
+    // Recent past (last 2 weeks) — shown inline, dimmed
+    if (recentPast.length > 0) {
+        html += `<div class="month-group"><div class="month-label">Recent Sessions</div><div class="sessions-list recent-past-list">`;
+        recentPast.sort((a,b) => b.date.localeCompare(a.date)).forEach((s,i) => { html += renderSessionCard(s, 0, i); });
+        html += `</div></div>`;
+    }
     if (upcoming.length > 0) {
         const g = {}; upcoming.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
         Object.keys(g).sort().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
-    } else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
-    if (past.length > 0) {
-        html += `<button class="past-sessions-toggle${pastSessionsVisible?' open':''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${past.length})</button>`;
+    } else if (recentPast.length === 0) { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
+    if (olderPast.length > 0) {
+        html += `<button class="past-sessions-toggle${pastSessionsVisible?' open':''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${olderPast.length})</button>`;
         html += `<div class="past-sessions-container${pastSessionsVisible?' open':''}">`;
-        const g = {}; past.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        const g = {}; olderPast.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
         Object.keys(g).sort().reverse().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
         html += `</div>`;
     }
