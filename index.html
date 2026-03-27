@@ -27,393 +27,241 @@
             --text-dim: #8a8a9a;
             --border: #2a2a38;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
         body::before {
-            content: '';
-            position: fixed;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(ellipse at 30% 20%, rgba(79, 195, 247, 0.03) 0%, transparent 50%),
-                        radial-gradient(ellipse at 70% 80%, rgba(239, 83, 80, 0.03) 0%, transparent 50%),
-                        radial-gradient(ellipse at 50% 50%, rgba(240, 165, 0, 0.02) 0%, transparent 50%);
-            z-index: 0;
-            pointer-events: none;
+            content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(79,195,247,0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(239,83,80,0.03) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 50%, rgba(240,165,0,0.02) 0%, transparent 50%);
+            z-index: 0; pointer-events: none;
         }
+        .container { max-width: 960px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
 
-        .container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 0 20px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Password Gate */
+        /* ===== PASSWORD GATE ===== */
         #password-gate {
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; min-height: 100vh;
-            text-align: center; padding: 20px;
+            justify-content: center; min-height: 100vh; text-align: center; padding: 20px;
         }
         #password-gate h1 {
-            font-family: 'Cinzel', serif;
-            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-family: 'Cinzel', serif; font-size: clamp(2rem, 5vw, 3.2rem);
             font-weight: 900; letter-spacing: 0.08em;
             background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; margin-bottom: 8px;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px;
         }
-        #password-gate .subtitle {
-            color: var(--text-dim); font-size: 0.95rem; font-weight: 300;
-            letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 40px;
-        }
+        #password-gate .subtitle { color: var(--text-dim); font-size: 0.95rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 40px; }
         .pass-form { display: flex; gap: 8px; margin-bottom: 16px; }
-        .pass-form input {
-            font-family: 'Inter', sans-serif; font-size: 0.9rem;
-            padding: 12px 20px; background: var(--surface);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); outline: none; width: 240px;
-            transition: border-color 0.2s;
-        }
+        .pass-form input { font-family: 'Inter', sans-serif; font-size: 0.9rem; padding: 12px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; width: 240px; }
         .pass-form input:focus { border-color: var(--frostmaiden-primary); }
-        .pass-form button {
-            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500;
-            padding: 12px 24px; border-radius: 8px; border: none;
-            background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg));
-            border: 1px solid var(--border); color: var(--text);
-            cursor: pointer; transition: all 0.2s;
-        }
+        .pass-form button { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg)); color: var(--text); cursor: pointer; }
         .pass-form button:hover { background: var(--surface-hover); border-color: var(--frostmaiden-primary); }
         .pass-error { color: var(--strahd-primary); font-size: 0.8rem; min-height: 1.2em; }
         .pass-hint { color: var(--text-dim); font-size: 0.75rem; margin-top: 24px; opacity: 0.5; }
 
-        /* Main App */
+        /* ===== MAIN APP ===== */
         #app { display: none; }
 
-        /* Header */
-        header {
-            text-align: center; padding: 60px 0 24px;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        header h1 {
-            font-family: 'Cinzel', serif;
-            font-size: clamp(2rem, 5vw, 3.2rem);
-            font-weight: 900; letter-spacing: 0.08em;
-            background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; margin-bottom: 8px;
-        }
-        header p {
-            color: var(--text-dim); font-size: 0.95rem; font-weight: 300;
-            letter-spacing: 0.15em; text-transform: uppercase;
-        }
-        .location { margin-top: 16px; font-size: 0.8rem; color: var(--text-dim); opacity: 0.7; }
-        .location a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dotted var(--text-dim); }
-
-        /* Top bar with hamburger + sign out */
+        /* ===== TOP BAR — Row 1 ===== */
         .top-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-top: 20px; width: 100%;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 16px;
         }
+        .top-bar-left { display: flex; align-items: center; gap: 12px; }
         .hamburger {
-            background: none; border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text-dim); cursor: pointer; padding: 8px 10px;
-            font-size: 1.2rem; line-height: 1; transition: all 0.2s;
+            background: none; border: none; color: var(--text-dim); cursor: pointer;
+            font-size: 1.3rem; line-height: 1; padding: 4px; transition: color 0.2s;
         }
-        .hamburger:hover { color: var(--text); border-color: var(--text-dim); }
+        .hamburger:hover { color: var(--text); }
+        .top-bar-logo {
+            font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 900; letter-spacing: 0.06em;
+            background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
         .sign-out-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.72rem;
-            padding: 4px 12px; border-radius: 100px;
-            border: 1px solid var(--border); background: transparent;
+            font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 4px 12px;
+            border-radius: 100px; border: 1px solid var(--border); background: transparent;
             color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .sign-out-btn:hover { color: var(--text); border-color: var(--text-dim); }
 
-        /* Slide-out nav menu */
-        .nav-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.6); z-index: 100;
+        /* ===== STATS BAR — Row 2 (clickable filters) ===== */
+        .stats-bar {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; padding: 12px 0; flex-wrap: wrap;
         }
-        .nav-overlay.open { display: block; }
-        .nav-menu {
-            position: fixed; top: 0; left: -300px;
-            width: 280px; height: 100vh;
-            background: var(--surface); border-right: 1px solid var(--border);
-            z-index: 101; transition: left 0.3s ease;
-            padding: 24px 20px; overflow-y: auto;
+        .stat-filter {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 100px;
+            border: 1px solid var(--border); background: transparent;
+            cursor: pointer; transition: all 0.25s; font-family: 'Inter', sans-serif;
         }
-        .nav-menu.open { left: 0; }
-        .nav-menu h2 {
-            font-family: 'Cinzel', serif; font-size: 1.1rem;
-            font-weight: 700; margin-bottom: 24px;
+        .stat-filter:hover { background: var(--surface); }
+        .stat-filter .sf-count {
+            font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; line-height: 1;
+        }
+        .stat-filter .sf-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+        .stat-filter.frostmaiden .sf-count { color: var(--frostmaiden-primary); }
+        .stat-filter.strahd .sf-count { color: var(--strahd-primary); }
+        .stat-filter.rokugan .sf-count { color: var(--rokugan-primary); }
+        .stat-filter.special .sf-count { color: var(--special-primary); }
+        .stat-filter.active { border-color: transparent; }
+        .stat-filter.active.all-filter { background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg)); border-color: var(--border); }
+        .stat-filter.active.frostmaiden { background: var(--frostmaiden-bg); border-color: var(--frostmaiden-primary); }
+        .stat-filter.active.strahd { background: var(--strahd-bg); border-color: var(--strahd-primary); }
+        .stat-filter.active.rokugan { background: var(--rokugan-bg); border-color: var(--rokugan-primary); }
+        .stat-filter.active.special { background: var(--special-bg); border-color: var(--special-primary); }
+        .stat-filter.active .sf-label { color: var(--text); }
+        .stat-filter.all-filter .sf-count {
+            font-size: 0.85rem;
             background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
-        .nav-close {
-            position: absolute; top: 16px; right: 16px;
-            background: none; border: none; color: var(--text-dim);
-            cursor: pointer; font-size: 1.2rem;
+
+        /* ===== CONTROLS ROW — Row 3 ===== */
+        .controls-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 0 16px; gap: 12px; flex-wrap: wrap;
         }
+        .controls-left { display: flex; gap: 4px; }
+        .view-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .view-btn:first-child { border-radius: 6px 0 0 6px; }
+        .view-btn:last-child { border-radius: 0 6px 6px 0; }
+        .view-btn.active { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
+        .next-session-pill {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 14px; border-radius: 100px;
+            border: 1px solid var(--border); background: var(--surface);
+            font-size: 0.78rem; color: var(--text-dim);
+        }
+        .next-session-pill .nsp-icon { font-size: 0.9rem; }
+        .next-session-pill .nsp-text strong { color: var(--text); font-weight: 600; }
+
+        /* ===== SLIDE-OUT NAV ===== */
+        .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; }
+        .nav-overlay.open { display: block; }
+        .nav-menu {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            background: var(--surface); border-right: 1px solid var(--border);
+            z-index: 101; transition: left 0.3s ease; padding: 24px 20px; overflow-y: auto;
+        }
+        .nav-menu.open { left: 0; }
+        .nav-menu h2 {
+            font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--frostmaiden-primary), var(--strahd-primary), var(--rokugan-primary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .nav-subtitle { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 20px; letter-spacing: 0.05em; }
+        .nav-subtitle a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dotted var(--text-dim); }
+        .nav-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.2rem; }
         .nav-close:hover { color: var(--text); }
         .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 12px 14px; border-radius: 8px;
-            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s;
             margin-bottom: 4px; border: 1px solid transparent;
         }
         .nav-item:hover { background: var(--surface-hover); }
         .nav-item.active { border-color: var(--border); background: var(--bg); }
         .nav-item .nav-icon { font-size: 1.1rem; }
-        .nav-item .nav-label {
-            font-size: 0.85rem; font-weight: 500; color: var(--text);
-        }
-        .nav-item .nav-sub {
-            font-size: 0.7rem; color: var(--text-dim);
-        }
+        .nav-item .nav-label { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+        .nav-item .nav-sub { font-size: 0.7rem; color: var(--text-dim); }
         .nav-item-info { display: flex; flex-direction: column; gap: 2px; }
         .nav-divider { height: 1px; background: var(--border); margin: 12px 0; }
+        .nav-add-btn {
+            display: flex; align-items: center; gap: 8px; width: 100%;
+            padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--border);
+            background: transparent; color: var(--text-dim); cursor: pointer;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; transition: all 0.2s;
+        }
+        .nav-add-btn:hover { border-color: var(--frostmaiden-primary); color: var(--text); }
 
-        /* Latest sessions per campaign (top cards) */
-        .latest-sessions {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px; margin-bottom: 24px;
+        /* ===== ADD SESSION FORM (in nav or modal) ===== */
+        .add-form-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: center; }
+        .add-form-overlay.open { display: flex; }
+        .add-session-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            padding: 24px; width: 90%; max-width: 480px; animation: fadeIn 0.2s ease forwards;
         }
-        .latest-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 10px; padding: 14px 16px;
-            cursor: pointer; transition: all 0.2s; position: relative;
-            overflow: hidden;
-        }
-        .latest-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-            width: 3px; border-radius: 3px 0 0 3px;
-        }
-        .latest-card.frostmaiden::before { background: var(--frostmaiden-primary); }
-        .latest-card.strahd::before { background: var(--strahd-primary); }
-        .latest-card.rokugan::before { background: var(--rokugan-primary); }
-        .latest-card.special::before { background: var(--special-primary); }
-        .latest-card:hover { background: var(--surface-hover); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .latest-card .lc-label {
-            font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em;
-            color: var(--text-dim); margin-bottom: 6px;
-        }
-        .latest-card .lc-campaign {
-            font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px;
-        }
-        .latest-card.frostmaiden .lc-campaign { color: var(--frostmaiden-primary); }
-        .latest-card.strahd .lc-campaign { color: var(--strahd-primary); }
-        .latest-card.rokugan .lc-campaign { color: var(--rokugan-primary); }
-        .latest-card.special .lc-campaign { color: var(--special-primary); }
-        .latest-card .lc-date { font-size: 0.75rem; color: var(--text-dim); }
-        .latest-card .lc-has-recap {
-            font-size: 0.65rem; color: #66bb6a; margin-top: 4px;
-        }
-
-        /* Next session banner */
-        .next-session-banner {
-            text-align: center; padding: 24px; border-radius: 16px;
-            border: 1px solid var(--border); margin-bottom: 24px;
-            background: var(--surface);
-        }
-        .next-session-banner.frostmaiden { border-color: rgba(79,195,247,0.2); background: linear-gradient(135deg, var(--frostmaiden-bg), var(--surface)); }
-        .next-session-banner.strahd { border-color: rgba(239,83,80,0.2); background: linear-gradient(135deg, var(--strahd-bg), var(--surface)); }
-        .next-session-banner.rokugan { border-color: rgba(240,165,0,0.2); background: linear-gradient(135deg, var(--rokugan-bg), var(--surface)); }
-        .next-session-banner.special { border-color: rgba(206,147,216,0.2); background: linear-gradient(135deg, var(--special-bg), var(--surface)); }
-        .next-session-banner .label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim); margin-bottom: 8px; }
-        .next-session-banner .campaign-name { font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
-        .next-session-banner .countdown { font-size: 0.85rem; color: var(--text-dim); }
-
-        /* Stats */
-        .stats {
-            display: flex; justify-content: center; gap: 40px;
-            padding: 24px 0; margin-bottom: 16px; flex-wrap: wrap;
-        }
-        .stat { text-align: center; }
-        .stat-number { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; line-height: 1; }
-        .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-top: 4px; }
-        .stat.frostmaiden .stat-number { color: var(--frostmaiden-primary); }
-        .stat.strahd .stat-number { color: var(--strahd-primary); }
-        .stat.rokugan .stat-number { color: var(--rokugan-primary); }
-        .stat.special .stat-number { color: var(--special-primary); }
-
-        /* Add session */
-        .add-session-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 18px; background: var(--surface);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); font-size: 0.85rem; font-weight: 500;
-            cursor: pointer; transition: all 0.2s; margin-bottom: 16px;
-        }
-        .add-session-btn:hover { background: var(--surface-hover); border-color: var(--text-dim); }
-        .add-session-btn .plus { font-size: 1.1rem; line-height: 1; }
-        .add-session-form {
-            display: none; background: var(--surface);
-            border: 1px solid var(--border); border-radius: 12px;
-            padding: 20px; margin-bottom: 20px;
-            animation: fadeIn 0.2s ease forwards;
-        }
-        .add-session-form.open { display: block; }
-        .add-session-form h3 { font-family: 'Cinzel', serif; font-size: 1rem; margin-bottom: 16px; }
+        .add-session-modal h3 { font-family: 'Cinzel', serif; font-size: 1.1rem; margin-bottom: 16px; }
         .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
         .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
         .form-group label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
-        .form-group input, .form-group select {
-            padding: 8px 10px; background: var(--bg); border: 1px solid var(--border);
-            border-radius: 6px; color: var(--text); font-size: 0.85rem; font-family: 'Inter', sans-serif;
-        }
+        .form-group input, .form-group select { padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.85rem; font-family: 'Inter', sans-serif; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--frostmaiden-primary); }
-        .customize-toggle {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 0.8rem; color: var(--text-dim); cursor: pointer;
-            background: none; border: none; padding: 4px 0; margin-bottom: 8px;
-        }
+        .customize-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-dim); cursor: pointer; background: none; border: none; padding: 4px 0; margin-bottom: 8px; }
         .customize-toggle:hover { color: var(--text); }
         .customize-fields { display: none; }
         .customize-fields.open { display: block; }
-        .form-buttons { display: flex; gap: 8px; margin-top: 12px; }
-        .form-buttons button {
-            padding: 8px 20px; border-radius: 6px; font-size: 0.85rem;
-            font-weight: 500; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s;
-        }
+        .form-buttons { display: flex; gap: 8px; margin-top: 16px; }
+        .form-buttons button { padding: 10px 24px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s; }
         .form-buttons .submit-btn { background: var(--frostmaiden-primary); color: #000; border: none; }
         .form-buttons .submit-btn:hover { opacity: 0.9; }
         .form-buttons .cancel-form-btn { background: transparent; color: var(--text-dim); }
-        .form-buttons .cancel-form-btn:hover { color: var(--text); background: var(--surface-hover); }
+        .form-buttons .cancel-form-btn:hover { color: var(--text); }
 
-        /* Filter / View toggle */
-        .filters { display: flex; justify-content: center; gap: 8px; margin-bottom: 36px; flex-wrap: wrap; }
-        .filter-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 500;
-            padding: 10px 22px; border-radius: 100px; border: 1px solid var(--border);
-            background: transparent; color: var(--text-dim); cursor: pointer;
-            transition: all 0.25s ease; letter-spacing: 0.04em;
-        }
-        .filter-btn:hover { background: var(--surface); color: var(--text); }
-        .filter-btn.active { color: #fff; border-color: transparent; }
-        .filter-btn.active[data-filter="all"] { background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg)); border-color: var(--border); color: var(--text); }
-        .filter-btn.active[data-filter="frostmaiden"] { background: var(--frostmaiden-bg); border-color: var(--frostmaiden-primary); color: var(--frostmaiden-primary); }
-        .filter-btn.active[data-filter="strahd"] { background: var(--strahd-bg); border-color: var(--strahd-primary); color: var(--strahd-primary); }
-        .filter-btn.active[data-filter="rokugan"] { background: var(--rokugan-bg); border-color: var(--rokugan-primary); color: var(--rokugan-primary); }
-        .filter-btn.active[data-filter="special"] { background: var(--special-bg); border-color: var(--special-primary); color: var(--special-primary); }
-        .view-toggle { display: flex; justify-content: center; gap: 4px; margin-bottom: 32px; }
-        .view-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.78rem;
-            padding: 6px 16px; border: 1px solid var(--border);
-            background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s;
-        }
-        .view-btn:first-child { border-radius: 6px 0 0 6px; }
-        .view-btn:last-child { border-radius: 0 6px 6px 0; }
-        .view-btn.active { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
-
-        /* Month groups */
-        .month-group { margin-bottom: 40px; }
+        /* ===== SESSION CARDS ===== */
+        .month-group { margin-bottom: 32px; }
         .month-label {
-            font-family: 'Cinzel', serif; font-size: 0.85rem; font-weight: 600;
+            font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 600;
             text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim);
-            margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+            margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
         }
-        .sessions-list { display: flex; flex-direction: column; gap: 10px; }
-
-        /* Session cards */
+        .sessions-list { display: flex; flex-direction: column; gap: 8px; }
         .session-card {
-            display: flex; flex-direction: column;
-            padding: 16px 20px; background: var(--surface);
-            border-radius: 12px; border: 1px solid var(--border);
-            transition: all 0.25s ease; cursor: pointer;
-            position: relative; overflow: hidden;
+            display: flex; flex-direction: column; padding: 14px 18px;
+            background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+            transition: all 0.25s ease; cursor: pointer; position: relative; overflow: hidden;
         }
-        .session-card::before {
-            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-            width: 3px; border-radius: 3px 0 0 3px;
-        }
-        .session-card:hover { background: var(--surface-hover); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .session-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+        .session-card:hover { background: var(--surface-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
         .session-card.frostmaiden::before { background: var(--frostmaiden-primary); }
         .session-card.strahd::before { background: var(--strahd-primary); }
         .session-card.rokugan::before { background: var(--rokugan-primary); }
         .session-card.special::before { background: var(--special-primary); }
-        .session-card.frostmaiden:hover { border-color: rgba(79,195,247,0.2); }
-        .session-card.strahd:hover { border-color: rgba(239,83,80,0.2); }
-        .session-card.rokugan:hover { border-color: rgba(240,165,0,0.2); }
-        .session-card.special:hover { border-color: rgba(206,147,216,0.2); }
-        .session-card.cancelled { color: var(--text-dim); opacity: 0.6; }
+        .session-card.cancelled { opacity: 0.5; }
         .session-card.cancelled::before { background: var(--text-dim); }
         .session-card.cancelled .session-campaign { text-decoration: line-through; }
-        .session-card-header { display: flex; align-items: center; gap: 16px; width: 100%; }
-        .session-date { flex-shrink: 0; width: 54px; text-align: center; }
-        .session-date .day-num { font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: 700; line-height: 1; }
-        .session-date .day-name { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-top: 2px; }
+        .session-card-header { display: flex; align-items: center; gap: 14px; width: 100%; }
+        .session-date { flex-shrink: 0; width: 48px; text-align: center; }
+        .session-date .day-num { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; line-height: 1; }
+        .session-date .day-name { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-dim); margin-top: 2px; }
         .session-card.frostmaiden .day-num { color: var(--frostmaiden-primary); }
         .session-card.strahd .day-num { color: var(--strahd-primary); }
         .session-card.rokugan .day-num { color: var(--rokugan-primary); }
         .session-card.special .day-num { color: var(--special-primary); }
         .session-card.cancelled .day-num { color: var(--text-dim); }
-        .session-divider { width: 1px; height: 36px; background: var(--border); flex-shrink: 0; }
+        .session-divider { width: 1px; height: 32px; background: var(--border); flex-shrink: 0; }
         .session-info { flex: 1; min-width: 0; }
-        .session-campaign { font-family: 'Cinzel', serif; font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
-        .session-meta { font-size: 0.78rem; color: var(--text-dim); }
-        .session-expand-icon { flex-shrink: 0; font-size: 0.6rem; color: var(--text-dim); transition: transform 0.2s; }
+        .session-campaign { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+        .session-meta { font-size: 0.75rem; color: var(--text-dim); }
+        .session-expand-icon { flex-shrink: 0; font-size: 0.55rem; color: var(--text-dim); transition: transform 0.2s; }
         .session-card.expanded .session-expand-icon { transform: rotate(90deg); }
-
-        /* Session action buttons */
-        .session-action { flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
-        .cancel-btn, .cancel-confirm, .undo-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.7rem;
-            padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
-            background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s;
-        }
+        .session-action { flex-shrink: 0; display: flex; gap: 6px; align-items: center; }
+        .cancel-btn, .undo-btn { font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
         .cancel-btn:hover { color: var(--strahd-primary); border-color: var(--strahd-primary); }
         .undo-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
-        .delete-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.65rem; padding: 4px 8px;
-            border-radius: 6px; border: 1px solid rgba(239,83,80,0.3);
-            background: rgba(239,83,80,0.1); color: var(--strahd-primary);
-            cursor: pointer; transition: all 0.2s;
-        }
-        .delete-btn:hover { background: rgba(239,83,80,0.25); border-color: var(--strahd-primary); }
-        .delete-confirm-text { font-size: 0.7rem; color: var(--strahd-primary); white-space: nowrap; }
-        .cancel-confirm { display: inline-block; font-size: 0.75rem; color: var(--strahd-primary); white-space: nowrap; margin-right: 6px; }
+        .delete-btn { font-family: 'Inter', sans-serif; font-size: 0.63rem; padding: 3px 7px; border-radius: 5px; border: 1px solid rgba(239,83,80,0.3); background: rgba(239,83,80,0.1); color: var(--strahd-primary); cursor: pointer; transition: all 0.2s; }
+        .delete-btn:hover { background: rgba(239,83,80,0.25); }
+        .delete-confirm-text { font-size: 0.68rem; color: var(--strahd-primary); white-space: nowrap; }
+        .cancel-confirm { font-size: 0.7rem; color: var(--strahd-primary); white-space: nowrap; margin-right: 4px; }
 
-        /* Expandable detail panel */
-        .session-detail {
-            display: none; width: 100%;
-            padding-top: 14px; margin-top: 14px;
-            border-top: 1px solid var(--border);
-            animation: fadeIn 0.2s ease forwards;
-        }
+        /* ===== EXPANDED DETAIL ===== */
+        .session-detail { display: none; width: 100%; padding-top: 12px; margin-top: 12px; border-top: 1px solid var(--border); }
         .session-card.expanded .session-detail { display: block; }
         .session-detail-section { margin-bottom: 14px; }
         .session-detail-section:last-child { margin-bottom: 0; }
-        .detail-label {
-            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;
-            color: var(--text-dim); margin-bottom: 6px; font-weight: 500;
-        }
-        .session-attendance { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .att-chip {
-            font-size: 0.75rem; font-weight: 500; padding: 4px 12px;
-            border-radius: 100px; cursor: pointer; transition: all 0.2s;
-            border: 1px solid rgba(102,187,106,0.3); background: rgba(102,187,106,0.12);
-            color: #66bb6a; font-family: 'Inter', sans-serif; user-select: none;
-        }
+        .detail-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+        .session-attendance { display: flex; flex-wrap: wrap; gap: 5px; }
+        .att-chip { font-size: 0.72rem; font-weight: 500; padding: 3px 10px; border-radius: 100px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(102,187,106,0.3); background: rgba(102,187,106,0.12); color: #66bb6a; font-family: 'Inter', sans-serif; user-select: none; }
         .att-chip:hover { filter: brightness(1.2); transform: scale(1.05); }
         .att-chip.out { background: rgba(239,83,80,0.12); color: #ef5350; border-color: rgba(239,83,80,0.3); text-decoration: line-through; opacity: 0.7; }
 
-        /* Rich text editor (Quill) */
-        .recap-editor-wrap {
-            border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-            background: var(--bg);
-        }
-        .recap-editor-wrap .ql-toolbar {
-            background: var(--surface); border: none; border-bottom: 1px solid var(--border);
-        }
+        /* ===== QUILL EDITOR ===== */
+        .recap-editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
+        .recap-editor-wrap .ql-toolbar { background: var(--surface); border: none; border-bottom: 1px solid var(--border); }
         .recap-editor-wrap .ql-toolbar button { color: var(--text-dim); }
         .recap-editor-wrap .ql-toolbar button:hover { color: var(--text); }
         .recap-editor-wrap .ql-toolbar button.ql-active { color: var(--frostmaiden-primary); }
@@ -423,89 +271,52 @@
         .recap-editor-wrap .ql-toolbar .ql-fill { fill: var(--text-dim); }
         .recap-editor-wrap .ql-toolbar button:hover .ql-fill { fill: var(--text); }
         .recap-editor-wrap .ql-toolbar button.ql-active .ql-fill { fill: var(--frostmaiden-primary); }
-        .recap-editor-wrap .ql-container {
-            border: none; font-family: 'Inter', sans-serif;
-            font-size: 0.85rem; color: var(--text); min-height: 100px;
-        }
-        .recap-editor-wrap .ql-editor { min-height: 100px; line-height: 1.6; }
+        .recap-editor-wrap .ql-container { border: none; font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--text); min-height: 80px; }
+        .recap-editor-wrap .ql-editor { min-height: 80px; line-height: 1.6; }
         .recap-editor-wrap .ql-editor.ql-blank::before { color: var(--text-dim); font-style: italic; }
-        .recap-display {
-            padding: 12px 14px; background: var(--bg); border: 1px solid var(--border);
-            border-radius: 8px; font-size: 0.85rem; line-height: 1.6; color: var(--text);
-        }
-        .recap-display p { margin-bottom: 8px; }
+        .recap-display { padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 0.82rem; line-height: 1.6; color: var(--text); }
+        .recap-display p { margin-bottom: 6px; }
         .recap-display p:last-child { margin-bottom: 0; }
         .recap-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
-        .recap-save-btn, .recap-edit-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
-            border-radius: 6px; border: 1px solid var(--border); background: transparent;
-            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
-        }
+        .recap-save-btn, .recap-edit-btn { font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 4px 12px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
         .recap-save-btn:hover { color: #66bb6a; border-color: #66bb6a; }
         .recap-edit-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
-        .recap-saved-msg { font-size: 0.72rem; color: #66bb6a; opacity: 0; transition: opacity 0.3s; }
+        .recap-saved-msg { font-size: 0.7rem; color: #66bb6a; opacity: 0; transition: opacity 0.3s; }
         .recap-saved-msg.show { opacity: 1; }
 
-        /* PDF upload */
-        .pdf-upload-area {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-        }
-        .pdf-upload-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 7px 16px; background: rgba(79,195,247,0.08);
-            border: 1px solid rgba(79,195,247,0.2); border-radius: 6px;
-            color: var(--frostmaiden-primary); font-size: 0.8rem;
-            cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
-        }
+        /* ===== PDF ===== */
+        .pdf-upload-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .pdf-upload-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.2); border-radius: 6px; color: var(--frostmaiden-primary); font-size: 0.78rem; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         .pdf-upload-btn:hover { background: rgba(79,195,247,0.15); border-color: var(--frostmaiden-primary); }
         .pdf-upload-btn input[type="file"] { display: none; }
-        .pdf-upload-status { font-size: 0.72rem; color: var(--text-dim); }
-        .pdf-link {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 14px; background: rgba(79,195,247,0.08);
-            border: 1px solid rgba(79,195,247,0.2); border-radius: 6px;
-            color: var(--frostmaiden-primary); font-size: 0.8rem;
-            text-decoration: none; transition: all 0.2s;
-        }
-        .pdf-link:hover { background: rgba(79,195,247,0.15); border-color: var(--frostmaiden-primary); }
+        .pdf-upload-status { font-size: 0.7rem; color: var(--text-dim); }
+        .pdf-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.2); border-radius: 6px; color: var(--frostmaiden-primary); font-size: 0.78rem; text-decoration: none; transition: all 0.2s; }
+        .pdf-link:hover { background: rgba(79,195,247,0.15); }
 
-        /* Past sessions toggle */
-        .past-sessions-toggle {
-            display: flex; align-items: center; gap: 8px;
-            padding: 12px 0; margin-top: 24px; border: none;
-            background: none; color: var(--text-dim); font-family: 'Inter', sans-serif;
-            font-size: 0.85rem; cursor: pointer; transition: color 0.2s; width: 100%;
-        }
+        /* ===== PAST SESSIONS TOGGLE ===== */
+        .past-sessions-toggle { display: flex; align-items: center; gap: 8px; padding: 12px 0; margin-top: 16px; border: none; background: none; color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 0.82rem; cursor: pointer; width: 100%; }
         .past-sessions-toggle:hover { color: var(--text); }
-        .past-sessions-toggle .toggle-arrow { transition: transform 0.2s; font-size: 0.7rem; }
+        .past-sessions-toggle .toggle-arrow { transition: transform 0.2s; font-size: 0.65rem; }
         .past-sessions-toggle.open .toggle-arrow { transform: rotate(90deg); }
         .past-sessions-container { display: none; }
         .past-sessions-container.open { display: block; }
         .past-sessions-container .session-card { opacity: 0.7; }
         .past-sessions-container .session-card:hover { opacity: 1; }
 
-        /* Campaign page view */
+        /* ===== CAMPAIGN PAGE ===== */
         .campaign-page { display: none; }
         .campaign-page.active { display: block; }
-        .campaign-page-header {
-            display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
-        }
-        .campaign-back-btn {
-            background: none; border: 1px solid var(--border); border-radius: 6px;
-            color: var(--text-dim); cursor: pointer; padding: 6px 12px;
-            font-size: 0.8rem; font-family: 'Inter', sans-serif; transition: all 0.2s;
-        }
+        .campaign-page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .campaign-back-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); cursor: pointer; padding: 5px 12px; font-size: 0.78rem; font-family: 'Inter', sans-serif; transition: all 0.2s; }
         .campaign-back-btn:hover { color: var(--text); border-color: var(--text-dim); }
-        .campaign-page-title {
-            font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700;
-        }
+        .campaign-page-title { font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700; }
 
-        /* Calendar view */
+        /* ===== CALENDAR ===== */
         .cal-month { margin-bottom: 32px; }
         .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-bottom: 4px; }
-        .cal-header span { text-align: center; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); padding: 8px 0; }
+        .cal-header span { text-align: center; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); padding: 6px 0; }
         .cal-body { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .cal-day { min-height: 52px; padding: 6px; border-radius: 6px; font-size: 0.78rem; color: var(--text-dim); background: var(--surface); display: flex; flex-direction: column; align-items: flex-start; }
+        .cal-day { min-height: 48px; padding: 5px; border-radius: 5px; font-size: 0.75rem; color: var(--text-dim); background: var(--surface); display: flex; flex-direction: column; align-items: flex-start; }
         .cal-day.empty { background: transparent; }
         .cal-day.today { border: 1px solid var(--frostmaiden-primary); }
         .cal-day.has-session { cursor: pointer; transition: all 0.2s; }
@@ -514,55 +325,39 @@
         .cal-day.strahd { border-left: 2px solid var(--strahd-primary); }
         .cal-day.rokugan { border-left: 2px solid var(--rokugan-primary); }
         .cal-day.special { border-left: 2px solid var(--special-primary); }
-        .cal-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 4px; }
+        .cal-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 3px; }
         .cal-day.frostmaiden .cal-dot { background: var(--frostmaiden-primary); }
         .cal-day.strahd .cal-dot { background: var(--strahd-primary); }
         .cal-day.rokugan .cal-dot { background: var(--rokugan-primary); }
         .cal-day.special .cal-dot { background: var(--special-primary); }
 
-        /* Tooltip */
-        .tooltip {
-            position: fixed; background: var(--surface); border: 1px solid var(--border);
-            border-radius: 10px; padding: 12px 16px; z-index: 50;
-            pointer-events: none; opacity: 0; transition: opacity 0.15s;
-            max-width: 280px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-        }
+        .tooltip { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; z-index: 50; pointer-events: none; opacity: 0; transition: opacity 0.15s; max-width: 280px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
         .tooltip.show { opacity: 1; }
         .tooltip-campaign { font-family: 'Cinzel', serif; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
         .tooltip-detail { font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; }
 
-        /* Footer */
-        footer {
-            text-align: center; padding: 60px 0 30px; font-size: 0.75rem;
-            color: var(--text-dim); opacity: 0.4;
-        }
+        footer { text-align: center; padding: 48px 0 24px; font-size: 0.7rem; color: var(--text-dim); opacity: 0.3; }
         footer a { color: var(--text-dim); text-decoration: none; }
 
-        /* Loading */
         .loading { text-align: center; padding: 60px 0; color: var(--text-dim); font-size: 0.85rem; }
-        .loading-spinner {
-            width: 24px; height: 24px; border: 2px solid var(--border);
-            border-top-color: var(--frostmaiden-primary); border-radius: 50%;
-            animation: spin 0.8s linear infinite; margin: 0 auto 12px;
-        }
+        .loading-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--frostmaiden-primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .empty-state { text-align: center; padding: 40px 0; color: var(--text-dim); }
         .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
-
-        /* Animations */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
 
-        /* Responsive */
         @media (max-width: 600px) {
-            header { padding: 40px 0 24px; }
-            .stats { gap: 24px; }
+            .stats-bar { gap: 4px; }
+            .stat-filter { padding: 6px 10px; }
+            .stat-filter .sf-count { font-size: 0.9rem; }
+            .stat-filter .sf-label { font-size: 0.6rem; }
             .session-card { padding: 12px 14px; }
-            .session-date { width: 44px; }
-            .session-date .day-num { font-size: 1.3rem; }
-            .cal-day { min-height: 36px; font-size: 0.72rem; }
-            .latest-sessions { grid-template-columns: 1fr; }
+            .session-date { width: 40px; }
+            .session-date .day-num { font-size: 1.2rem; }
+            .cal-day { min-height: 34px; font-size: 0.7rem; }
             .nav-menu { width: 260px; }
+            .next-session-pill { display: none; }
         }
     </style>
 </head>
@@ -580,11 +375,12 @@
     <div class="pass-hint">Ask your GM for the passphrase</div>
 </div>
 
-<!-- Nav Menu -->
+<!-- Nav Overlay + Slide Menu -->
 <div class="nav-overlay" id="nav-overlay" onclick="closeNav()"></div>
 <div class="nav-menu" id="nav-menu">
     <button class="nav-close" onclick="closeNav()">&times;</button>
     <h2>TPK Group</h2>
+    <div class="nav-subtitle"><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; Portland</div>
     <div class="nav-item active" onclick="navigateTo('home')">
         <span class="nav-icon">&#127968;</span>
         <div class="nav-item-info"><span class="nav-label">Home</span><span class="nav-sub">Schedule overview</span></div>
@@ -606,78 +402,72 @@
         <span class="nav-icon">&#10024;</span>
         <div class="nav-item-info"><span class="nav-label">Special Sessions</span><span class="nav-sub">One-shots &amp; events</span></div>
     </div>
+    <div class="nav-divider"></div>
+    <button class="nav-add-btn" onclick="openAddSession()">+ Add Session</button>
+</div>
+
+<!-- Add Session Modal -->
+<div class="add-form-overlay" id="add-form-overlay" onclick="closeAddSession()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Add New Session</h3>
+        <div class="form-row">
+            <div class="form-group"><label>Date</label><input type="date" id="new-session-date"></div>
+            <div class="form-group"><label>Campaign</label>
+                <select id="new-session-campaign">
+                    <option value="frostmaiden">Rime of the Frostmaiden</option>
+                    <option value="strahd">Curse of Strahd</option>
+                    <option value="rokugan">Adventures in Rokugan</option>
+                    <option value="special">Special</option>
+                </select>
+            </div>
+        </div>
+        <button class="customize-toggle" onclick="toggleCustomizeFields()"><span id="customize-arrow">&#9654;</span>&nbsp;Customize details</button>
+        <div class="customize-fields" id="customize-fields">
+            <div class="form-row">
+                <div class="form-group"><label>Time</label><input type="text" id="new-session-time" placeholder="6:00 PM"></div>
+                <div class="form-group"><label>GM</label><input type="text" id="new-session-gm" placeholder="Max Hobbs"></div>
+                <div class="form-group"><label>Duration</label><input type="text" id="new-session-duration" placeholder="4 hrs"></div>
+            </div>
+        </div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="submitAddSession()">Add Session</button>
+            <button class="cancel-form-btn" onclick="closeAddSession()">Cancel</button>
+        </div>
+    </div>
 </div>
 
 <!-- Main App -->
 <div id="app">
     <div class="container">
-        <header>
-            <h1>TPK Group</h1>
-            <p>Campaign Schedule</p>
-            <div class="location">
-                <a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; 5051 SE Hawthorne Blvd, Portland
-            </div>
-            <div class="top-bar">
+        <!-- Row 1: Top bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
                 <button class="hamburger" onclick="openNav()">&#9776;</button>
-                <button class="sign-out-btn" onclick="logout()">Sign Out</button>
+                <div class="top-bar-logo">TPK Group</div>
             </div>
-        </header>
+            <button class="sign-out-btn" onclick="logout()">Sign Out</button>
+        </div>
 
         <!-- HOME VIEW -->
         <div id="home-view">
-            <div id="latest-sessions" class="latest-sessions"></div>
-            <div id="next-session"></div>
+            <!-- Row 2: Stats as filters -->
+            <div class="stats-bar" id="stats-bar"></div>
 
-            <button class="add-session-btn" onclick="toggleAddSessionForm()"><span class="plus">+</span> Add Session</button>
-
-            <div class="add-session-form" id="add-session-form">
-                <h3>Add New Session</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="new-session-date">
-                    </div>
-                    <div class="form-group">
-                        <label>Campaign</label>
-                        <select id="new-session-campaign">
-                            <option value="frostmaiden">Rime of the Frostmaiden</option>
-                            <option value="strahd">Curse of Strahd</option>
-                            <option value="rokugan">Adventures in Rokugan</option>
-                            <option value="special">Special</option>
-                        </select>
-                    </div>
+            <!-- Row 3: View toggle + next session pill -->
+            <div class="controls-row">
+                <div class="controls-left">
+                    <button class="view-btn active" data-view="list">List</button>
+                    <button class="view-btn" data-view="calendar">Calendar</button>
                 </div>
-                <button class="customize-toggle" onclick="toggleCustomizeFields()"><span id="customize-arrow">&#9654;</span>&nbsp;Customize details</button>
-                <div class="customize-fields" id="customize-fields">
-                    <div class="form-row">
-                        <div class="form-group"><label>Time</label><input type="text" id="new-session-time" placeholder="6:00 PM"></div>
-                        <div class="form-group"><label>GM</label><input type="text" id="new-session-gm" placeholder="Max Hobbs"></div>
-                        <div class="form-group"><label>Duration</label><input type="text" id="new-session-duration" placeholder="4 hrs"></div>
-                    </div>
-                </div>
-                <div class="form-buttons">
-                    <button class="submit-btn" onclick="submitAddSession()">Add Session</button>
-                    <button class="cancel-form-btn" onclick="toggleAddSessionForm()">Cancel</button>
-                </div>
+                <div id="next-session-pill"></div>
             </div>
 
-            <div class="stats" id="stats"></div>
-            <div class="filters" id="filters">
-                <button class="filter-btn active" data-filter="all">All Sessions</button>
-                <button class="filter-btn" data-filter="frostmaiden">Frostmaiden</button>
-                <button class="filter-btn" data-filter="strahd">Strahd</button>
-                <button class="filter-btn" data-filter="rokugan">Rokugan</button>
-                <button class="filter-btn" data-filter="special">Special</button>
-            </div>
-            <div class="view-toggle">
-                <button class="view-btn active" data-view="list">List</button>
-                <button class="view-btn" data-view="calendar">Calendar</button>
-            </div>
+            <!-- Content -->
             <div id="list-view"><div class="loading"><div class="loading-spinner"></div><br>Loading sessions...</div></div>
             <div id="calendar-view" style="display:none"></div>
         </div>
 
-        <!-- CAMPAIGN PAGE VIEW -->
+        <!-- CAMPAIGN PAGE -->
         <div id="campaign-page" class="campaign-page">
             <div class="campaign-page-header">
                 <button class="campaign-back-btn" onclick="navigateTo('home')">&larr; Back</button>
@@ -688,12 +478,9 @@
 
         <div id="tooltip" class="tooltip"></div>
     </div>
-    <footer>
-        <a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; An Ale for Every Tale
-    </footer>
+    <footer><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; An Ale for Every Tale</footer>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -708,36 +495,19 @@ const firebaseConfig = {
     messagingSenderId: "645205749861",
     appId: "1:645205749861:web:c9ee21ad9d66ab1b43168c"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// ==================== CONFIG ====================
-
 const PASSPHRASE = "tpkdice";
-
-const campaignNames = {
-    frostmaiden: "Rime of the Frostmaiden",
-    strahd: "Curse of Strahd",
-    rokugan: "Adventures in Rokugan",
-    special: "Special"
-};
-
-const campaignIcons = {
-    frostmaiden: "\u2744\uFE0F",
-    strahd: "\uD83E\uDDDB",
-    rokugan: "\u2694\uFE0F",
-    special: "\u2728"
-};
-
+const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", rokugan: "Adventures in Rokugan", special: "Special" };
+const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", rokugan: "\u2694\uFE0F", special: "\u2728" };
 const campaignRosters = {
     frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     rokugan: ["Ryn", "Cooter", "Rosie", "Gordo"],
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
     special: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"]
 };
-
 const seedSessions = [
     { date: "2026-04-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-04-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
@@ -770,8 +540,6 @@ const seedSessions = [
     { date: "2026-09-30", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
 ];
 
-// ==================== STATE ====================
-
 let sessions = [];
 let activeFilter = "all";
 let activeView = "list";
@@ -779,233 +547,46 @@ let cancelPendingSession = null;
 let currentPage = "home";
 let pastSessionsVisible = false;
 let activeQuills = {};
-
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-// ==================== AUTH ====================
-
+// ===== AUTH =====
 window.checkPassword = function() {
     const input = document.getElementById('pass-input').value.trim().toLowerCase();
-    if (input === PASSPHRASE) {
-        sessionStorage.setItem('tpk_auth', 'true');
-        showApp();
-    } else {
-        document.getElementById('pass-error').textContent = "Wrong passphrase. Try again.";
-    }
+    if (input === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); }
+    else { document.getElementById('pass-error').textContent = "Wrong passphrase. Try again."; }
 };
+window.logout = function() { sessionStorage.removeItem('tpk_auth'); document.getElementById('app').style.display = 'none'; document.getElementById('password-gate').style.display = 'flex'; };
+document.getElementById('pass-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') window.checkPassword(); });
+function showApp() { document.getElementById('password-gate').style.display = 'none'; document.getElementById('app').style.display = 'block'; initApp(); }
+if (sessionStorage.getItem('tpk_auth') === 'true') showApp();
 
-window.logout = function() {
-    sessionStorage.removeItem('tpk_auth');
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('password-gate').style.display = 'flex';
-};
-
-document.getElementById('pass-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') window.checkPassword();
-});
-
-function showApp() {
-    document.getElementById('password-gate').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    initApp();
-}
-
-if (sessionStorage.getItem('tpk_auth') === 'true') { showApp(); }
-
-// ==================== NAV ====================
-
-window.openNav = function() {
-    document.getElementById('nav-overlay').classList.add('open');
-    document.getElementById('nav-menu').classList.add('open');
-};
-
-window.closeNav = function() {
-    document.getElementById('nav-overlay').classList.remove('open');
-    document.getElementById('nav-menu').classList.remove('open');
-};
-
+// ===== NAV =====
+window.openNav = function() { document.getElementById('nav-overlay').classList.add('open'); document.getElementById('nav-menu').classList.add('open'); };
+window.closeNav = function() { document.getElementById('nav-overlay').classList.remove('open'); document.getElementById('nav-menu').classList.remove('open'); };
 window.navigateTo = function(page) {
+    closeNav(); currentPage = page;
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    const items = document.querySelectorAll('.nav-item');
+    if (page === 'home') items[0].classList.add('active');
+    else if (page === 'frostmaiden') items[1].classList.add('active');
+    else if (page === 'strahd') items[2].classList.add('active');
+    else if (page === 'rokugan') items[3].classList.add('active');
+    else if (page === 'special') items[4].classList.add('active');
+    if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); renderCampaignPage(page); }
+};
+window.openAddSession = function() {
     closeNav();
-    currentPage = page;
-    // Update nav active states
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    const navItems = document.querySelectorAll('.nav-item');
-    if (page === 'home') navItems[0].classList.add('active');
-    else if (page === 'frostmaiden') navItems[1].classList.add('active');
-    else if (page === 'strahd') navItems[2].classList.add('active');
-    else if (page === 'rokugan') navItems[3].classList.add('active');
-    else if (page === 'special') navItems[4].classList.add('active');
-
-    if (page === 'home') {
-        document.getElementById('home-view').style.display = 'block';
-        document.getElementById('campaign-page').classList.remove('active');
-    } else {
-        document.getElementById('home-view').style.display = 'none';
-        document.getElementById('campaign-page').classList.add('active');
-        renderCampaignPage(page);
-    }
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('new-session-date').value = tomorrow.toISOString().split('T')[0];
+    document.getElementById('add-form-overlay').classList.add('open');
 };
-
-// ==================== FIREBASE DATA ====================
-
-async function seedFirestore() {
-    const snap = await getDocs(collection(db, "sessions"));
-    if (snap.size > 0) return;
-    for (const s of seedSessions) {
-        const roster = campaignRosters[s.campaign] || [];
-        const attendance = {};
-        roster.forEach(p => { attendance[p] = "in"; });
-        await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" });
-    }
-}
-
-async function initApp() {
-    await seedFirestore();
-    const q = query(collection(db, "sessions"), orderBy("date"));
-    let firstLoad = true;
-    let prevCount = 0;
-    onSnapshot(q, (snapshot) => {
-        sessions = [];
-        snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
-        if (firstLoad) {
-            renderAll();
-            prevCount = sessions.length;
-            firstLoad = false;
-        } else if (sessions.length !== prevCount) {
-            renderAll();
-            prevCount = sessions.length;
-        } else {
-            updateAttendanceChips();
-            updateCancelStates();
-        }
-    });
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeFilter = btn.dataset.filter;
-            renderList(); renderCalendar();
-        });
-    });
-
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeView = btn.dataset.view;
-            document.getElementById('list-view').style.display = activeView === 'list' ? 'block' : 'none';
-            document.getElementById('calendar-view').style.display = activeView === 'calendar' ? 'block' : 'none';
-        });
-    });
-}
-
-// ==================== ATTENDANCE & CANCEL ====================
-
-function updateAttendanceChips() {
-    document.querySelectorAll('.att-chip').forEach(chip => {
-        const onclick = chip.getAttribute('onclick');
-        if (!onclick) return;
-        const match = onclick.match(/toggleAttendance\('([^']+)',\s*'([^']+)'\)/);
-        if (!match) return;
-        const [, date, player] = match;
-        const s = sessions.find(x => x.date === date);
-        if (!s) return;
-        const status = (s.attendance && s.attendance[player]) || "in";
-        chip.className = `att-chip ${status}`;
-    });
-}
-
-function updateCancelStates() {
-    document.querySelectorAll('.session-card').forEach(card => {
-        const dateAttr = card.getAttribute('data-session-date');
-        if (!dateAttr) return;
-        const s = sessions.find(x => x.date === dateAttr);
-        if (!s) return;
-        const isCancelled = s.status === "cancelled";
-        card.classList.toggle('cancelled', isCancelled);
-        const actionEl = card.querySelector('.session-action');
-        if (actionEl) {
-            if (isCancelled) {
-                actionEl.innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${dateAttr}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${dateAttr}')">Delete</button>`;
-            } else {
-                actionEl.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${dateAttr}')">&#10005;</button>`;
-            }
-        }
-    });
-}
-
-window.initiateCancelSession = function(sessionDate) {
-    cancelPendingSession = sessionDate;
-    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
-    const actionEl = card.querySelector('.session-action');
-    actionEl.innerHTML = `
-        <span class="cancel-confirm">Cancel?</span>
-        <button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sessionDate}')">Yes</button>
-        <button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>
-    `;
-};
-
-window.confirmCancelSession = async function(sessionDate) {
-    try { await updateDoc(doc(db, "sessions", sessionDate), { status: "cancelled" }); cancelPendingSession = null; }
-    catch (err) { console.error("Error cancelling:", err); }
-};
-
-window.cancelCancelSession = function() {
-    if (cancelPendingSession) {
-        const card = document.querySelector(`[data-session-date="${cancelPendingSession}"]`);
-        const actionEl = card.querySelector('.session-action');
-        actionEl.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">&#10005;</button>`;
-        cancelPendingSession = null;
-    }
-};
-
-window.undoCancelSession = async function(sessionDate) {
-    try { await updateDoc(doc(db, "sessions", sessionDate), { status: "active" }); }
-    catch (err) { console.error("Error uncancelling:", err); }
-};
-
-window.initiateDeleteSession = function(sessionDate) {
-    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
-    const actionEl = card.querySelector('.session-action');
-    actionEl.innerHTML = `
-        <span class="delete-confirm-text">Remove permanently?</span>
-        <button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sessionDate}')">Yes</button>
-        <button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sessionDate}')">No</button>
-    `;
-};
-
-window.confirmDeleteSession = async function(sessionDate) {
-    try { await deleteDoc(doc(db, "sessions", sessionDate)); }
-    catch (err) { console.error("Error deleting:", err); }
-};
-
-window.cancelDeleteSession = function(sessionDate) {
-    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
-    if (!card) return;
-    const actionEl = card.querySelector('.session-action');
-    actionEl.innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sessionDate}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sessionDate}')">Delete</button>`;
-};
-
-// ==================== ADD SESSION ====================
-
-window.toggleAddSessionForm = function() {
-    const form = document.getElementById('add-session-form');
-    form.classList.toggle('open');
-    if (form.classList.contains('open')) {
-        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('new-session-date').value = tomorrow.toISOString().split('T')[0];
-    }
-};
-
+window.closeAddSession = function() { document.getElementById('add-form-overlay').classList.remove('open'); };
 window.toggleCustomizeFields = function() {
-    const fields = document.getElementById('customize-fields');
-    const arrow = document.getElementById('customize-arrow');
-    fields.classList.toggle('open');
-    arrow.innerHTML = fields.classList.contains('open') ? '&#9660;' : '&#9654;';
+    const f = document.getElementById('customize-fields'); const a = document.getElementById('customize-arrow');
+    f.classList.toggle('open'); a.innerHTML = f.classList.contains('open') ? '&#9660;' : '&#9654;';
 };
-
 window.submitAddSession = async function() {
     const dateVal = document.getElementById('new-session-date').value;
     const campaign = document.getElementById('new-session-campaign').value;
@@ -1014,441 +595,218 @@ window.submitAddSession = async function() {
     const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
     const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
     const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
-    const roster = campaignRosters[campaign] || [];
-    const attendance = {};
+    const roster = campaignRosters[campaign] || []; const attendance = {};
     roster.forEach(p => { attendance[p] = "in"; });
-    try {
-        await setDoc(doc(db, "sessions", dateVal), { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" });
-        document.getElementById('add-session-form').classList.remove('open');
-        document.getElementById('new-session-time').value = '';
-        document.getElementById('new-session-gm').value = '';
-        document.getElementById('new-session-duration').value = '';
-        document.getElementById('customize-fields').classList.remove('open');
-        document.getElementById('customize-arrow').innerHTML = '&#9654;';
-    } catch (err) { console.error("Error adding session:", err); alert('Error adding session.'); }
+    try { await setDoc(doc(db, "sessions", dateVal), { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" }); closeAddSession(); }
+    catch (err) { console.error("Error adding session:", err); alert('Error adding session.'); }
 };
 
-window.toggleAttendance = async function(sessionDate, playerName) {
-    const s = sessions.find(x => x.date === sessionDate);
-    if (!s) return;
-    const current = (s.attendance && s.attendance[playerName]) || "in";
-    const next = current === "in" ? "out" : "in";
-    const update = {};
-    update[`attendance.${playerName}`] = next;
-    await updateDoc(doc(db, "sessions", sessionDate), update);
-};
+// ===== FIREBASE =====
+async function seedFirestore() {
+    const snap = await getDocs(collection(db, "sessions")); if (snap.size > 0) return;
+    for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
+}
+async function initApp() {
+    await seedFirestore();
+    const q = query(collection(db, "sessions"), orderBy("date"));
+    let firstLoad = true; let prevCount = 0;
+    onSnapshot(q, (snapshot) => {
+        sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
+        if (firstLoad) { renderAll(); prevCount = sessions.length; firstLoad = false; }
+        else if (sessions.length !== prevCount) { renderAll(); prevCount = sessions.length; }
+        else { updateAttendanceChips(); updateCancelStates(); }
+    });
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active'); activeView = btn.dataset.view;
+            document.getElementById('list-view').style.display = activeView === 'list' ? 'block' : 'none';
+            document.getElementById('calendar-view').style.display = activeView === 'calendar' ? 'block' : 'none';
+        });
+    });
+}
 
-// ==================== RECAP & PDF ====================
+// ===== ATTENDANCE & CANCEL =====
+function updateAttendanceChips() {
+    document.querySelectorAll('.att-chip').forEach(chip => {
+        const oc = chip.getAttribute('onclick'); if (!oc) return;
+        const m = oc.match(/toggleAttendance\('([^']+)',\s*'([^']+)'\)/); if (!m) return;
+        const s = sessions.find(x => x.date === m[1]); if (!s) return;
+        chip.className = `att-chip ${(s.attendance && s.attendance[m[2]]) || "in"}`;
+    });
+}
+function updateCancelStates() {
+    document.querySelectorAll('.session-card').forEach(card => {
+        const d = card.getAttribute('data-session-date'); if (!d) return;
+        const s = sessions.find(x => x.date === d); if (!s) return;
+        const c = s.status === "cancelled"; card.classList.toggle('cancelled', c);
+        const a = card.querySelector('.session-action'); if (!a) return;
+        a.innerHTML = c ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">&#10005;</button>`;
+    });
+}
+window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = document.querySelector(`[data-session-date="${sd}"]`).querySelector('.session-action'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
+window.confirmCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "cancelled" }); cancelPendingSession = null; } catch(e) { console.error(e); } };
+window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = document.querySelector(`[data-session-date="${cancelPendingSession}"]`).querySelector('.session-action'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">&#10005;</button>`; cancelPendingSession = null; };
+window.undoCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "active" }); } catch(e) { console.error(e); } };
+window.initiateDeleteSession = function(sd) { const a = document.querySelector(`[data-session-date="${sd}"]`).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
+window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
+window.cancelDeleteSession = function(sd) { const c = document.querySelector(`[data-session-date="${sd}"]`); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
+window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const u = {}; u[`attendance.${p}`] = cur === "in" ? "out" : "in"; await updateDoc(doc(db, "sessions", sd), u); };
 
-window.toggleSessionExpand = function(sessionDate) {
-    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
-    if (!card) return;
-    const wasExpanded = card.classList.contains('expanded');
-    card.classList.toggle('expanded');
-
-    // Initialize Quill editor if opening and has an editor placeholder
-    if (!wasExpanded) {
-        const editorEl = card.querySelector('.recap-editor');
-        if (editorEl && !activeQuills[sessionDate]) {
-            activeQuills[sessionDate] = new Quill(editorEl, {
-                theme: 'snow',
-                placeholder: 'Paste or type session recap here...',
-                modules: {
-                    toolbar: [
-                        ['bold', 'italic', 'underline'],
-                        [{ 'align': [] }],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                        ['clean']
-                    ]
-                }
-            });
-            // Load existing content
-            const s = sessions.find(x => x.date === sessionDate);
-            if (s && s.recapHtml) {
-                activeQuills[sessionDate].root.innerHTML = s.recapHtml;
-            }
+// ===== RECAP & PDF =====
+window.toggleSessionExpand = function(sd) {
+    const card = document.querySelector(`[data-session-date="${sd}"]`); if (!card) return;
+    const was = card.classList.contains('expanded'); card.classList.toggle('expanded');
+    if (!was) {
+        const el = card.querySelector('.recap-editor');
+        if (el && !activeQuills[sd]) {
+            activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
+            const s = sessions.find(x => x.date === sd);
+            if (s && s.recapHtml) activeQuills[sd].root.innerHTML = s.recapHtml;
         }
     }
 };
-
-window.saveRecap = async function(sessionDate) {
-    const quill = activeQuills[sessionDate];
-    if (!quill) return;
-    const html = quill.root.innerHTML;
-    const text = quill.getText().trim();
-    if (!text) return;
-    try {
-        await updateDoc(doc(db, "sessions", sessionDate), { recapHtml: html, recap: text });
-        const msg = document.getElementById(`recap-msg-${sessionDate}`);
-        if (msg) { msg.classList.add('show'); setTimeout(() => msg.classList.remove('show'), 2000); }
-    } catch (err) { console.error("Error saving recap:", err); }
+window.saveRecap = async function(sd) {
+    const q = activeQuills[sd]; if (!q) return;
+    const html = q.root.innerHTML; const text = q.getText().trim(); if (!text) return;
+    try { await updateDoc(doc(db, "sessions", sd), { recapHtml: html, recap: text }); const m = document.getElementById(`recap-msg-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } } catch(e) { console.error(e); }
+};
+window.editRecap = function(sd) {
+    const s = sessions.find(x => x.date === sd); if (!s) return;
+    const card = document.querySelector(`[data-session-date="${sd}"]`); const d = card.querySelector('.recap-display'); if (!d) return;
+    d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">Save</button><span class="recap-saved-msg" id="recap-msg-${sd}">Saved!</span></div>`;
+    delete activeQuills[sd]; const el = document.getElementById(`recap-editor-${sd}`);
+    activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
+    if (s.recapHtml) activeQuills[sd].root.innerHTML = s.recapHtml;
+};
+window.uploadPdf = function(sd, inputEl) {
+    const file = inputEl.files[0]; if (!file || file.type !== 'application/pdf') { alert('Please select a PDF.'); return; }
+    const st = document.getElementById(`pdf-status-${sd}`); if (st) st.textContent = 'Uploading...';
+    const fr = storageRef(storage, `recaps/${sd}_${file.name}`);
+    uploadBytes(fr, file).then(snap => getDownloadURL(snap.ref)).then(url => updateDoc(doc(db, "sessions", sd), { pdfUrl: url, pdfName: file.name })).then(() => { if (st) st.textContent = 'Uploaded!'; if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage); }).catch(e => { console.error(e); if (st) st.textContent = 'Failed.'; });
 };
 
-window.editRecap = function(sessionDate) {
-    const s = sessions.find(x => x.date === sessionDate);
-    if (!s) return;
-    const card = document.querySelector(`[data-session-date="${sessionDate}"]`);
-    const displayEl = card.querySelector('.recap-display');
-    if (!displayEl) return;
-    const parent = displayEl.parentElement;
-    parent.innerHTML = `
-        <div class="detail-label">Session Recap</div>
-        <div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sessionDate}"></div></div>
-        <div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sessionDate}')">Save</button><span class="recap-saved-msg" id="recap-msg-${sessionDate}">Saved!</span></div>
-    `;
-    delete activeQuills[sessionDate];
-    const editorEl = document.getElementById(`recap-editor-${sessionDate}`);
-    activeQuills[sessionDate] = new Quill(editorEl, {
-        theme: 'snow',
-        placeholder: 'Paste or type session recap here...',
-        modules: { toolbar: [['bold', 'italic', 'underline'], [{ 'align': [] }], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['clean']] }
+// ===== RENDER =====
+function renderAll() { renderStatsBar(); renderNextSessionPill(); renderList(); renderCalendar(); }
+function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
+function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
+function formatDateShort(ds) { return parseDate(ds).toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+function getMonthKey(ds) { const d = parseDate(ds); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function getMonthLabel(k) { const [y,m] = k.split('-'); return `${monthNames[parseInt(m)-1]} ${y}`; }
+function getToday() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+
+// Stats bar = filters
+function renderStatsBar() {
+    const counts = { frostmaiden:0, strahd:0, rokugan:0, special:0 };
+    sessions.forEach(s => { if (s.status !== "cancelled") counts[s.campaign]++; });
+    const total = Object.values(counts).reduce((a,b) => a+b, 0);
+    let html = `<button class="stat-filter all-filter${activeFilter === 'all' ? ' active' : ''}" onclick="setFilter('all')"><span class="sf-count">${total}</span><span class="sf-label">All</span></button>`;
+    ['frostmaiden','strahd','rokugan','special'].forEach(c => {
+        html += `<button class="stat-filter ${c}${activeFilter === c ? ' active' : ''}" onclick="setFilter('${c}')"><span class="sf-count">${counts[c]}</span><span class="sf-label">${c === 'frostmaiden' ? 'Frost' : c === 'rokugan' ? 'Roku' : c.charAt(0).toUpperCase()+c.slice(1)}</span></button>`;
     });
-    if (s.recapHtml) activeQuills[sessionDate].root.innerHTML = s.recapHtml;
-};
-
-window.uploadPdf = function(sessionDate, inputEl) {
-    const file = inputEl.files[0];
-    if (!file) return;
-    if (file.type !== 'application/pdf') { alert('Please select a PDF file.'); return; }
-    const statusEl = document.getElementById(`pdf-status-${sessionDate}`);
-    if (statusEl) statusEl.textContent = 'Uploading...';
-
-    const fileRef = storageRef(storage, `recaps/${sessionDate}_${file.name}`);
-    uploadBytes(fileRef, file).then(snapshot => {
-        return getDownloadURL(snapshot.ref);
-    }).then(url => {
-        return updateDoc(doc(db, "sessions", sessionDate), { pdfUrl: url, pdfName: file.name });
-    }).then(() => {
-        if (statusEl) statusEl.textContent = 'Uploaded!';
-        // Re-render to show download link
-        if (currentPage === 'home') renderAll();
-        else renderCampaignPage(currentPage);
-    }).catch(err => {
-        console.error("Error uploading PDF:", err);
-        if (statusEl) statusEl.textContent = 'Upload failed. Try again.';
-    });
-};
-
-// ==================== RENDER ====================
-
-function renderAll() {
-    renderLatestSessions();
-    renderNextSession();
-    renderStats();
-    renderList();
-    renderCalendar();
+    document.getElementById('stats-bar').innerHTML = html;
 }
+window.setFilter = function(f) { activeFilter = f; renderStatsBar(); renderList(); renderCalendar(); };
 
-function parseDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-}
-
-function formatDate(dateStr) {
-    const d = parseDate(dateStr);
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-}
-
-function formatDateShort(dateStr) {
-    const d = parseDate(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function getMonthKey(dateStr) {
-    const d = parseDate(dateStr);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-function getMonthLabel(key) {
-    const [y, m] = key.split('-');
-    return `${monthNames[parseInt(m) - 1]} ${y}`;
-}
-
-function getToday() {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// ==================== LATEST SESSIONS (top cards) ====================
-
-function renderLatestSessions() {
-    const today = getToday();
-    const campaigns = ['frostmaiden', 'strahd', 'rokugan'];
-    let html = '';
-
-    campaigns.forEach(c => {
-        // Find the most recent past session for this campaign
-        const pastSessions = sessions.filter(s => s.campaign === c && s.status !== "cancelled" && parseDate(s.date) < today);
-        if (pastSessions.length === 0) return;
-        const latest = pastSessions[pastSessions.length - 1]; // already sorted by date
-        const hasRecap = !!(latest.recapHtml || latest.recap);
-        const hasPdf = !!latest.pdfUrl;
-
-        html += `<div class="latest-card ${c}" onclick="navigateTo('${c}')">`;
-        html += `<div class="lc-label">Latest Session</div>`;
-        html += `<div class="lc-campaign">${campaignIcons[c]} ${campaignNames[c]}</div>`;
-        html += `<div class="lc-date">${formatDateShort(latest.date)}</div>`;
-        if (hasRecap) html += `<div class="lc-has-recap">&#9989; Recap available</div>`;
-        if (hasPdf) html += `<div class="lc-has-recap">&#128196; PDF available</div>`;
-        html += `</div>`;
-    });
-
-    document.getElementById('latest-sessions').innerHTML = html;
-}
-
-// ==================== NEXT SESSION ====================
-
-function renderNextSession() {
+function renderNextSessionPill() {
     const today = getToday();
     const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
-    if (!next) { document.getElementById('next-session').innerHTML = ''; return; }
-    const d = parseDate(next.date);
-    const diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-    let countdownText = diff === 0 ? "Today!" : diff === 1 ? "Tomorrow" : `${diff} days away`;
-    document.getElementById('next-session').innerHTML = `
-        <div class="next-session-banner ${next.campaign}">
-            <div class="label">Next Session</div>
-            <div class="campaign-name">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div>
-            <div class="countdown">${formatDate(next.date)} at ${next.time} \u2014 ${countdownText}</div>
-        </div>
-    `;
+    if (!next) { document.getElementById('next-session-pill').innerHTML = ''; return; }
+    const d = parseDate(next.date); const diff = Math.ceil((d - today) / 86400000);
+    const when = diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : `in ${diff}d`;
+    document.getElementById('next-session-pill').innerHTML = `<div class="next-session-pill"><span class="nsp-icon">${campaignIcons[next.campaign]}</span><span class="nsp-text"><strong>${formatDateShort(next.date)}</strong> &mdash; ${when}</span></div>`;
 }
 
-function renderStats() {
-    const counts = { frostmaiden: 0, strahd: 0, rokugan: 0, special: 0 };
-    sessions.forEach(s => { if (s.status !== "cancelled") counts[s.campaign]++; });
-    document.getElementById('stats').innerHTML = `
-        <div class="stat frostmaiden"><div class="stat-number">${counts.frostmaiden}</div><div class="stat-label">Frostmaiden</div></div>
-        <div class="stat strahd"><div class="stat-number">${counts.strahd}</div><div class="stat-label">Strahd</div></div>
-        <div class="stat rokugan"><div class="stat-number">${counts.rokugan}</div><div class="stat-label">Rokugan</div></div>
-        <div class="stat special"><div class="stat-number">${counts.special}</div><div class="stat-label">Special</div></div>
-    `;
-}
-
-// ==================== SESSION CARD ====================
-
-function renderSessionCard(s, groupIndex, cardIndex) {
-    const d = parseDate(s.date);
-    const dayNum = d.getDate();
-    const dayName = dayNames[d.getDay()];
+function renderSessionCard(s, gi, ci) {
+    const d = parseDate(s.date); const dn = d.getDate(); const dw = dayNames[d.getDay()];
     const roster = s.roster || campaignRosters[s.campaign] || [];
-    const attendance = s.attendance || {};
-    const isCancelled = s.status === "cancelled";
-
-    let attHtml = '';
-    roster.forEach(p => {
-        const status = attendance[p] || "in";
-        attHtml += `<button class="att-chip ${status}" onclick="event.stopPropagation(); toggleAttendance('${s.date}', '${p}')" title="Click to toggle">${p}</button>`;
-    });
-
-    const actionHtml = isCancelled
-        ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>`
-        : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
-
-    // Recap section
+    const att = s.attendance || {}; const isCancelled = s.status === "cancelled";
+    let attHtml = ''; roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.date}','${p}')" title="Toggle">${p}</button>`; });
+    const actionHtml = isCancelled ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
     let recapHtml = '';
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
         recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
-        if (hasRecap) {
-            recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div>`;
-            recapHtml += `<div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`;
-        } else {
-            recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div>`;
-            recapHtml += `<div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`;
-        }
-        recapHtml += `</div>`;
-
-        // PDF section
-        recapHtml += `<div class="session-detail-section"><div class="detail-label">Archivist PDF</div>`;
-        if (s.pdfUrl) {
-            recapHtml += `<div class="pdf-upload-area">`;
-            recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName || 'Download PDF')}</a>`;
-            recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}', this)"></label>`;
-            recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span>`;
-            recapHtml += `</div>`;
-        } else {
-            recapHtml += `<div class="pdf-upload-area">`;
-            recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}', this)"></label>`;
-            recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span>`;
-            recapHtml += `</div>`;
-        }
-        recapHtml += `</div>`;
+        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
+        else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`; }
+        recapHtml += `</div><div class="session-detail-section"><div class="detail-label">Archivist PDF</div><div class="pdf-upload-area">`;
+        if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
+        else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
+        recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span></div></div>`;
     }
-
-    return `
-        <div class="session-card ${s.campaign}${isCancelled ? ' cancelled' : ''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}')" style="animation-delay: ${(groupIndex * 0.05) + (cardIndex * 0.03)}s">
-            <div class="session-card-header">
-                <div class="session-date"><div class="day-num">${dayNum}</div><div class="day-name">${dayName}</div></div>
-                <div class="session-divider"></div>
-                <div class="session-info">
-                    <div class="session-campaign">${campaignNames[s.campaign]}</div>
-                    <div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div>
-                </div>
-                <div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div>
-                <div class="session-expand-icon">&#9654;</div>
-            </div>
-            <div class="session-detail">
-                <div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>
-                ${recapHtml}
-            </div>
-        </div>
-    `;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}')" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div><div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}</div></div>`;
 }
-
-// ==================== LIST RENDER (with past/upcoming split) ====================
 
 function renderList() {
     const today = getToday();
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
-    if (filtered.length === 0) {
-        document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
-        return;
-    }
-
+    if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
     const upcoming = filtered.filter(s => parseDate(s.date) >= today);
     const past = filtered.filter(s => parseDate(s.date) < today);
-    activeQuills = {}; // Reset quill instances
-
+    activeQuills = {};
     let html = '';
     if (upcoming.length > 0) {
-        const grouped = {};
-        upcoming.forEach(s => { const key = getMonthKey(s.date); if (!grouped[key]) grouped[key] = []; grouped[key].push(s); });
-        Object.keys(grouped).sort().forEach((key, gi) => {
-            html += `<div class="month-group" style="animation-delay: ${gi * 0.05}s"><div class="month-label">${getMonthLabel(key)}</div><div class="sessions-list">`;
-            grouped[key].forEach((s, i) => { html += renderSessionCard(s, gi, i); });
-            html += `</div></div>`;
-        });
-    } else {
-        html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`;
-    }
-
+        const g = {}; upcoming.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        Object.keys(g).sort().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
+    } else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
     if (past.length > 0) {
-        html += `<button class="past-sessions-toggle${pastSessionsVisible ? ' open' : ''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${past.length})</button>`;
-        html += `<div class="past-sessions-container${pastSessionsVisible ? ' open' : ''}">`;
-        const grouped = {};
-        past.forEach(s => { const key = getMonthKey(s.date); if (!grouped[key]) grouped[key] = []; grouped[key].push(s); });
-        Object.keys(grouped).sort().reverse().forEach((key, gi) => {
-            html += `<div class="month-group" style="animation-delay: ${gi * 0.05}s"><div class="month-label">${getMonthLabel(key)}</div><div class="sessions-list">`;
-            grouped[key].forEach((s, i) => { html += renderSessionCard(s, gi, i); });
-            html += `</div></div>`;
-        });
+        html += `<button class="past-sessions-toggle${pastSessionsVisible?' open':''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${past.length})</button>`;
+        html += `<div class="past-sessions-container${pastSessionsVisible?' open':''}">`;
+        const g = {}; past.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        Object.keys(g).sort().reverse().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
         html += `</div>`;
     }
-
     document.getElementById('list-view').innerHTML = html;
 }
-
-window.togglePastSessions = function() {
-    pastSessionsVisible = !pastSessionsVisible;
-    const toggle = document.querySelector('.past-sessions-toggle');
-    const container = document.querySelector('.past-sessions-container');
-    if (toggle) toggle.classList.toggle('open', pastSessionsVisible);
-    if (container) container.classList.toggle('open', pastSessionsVisible);
-};
-
-// ==================== CAMPAIGN PAGE ====================
+window.togglePastSessions = function() { pastSessionsVisible = !pastSessionsVisible; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.toggle('open', pastSessionsVisible); if (c) c.classList.toggle('open', pastSessionsVisible); };
 
 function renderCampaignPage(campaign) {
     const today = getToday();
-    const title = `${campaignIcons[campaign]} ${campaignNames[campaign]}`;
-    document.getElementById('campaign-page-title').innerHTML = title;
+    document.getElementById('campaign-page-title').innerHTML = `${campaignIcons[campaign]} ${campaignNames[campaign]}`;
     document.getElementById('campaign-page-title').style.color = `var(--${campaign}-primary)`;
-
-    const campaignSessions = sessions.filter(s => s.campaign === campaign);
-    const upcoming = campaignSessions.filter(s => parseDate(s.date) >= today);
-    const past = campaignSessions.filter(s => parseDate(s.date) < today);
-
+    const cs = sessions.filter(s => s.campaign === campaign);
+    const upcoming = cs.filter(s => parseDate(s.date) >= today);
+    const past = cs.filter(s => parseDate(s.date) < today);
     activeQuills = {};
     let html = '';
-
-    // Upcoming
-    if (upcoming.length > 0) {
-        html += `<div class="month-label">Upcoming</div><div class="sessions-list" style="margin-bottom:32px">`;
-        upcoming.forEach((s, i) => { html += renderSessionCard(s, 0, i); });
-        html += `</div>`;
-    }
-
-    // Past
-    if (past.length > 0) {
-        html += `<div class="month-label">Past Sessions</div><div class="sessions-list">`;
-        [...past].reverse().forEach((s, i) => { html += renderSessionCard(s, 1, i); });
-        html += `</div>`;
-    }
-
-    if (campaignSessions.length === 0) {
-        html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
-    }
-
+    if (upcoming.length > 0) { html += `<div class="month-label">Upcoming</div><div class="sessions-list" style="margin-bottom:24px">`; upcoming.forEach((s,i) => { html += renderSessionCard(s, 0, i); }); html += `</div>`; }
+    if (past.length > 0) { html += `<div class="month-label">Past Sessions</div><div class="sessions-list">`; [...past].reverse().forEach((s,i) => { html += renderSessionCard(s, 1, i); }); html += `</div>`; }
+    if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     document.getElementById('campaign-page-content').innerHTML = html;
 }
 
-// ==================== CALENDAR ====================
-
 function renderCalendar() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
-    const sessionMap = {};
-    filtered.forEach(s => { sessionMap[s.date] = s; });
-    const allMonths = new Set();
-    sessions.forEach(s => allMonths.add(getMonthKey(s.date)));
-    const months = [...allMonths].sort();
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
+    const sm = {}; filtered.forEach(s => { sm[s.date] = s; });
+    const am = new Set(); sessions.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
+    const today = new Date(); const ts = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
     let html = '';
-    months.forEach(key => {
-        const [year, month] = key.split('-').map(Number);
-        const firstDay = new Date(year, month - 1, 1).getDay();
-        const daysInMonth = new Date(year, month, 0).getDate();
-        html += `<div class="cal-month"><div class="month-label">${getMonthLabel(key)}</div>`;
-        html += `<div class="cal-header">${dayNames.map(d => `<span>${d}</span>`).join('')}</div><div class="cal-body">`;
-        for (let i = 0; i < firstDay; i++) html += `<div class="cal-day empty"></div>`;
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const session = sessionMap[dateStr];
-            const isToday = dateStr === todayStr;
-            const todayClass = isToday ? ' today' : '';
-            if (session) {
-                html += `<div class="cal-day has-session ${session.campaign}${todayClass}" onmouseenter="showTooltip(event, '${dateStr}')" onmouseleave="hideTooltip()"><span>${day}</span><div class="cal-dot"></div></div>`;
-            } else {
-                html += `<div class="cal-day${todayClass}"><span>${day}</span></div>`;
-            }
+    months.forEach(k => {
+        const [y,m] = k.split('-').map(Number); const fd = new Date(y,m-1,1).getDay(); const dim = new Date(y,m,0).getDate();
+        html += `<div class="cal-month"><div class="month-label">${getMonthLabel(k)}</div><div class="cal-header">${dayNames.map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-body">`;
+        for (let i = 0; i < fd; i++) html += `<div class="cal-day empty"></div>`;
+        for (let day = 1; day <= dim; day++) {
+            const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const s = sm[ds]; const tc = ds === ts ? ' today' : '';
+            if (s) html += `<div class="cal-day has-session ${s.campaign}${tc}" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div class="cal-dot"></div></div>`;
+            else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
         }
         html += `</div></div>`;
     });
     document.getElementById('calendar-view').innerHTML = html;
 }
-
-window.showTooltip = function(event, dateStr) {
-    const session = sessions.find(s => s.date === dateStr);
-    if (!session) return;
+window.showTooltip = function(ev, ds) {
+    const s = sessions.find(x => x.date === ds); if (!s) return;
     const tip = document.getElementById('tooltip');
-    const roster = session.roster || [];
-    const attendance = session.attendance || {};
-    const inList = roster.filter(p => (attendance[p] || "in") === "in");
-    const outList = roster.filter(p => attendance[p] === "out");
-    let attLine = '';
-    if (inList.length) attLine += `<br>\u2705 ${inList.join(', ')}`;
-    if (outList.length) attLine += `<br>\u274C ${outList.join(', ')}`;
-    tip.innerHTML = `
-        <div class="tooltip-campaign" style="color: var(--${session.campaign}-primary)">${campaignIcons[session.campaign]} ${campaignNames[session.campaign]}</div>
-        <div class="tooltip-detail">${formatDate(session.date)}<br>GM: ${session.gm} \u00b7 ${session.time} \u00b7 ${session.duration}${attLine}</div>
-    `;
-    tip.classList.add('show');
-    const rect = event.target.getBoundingClientRect();
-    tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px';
-    tip.style.top = (rect.bottom + 8) + 'px';
+    const r = s.roster || []; const a = s.attendance || {};
+    const inL = r.filter(p => (a[p]||"in") === "in"); const outL = r.filter(p => a[p] === "out");
+    let att = ''; if (inL.length) att += `<br>\u2705 ${inL.join(', ')}`; if (outL.length) att += `<br>\u274C ${outL.join(', ')}`;
+    tip.innerHTML = `<div class="tooltip-campaign" style="color:var(--${s.campaign}-primary)">${campaignIcons[s.campaign]} ${campaignNames[s.campaign]}</div><div class="tooltip-detail">${formatDate(s.date)}<br>GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${att}</div>`;
+    tip.classList.add('show'); const rect = ev.target.getBoundingClientRect();
+    tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px'; tip.style.top = (rect.bottom + 8) + 'px';
 };
-
-window.hideTooltip = function() {
-    document.getElementById('tooltip').classList.remove('show');
-};
-
+window.hideTooltip = function() { document.getElementById('tooltip').classList.remove('show'); };
 </script>
 </body>
 </html>
