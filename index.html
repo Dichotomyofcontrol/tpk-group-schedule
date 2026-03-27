@@ -852,8 +852,11 @@ window.submitAddSession = async function() {
 
 // ===== FIREBASE =====
 async function seedFirestore() {
-    const snap = await getDocs(collection(db, "sessions")); if (snap.size > 0) return;
-    for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
+    const snap = await getDocs(collection(db, "sessions"));
+    const existing = new Set(); snap.forEach(d => existing.add(d.id));
+    const missing = seedSessions.filter(s => !existing.has(s.date));
+    if (missing.length === 0) return;
+    for (const s of missing) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
 }
 async function initApp() {
     await seedFirestore();
