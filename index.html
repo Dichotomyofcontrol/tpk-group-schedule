@@ -340,6 +340,73 @@
         .tooltip-campaign { font-family: 'Cinzel', serif; font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
         .tooltip-detail { font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; }
 
+        /* ===== HERO SECTION ===== */
+        .hero-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            padding: 20px 24px; margin-bottom: 16px; position: relative; overflow: hidden;
+        }
+        .hero-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+        .hero-card.frostmaiden::before { background: var(--frostmaiden-primary); }
+        .hero-card.strahd::before { background: var(--strahd-primary); }
+        .hero-card.rokugan::before { background: var(--rokugan-primary); }
+        .hero-card.special::before { background: var(--special-primary); }
+        .hero-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .hero-campaign { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; }
+        .hero-card.frostmaiden .hero-campaign { color: var(--frostmaiden-primary); }
+        .hero-card.strahd .hero-campaign { color: var(--strahd-primary); }
+        .hero-card.rokugan .hero-campaign { color: var(--rokugan-primary); }
+        .hero-card.special .hero-campaign { color: var(--special-primary); }
+        .hero-countdown { font-size: 0.82rem; color: var(--text-dim); }
+        .hero-countdown strong { color: var(--text); font-weight: 600; }
+        .hero-date { font-size: 0.85rem; color: var(--text); margin-bottom: 12px; }
+        .hero-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+        .hero-recap { font-size: 0.82rem; color: var(--text); line-height: 1.6; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; max-height: 120px; overflow-y: auto; }
+        .hero-recap p { margin-bottom: 4px; }
+        .hero-recap p:last-child { margin-bottom: 0; }
+        .hero-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
+
+        /* ===== RECENT RECAPS ===== */
+        .recent-recaps-section { margin-bottom: 16px; }
+        .recent-recaps-label { font-family: 'Cinzel', serif; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 10px; }
+        .recent-recaps-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+        .recent-recap-card {
+            flex: 1; min-width: 200px; max-width: 320px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+            padding: 14px 16px; position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s;
+        }
+        .recent-recap-card:hover { background: var(--surface-hover); transform: translateY(-1px); }
+        .recent-recap-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+        .recent-recap-card.frostmaiden::before { background: var(--frostmaiden-primary); }
+        .recent-recap-card.strahd::before { background: var(--strahd-primary); }
+        .recent-recap-card.rokugan::before { background: var(--rokugan-primary); }
+        .recent-recap-card.special::before { background: var(--special-primary); }
+        .rrc-campaign { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+        .recent-recap-card.frostmaiden .rrc-campaign { color: var(--frostmaiden-primary); }
+        .recent-recap-card.strahd .rrc-campaign { color: var(--strahd-primary); }
+        .recent-recap-card.rokugan .rrc-campaign { color: var(--rokugan-primary); }
+        .recent-recap-card.special .rrc-campaign { color: var(--special-primary); }
+        .rrc-date { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 8px; }
+        .rrc-excerpt { font-size: 0.75rem; color: var(--text); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .rrc-no-recap { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
+        .rrc-pdf { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; color: var(--frostmaiden-primary); margin-top: 6px; text-decoration: none; }
+
+        /* ===== CAMPAIGN PAGE OVERVIEW ===== */
+        .campaign-overview { margin-bottom: 24px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+        .campaign-overview-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 10px; font-weight: 500; }
+        .campaign-roster { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .roster-chip {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 8px; min-width: 70px; text-align: center;
+        }
+        .roster-name { font-size: 0.82rem; font-weight: 500; color: var(--text); }
+        .campaign-last-recap { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+        .campaign-last-recap-text { font-size: 0.82rem; line-height: 1.6; color: var(--text); max-height: 150px; overflow-y: auto; }
+        .campaign-last-recap-text p { margin-bottom: 4px; }
+        .campaign-last-recap-text p:last-child { margin-bottom: 0; }
+        .campaign-last-recap-meta { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; }
+        .campaign-last-pdf { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 5px 12px; background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.2); border-radius: 6px; color: var(--frostmaiden-primary); font-size: 0.75rem; text-decoration: none; }
+
         footer { text-align: center; padding: 48px 0 24px; font-size: 0.7rem; color: var(--text-dim); opacity: 0.3; }
         footer a { color: var(--text-dim); text-decoration: none; }
 
@@ -387,6 +454,18 @@
             .tooltip-detail { font-size: 0.72rem; }
             .pdf-upload-btn { font-size: 0.72rem; padding: 5px 10px; }
             .pdf-link { font-size: 0.72rem; padding: 5px 10px; }
+            .hero-card { padding: 14px 16px; margin-bottom: 12px; }
+            .hero-campaign { font-size: 0.95rem; }
+            .hero-countdown { font-size: 0.75rem; }
+            .hero-date { font-size: 0.78rem; }
+            .hero-recap { font-size: 0.78rem; padding: 8px 10px; max-height: 100px; }
+            .recent-recaps-grid { gap: 8px; }
+            .recent-recap-card { min-width: 160px; padding: 10px 12px; }
+            .rrc-campaign { font-size: 0.72rem; }
+            .rrc-excerpt { font-size: 0.7rem; -webkit-line-clamp: 2; }
+            .campaign-overview { padding: 14px 16px; }
+            .roster-chip { padding: 6px 10px; min-width: 60px; }
+            .roster-name { font-size: 0.75rem; }
             #password-gate h1 { font-size: clamp(1.6rem, 5vw, 2.5rem); }
             .pass-form input { width: 180px; padding: 10px 14px; font-size: 0.85rem; }
             .pass-form button { padding: 10px 18px; font-size: 0.82rem; }
@@ -481,6 +560,12 @@
 
         <!-- HOME VIEW -->
         <div id="home-view">
+            <!-- Hero: Next session countdown + last recap -->
+            <div id="hero-section"></div>
+
+            <!-- Recent recaps for all campaigns -->
+            <div id="recent-recaps"></div>
+
             <!-- Row 2: Stats as filters -->
             <div class="stats-bar" id="stats-bar"></div>
 
@@ -719,7 +804,7 @@ window.uploadPdf = function(sd, inputEl) {
 };
 
 // ===== RENDER =====
-function renderAll() { renderStatsBar(); renderNextSessionPill(); renderList(); renderCalendar(); }
+function renderAll() { renderHero(); renderRecentRecaps(); renderStatsBar(); renderNextSessionPill(); renderList(); renderCalendar(); }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
 function formatDateShort(ds) { return parseDate(ds).toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
@@ -727,6 +812,48 @@ function getMonthKey(ds) { const d = parseDate(ds); return `${d.getFullYear()}-$
 function getMonthLabel(k) { const [y,m] = k.split('-'); return `${monthNames[parseInt(m)-1]} ${y}`; }
 function getToday() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
 function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+function stripHtml(h) { const d = document.createElement('div'); d.innerHTML = h; return d.textContent || d.innerText || ''; }
+
+// ===== HERO: Next session + last recap =====
+function renderHero() {
+    const today = getToday();
+    const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
+    if (!next) { document.getElementById('hero-section').innerHTML = ''; return; }
+    const d = parseDate(next.date); const diff = Math.ceil((d - today) / 86400000);
+    const when = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `in ${diff} days`;
+    // Find the last PAST session for the SAME campaign
+    const pastForCampaign = sessions.filter(s => s.campaign === next.campaign && parseDate(s.date) < today && s.status !== "cancelled");
+    const lastSession = pastForCampaign.length > 0 ? pastForCampaign[pastForCampaign.length - 1] : null;
+    let recapBlock = '';
+    if (lastSession && (lastSession.recapHtml || lastSession.recap)) {
+        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
+    } else if (lastSession) {
+        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-no-recap">No recap yet — someone should write one!</div>`;
+    }
+    document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
+}
+
+// ===== RECENT RECAPS: Last session per campaign =====
+function renderRecentRecaps() {
+    const today = getToday();
+    const campaigns = ['frostmaiden', 'strahd', 'rokugan'];
+    const cards = [];
+    campaigns.forEach(c => {
+        const past = sessions.filter(s => s.campaign === c && parseDate(s.date) < today && s.status !== "cancelled");
+        if (past.length === 0) return;
+        const last = past[past.length - 1];
+        let excerpt = '';
+        if (last.recapHtml || last.recap) {
+            const text = last.recapHtml ? stripHtml(last.recapHtml) : last.recap;
+            excerpt = `<div class="rrc-excerpt">${escapeHtml(text)}</div>`;
+        } else { excerpt = `<div class="rrc-no-recap">No recap yet</div>`; }
+        let pdfLink = '';
+        if (last.pdfUrl) { pdfLink = `<a class="rrc-pdf" href="${escapeHtml(last.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; PDF</a>`; }
+        cards.push(`<div class="recent-recap-card ${c}" onclick="navigateTo('${c}')"><div class="rrc-campaign">${campaignNames[c]}</div><div class="rrc-date">${formatDateShort(last.date)}</div>${excerpt}${pdfLink}</div>`);
+    });
+    if (cards.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
+    document.getElementById('recent-recaps').innerHTML = `<div class="recent-recaps-section"><div class="recent-recaps-label">Last Sessions</div><div class="recent-recaps-grid">${cards.join('')}</div></div>`;
+}
 
 // Stats bar = filters
 function renderStatsBar() {
@@ -802,11 +929,40 @@ function renderCampaignPage(campaign) {
     const past = cs.filter(s => parseDate(s.date) < today);
     activeQuills = {};
     let html = '';
-    if (upcoming.length > 0) { html += `<div class="month-label">Upcoming</div><div class="sessions-list" style="margin-bottom:24px">`; upcoming.forEach((s,i) => { html += renderSessionCard(s, 0, i); }); html += `</div>`; }
-    if (past.length > 0) { html += `<div class="month-label">Past Sessions</div><div class="sessions-list">`; [...past].reverse().forEach((s,i) => { html += renderSessionCard(s, 1, i); }); html += `</div>`; }
+
+    // Campaign overview: roster + last session recap
+    const roster = campaignRosters[campaign] || [];
+    const lastPast = past.length > 0 ? past[past.length - 1] : null;
+    html += `<div class="campaign-overview">`;
+    html += `<div class="campaign-overview-label">Party</div><div class="campaign-roster">`;
+    roster.forEach(p => { html += `<div class="roster-chip"><span class="roster-name">${escapeHtml(p)}</span></div>`; });
+    html += `</div>`;
+    if (lastPast) {
+        html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
+        if (lastPast.recapHtml || lastPast.recap) {
+            html += `<div class="campaign-last-recap"><div class="campaign-last-recap-text">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div></div>`;
+        } else { html += `<div class="hero-no-recap">No recap written yet</div>`; }
+        if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a>`; }
+    }
+    html += `</div>`;
+
+    // Upcoming sessions with month headers
+    if (upcoming.length > 0) {
+        const g = {}; upcoming.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        Object.keys(g).sort().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
+    }
+    // Past sessions with month headers
+    if (past.length > 0) {
+        html += `<button class="past-sessions-toggle" onclick="toggleCampaignPast()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${past.length})</button>`;
+        html += `<div class="past-sessions-container" id="campaign-past-container">`;
+        const g = {}; past.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        Object.keys(g).sort().reverse().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
+        html += `</div>`;
+    }
     if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     document.getElementById('campaign-page-content').innerHTML = html;
 }
+window.toggleCampaignPast = function() { const t = document.querySelector('#campaign-page-content .past-sessions-toggle'); const c = document.getElementById('campaign-past-container'); if (t) t.classList.toggle('open'); if (c) c.classList.toggle('open'); };
 
 function renderCalendar() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
