@@ -357,29 +357,102 @@
         .hero-recap p:last-child { margin-bottom: 0; }
         .hero-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
 
-        /* ===== RECENT RECAPS ===== */
-        .recent-recaps-section { margin-bottom: 16px; }
-        .recent-recaps-label { font-family: 'Cinzel', serif; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-dim); margin-bottom: 10px; }
-        .recent-recaps-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
-        .recent-recap-card {
-            flex: 1; min-width: 200px; max-width: 320px;
-            background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-            padding: 14px 16px; position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s;
+        /* ===== LAST SESSIONS (collapsible) ===== */
+        .last-sessions-section { margin-bottom: 16px; }
+        .last-sessions-header {
+            display: flex; align-items: center; gap: 8px; padding: 10px 0;
+            border: none; background: none; color: var(--text-dim); font-family: 'Cinzel', serif;
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em;
+            cursor: pointer; width: 100%; transition: color 0.2s;
         }
-        .recent-recap-card:hover { background: var(--surface-hover); transform: translateY(-1px); }
-        .recent-recap-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
-        .recent-recap-card.frostmaiden::before { background: var(--frostmaiden-primary); }
-        .recent-recap-card.strahd::before { background: var(--strahd-primary); }
-        .recent-recap-card.rokugan::before { background: var(--rokugan-primary); }
-        .recent-recap-card.special::before { background: var(--special-primary); }
-        .rrc-campaign { font-family: 'Cinzel', serif; font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
-        .recent-recap-card.frostmaiden .rrc-campaign { color: var(--frostmaiden-primary); }
-        .recent-recap-card.strahd .rrc-campaign { color: var(--strahd-primary); }
-        .recent-recap-card.rokugan .rrc-campaign { color: var(--rokugan-primary); }
-        .recent-recap-card.special .rrc-campaign { color: var(--special-primary); }
-        .rrc-date { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 8px; }
-        .rrc-excerpt { font-size: 0.75rem; color: var(--text); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .rrc-no-recap { font-size: 0.72rem; color: var(--text-dim); font-style: italic; }
+        .last-sessions-header:hover { color: var(--text); }
+        .last-sessions-header .ls-arrow { transition: transform 0.2s; font-size: 0.55rem; font-family: 'Inter', sans-serif; }
+        .last-sessions-header.open .ls-arrow { transform: rotate(90deg); }
+        .last-sessions-list { display: flex; flex-direction: column; gap: 10px; }
+        .last-sessions-extra { display: none; margin-top: 10px; }
+        .last-sessions-extra.open { display: flex; flex-direction: column; gap: 10px; }
+        .last-session-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px 20px; position: relative; overflow: hidden; transition: all 0.2s;
+        }
+        .last-session-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+        .last-session-card.frostmaiden::before { background: var(--frostmaiden-primary); }
+        .last-session-card.strahd::before { background: var(--strahd-primary); }
+        .last-session-card.rokugan::before { background: var(--rokugan-primary); }
+        .last-session-card.special::before { background: var(--special-primary); }
+        .lsc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+        .lsc-campaign { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600; }
+        .last-session-card.frostmaiden .lsc-campaign { color: var(--frostmaiden-primary); }
+        .last-session-card.strahd .lsc-campaign { color: var(--strahd-primary); }
+        .last-session-card.rokugan .lsc-campaign { color: var(--rokugan-primary); }
+        .last-session-card.special .lsc-campaign { color: var(--special-primary); }
+        .lsc-date { font-size: 0.72rem; color: var(--text-dim); }
+        .lsc-recap { font-size: 0.82rem; color: var(--text); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .lsc-recap p { margin-bottom: 4px; }
+        .lsc-recap p:last-child { margin-bottom: 0; }
+        .lsc-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; cursor: pointer; }
+        .lsc-no-recap:hover { color: var(--text); }
+        .lsc-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .lsc-read-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 4px 12px;
+            border-radius: 5px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .lsc-read-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+        .lsc-edit-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 4px 12px;
+            border-radius: 5px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .lsc-edit-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .lsc-pdf { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; color: var(--frostmaiden-primary); text-decoration: none; padding: 4px 12px; border-radius: 5px; border: 1px solid rgba(79,195,247,0.2); background: rgba(79,195,247,0.06); transition: all 0.2s; }
+        .lsc-pdf:hover { background: rgba(79,195,247,0.12); }
+
+        /* ===== READER MODAL ===== */
+        .reader-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+            z-index: 200; justify-content: center; align-items: center; padding: 20px;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .reader-overlay.open { display: flex; }
+        .reader-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            width: 100%; max-width: 680px; max-height: 85vh; display: flex; flex-direction: column;
+            animation: fadeIn 0.25s ease forwards; position: relative; overflow: hidden;
+        }
+        .reader-modal::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+        .reader-modal.frostmaiden::before { background: var(--frostmaiden-primary); }
+        .reader-modal.strahd::before { background: var(--strahd-primary); }
+        .reader-modal.rokugan::before { background: var(--rokugan-primary); }
+        .reader-modal.special::before { background: var(--special-primary); }
+        .reader-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        .reader-title { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; }
+        .reader-modal.frostmaiden .reader-title { color: var(--frostmaiden-primary); }
+        .reader-modal.strahd .reader-title { color: var(--strahd-primary); }
+        .reader-modal.rokugan .reader-title { color: var(--rokugan-primary); }
+        .reader-modal.special .reader-title { color: var(--special-primary); }
+        .reader-date { font-size: 0.75rem; color: var(--text-dim); margin-left: 10px; }
+        .reader-close {
+            background: none; border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-dim); cursor: pointer; font-size: 1.1rem; padding: 4px 10px;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .reader-close:hover { color: var(--text); border-color: var(--text-dim); }
+        .reader-body {
+            padding: 24px; overflow-y: auto; flex: 1;
+            font-size: 0.9rem; line-height: 1.8; color: var(--text);
+        }
+        .reader-body p { margin-bottom: 10px; }
+        .reader-body p:last-child { margin-bottom: 0; }
+        .reader-footer {
+            display: flex; align-items: center; gap: 10px; padding: 14px 24px;
+            border-top: 1px solid var(--border); flex-shrink: 0;
+        }
+
+        /* Legacy compat — keep rrc-pdf for campaign page if needed */
         .rrc-pdf { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; color: var(--frostmaiden-primary); margin-top: 6px; text-decoration: none; }
 
         /* ===== CAMPAIGN PAGE OVERVIEW ===== */
@@ -450,10 +523,13 @@
             .hero-countdown { font-size: 0.75rem; }
             .hero-date { font-size: 0.78rem; }
             .hero-recap { font-size: 0.78rem; padding: 8px 10px; max-height: 100px; }
-            .recent-recaps-grid { gap: 8px; }
-            .recent-recap-card { min-width: 160px; padding: 10px 12px; }
-            .rrc-campaign { font-size: 0.72rem; }
-            .rrc-excerpt { font-size: 0.7rem; -webkit-line-clamp: 2; }
+            .last-session-card { padding: 12px 14px; }
+            .lsc-campaign { font-size: 0.82rem; }
+            .lsc-recap { font-size: 0.78rem; -webkit-line-clamp: 2; }
+            .reader-modal { max-width: 95vw; max-height: 90vh; }
+            .reader-header { padding: 14px 16px; }
+            .reader-body { padding: 16px; font-size: 0.85rem; }
+            .reader-footer { padding: 10px 16px; }
             .campaign-overview { padding: 14px 16px; }
             .roster-chip { padding: 6px 10px; min-width: 60px; }
             .roster-name { font-size: 0.75rem; }
@@ -584,6 +660,22 @@
 
         <div id="tooltip" class="tooltip"></div>
     </div>
+
+    <!-- Reader Modal -->
+    <div class="reader-overlay" id="reader-overlay" onclick="closeReaderModal()">
+        <div class="reader-modal" id="reader-modal" onclick="event.stopPropagation()">
+            <div class="reader-header">
+                <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0">
+                    <div class="reader-title" id="reader-title"></div>
+                    <span class="reader-date" id="reader-date"></span>
+                </div>
+                <button class="reader-close" onclick="closeReaderModal()">&times;</button>
+            </div>
+            <div class="reader-body" id="reader-body"></div>
+            <div class="reader-footer" id="reader-footer"></div>
+        </div>
+    </div>
+
     <footer><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; An Ale for Every Tale</footer>
 </div>
 
@@ -591,7 +683,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -775,8 +867,9 @@ window.toggleSessionExpand = function(sd, ev) {
 };
 window.saveRecap = async function(sd) {
     const q = activeQuills[sd]; if (!q) return;
-    const html = q.root.innerHTML; const text = q.getText().trim(); if (!text) return;
-    try { await updateDoc(doc(db, "sessions", sd), { recapHtml: html, recap: text }); const m = document.getElementById(`recap-msg-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } } catch(e) { console.error(e); }
+    const html = q.root.innerHTML; const text = q.getText().trim();
+    const data = text ? { recapHtml: html, recap: text } : { recapHtml: '', recap: '' };
+    try { await updateDoc(doc(db, "sessions", sd), data); const m = document.getElementById(`recap-msg-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } if (!text) { setTimeout(() => renderAll(), 500); } } catch(e) { console.error(e); }
 };
 window.editRecap = function(sd) {
     const s = sessions.find(x => x.date === sd); if (!s) return;
@@ -803,12 +896,25 @@ window.uploadPdf = function(sd, inputEl) {
     }).then(() => { clearInterval(dotTimer); if (st) st.textContent = 'Uploaded!'; setTimeout(() => { if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage); }, 1000); }).catch(e => { clearInterval(dotTimer); console.error(e); if (st) st.textContent = 'Upload failed — try again'; if (btn) btn.style.pointerEvents = 'auto'; });
 };
 
+window.deletePdf = async function(sd) {
+    const s = sessions.find(x => x.date === sd); if (!s || !s.pdfUrl) return;
+    if (!confirm('Delete this PDF recap?')) return;
+    try {
+        // Try to delete from storage if it's a clean URL
+        const pdfPath = s.pdfUrl.startsWith('/recaps/') ? s.pdfUrl.slice(1) : null;
+        if (pdfPath) { try { await deleteObject(storageRef(storage, pdfPath)); } catch(e) { console.warn('Storage delete failed (may not exist):', e); } }
+        await updateDoc(doc(db, "sessions", sd), { pdfUrl: '', pdfName: '' });
+        if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage);
+    } catch(e) { console.error(e); alert('Failed to delete PDF.'); }
+};
+
 // Save recap from campaign overview editor
 window.saveOverviewRecap = async function(sd) {
     const key = `overview-${sd}`;
     const q = activeQuills[key]; if (!q) return;
-    const html = q.root.innerHTML; const text = q.getText().trim(); if (!text) return;
-    try { await updateDoc(doc(db, "sessions", sd), { recapHtml: html, recap: text }); const m = document.getElementById(`recap-msg-overview-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } } catch(e) { console.error(e); }
+    const html = q.root.innerHTML; const text = q.getText().trim();
+    const data = text ? { recapHtml: html, recap: text } : { recapHtml: '', recap: '' };
+    try { await updateDoc(doc(db, "sessions", sd), data); const m = document.getElementById(`recap-msg-overview-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } if (!text) { setTimeout(() => renderCampaignPage(currentPage), 500); } } catch(e) { console.error(e); }
 };
 
 // ===== RENDER =====
@@ -835,36 +941,93 @@ function renderHero() {
     const lastSession = pastForCampaign.length > 0 ? pastForCampaign[pastForCampaign.length - 1] : null;
     let recapBlock = '';
     if (lastSession && (lastSession.recapHtml || lastSession.recap)) {
-        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
+        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-recap" style="cursor:pointer" onclick="openReaderModal('${lastSession.date}')">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
     } else if (lastSession) {
         recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-no-recap" style="cursor:pointer" onclick="goToSession('${lastSession.date}')">No recap yet — tap to add one</div>`;
     }
     document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
 }
 
-// ===== RECENT RECAPS: Last session per campaign =====
+// ===== LAST SESSIONS: Collapsible section =====
+let lastSessionsExpanded = false;
 function renderRecentRecaps() {
     const today = getToday();
-    // When filtered to a specific campaign, hide recent recaps (hero already covers it)
     if (activeFilter !== 'all') { document.getElementById('recent-recaps').innerHTML = ''; return; }
+
+    // Find the next upcoming session to determine "primary" campaign
+    const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
+    const primaryCampaign = next ? next.campaign : null;
+
     const campaigns = ['frostmaiden', 'strahd', 'rokugan'];
-    const cards = [];
+    const lastSessions = [];
     campaigns.forEach(c => {
         const past = sessions.filter(s => s.campaign === c && parseDate(s.date) < today && s.status !== "cancelled");
         if (past.length === 0) return;
-        const last = past[past.length - 1];
-        let excerpt = '';
-        if (last.recapHtml || last.recap) {
-            const text = last.recapHtml ? stripHtml(last.recapHtml) : last.recap;
-            excerpt = `<div class="rrc-excerpt">${escapeHtml(text)}</div>`;
-        } else { excerpt = `<div class="rrc-no-recap">No recap yet — tap to add</div>`; }
-        let pdfLink = '';
-        if (last.pdfUrl) { pdfLink = `<a class="rrc-pdf" href="${escapeHtml(last.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; PDF</a>`; }
-        cards.push(`<div class="recent-recap-card ${c}" onclick="goToSession('${last.date}')"><div class="rrc-campaign">${campaignNames[c]}</div><div class="rrc-date">${formatDateShort(last.date)}</div>${excerpt}${pdfLink}</div>`);
+        lastSessions.push({ campaign: c, session: past[past.length - 1] });
     });
-    if (cards.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
-    document.getElementById('recent-recaps').innerHTML = `<div class="recent-recaps-section"><div class="recent-recaps-label">Last Sessions</div><div class="recent-recaps-grid">${cards.join('')}</div></div>`;
+    if (lastSessions.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
+
+    // Primary card = same campaign as next session; others go in collapsible
+    const primary = lastSessions.find(x => x.campaign === primaryCampaign) || lastSessions[0];
+    const others = lastSessions.filter(x => x !== primary);
+
+    function buildCard(item) {
+        const s = item.session; const c = item.campaign;
+        let recapBlock = '';
+        if (s.recapHtml || s.recap) {
+            const text = s.recapHtml ? stripHtml(s.recapHtml) : s.recap;
+            recapBlock = `<div class="lsc-recap">${escapeHtml(text)}</div>`;
+        } else {
+            recapBlock = `<div class="lsc-no-recap" onclick="goToSession('${s.date}')">No recap yet — tap to add</div>`;
+        }
+        let actions = '<div class="lsc-actions">';
+        if (s.recapHtml || s.recap) {
+            actions += `<button class="lsc-read-btn" onclick="openReaderModal('${s.date}')">Read Full</button>`;
+        }
+        actions += `<button class="lsc-edit-btn" onclick="goToSession('${s.date}')">Edit</button>`;
+        if (s.pdfUrl) { actions += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
+        actions += '</div>';
+        return `<div class="last-session-card ${c}"><div class="lsc-top"><div class="lsc-campaign">${campaignIcons[c]} ${campaignNames[c]}</div><div class="lsc-date">${formatDateShort(s.date)}</div></div>${recapBlock}${actions}</div>`;
+    }
+
+    let html = '<div class="last-sessions-section">';
+    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-arrow">&#9654;</span> Last Sessions</button>`;
+    html += '<div class="last-sessions-list">';
+    html += buildCard(primary);
+    if (others.length > 0) {
+        html += `<div class="last-sessions-extra${lastSessionsExpanded ? ' open' : ''}" id="last-sessions-extra">`;
+        others.forEach(item => { html += buildCard(item); });
+        html += '</div>';
+    }
+    html += '</div></div>';
+    document.getElementById('recent-recaps').innerHTML = html;
 }
+window.toggleLastSessions = function() {
+    lastSessionsExpanded = !lastSessionsExpanded;
+    const h = document.querySelector('.last-sessions-header');
+    const e = document.getElementById('last-sessions-extra');
+    if (h) h.classList.toggle('open', lastSessionsExpanded);
+    if (e) e.classList.toggle('open', lastSessionsExpanded);
+};
+window.openReaderModal = function(ds) {
+    const s = sessions.find(x => x.date === ds); if (!s) return;
+    const modal = document.getElementById('reader-modal');
+    const overlay = document.getElementById('reader-overlay');
+    modal.className = `reader-modal ${s.campaign}`;
+    document.getElementById('reader-title').textContent = campaignNames[s.campaign];
+    document.getElementById('reader-date').textContent = formatDate(s.date);
+    document.getElementById('reader-body').innerHTML = s.recapHtml || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
+    let footer = `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
+    if (s.pdfUrl) { footer += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF Recap</a>`; }
+    document.getElementById('reader-footer').innerHTML = footer;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closeReaderModal = function() {
+    document.getElementById('reader-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+};
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReaderModal(); });
 // Go to a session: switch to list, show past if needed, scroll and expand
 window.goToSession = function(ds) {
     // Make sure we're on home view
@@ -915,7 +1078,7 @@ function renderSessionCard(s, gi, ci) {
         if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
         else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`; }
         recapHtml += `</div><div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
-        if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
+        if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${s.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
         else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
         recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span></div></div>`;
     }
@@ -972,7 +1135,7 @@ function renderCampaignPage(campaign) {
             html += `<div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-overview-${lastPast.date}">Saved!</span></div>`;
         }
         html += `<div style="margin-top:10px"><div class="pdf-upload-area">`;
-        if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a><label class="pdf-upload-btn" style="margin-left:8px">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label>`; }
+        if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a><label class="pdf-upload-btn" style="margin-left:8px">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label><button class="delete-btn" onclick="deletePdf('${lastPast.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
         else { html += `<label class="pdf-upload-btn">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label>`; }
         html += `<span class="pdf-upload-status" id="pdf-status-${lastPast.date}"></span></div></div>`;
     }
