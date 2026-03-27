@@ -297,6 +297,12 @@
         .past-sessions-container { display: none; }
         .past-sessions-container.open { display: block; }
         .past-sessions-container .session-card { opacity: 0.7; }
+        .sort-toggle {
+            font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 4px 10px;
+            border-radius: 5px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s; margin-left: auto;
+        }
+        .sort-toggle:hover { color: var(--text); border-color: var(--text-dim); }
         .past-sessions-container .session-card:hover { opacity: 1; }
 
         /* ===== CAMPAIGN PAGE ===== */
@@ -352,9 +358,9 @@
         .hero-countdown strong { color: var(--text); font-weight: 600; }
         .hero-date { font-size: 0.85rem; color: var(--text); margin-bottom: 12px; }
         .hero-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
-        .hero-recap { font-size: 0.82rem; color: var(--text); line-height: 1.6; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; max-height: 120px; overflow-y: auto; }
-        .hero-recap p { margin-bottom: 4px; }
-        .hero-recap p:last-child { margin-bottom: 0; }
+        .hero-recap { font-size: 0.82rem; color: var(--text); line-height: 1.6; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .hero-recap p { margin-bottom: 0; display: inline; }
+        .hero-recap p::after { content: ' '; }
         .hero-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
 
         /* ===== LAST SESSIONS (collapsible) ===== */
@@ -522,7 +528,7 @@
             .hero-campaign { font-size: 0.95rem; }
             .hero-countdown { font-size: 0.75rem; }
             .hero-date { font-size: 0.78rem; }
-            .hero-recap { font-size: 0.78rem; padding: 8px 10px; max-height: 100px; }
+            .hero-recap { font-size: 0.78rem; padding: 8px 10px; }
             .last-session-card { padding: 12px 14px; }
             .lsc-campaign { font-size: 0.82rem; }
             .lsc-recap { font-size: 0.78rem; -webkit-line-clamp: 2; }
@@ -744,6 +750,7 @@ let activeView = "list";
 let cancelPendingSession = null;
 let currentPage = "home";
 let pastSessionsVisible = false;
+let campaignSortNewest = true;
 let activeQuills = {};
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -772,7 +779,7 @@ window.navigateTo = function(page) {
     else if (page === 'rokugan') items[3].classList.add('active');
     else if (page === 'special') items[4].classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); }
-    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); renderCampaignPage(page); }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = true; renderCampaignPage(page); }
 };
 window.openAddSession = function() {
     closeNav();
@@ -1000,7 +1007,7 @@ function renderRecentRecaps() {
 
     // Always collapsed by default — just the header toggle with all other campaigns inside
     let html = '<div class="last-sessions-section">';
-    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-arrow">&#9654;</span> Other Campaigns</button>`;
+    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-arrow">&#9654;</span> Recaps from Other Campaigns</button>`;
     html += `<div class="last-sessions-extra${lastSessionsExpanded ? ' open' : ''}" id="last-sessions-extra">`;
     others.forEach(item => { html += buildCard(item); });
     html += '</div></div>';
@@ -1145,18 +1152,14 @@ function renderCampaignPage(campaign) {
     }
     html += `</div>`;
 
-    // Upcoming sessions with month headers
-    if (upcoming.length > 0) {
-        const g = {}; upcoming.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-        Object.keys(g).sort().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
-    }
-    // Past sessions with month headers
-    if (past.length > 0) {
-        html += `<button class="past-sessions-toggle" onclick="toggleCampaignPast()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${past.length})</button>`;
-        html += `<div class="past-sessions-container" id="campaign-past-container">`;
-        const g = {}; past.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-        Object.keys(g).sort().reverse().forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
-        html += `</div>`;
+    // Sort toggle for all sessions
+    if (cs.length > 0) {
+        html += `<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px"><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? 'Newest First' : 'Oldest First'}</button></div>`;
+        // Combine all sessions into one sorted list
+        const allSorted = [...cs].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+        const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        const sortedKeys = Object.keys(g).sort(); if (campaignSortNewest) sortedKeys.reverse();
+        sortedKeys.forEach((k, gi) => { html += `<div class="month-group"><div class="month-label">${getMonthLabel(k)}</div><div class="sessions-list">`; g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += `</div></div>`; });
     }
     if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     document.getElementById('campaign-page-content').innerHTML = html;
@@ -1169,7 +1172,7 @@ function renderCampaignPage(campaign) {
         }
     }
 }
-window.toggleCampaignPast = function() { const t = document.querySelector('#campaign-page-content .past-sessions-toggle'); const c = document.getElementById('campaign-past-container'); if (t) t.classList.toggle('open'); if (c) c.classList.toggle('open'); };
+window.toggleCampaignSort = function(campaign) { campaignSortNewest = !campaignSortNewest; renderCampaignPage(campaign); };
 
 function renderCalendar() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
