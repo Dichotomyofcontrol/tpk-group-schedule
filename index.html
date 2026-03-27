@@ -497,6 +497,52 @@
         .campaign-last-recap-meta { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 8px; }
         .campaign-last-pdf { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 5px 12px; background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.2); border-radius: 6px; color: var(--frostmaiden-primary); font-size: 0.75rem; text-decoration: none; }
 
+        /* ===== COPY BUTTON ===== */
+        .copy-recap-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 5px 12px;
+            border-radius: 6px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .copy-recap-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .copy-recap-btn.copied { color: #4caf50; border-color: #4caf50; }
+
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            background: none; border: 1px solid var(--border); border-radius: 100px;
+            color: var(--text-dim); cursor: pointer; font-size: 0.85rem;
+            padding: 4px 10px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+
+        /* ===== LIGHT THEME ===== */
+        body.light {
+            --bg: #f5f5f0;
+            --surface: #ffffff;
+            --surface-hover: #f0f0ea;
+            --text: #1a1a24;
+            --text-dim: #6b6b7a;
+            --border: #d8d8e0;
+        }
+        body.light::before {
+            background: radial-gradient(ellipse at 30% 20%, rgba(79,195,247,0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(239,83,80,0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 50%, rgba(240,165,0,0.04) 0%, transparent 50%);
+        }
+        body.light .reader-body { color: var(--text); }
+        body.light .ql-editor { color: var(--text); }
+        body.light .ql-snow .ql-stroke { stroke: var(--text-dim); }
+        body.light .ql-snow .ql-fill { fill: var(--text-dim); }
+        body.light .ql-snow .ql-picker-label { color: var(--text-dim); }
+        body.light .ql-toolbar.ql-snow { border-color: var(--border); }
+        body.light .ql-container.ql-snow { border-color: var(--border); }
+        body.light #password-gate h1 {
+            -webkit-text-fill-color: transparent;
+        }
+        body.light .top-bar-logo {
+            -webkit-text-fill-color: transparent;
+        }
+
         footer { text-align: center; padding: 48px 0 24px; font-size: 0.7rem; color: var(--text-dim); opacity: 0.3; }
         footer a { color: var(--text-dim); text-decoration: none; }
 
@@ -647,7 +693,10 @@
                 <button class="hamburger" onclick="openNav()">&#9776;</button>
                 <div class="top-bar-logo">Six in the TPK</div>
             </div>
-            <button class="sign-out-btn" onclick="logout()">Sign Out</button>
+            <div style="display:flex;align-items:center;gap:8px">
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
+                <button class="sign-out-btn" onclick="logout()">Sign Out</button>
+            </div>
         </div>
 
         <!-- HOME VIEW -->
@@ -1075,7 +1124,8 @@ window.openReaderModal = function(ds) {
     document.getElementById('reader-title').textContent = campaignNames[s.campaign];
     document.getElementById('reader-date').textContent = formatDate(s.date);
     document.getElementById('reader-body').innerHTML = s.recapHtml || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
-    let footer = `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
+    let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">&#128203; Copy</button>`;
+    footer += `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
     if (s.pdfUrl) { footer += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF Recap</a>`; }
     document.getElementById('reader-footer').innerHTML = footer;
     overlay.classList.add('open');
@@ -1086,6 +1136,40 @@ window.closeReaderModal = function() {
     document.body.style.overflow = '';
 };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReaderModal(); });
+
+// ===== COPY RECAP =====
+window.copyRecapText = function(sd, btn) {
+    const s = sessions.find(x => x.date === sd); if (!s) return;
+    const text = s.recapHtml ? stripHtml(s.recapHtml) : (s.recap || '');
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        btn.innerHTML = '&#10003; Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.innerHTML = '&#128203; Copy'; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        btn.innerHTML = '&#10003; Copied'; btn.classList.add('copied');
+        setTimeout(() => { btn.innerHTML = '&#128203; Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+};
+
+// ===== THEME TOGGLE =====
+window.toggleTheme = function() {
+    const isLight = document.body.classList.toggle('light');
+    localStorage.setItem('tpk-theme', isLight ? 'light' : 'dark');
+    document.getElementById('theme-toggle').innerHTML = isLight ? '&#9728;' : '&#9790;';
+};
+// Apply saved theme on load
+(function() {
+    const saved = localStorage.getItem('tpk-theme');
+    if (saved === 'light') {
+        document.body.classList.add('light');
+        const btn = document.getElementById('theme-toggle');
+        if (btn) btn.innerHTML = '&#9728;';
+    }
+})();
 // Go to a session: switch to list, show past if needed, scroll and expand
 window.goToSession = function(ds) {
     // Make sure we're on home view
@@ -1151,7 +1235,7 @@ function renderSessionCard(s, gi, ci) {
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
         recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
-        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
+        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${s.date}', this)">&#128203; Copy</button><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
         else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`; }
         recapHtml += `</div><div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
         if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${s.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
@@ -1234,7 +1318,7 @@ function renderCampaignPage(campaign) {
         html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         if (lastPast.recapHtml || lastPast.recap) {
             html += `<div class="campaign-last-recap"><div class="campaign-last-recap-text">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div></div>`;
-            html += `<div class="recap-actions" style="margin-top:8px"><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
+            html += `<div class="recap-actions" style="margin-top:8px"><button class="copy-recap-btn" onclick="copyRecapText('${lastPast.date}', this)">&#128203; Copy</button><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
         } else {
             html += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.date}"></div></div>`;
             html += `<div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-overview-${lastPast.date}">Saved!</span></div>`;
