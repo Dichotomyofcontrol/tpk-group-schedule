@@ -524,24 +524,25 @@
         /* ===== CAMPAIGN PAGE OVERVIEW ===== */
         .campaign-overview { margin-bottom: 24px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
         .campaign-overview-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 10px; font-weight: 500; }
-        .campaign-roster { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        .campaign-roster { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: stretch; }
         /* Player card */
         .player-card {
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-            padding: 12px 14px 10px; background: var(--bg); border: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 12px 10px 10px; background: var(--bg); border: 1px solid var(--border);
             border-radius: 10px; width: 110px; text-align: center; transition: all 0.2s;
         }
         .player-card:hover { border-color: var(--text-dim); }
         .player-avatar {
-            width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
+            width: 56px; height: 56px; border-radius: 50%; overflow: hidden;
             background: var(--surface); border: 2px solid var(--border);
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem; color: var(--text-dim); flex-shrink: 0;
+            font-size: 1.3rem; color: var(--text-dim); flex-shrink: 0;
+            margin-bottom: 2px;
         }
         .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .player-name { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.2; }
-        .player-class { font-size: 0.65rem; color: var(--text-dim); line-height: 1.3; }
-        .player-level { font-size: 0.58rem; color: var(--text-dim); opacity: 0.7; margin-top: -2px; }
+        .player-name { font-size: 0.8rem; font-weight: 600; color: var(--text); line-height: 1.2; min-height: 1.2em; display: flex; align-items: center; }
+        .player-class { font-size: 0.65rem; color: var(--text-dim); line-height: 1.3; min-height: 2.6em; display: flex; align-items: flex-start; justify-content: center; width: 100%; }
+        .player-level { font-size: 0.6rem; color: var(--text-dim); opacity: 0.7; }
         /* Edit mode player card */
         .player-card.editing { width: 130px; padding-bottom: 8px; }
         .player-avatar.editable { cursor: pointer; position: relative; }
@@ -613,6 +614,40 @@
         }
         .roster-add-card:hover { border-color: var(--text-dim); color: var(--text); }
         .roster-add-card .add-icon { font-size: 1.5rem; opacity: 0.5; }
+        /* Player detail modal */
+        .player-detail-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 200; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .player-detail-overlay.open { display: flex; }
+        .player-detail-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+            width: 100%; max-width: 320px; text-align: center; overflow: hidden;
+            animation: fadeIn 0.25s ease forwards;
+        }
+        .player-detail-img {
+            width: 100%; aspect-ratio: 1; background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 5rem; color: var(--text-dim); overflow: hidden;
+        }
+        .player-detail-img img { width: 100%; height: 100%; object-fit: cover; }
+        .player-detail-info { padding: 20px 24px 24px; }
+        .player-detail-name {
+            font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .player-detail-class { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 2px; }
+        .player-detail-level { font-size: 0.75rem; color: var(--text-dim); opacity: 0.7; }
+        .player-detail-close {
+            position: absolute; top: 12px; right: 12px;
+            background: rgba(0,0,0,0.5); border: none; border-radius: 50%;
+            color: #fff; width: 32px; height: 32px; font-size: 1.1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .player-detail-close:hover { background: rgba(0,0,0,0.7); }
+        .player-card:not(.editing) { cursor: pointer; }
         /* Scope selector */
         .scope-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
@@ -788,11 +823,11 @@
             .campaign-overview { padding: 14px 16px; }
             .roster-chip { padding: 6px 10px; min-width: 60px; }
             .roster-name { font-size: 0.75rem; }
-            .player-card { width: 90px; padding: 10px 8px 8px; }
+            .player-card { width: 90px; padding: 10px 6px 8px; }
             .player-card.editing { width: 110px; }
-            .player-avatar { width: 50px; height: 50px; font-size: 1.1rem; }
-            .player-name { font-size: 0.72rem; }
-            .player-class { font-size: 0.58rem; }
+            .player-avatar { width: 44px; height: 44px; font-size: 1rem; }
+            .player-name { font-size: 0.72rem; min-height: 1.2em; }
+            .player-class { font-size: 0.58rem; min-height: 2.4em; }
             .player-edit-input { font-size: 0.65rem; padding: 3px 6px; }
             .roster-add-card { width: 90px; min-height: 100px; }
             #password-gate h1 { font-size: clamp(1.6rem, 5vw, 2.5rem); }
@@ -948,6 +983,19 @@
         </div>
     </div>
 
+    <!-- Player Detail Modal -->
+    <div class="player-detail-overlay" id="player-detail-overlay" onclick="closePlayerDetail()">
+        <div class="player-detail-modal" onclick="event.stopPropagation()" style="position:relative">
+            <button class="player-detail-close" onclick="closePlayerDetail()">&times;</button>
+            <div class="player-detail-img" id="player-detail-img"></div>
+            <div class="player-detail-info">
+                <div class="player-detail-name" id="player-detail-name"></div>
+                <div class="player-detail-class" id="player-detail-class"></div>
+                <div class="player-detail-level" id="player-detail-level"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scope Selector Modal -->
     <div class="scope-overlay" id="scope-overlay" onclick="cancelPartyAction()">
         <div class="scope-modal" onclick="event.stopPropagation()">
@@ -1070,6 +1118,7 @@ let cancelPendingSession = null;
 let currentPage = "home";
 let pastSessionsVisible = false;
 let campaignSortNewest = false;
+let campaignTimeFilter = 'all';
 let activeQuills = {};
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -1098,7 +1147,7 @@ window.navigateTo = function(page) {
     else if (page === 'rokugan') items[3].classList.add('active');
     else if (page === 'special') items[4].classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
-    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'all'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
 window.openAddSession = function() {
     closeNav();
@@ -1277,8 +1326,10 @@ function monthGroupOpen(k, sessionList) {
 function monthGroupClose() { return '</div></div></div>'; }
 
 window.toggleMonth = function(k) {
-    const hdr = document.querySelector(`.month-header[onclick*="'${k}'"]`);
-    const body = document.getElementById(`month-${k}`);
+    const container = document.querySelector('.campaign-page.active') ? document.getElementById('campaign-page-content') : document.getElementById('list-view');
+    if (!container) return;
+    const hdr = container.querySelector(`.month-header[onclick*="'${k}'"]`);
+    const body = container.querySelector(`[id="month-${k}"]`);
     if (!hdr || !body) return;
     const isCollapsed = hdr.classList.toggle('collapsed');
     body.classList.toggle('collapsed', isCollapsed);
@@ -1287,10 +1338,12 @@ window.toggleMonth = function(k) {
 
 window.toggleAllMonths = function() {
     allMonthsCollapsed = !allMonthsCollapsed;
-    document.querySelectorAll('.month-header').forEach(hdr => {
+    const container = document.querySelector('.campaign-page.active') ? document.getElementById('campaign-page-content') : document.getElementById('list-view');
+    if (!container) return;
+    container.querySelectorAll('.month-header').forEach(hdr => {
         const m = hdr.getAttribute('onclick').match(/'([^']+)'/);
         if (!m) return;
-        const k = m[1]; const body = document.getElementById(`month-${k}`);
+        const k = m[1]; const body = container.querySelector(`[id="month-${k}"]`);
         hdr.classList.toggle('collapsed', allMonthsCollapsed);
         if (body) body.classList.toggle('collapsed', allMonthsCollapsed);
         if (allMonthsCollapsed) collapsedMonths.add(k); else collapsedMonths.delete(k);
@@ -1330,6 +1383,24 @@ async function saveCharactersToFirestore() {
     try { await setDoc(doc(db, "config", "characters"), { ...campaignCharacters }); }
     catch(e) { console.error('Failed to save characters:', e); }
 }
+
+// Player detail modal
+window.openPlayerDetail = function(campaign, name) {
+    const chars = campaignCharacters[campaign] || {};
+    const c = chars[name] || {};
+    const imgEl = document.getElementById('player-detail-img');
+    imgEl.innerHTML = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(name)}">` : name.charAt(0).toUpperCase();
+    document.getElementById('player-detail-name').textContent = name;
+    const classText = c.charClass ? (c.subclass ? c.charClass + ' · ' + c.subclass : c.charClass) : '';
+    document.getElementById('player-detail-class').textContent = classText;
+    document.getElementById('player-detail-level').textContent = c.level ? 'Level ' + c.level : '';
+    document.getElementById('player-detail-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closePlayerDetail = function() {
+    document.getElementById('player-detail-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+};
 
 window.togglePartyEdit = function(campaign) {
     partyEditMode = partyEditMode === campaign ? null : campaign;
@@ -1383,7 +1454,7 @@ window.uploadAvatar = async function(campaign, index, inputEl) {
     const name = campaignRosters[campaign][index];
     const cleanName = name.replace(/\s+/g, '_');
     const ext = file.name.split('.').pop();
-    const path = `avatars/${campaign}_${cleanName}.${ext}`;
+    const path = `recaps/avatars/${campaign}_${cleanName}.${ext}`;
     const ref = storageRef(storage, path);
     try {
         const snap = await uploadBytes(ref, file);
@@ -1611,7 +1682,7 @@ window.closeReaderModal = function() {
     document.getElementById('reader-overlay').classList.remove('open');
     document.body.style.overflow = '';
 };
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReaderModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeReaderModal(); closePlayerDetail(); } });
 
 // ===== COPY RECAP =====
 window.copyRecapText = function(sd, btn) {
@@ -1830,10 +1901,10 @@ function renderCampaignPage(campaign) {
         roster.forEach(p => {
             const c = chars[p] || {};
             const avatarInner = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
-            html += `<div class="player-card">`;
+            html += `<div class="player-card" onclick="openPlayerDetail('${campaign}','${escapeHtml(p)}')">`;
             html += `<div class="player-avatar">${avatarInner}</div>`;
             html += `<div class="player-name">${escapeHtml(p)}</div>`;
-            if (c.charClass) { html += `<div class="player-class">${escapeHtml(c.charClass)}${c.subclass ? ' · '+escapeHtml(c.subclass) : ''}</div>`; }
+            if (c.charClass) { const fullClass = c.charClass + (c.subclass ? ' · '+c.subclass : ''); html += `<div class="player-class" title="${escapeHtml(fullClass)}">${escapeHtml(c.charClass)}${c.subclass ? ' · '+escapeHtml(c.subclass) : ''}</div>`; }
             if (c.level) { html += `<div class="player-level">Lvl ${c.level}</div>`; }
             html += `</div>`;
         });
@@ -1859,14 +1930,30 @@ function renderCampaignPage(campaign) {
         html += `</div>`;
     }
 
-    // Sort toggle + collapse all for all sessions
+    // Controls row: time filters + sort + collapse all
     if (cs.length > 0) {
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button><div class="collapse-all-row" style="margin-bottom:0"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button></div></div>`;
-        // Combine all sessions into one sorted list
-        const allSorted = [...cs].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
-        const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-        const sortedKeys = Object.keys(g).sort(); if (campaignSortNewest) sortedKeys.reverse();
-        sortedKeys.forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap">`;
+        html += `<div style="display:flex;gap:0">`;
+        html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
+        html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
+        html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
+        html += `</div>`;
+        html += `<div style="display:flex;gap:8px;align-items:center">`;
+        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        html += `<button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
+        html += `</div></div>`;
+        // Filter sessions based on time filter
+        let displaySessions = cs;
+        if (campaignTimeFilter === 'upcoming') displaySessions = upcoming;
+        else if (campaignTimeFilter === 'past') displaySessions = past;
+        if (displaySessions.length > 0) {
+            const allSorted = [...displaySessions].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+            const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+            const sortedKeys = Object.keys(g).sort(); if (campaignSortNewest) sortedKeys.reverse();
+            sortedKeys.forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
+        } else {
+            html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${campaignTimeFilter} sessions.</div></div>`;
+        }
     }
     if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     document.getElementById('campaign-page-content').innerHTML = html;
@@ -1880,6 +1967,7 @@ function renderCampaignPage(campaign) {
     }
 }
 window.toggleCampaignSort = function(campaign) { campaignSortNewest = !campaignSortNewest; renderCampaignPage(campaign); };
+window.setCampaignTimeFilter = function(t, campaign) { campaignTimeFilter = t; collapsedMonths.clear(); allMonthsCollapsed = false; renderCampaignPage(campaign); };
 
 function renderCalendar() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
