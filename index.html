@@ -131,14 +131,6 @@
         .view-btn:first-child { border-radius: 6px 0 0 6px; }
         .view-btn:last-child { border-radius: 0 6px 6px 0; }
         .view-btn.active { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
-        .next-session-pill {
-            display: flex; align-items: center; gap: 8px;
-            padding: 6px 14px; border-radius: 100px;
-            border: 1px solid var(--border); background: var(--surface);
-            font-size: 0.78rem; color: var(--text-dim);
-        }
-        .next-session-pill .nsp-icon { font-size: 0.9rem; }
-        .next-session-pill .nsp-text strong { color: var(--text); font-weight: 600; }
 
         /* ===== SLIDE-OUT NAV ===== */
         .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; }
@@ -444,7 +436,6 @@
             .cal-header span { font-size: 0.55rem; }
             .month-label { font-size: 0.72rem; }
             .nav-menu { width: 85vw; max-width: 300px; }
-            .next-session-pill { display: none; }
             .add-session-modal { padding: 18px; width: 95%; }
             .form-group input, .form-group select { font-size: 0.82rem; padding: 10px; }
             .campaign-page-title { font-size: 1rem; }
@@ -569,13 +560,12 @@
             <!-- Row 2: Stats as filters -->
             <div class="stats-bar" id="stats-bar"></div>
 
-            <!-- Row 3: View toggle + next session pill -->
+            <!-- Row 3: View toggle -->
             <div class="controls-row">
                 <div class="controls-left">
                     <button class="view-btn active" data-view="list">List</button>
                     <button class="view-btn" data-view="calendar">Calendar</button>
                 </div>
-                <div id="next-session-pill"></div>
             </div>
 
             <!-- Content -->
@@ -798,13 +788,31 @@ window.editRecap = function(sd) {
 };
 window.uploadPdf = function(sd, inputEl) {
     const file = inputEl.files[0]; if (!file || file.type !== 'application/pdf') { alert('Please select a PDF.'); return; }
+    if (file.size > 25 * 1024 * 1024) { alert('File too large. Max 25MB.'); return; }
     const st = document.getElementById(`pdf-status-${sd}`); if (st) st.textContent = 'Uploading...';
+    // Disable the upload button to prevent double-clicks
+    const btn = inputEl.closest('.pdf-upload-btn'); if (btn) btn.style.pointerEvents = 'none';
     const fr = storageRef(storage, `recaps/${sd}_${file.name}`);
-    uploadBytes(fr, file).then(snap => getDownloadURL(snap.ref)).then(url => updateDoc(doc(db, "sessions", sd), { pdfUrl: url, pdfName: file.name })).then(() => { if (st) st.textContent = 'Uploaded!'; if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage); }).catch(e => { console.error(e); if (st) st.textContent = 'Failed.'; });
+    const startTime = Date.now();
+    // Show progress dots
+    let dots = 0; const dotTimer = setInterval(() => { dots = (dots + 1) % 4; if (st) st.textContent = 'Uploading' + '.'.repeat(dots + 1); }, 500);
+    const cleanName = file.name.replace(/\s+/g, '_');
+    uploadBytes(fr, file).then(snap => getDownloadURL(snap.ref)).then(url => {
+        const cleanUrl = `/recaps/${sd}_${cleanName}`;
+        return updateDoc(doc(db, "sessions", sd), { pdfUrl: cleanUrl, pdfName: file.name });
+    }).then(() => { clearInterval(dotTimer); if (st) st.textContent = 'Uploaded!'; setTimeout(() => { if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage); }, 1000); }).catch(e => { clearInterval(dotTimer); console.error(e); if (st) st.textContent = 'Upload failed — try again'; if (btn) btn.style.pointerEvents = 'auto'; });
+};
+
+// Save recap from campaign overview editor
+window.saveOverviewRecap = async function(sd) {
+    const key = `overview-${sd}`;
+    const q = activeQuills[key]; if (!q) return;
+    const html = q.root.innerHTML; const text = q.getText().trim(); if (!text) return;
+    try { await updateDoc(doc(db, "sessions", sd), { recapHtml: html, recap: text }); const m = document.getElementById(`recap-msg-overview-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } } catch(e) { console.error(e); }
 };
 
 // ===== RENDER =====
-function renderAll() { renderHero(); renderRecentRecaps(); renderStatsBar(); renderNextSessionPill(); renderList(); renderCalendar(); }
+function renderAll() { renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
 function formatDateShort(ds) { return parseDate(ds).toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
@@ -817,7 +825,8 @@ function stripHtml(h) { const d = document.createElement('div'); d.innerHTML = h
 // ===== HERO: Next session + last recap =====
 function renderHero() {
     const today = getToday();
-    const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
+    const filtered = activeFilter === 'all' ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    const next = filtered.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
     if (!next) { document.getElementById('hero-section').innerHTML = ''; return; }
     const d = parseDate(next.date); const diff = Math.ceil((d - today) / 86400000);
     const when = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `in ${diff} days`;
@@ -828,7 +837,7 @@ function renderHero() {
     if (lastSession && (lastSession.recapHtml || lastSession.recap)) {
         recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
     } else if (lastSession) {
-        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-no-recap">No recap yet — someone should write one!</div>`;
+        recapBlock = `<div class="hero-label">Last Time (${formatDateShort(lastSession.date)})</div><div class="hero-no-recap" style="cursor:pointer" onclick="goToSession('${lastSession.date}')">No recap yet — tap to add one</div>`;
     }
     document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
 }
@@ -836,6 +845,8 @@ function renderHero() {
 // ===== RECENT RECAPS: Last session per campaign =====
 function renderRecentRecaps() {
     const today = getToday();
+    // When filtered to a specific campaign, hide recent recaps (hero already covers it)
+    if (activeFilter !== 'all') { document.getElementById('recent-recaps').innerHTML = ''; return; }
     const campaigns = ['frostmaiden', 'strahd', 'rokugan'];
     const cards = [];
     campaigns.forEach(c => {
@@ -846,14 +857,36 @@ function renderRecentRecaps() {
         if (last.recapHtml || last.recap) {
             const text = last.recapHtml ? stripHtml(last.recapHtml) : last.recap;
             excerpt = `<div class="rrc-excerpt">${escapeHtml(text)}</div>`;
-        } else { excerpt = `<div class="rrc-no-recap">No recap yet</div>`; }
+        } else { excerpt = `<div class="rrc-no-recap">No recap yet — tap to add</div>`; }
         let pdfLink = '';
         if (last.pdfUrl) { pdfLink = `<a class="rrc-pdf" href="${escapeHtml(last.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; PDF</a>`; }
-        cards.push(`<div class="recent-recap-card ${c}" onclick="navigateTo('${c}')"><div class="rrc-campaign">${campaignNames[c]}</div><div class="rrc-date">${formatDateShort(last.date)}</div>${excerpt}${pdfLink}</div>`);
+        cards.push(`<div class="recent-recap-card ${c}" onclick="goToSession('${last.date}')"><div class="rrc-campaign">${campaignNames[c]}</div><div class="rrc-date">${formatDateShort(last.date)}</div>${excerpt}${pdfLink}</div>`);
     });
     if (cards.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
     document.getElementById('recent-recaps').innerHTML = `<div class="recent-recaps-section"><div class="recent-recaps-label">Last Sessions</div><div class="recent-recaps-grid">${cards.join('')}</div></div>`;
 }
+// Go to a session: switch to list, show past if needed, scroll and expand
+window.goToSession = function(ds) {
+    // Make sure we're on home view
+    if (currentPage !== 'home') navigateTo('home');
+    // Switch to list view
+    activeView = 'list';
+    document.querySelectorAll('.view-btn').forEach(b => { b.classList.toggle('active', b.dataset.view === 'list'); });
+    document.getElementById('list-view').style.display = 'block';
+    document.getElementById('calendar-view').style.display = 'none';
+    // Show past sessions if needed
+    const s = sessions.find(x => x.date === ds);
+    if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) {
+        pastSessionsVisible = true;
+        const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container');
+        if (t) t.classList.add('open'); if (c) c.classList.add('open');
+    }
+    // Scroll to card and expand
+    setTimeout(() => {
+        const card = document.querySelector(`[data-session-date="${ds}"]`);
+        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
+    }, 100);
+};
 
 // Stats bar = filters
 function renderStatsBar() {
@@ -866,16 +899,8 @@ function renderStatsBar() {
     });
     document.getElementById('stats-bar').innerHTML = html;
 }
-window.setFilter = function(f) { activeFilter = f; renderStatsBar(); renderList(); renderCalendar(); };
+window.setFilter = function(f) { activeFilter = f; renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); };
 
-function renderNextSessionPill() {
-    const today = getToday();
-    const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
-    if (!next) { document.getElementById('next-session-pill').innerHTML = ''; return; }
-    const d = parseDate(next.date); const diff = Math.ceil((d - today) / 86400000);
-    const when = diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : `in ${diff}d`;
-    document.getElementById('next-session-pill').innerHTML = `<div class="next-session-pill"><span class="nsp-icon">${campaignIcons[next.campaign]}</span><span class="nsp-text"><strong>${formatDateShort(next.date)}</strong> &mdash; ${when}</span></div>`;
-}
 
 function renderSessionCard(s, gi, ci) {
     const d = parseDate(s.date); const dn = d.getDate(); const dw = dayNames[d.getDay()];
@@ -941,8 +966,15 @@ function renderCampaignPage(campaign) {
         html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         if (lastPast.recapHtml || lastPast.recap) {
             html += `<div class="campaign-last-recap"><div class="campaign-last-recap-text">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div></div>`;
-        } else { html += `<div class="hero-no-recap">No recap written yet</div>`; }
-        if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a>`; }
+            html += `<div class="recap-actions" style="margin-top:8px"><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
+        } else {
+            html += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.date}"></div></div>`;
+            html += `<div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-overview-${lastPast.date}">Saved!</span></div>`;
+        }
+        html += `<div style="margin-top:10px"><div class="pdf-upload-area">`;
+        if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a><label class="pdf-upload-btn" style="margin-left:8px">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label>`; }
+        else { html += `<label class="pdf-upload-btn">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label>`; }
+        html += `<span class="pdf-upload-status" id="pdf-status-${lastPast.date}"></span></div></div>`;
     }
     html += `</div>`;
 
@@ -961,6 +993,14 @@ function renderCampaignPage(campaign) {
     }
     if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     document.getElementById('campaign-page-content').innerHTML = html;
+    // Initialize Quill for overview recap editor if present
+    if (lastPast && !(lastPast.recapHtml || lastPast.recap)) {
+        const el = document.getElementById(`recap-editor-overview-${lastPast.date}`);
+        if (el) {
+            const key = `overview-${lastPast.date}`;
+            activeQuills[key] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
+        }
+    }
 }
 window.toggleCampaignPast = function() { const t = document.querySelector('#campaign-page-content .past-sessions-toggle'); const c = document.getElementById('campaign-past-container'); if (t) t.classList.toggle('open'); if (c) c.classList.toggle('open'); };
 
