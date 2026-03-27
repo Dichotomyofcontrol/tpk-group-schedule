@@ -1086,7 +1086,8 @@ function renderSessionCard(s, gi, ci) {
     const roster = s.roster || campaignRosters[s.campaign] || [];
     const att = s.attendance || {}; const isCancelled = s.status === "cancelled";
     let attHtml = ''; roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.date}','${p}')" title="Toggle">${p}</button>`; });
-    const actionHtml = isCancelled ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
+    const isPast = d < getToday();
+    const actionHtml = isCancelled ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : isPast ? `<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">&#10005;</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
     let recapHtml = '';
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
