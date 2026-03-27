@@ -548,6 +548,91 @@
         .copy-recap-btn:hover { color: var(--text); border-color: var(--text-dim); }
         .copy-recap-btn.copied { color: #4caf50; border-color: #4caf50; }
 
+        /* ===== PARTY MANAGEMENT ===== */
+        .roster-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .edit-party-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 3px 10px;
+            border-radius: 100px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .edit-party-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .edit-party-btn.active { color: var(--text); border-color: var(--text-dim); background: var(--surface-hover); }
+        .roster-chip.editing { position: relative; padding-right: 28px; }
+        .roster-chip-actions { display: flex; gap: 2px; margin-top: 4px; }
+        .roster-chip-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.6rem; padding: 1px 6px;
+            border-radius: 4px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.15s; line-height: 1.4;
+        }
+        .roster-chip-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .roster-chip-btn.remove { color: var(--strahd-primary); border-color: var(--strahd-primary); }
+        .roster-chip-btn.remove:hover { background: rgba(239,83,80,0.15); }
+        .roster-add-chip {
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px 14px; background: transparent; border: 1px dashed var(--border);
+            border-radius: 8px; min-width: 70px; cursor: pointer; transition: all 0.2s;
+            font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--text-dim);
+        }
+        .roster-add-chip:hover { border-color: var(--text-dim); color: var(--text); }
+        .roster-inline-input {
+            font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 6px 10px;
+            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); outline: none; width: 110px; text-align: center;
+        }
+        .roster-inline-input:focus { border-color: var(--frostmaiden-primary); }
+        /* Scope selector */
+        .scope-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 200; align-items: center; justify-content: center;
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        }
+        .scope-overlay.open { display: flex; }
+        .scope-modal {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+            padding: 24px; width: 100%; max-width: 380px; text-align: center;
+            animation: fadeIn 0.2s ease forwards;
+        }
+        .scope-modal h3 { font-family: 'Cinzel', serif; font-size: 1rem; margin-bottom: 6px; color: var(--text); }
+        .scope-modal p { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 18px; line-height: 1.5; }
+        .scope-btns { display: flex; flex-direction: column; gap: 8px; }
+        .scope-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 10px 16px;
+            border-radius: 8px; border: 1px solid var(--border); background: transparent;
+            color: var(--text); cursor: pointer; transition: all 0.2s; text-align: left;
+        }
+        .scope-btn:hover { background: var(--surface-hover); border-color: var(--text-dim); }
+        .scope-btn .scope-btn-label { font-weight: 500; }
+        .scope-btn .scope-btn-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+        .scope-btn.danger { border-color: var(--strahd-primary); }
+        .scope-btn.danger:hover { background: rgba(239,83,80,0.1); }
+        .scope-cancel {
+            font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 8px;
+            border: none; background: transparent; color: var(--text-dim);
+            cursor: pointer; margin-top: 8px;
+        }
+        .scope-cancel:hover { color: var(--text); }
+        .confirm-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            z-index: 210; align-items: center; justify-content: center;
+        }
+        .confirm-overlay.open { display: flex; }
+        .confirm-modal {
+            background: var(--surface); border: 1px solid var(--strahd-primary); border-radius: 14px;
+            padding: 24px; width: 100%; max-width: 340px; text-align: center;
+            animation: fadeIn 0.2s ease forwards;
+        }
+        .confirm-modal h3 { font-family: 'Cinzel', serif; font-size: 0.95rem; color: var(--strahd-primary); margin-bottom: 8px; }
+        .confirm-modal p { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
+        .confirm-btns { display: flex; gap: 8px; justify-content: center; }
+        .confirm-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.8rem; padding: 8px 20px;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .confirm-btn.yes { background: var(--strahd-primary); border: none; color: #fff; }
+        .confirm-btn.yes:hover { opacity: 0.85; }
+        .confirm-btn.no { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+        .confirm-btn.no:hover { border-color: var(--text-dim); color: var(--text); }
+
         /* ===== THEME TOGGLE ===== */
         .theme-toggle {
             background: none; border: 1px solid var(--border); border-radius: 100px;
@@ -823,13 +908,44 @@
         </div>
     </div>
 
+    <!-- Scope Selector Modal -->
+    <div class="scope-overlay" id="scope-overlay" onclick="cancelPartyAction()">
+        <div class="scope-modal" onclick="event.stopPropagation()">
+            <h3 id="scope-title">Apply Change</h3>
+            <p id="scope-desc">Which sessions should this affect?</p>
+            <div class="scope-btns">
+                <button class="scope-btn" onclick="executePartyAction('future')">
+                    <div class="scope-btn-label">Future Sessions Only</div>
+                    <div class="scope-btn-desc">Today and forward — past sessions stay as-is</div>
+                </button>
+                <button class="scope-btn danger" onclick="showAllSessionsConfirm()">
+                    <div class="scope-btn-label">All Sessions</div>
+                    <div class="scope-btn-desc">Rewrite every session in this campaign</div>
+                </button>
+            </div>
+            <button class="scope-cancel" onclick="cancelPartyAction()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Double Confirm Modal -->
+    <div class="confirm-overlay" id="confirm-overlay" onclick="cancelPartyAction()">
+        <div class="confirm-modal" onclick="event.stopPropagation()">
+            <h3>Are you sure?</h3>
+            <p id="confirm-desc">This will modify all sessions for this campaign, including past sessions. This cannot be undone.</p>
+            <div class="confirm-btns">
+                <button class="confirm-btn no" onclick="cancelPartyAction()">Cancel</button>
+                <button class="confirm-btn yes" onclick="executePartyAction('all')">Yes, apply to all</button>
+            </div>
+        </div>
+    </div>
+
     <footer><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; An Ale for Every Tale</footer>
 </div>
 
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -939,8 +1055,8 @@ window.navigateTo = function(page) {
     else if (page === 'strahd') items[2].classList.add('active');
     else if (page === 'rokugan') items[3].classList.add('active');
     else if (page === 'special') items[4].classList.add('active');
-    if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); }
-    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; renderCampaignPage(page); }
+    if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
 window.openAddSession = function() {
     closeNav();
@@ -976,6 +1092,7 @@ async function seedFirestore() {
     for (const s of missing) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
 }
 async function initApp() {
+    await loadSavedRosters();
     await seedFirestore();
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true; let prevCount = 0;
@@ -1138,6 +1255,154 @@ window.toggleAllMonths = function() {
     });
     const btn = document.getElementById('collapse-all-btn');
     if (btn) btn.textContent = allMonthsCollapsed ? 'Expand All' : 'Collapse All';
+};
+
+// ===== PARTY MANAGEMENT =====
+let partyEditMode = null; // which campaign is in edit mode, or null
+let pendingPartyAction = null; // { type: 'add'|'remove'|'rename', campaign, index, newName }
+
+// Load saved rosters from Firestore (overrides hardcoded defaults)
+async function loadSavedRosters() {
+    try {
+        const snap = await getDoc(doc(db, "config", "rosters"));
+        if (snap.exists()) {
+            const data = snap.data();
+            Object.keys(data).forEach(c => { if (Array.isArray(data[c])) campaignRosters[c] = data[c]; });
+        }
+    } catch(e) { console.warn('Could not load saved rosters:', e); }
+}
+
+async function saveRostersToFirestore() {
+    try { await setDoc(doc(db, "config", "rosters"), { ...campaignRosters }); }
+    catch(e) { console.error('Failed to save rosters:', e); }
+}
+
+window.togglePartyEdit = function(campaign) {
+    partyEditMode = partyEditMode === campaign ? null : campaign;
+    renderCampaignPage(campaign);
+};
+
+window.startAddPartyMember = function(campaign) {
+    // Replace the "+ Add" chip with an inline input
+    const container = document.getElementById(`roster-${campaign}`);
+    const addChip = container.querySelector('.roster-add-chip');
+    if (!addChip) return;
+    addChip.outerHTML = `<div class="roster-chip editing"><input class="roster-inline-input" id="add-member-input" placeholder="Name" maxlength="20" onkeydown="if(event.key==='Enter')confirmAddMember('${campaign}');if(event.key==='Escape')renderCampaignPage('${campaign}')"><div class="roster-chip-actions"><button class="roster-chip-btn" onclick="confirmAddMember('${campaign}')">Add</button><button class="roster-chip-btn" onclick="renderCampaignPage('${campaign}')">Cancel</button></div></div>`;
+    document.getElementById('add-member-input').focus();
+};
+
+window.confirmAddMember = function(campaign) {
+    const input = document.getElementById('add-member-input');
+    const name = input ? input.value.trim() : '';
+    if (!name) return;
+    if (campaignRosters[campaign].includes(name)) { alert('That name already exists in the party.'); return; }
+    pendingPartyAction = { type: 'add', campaign, newName: name };
+    showScopeSelector('Add "' + name + '"', 'Where should this new party member appear?');
+};
+
+window.startRenamePartyMember = function(campaign, index) {
+    const roster = campaignRosters[campaign];
+    const container = document.getElementById(`roster-${campaign}`);
+    const chips = container.querySelectorAll('.roster-chip.editing');
+    const chip = chips[index]; if (!chip) return;
+    const oldName = roster[index];
+    chip.innerHTML = `<input class="roster-inline-input" id="rename-member-input" value="${escapeHtml(oldName)}" maxlength="20" onkeydown="if(event.key==='Enter')confirmRenameMember('${campaign}',${index});if(event.key==='Escape')renderCampaignPage('${campaign}')"><div class="roster-chip-actions"><button class="roster-chip-btn" onclick="confirmRenameMember('${campaign}',${index})">Save</button><button class="roster-chip-btn" onclick="renderCampaignPage('${campaign}')">Cancel</button></div>`;
+    const inp = document.getElementById('rename-member-input'); inp.focus(); inp.select();
+};
+
+window.confirmRenameMember = function(campaign, index) {
+    const input = document.getElementById('rename-member-input');
+    const newName = input ? input.value.trim() : '';
+    const oldName = campaignRosters[campaign][index];
+    if (!newName || newName === oldName) return;
+    if (campaignRosters[campaign].includes(newName)) { alert('That name already exists in the party.'); return; }
+    pendingPartyAction = { type: 'rename', campaign, index, newName, oldName };
+    showScopeSelector('Rename "' + oldName + '" to "' + newName + '"', 'Which sessions should this name change apply to?');
+};
+
+window.startRemovePartyMember = function(campaign, index) {
+    const name = campaignRosters[campaign][index];
+    pendingPartyAction = { type: 'remove', campaign, index, oldName: name };
+    showScopeSelector('Remove "' + name + '"', 'Which sessions should this removal apply to?');
+};
+
+function showScopeSelector(title, desc) {
+    document.getElementById('scope-title').textContent = title;
+    document.getElementById('scope-desc').textContent = desc;
+    document.getElementById('scope-overlay').classList.add('open');
+}
+
+window.showAllSessionsConfirm = function() {
+    document.getElementById('scope-overlay').classList.remove('open');
+    const action = pendingPartyAction;
+    if (!action) return;
+    let desc = 'This will modify all sessions for ' + campaignNames[action.campaign] + ', including past sessions. This cannot be undone.';
+    document.getElementById('confirm-desc').textContent = desc;
+    document.getElementById('confirm-overlay').classList.add('open');
+};
+
+window.cancelPartyAction = function() {
+    document.getElementById('scope-overlay').classList.remove('open');
+    document.getElementById('confirm-overlay').classList.remove('open');
+    pendingPartyAction = null;
+};
+
+window.executePartyAction = async function(scope) {
+    document.getElementById('scope-overlay').classList.remove('open');
+    document.getElementById('confirm-overlay').classList.remove('open');
+    const action = pendingPartyAction;
+    if (!action) return;
+    pendingPartyAction = null;
+    const campaign = action.campaign;
+    const today = getToday();
+
+    // 1. Update the in-memory roster
+    if (action.type === 'add') {
+        campaignRosters[campaign].push(action.newName);
+    } else if (action.type === 'rename') {
+        campaignRosters[campaign][action.index] = action.newName;
+    } else if (action.type === 'remove') {
+        campaignRosters[campaign].splice(action.index, 1);
+    }
+
+    // 2. Save rosters to Firestore
+    await saveRostersToFirestore();
+
+    // 3. Update individual session docs based on scope
+    const campaignSessions = sessions.filter(s => s.campaign === campaign);
+    const targetSessions = scope === 'all' ? campaignSessions : campaignSessions.filter(s => parseDate(s.date) >= today);
+
+    const updates = [];
+    for (const s of targetSessions) {
+        const roster = s.roster || campaignRosters[campaign];
+        const att = s.attendance || {};
+        let newRoster = [...roster];
+        let newAtt = { ...att };
+
+        if (action.type === 'add') {
+            if (!newRoster.includes(action.newName)) {
+                newRoster.push(action.newName);
+                newAtt[action.newName] = 'in';
+            }
+        } else if (action.type === 'rename') {
+            const ri = newRoster.indexOf(action.oldName);
+            if (ri !== -1) {
+                newRoster[ri] = action.newName;
+                newAtt[action.newName] = newAtt[action.oldName] || 'in';
+                delete newAtt[action.oldName];
+            }
+        } else if (action.type === 'remove') {
+            newRoster = newRoster.filter(n => n !== action.oldName);
+            delete newAtt[action.oldName];
+        }
+
+        updates.push(updateDoc(doc(db, "sessions", s.date), { roster: newRoster, attendance: newAtt }));
+    }
+
+    try { await Promise.all(updates); } catch(e) { console.error('Failed to update sessions:', e); }
+
+    // 4. Re-render
+    renderCampaignPage(campaign);
 };
 
 // ===== HERO: Next session + last recap =====
@@ -1441,8 +1706,16 @@ function renderCampaignPage(campaign) {
     const roster = campaignRosters[campaign] || [];
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     html += `<div class="campaign-overview">`;
-    html += `<div class="campaign-overview-label">Party</div><div class="campaign-roster">`;
-    roster.forEach(p => { html += `<div class="roster-chip"><span class="roster-name">${escapeHtml(p)}</span></div>`; });
+    html += `<div class="roster-header"><div class="campaign-overview-label" style="margin-bottom:0">Party</div><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
+    html += `<div class="campaign-roster" id="roster-${campaign}">`;
+    if (partyEditMode === campaign) {
+        roster.forEach((p, idx) => {
+            html += `<div class="roster-chip editing"><span class="roster-name">${escapeHtml(p)}</span><div class="roster-chip-actions"><button class="roster-chip-btn" onclick="startRenamePartyMember('${campaign}', ${idx})">Rename</button><button class="roster-chip-btn remove" onclick="startRemovePartyMember('${campaign}', ${idx})">Remove</button></div></div>`;
+        });
+        html += `<div class="roster-add-chip" onclick="startAddPartyMember('${campaign}')">+ Add</div>`;
+    } else {
+        roster.forEach(p => { html += `<div class="roster-chip"><span class="roster-name">${escapeHtml(p)}</span></div>`; });
+    }
     html += `</div>`;
     if (lastPast) {
         html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
@@ -1460,9 +1733,9 @@ function renderCampaignPage(campaign) {
     }
     html += `</div>`;
 
-    // Sort toggle for all sessions
+    // Sort toggle + collapse all for all sessions
     if (cs.length > 0) {
-        html += `<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px"><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button></div>`;
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button></div>`;
         // Combine all sessions into one sorted list
         const allSorted = [...cs].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
         const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
