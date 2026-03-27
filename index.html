@@ -524,7 +524,44 @@
         /* ===== CAMPAIGN PAGE OVERVIEW ===== */
         .campaign-overview { margin-bottom: 24px; padding: 18px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
         .campaign-overview-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 10px; font-weight: 500; }
-        .campaign-roster { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .campaign-roster { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+        /* Player card */
+        .player-card {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 12px 14px 10px; background: var(--bg); border: 1px solid var(--border);
+            border-radius: 10px; width: 110px; text-align: center; transition: all 0.2s;
+        }
+        .player-card:hover { border-color: var(--text-dim); }
+        .player-avatar {
+            width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
+            background: var(--surface); border: 2px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: var(--text-dim); flex-shrink: 0;
+        }
+        .player-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .player-name { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.2; }
+        .player-class { font-size: 0.65rem; color: var(--text-dim); line-height: 1.3; }
+        .player-level { font-size: 0.58rem; color: var(--text-dim); opacity: 0.7; margin-top: -2px; }
+        /* Edit mode player card */
+        .player-card.editing { width: 130px; padding-bottom: 8px; }
+        .player-avatar.editable { cursor: pointer; position: relative; }
+        .player-avatar.editable:hover { border-color: var(--frostmaiden-primary); }
+        .player-avatar-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s; border-radius: 50%;
+            font-size: 0.6rem; color: #fff; font-family: 'Inter', sans-serif;
+        }
+        .player-avatar.editable:hover .player-avatar-overlay { opacity: 1; }
+        .player-edit-fields { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        .player-edit-input {
+            font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 4px 8px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text); outline: none; width: 100%; text-align: center;
+        }
+        .player-edit-input:focus { border-color: var(--frostmaiden-primary); }
+        .player-edit-input::placeholder { color: var(--text-dim); opacity: 0.6; }
+        /* Legacy compat for attendance chips */
         .roster-chip {
             display: flex; flex-direction: column; align-items: center; gap: 2px;
             padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
@@ -557,29 +594,25 @@
         }
         .edit-party-btn:hover { color: var(--text); border-color: var(--text-dim); }
         .edit-party-btn.active { color: var(--text); border-color: var(--text-dim); background: var(--surface-hover); }
-        .roster-chip.editing { position: relative; padding-right: 28px; }
-        .roster-chip-actions { display: flex; gap: 2px; margin-top: 4px; }
-        .roster-chip-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.6rem; padding: 1px 6px;
+        .player-card-actions { display: flex; gap: 4px; margin-top: 6px; width: 100%; justify-content: center; }
+        .player-card-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.6rem; padding: 2px 8px;
             border-radius: 4px; border: 1px solid var(--border); background: transparent;
             color: var(--text-dim); cursor: pointer; transition: all 0.15s; line-height: 1.4;
         }
-        .roster-chip-btn:hover { color: var(--text); border-color: var(--text-dim); }
-        .roster-chip-btn.remove { color: var(--strahd-primary); border-color: var(--strahd-primary); }
-        .roster-chip-btn.remove:hover { background: rgba(239,83,80,0.15); }
-        .roster-add-chip {
-            display: flex; align-items: center; justify-content: center;
-            padding: 8px 14px; background: transparent; border: 1px dashed var(--border);
-            border-radius: 8px; min-width: 70px; cursor: pointer; transition: all 0.2s;
-            font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--text-dim);
+        .player-card-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .player-card-btn.save { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+        .player-card-btn.save:hover { background: rgba(79,195,247,0.15); }
+        .player-card-btn.remove { color: var(--strahd-primary); border-color: var(--strahd-primary); }
+        .player-card-btn.remove:hover { background: rgba(239,83,80,0.15); }
+        .roster-add-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 110px; min-height: 120px; background: transparent; border: 1px dashed var(--border);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+            font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--text-dim); gap: 4px;
         }
-        .roster-add-chip:hover { border-color: var(--text-dim); color: var(--text); }
-        .roster-inline-input {
-            font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 6px 10px;
-            background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text); outline: none; width: 110px; text-align: center;
-        }
-        .roster-inline-input:focus { border-color: var(--frostmaiden-primary); }
+        .roster-add-card:hover { border-color: var(--text-dim); color: var(--text); }
+        .roster-add-card .add-icon { font-size: 1.5rem; opacity: 0.5; }
         /* Scope selector */
         .scope-overlay {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
@@ -755,6 +788,13 @@
             .campaign-overview { padding: 14px 16px; }
             .roster-chip { padding: 6px 10px; min-width: 60px; }
             .roster-name { font-size: 0.75rem; }
+            .player-card { width: 90px; padding: 10px 8px 8px; }
+            .player-card.editing { width: 110px; }
+            .player-avatar { width: 50px; height: 50px; font-size: 1.1rem; }
+            .player-name { font-size: 0.72rem; }
+            .player-class { font-size: 0.58rem; }
+            .player-edit-input { font-size: 0.65rem; padding: 3px 6px; }
+            .roster-add-card { width: 90px; min-height: 100px; }
             #password-gate h1 { font-size: clamp(1.6rem, 5vw, 2.5rem); }
             .pass-form input { width: 180px; padding: 10px 14px; font-size: 0.85rem; }
             .pass-form button { padding: 10px 18px; font-size: 0.82rem; }
@@ -969,6 +1009,8 @@ const campaignRosters = {
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
     special: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"]
 };
+// Character details: campaign -> name -> { charClass, subclass, level, imageUrl }
+const campaignCharacters = { frostmaiden: {}, strahd: {}, rokugan: {}, special: {} };
 const seedSessions = [
     { date: "2026-04-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-04-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
@@ -1258,18 +1300,25 @@ window.toggleAllMonths = function() {
 };
 
 // ===== PARTY MANAGEMENT =====
-let partyEditMode = null; // which campaign is in edit mode, or null
-let pendingPartyAction = null; // { type: 'add'|'remove'|'rename', campaign, index, newName }
+let partyEditMode = null;
+let pendingPartyAction = null;
 
-// Load saved rosters from Firestore (overrides hardcoded defaults)
+// Load saved rosters + character details from Firestore
 async function loadSavedRosters() {
     try {
-        const snap = await getDoc(doc(db, "config", "rosters"));
-        if (snap.exists()) {
-            const data = snap.data();
+        const [rosterSnap, charSnap] = await Promise.all([
+            getDoc(doc(db, "config", "rosters")),
+            getDoc(doc(db, "config", "characters"))
+        ]);
+        if (rosterSnap.exists()) {
+            const data = rosterSnap.data();
             Object.keys(data).forEach(c => { if (Array.isArray(data[c])) campaignRosters[c] = data[c]; });
         }
-    } catch(e) { console.warn('Could not load saved rosters:', e); }
+        if (charSnap.exists()) {
+            const data = charSnap.data();
+            Object.keys(data).forEach(c => { if (typeof data[c] === 'object') campaignCharacters[c] = data[c]; });
+        }
+    } catch(e) { console.warn('Could not load saved rosters/characters:', e); }
 }
 
 async function saveRostersToFirestore() {
@@ -1277,17 +1326,82 @@ async function saveRostersToFirestore() {
     catch(e) { console.error('Failed to save rosters:', e); }
 }
 
+async function saveCharactersToFirestore() {
+    try { await setDoc(doc(db, "config", "characters"), { ...campaignCharacters }); }
+    catch(e) { console.error('Failed to save characters:', e); }
+}
+
 window.togglePartyEdit = function(campaign) {
     partyEditMode = partyEditMode === campaign ? null : campaign;
     renderCampaignPage(campaign);
 };
 
+// Save class/subclass/level edits for a character (no scope needed — campaign-level data)
+window.saveCharacterEdits = async function(campaign, index) {
+    const name = document.getElementById(`edit-name-${index}`).value.trim();
+    const charClass = document.getElementById(`edit-class-${index}`).value.trim();
+    const subclass = document.getElementById(`edit-subclass-${index}`).value.trim();
+    const level = document.getElementById(`edit-level-${index}`).value.trim();
+    const oldName = campaignRosters[campaign][index];
+
+    if (!name) return;
+
+    // If name changed, handle as a rename with scope
+    if (name !== oldName) {
+        if (campaignRosters[campaign].includes(name)) { alert('That name already exists.'); return; }
+        // Save character details under the new name first
+        if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+        const oldChar = campaignCharacters[campaign][oldName] || {};
+        campaignCharacters[campaign][name] = { ...oldChar, charClass, subclass, level, imageUrl: oldChar.imageUrl || '' };
+        delete campaignCharacters[campaign][oldName];
+        await saveCharactersToFirestore();
+        // Trigger scope selector for the rename
+        pendingPartyAction = { type: 'rename', campaign, index, newName: name, oldName };
+        showScopeSelector('Rename "' + oldName + '" to "' + name + '"', 'Which sessions should this name change apply to?');
+        return;
+    }
+
+    // Just updating details — no session changes needed
+    if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+    campaignCharacters[campaign][name] = {
+        ...(campaignCharacters[campaign][name] || {}),
+        charClass, subclass, level
+    };
+    await saveCharactersToFirestore();
+    renderCampaignPage(campaign);
+};
+
+// Avatar upload
+window.triggerAvatarUpload = function(campaign, index) {
+    document.getElementById(`avatar-input-${index}`).click();
+};
+
+window.uploadAvatar = async function(campaign, index, inputEl) {
+    const file = inputEl.files[0];
+    if (!file || !file.type.startsWith('image/')) { alert('Please select an image.'); return; }
+    if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return; }
+    const name = campaignRosters[campaign][index];
+    const cleanName = name.replace(/\s+/g, '_');
+    const ext = file.name.split('.').pop();
+    const path = `avatars/${campaign}_${cleanName}.${ext}`;
+    const ref = storageRef(storage, path);
+    try {
+        const snap = await uploadBytes(ref, file);
+        const url = await getDownloadURL(snap.ref);
+        if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+        if (!campaignCharacters[campaign][name]) campaignCharacters[campaign][name] = {};
+        campaignCharacters[campaign][name].imageUrl = url;
+        await saveCharactersToFirestore();
+        renderCampaignPage(campaign);
+    } catch(e) { console.error('Avatar upload failed:', e); alert('Upload failed. Try again.'); }
+};
+
+// Add new party member
 window.startAddPartyMember = function(campaign) {
-    // Replace the "+ Add" chip with an inline input
     const container = document.getElementById(`roster-${campaign}`);
-    const addChip = container.querySelector('.roster-add-chip');
-    if (!addChip) return;
-    addChip.outerHTML = `<div class="roster-chip editing"><input class="roster-inline-input" id="add-member-input" placeholder="Name" maxlength="20" onkeydown="if(event.key==='Enter')confirmAddMember('${campaign}');if(event.key==='Escape')renderCampaignPage('${campaign}')"><div class="roster-chip-actions"><button class="roster-chip-btn" onclick="confirmAddMember('${campaign}')">Add</button><button class="roster-chip-btn" onclick="renderCampaignPage('${campaign}')">Cancel</button></div></div>`;
+    const addCard = container.querySelector('.roster-add-card');
+    if (!addCard) return;
+    addCard.outerHTML = `<div class="player-card editing"><div class="player-avatar">&plus;</div><div class="player-edit-fields"><input class="player-edit-input" id="add-member-input" placeholder="Name" maxlength="20" onkeydown="if(event.key==='Enter')confirmAddMember('${campaign}');if(event.key==='Escape')renderCampaignPage('${campaign}')"></div><div class="player-card-actions"><button class="player-card-btn save" onclick="confirmAddMember('${campaign}')">Add</button><button class="player-card-btn" onclick="renderCampaignPage('${campaign}')">Cancel</button></div></div>`;
     document.getElementById('add-member-input').focus();
 };
 
@@ -1298,26 +1412,6 @@ window.confirmAddMember = function(campaign) {
     if (campaignRosters[campaign].includes(name)) { alert('That name already exists in the party.'); return; }
     pendingPartyAction = { type: 'add', campaign, newName: name };
     showScopeSelector('Add "' + name + '"', 'Where should this new party member appear?');
-};
-
-window.startRenamePartyMember = function(campaign, index) {
-    const roster = campaignRosters[campaign];
-    const container = document.getElementById(`roster-${campaign}`);
-    const chips = container.querySelectorAll('.roster-chip.editing');
-    const chip = chips[index]; if (!chip) return;
-    const oldName = roster[index];
-    chip.innerHTML = `<input class="roster-inline-input" id="rename-member-input" value="${escapeHtml(oldName)}" maxlength="20" onkeydown="if(event.key==='Enter')confirmRenameMember('${campaign}',${index});if(event.key==='Escape')renderCampaignPage('${campaign}')"><div class="roster-chip-actions"><button class="roster-chip-btn" onclick="confirmRenameMember('${campaign}',${index})">Save</button><button class="roster-chip-btn" onclick="renderCampaignPage('${campaign}')">Cancel</button></div>`;
-    const inp = document.getElementById('rename-member-input'); inp.focus(); inp.select();
-};
-
-window.confirmRenameMember = function(campaign, index) {
-    const input = document.getElementById('rename-member-input');
-    const newName = input ? input.value.trim() : '';
-    const oldName = campaignRosters[campaign][index];
-    if (!newName || newName === oldName) return;
-    if (campaignRosters[campaign].includes(newName)) { alert('That name already exists in the party.'); return; }
-    pendingPartyAction = { type: 'rename', campaign, index, newName, oldName };
-    showScopeSelector('Rename "' + oldName + '" to "' + newName + '"', 'Which sessions should this name change apply to?');
 };
 
 window.startRemovePartyMember = function(campaign, index) {
@@ -1356,17 +1450,25 @@ window.executePartyAction = async function(scope) {
     const campaign = action.campaign;
     const today = getToday();
 
-    // 1. Update the in-memory roster
+    // 1. Update the in-memory roster + characters
     if (action.type === 'add') {
         campaignRosters[campaign].push(action.newName);
     } else if (action.type === 'rename') {
         campaignRosters[campaign][action.index] = action.newName;
+        // Migrate character data to new name if not already done
+        const chars = campaignCharacters[campaign] || {};
+        if (chars[action.oldName] && !chars[action.newName]) {
+            chars[action.newName] = chars[action.oldName];
+            delete chars[action.oldName];
+        }
     } else if (action.type === 'remove') {
         campaignRosters[campaign].splice(action.index, 1);
+        const chars = campaignCharacters[campaign] || {};
+        delete chars[action.oldName];
     }
 
-    // 2. Save rosters to Firestore
-    await saveRostersToFirestore();
+    // 2. Save to Firestore
+    await Promise.all([saveRostersToFirestore(), saveCharactersToFirestore()]);
 
     // 3. Update individual session docs based on scope
     const campaignSessions = sessions.filter(s => s.campaign === campaign);
@@ -1702,22 +1804,46 @@ function renderCampaignPage(campaign) {
     activeQuills = {};
     let html = '';
 
-    // Campaign overview: roster + last session recap
+    // Party roster — standalone section with player cards
     const roster = campaignRosters[campaign] || [];
-    const lastPast = past.length > 0 ? past[past.length - 1] : null;
+    const chars = campaignCharacters[campaign] || {};
     html += `<div class="campaign-overview">`;
     html += `<div class="roster-header"><div class="campaign-overview-label" style="margin-bottom:0">Party</div><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
     html += `<div class="campaign-roster" id="roster-${campaign}">`;
     if (partyEditMode === campaign) {
         roster.forEach((p, idx) => {
-            html += `<div class="roster-chip editing"><span class="roster-name">${escapeHtml(p)}</span><div class="roster-chip-actions"><button class="roster-chip-btn" onclick="startRenamePartyMember('${campaign}', ${idx})">Rename</button><button class="roster-chip-btn remove" onclick="startRemovePartyMember('${campaign}', ${idx})">Remove</button></div></div>`;
+            const c = chars[p] || {};
+            const avatarInner = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
+            html += `<div class="player-card editing" data-idx="${idx}">`;
+            html += `<div class="player-avatar editable" onclick="triggerAvatarUpload('${campaign}',${idx})"><input type="file" accept="image/*" style="display:none" id="avatar-input-${idx}" onchange="uploadAvatar('${campaign}',${idx},this)">${avatarInner}<div class="player-avatar-overlay">Upload</div></div>`;
+            html += `<div class="player-edit-fields">`;
+            html += `<input class="player-edit-input" id="edit-name-${idx}" value="${escapeHtml(p)}" placeholder="Name" maxlength="20">`;
+            html += `<input class="player-edit-input" id="edit-class-${idx}" value="${escapeHtml(c.charClass||'')}" placeholder="Class" maxlength="30">`;
+            html += `<input class="player-edit-input" id="edit-subclass-${idx}" value="${escapeHtml(c.subclass||'')}" placeholder="Subclass" maxlength="30">`;
+            html += `<input class="player-edit-input" id="edit-level-${idx}" value="${c.level||''}" placeholder="Lvl" maxlength="3" style="width:50px;margin:0 auto">`;
+            html += `</div>`;
+            html += `<div class="player-card-actions"><button class="player-card-btn save" onclick="saveCharacterEdits('${campaign}',${idx})">Save</button><button class="player-card-btn remove" onclick="startRemovePartyMember('${campaign}',${idx})">Remove</button></div>`;
+            html += `</div>`;
         });
-        html += `<div class="roster-add-chip" onclick="startAddPartyMember('${campaign}')">+ Add</div>`;
+        html += `<div class="roster-add-card" onclick="startAddPartyMember('${campaign}')"><span class="add-icon">+</span><span>Add</span></div>`;
     } else {
-        roster.forEach(p => { html += `<div class="roster-chip"><span class="roster-name">${escapeHtml(p)}</span></div>`; });
+        roster.forEach(p => {
+            const c = chars[p] || {};
+            const avatarInner = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
+            html += `<div class="player-card">`;
+            html += `<div class="player-avatar">${avatarInner}</div>`;
+            html += `<div class="player-name">${escapeHtml(p)}</div>`;
+            if (c.charClass) { html += `<div class="player-class">${escapeHtml(c.charClass)}${c.subclass ? ' · '+escapeHtml(c.subclass) : ''}</div>`; }
+            if (c.level) { html += `<div class="player-level">Lvl ${c.level}</div>`; }
+            html += `</div>`;
+        });
     }
-    html += `</div>`;
+    html += `</div></div>`;
+
+    // Last session recap — separate card
+    const lastPast = past.length > 0 ? past[past.length - 1] : null;
     if (lastPast) {
+        html += `<div class="campaign-overview">`;
         html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         if (lastPast.recapHtml || lastPast.recap) {
             html += `<div class="campaign-last-recap"><div class="campaign-last-recap-text">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div></div>`;
@@ -1730,12 +1856,12 @@ function renderCampaignPage(campaign) {
         if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a><label class="pdf-upload-btn" style="margin-left:8px">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label><button class="delete-btn" onclick="deletePdf('${lastPast.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
         else { html += `<label class="pdf-upload-btn">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label>`; }
         html += `<span class="pdf-upload-status" id="pdf-status-${lastPast.date}"></span></div></div>`;
+        html += `</div>`;
     }
-    html += `</div>`;
 
     // Sort toggle + collapse all for all sessions
     if (cs.length > 0) {
-        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button></div>`;
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button><div class="collapse-all-row" style="margin-bottom:0"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button></div></div>`;
         // Combine all sessions into one sorted list
         const allSorted = [...cs].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
         const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
