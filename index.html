@@ -105,7 +105,7 @@
         /* ===== SESSIONS WRAPPER — background region for the entire sessions section ===== */
         .sessions-wrapper {
             background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+            border-radius: 16px; padding: 20px; margin-top: 24px; margin-bottom: 20px;
         }
         .sessions-wrapper .section-heading { margin-top: 0; }
         body.light .sessions-wrapper { background: rgba(0,0,0,0.02); }
@@ -1017,8 +1017,8 @@
                             <button class="view-btn" data-view="calendar">Calendar</button>
                         </div>
                         <div class="controls-left">
-                            <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
-                            <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
+                            <button class="view-btn" data-time="all" onclick="setTimeFilter('all')">All</button>
+                            <button class="view-btn active" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
                             <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                         </div>
                     </div>
@@ -1192,13 +1192,13 @@ const seedSessions = [
 let sessions = [];
 let activeFilter = "all";
 let activeView = "list";
-let activeTimeFilter = "all";
+let activeTimeFilter = "upcoming";
 let homeSortNewest = false;
 let cancelPendingSession = null;
 let currentPage = "home";
 let pastSessionsVisible = false;
 let campaignSortNewest = false;
-let campaignTimeFilter = 'all';
+let campaignTimeFilter = 'upcoming';
 let activeQuills = {};
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -1227,7 +1227,7 @@ window.navigateTo = function(page) {
     else if (page === 'rokugan') items[3].classList.add('active');
     else if (page === 'special') items[4].classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
-    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'all'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
 window.openAddSession = function() {
     closeNav();
@@ -1863,43 +1863,31 @@ function renderList() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
     if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
     activeQuills = {};
-    // Update button text for sort and collapse
     const sortBtn = document.getElementById('home-sort-btn');
     if (sortBtn) sortBtn.innerHTML = homeSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First';
     const colBtn = document.getElementById('home-collapse-btn');
     if (colBtn) colBtn.textContent = allMonthsCollapsed ? 'Expand All' : 'Collapse All';
     let html = '';
 
-    // Helper to group and render sessions
-    function groupAndRender(list, reverseSort) {
+    function groupAndRender(list) {
         const sorted = [...list].sort((a,b) => homeSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
         const g = {}; sorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-        const keys = Object.keys(g).sort(); if (homeSortNewest || reverseSort) keys.reverse();
+        const keys = Object.keys(g).sort(); if (homeSortNewest) keys.reverse();
         keys.forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
     }
 
-    if (activeTimeFilter === 'upcoming') {
-        const upcoming = filtered.filter(s => parseDate(s.date) >= today);
-        if (upcoming.length > 0) { groupAndRender(upcoming, false); }
-        else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
-
-    } else if (activeTimeFilter === 'past') {
-        const past = filtered.filter(s => parseDate(s.date) < today);
-        if (past.length > 0) { groupAndRender(past, true); }
-        else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No past sessions.</div></div>`; }
-
+    let displayList;
+    if (activeTimeFilter === 'all') {
+        displayList = filtered;
+    } else if (activeTimeFilter === 'upcoming') {
+        displayList = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
     } else {
-        const mainList = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
-        const olderPast = filtered.filter(s => parseDate(s.date) < twoWeeksAgo);
-        if (mainList.length > 0) { groupAndRender(mainList, false); }
-        else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
-        if (olderPast.length > 0) {
-            html += `<button class="past-sessions-toggle${pastSessionsVisible?' open':''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${olderPast.length})</button>`;
-            html += `<div class="past-sessions-container${pastSessionsVisible?' open':''}">`;
-            groupAndRender(olderPast, true);
-            html += `</div>`;
-        }
+        displayList = filtered.filter(s => parseDate(s.date) < today);
     }
+
+    if (displayList.length > 0) { groupAndRender(displayList); }
+    else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${activeTimeFilter} sessions.</div></div>`; }
+
     document.getElementById('list-view').innerHTML = html;
 }
 window.togglePastSessions = function() { pastSessionsVisible = !pastSessionsVisible; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.toggle('open', pastSessionsVisible); if (c) c.classList.toggle('open', pastSessionsVisible); };
@@ -1993,8 +1981,9 @@ function renderCampaignPage(campaign) {
         html += `</div>`;
 
         // Filter sessions based on time filter
+        const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
         let displaySessions = cs;
-        if (campaignTimeFilter === 'upcoming') displaySessions = upcoming;
+        if (campaignTimeFilter === 'upcoming') displaySessions = cs.filter(s => parseDate(s.date) >= twoWeeksAgo);
         else if (campaignTimeFilter === 'past') displaySessions = past;
         if (displaySessions.length > 0) {
             const allSorted = [...displaySessions].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
@@ -2021,10 +2010,14 @@ window.toggleCampaignSort = function(campaign) { campaignSortNewest = !campaignS
 window.setCampaignTimeFilter = function(t, campaign) { campaignTimeFilter = t; collapsedMonths.clear(); allMonthsCollapsed = false; renderCampaignPage(campaign); };
 
 function renderCalendar() {
-    const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    const today = getToday();
+    const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    let filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    if (activeTimeFilter === 'upcoming') filtered = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
+    else if (activeTimeFilter === 'past') filtered = filtered.filter(s => parseDate(s.date) < today);
     const sm = {}; filtered.forEach(s => { sm[s.date] = s; });
-    const am = new Set(); sessions.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
-    const today = new Date(); const ts = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const am = new Set(); filtered.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
+    const todayDate = new Date(); const ts = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
     let html = '';
     months.forEach(k => {
         const [y,m] = k.split('-').map(Number); const fd = new Date(y,m-1,1).getDay(); const dim = new Date(y,m,0).getDate();
