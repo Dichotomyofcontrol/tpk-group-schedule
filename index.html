@@ -152,13 +152,17 @@
         /* ===== CONTROLS ROW — Row 3 ===== */
         .controls-row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 0 8px; gap: 12px; flex-wrap: wrap;
+            padding: 0 0 8px; gap: 8px; flex-wrap: nowrap;
         }
-        .controls-left { display: flex; gap: 4px; }
+        .controls-left { display: flex; gap: 4px; flex-shrink: 0; }
         .controls-sub-row {
             display: flex; align-items: center; justify-content: flex-end;
-            padding: 0 0 4px; gap: 4px; flex-wrap: wrap;
+            padding: 0 0 4px; gap: 4px; flex-wrap: nowrap;
         }
+        .controls-time-row {
+            display: flex; padding: 0 0 8px; gap: 0;
+        }
+        .controls-time-row .view-btn { flex: 1; text-align: center; }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
             border: 1px solid var(--border); background: transparent;
@@ -1011,15 +1015,15 @@
                             <button class="view-btn active" data-view="list">List</button>
                             <button class="view-btn" data-view="calendar">Calendar</button>
                         </div>
-                        <div class="controls-left">
-                            <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
-                            <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
-                            <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                        <div class="controls-sub-row">
+                            <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                            <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
                         </div>
                     </div>
-                    <div class="controls-sub-row">
-                        <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
-                        <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
+                    <div class="controls-time-row">
+                        <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
+                        <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
+                        <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                     </div>
                 </div>
 
@@ -1690,73 +1694,7 @@ function renderHero() {
 }
 
 // ===== LAST SESSIONS: Collapsible section =====
-let lastSessionsExpanded = false;
-function renderRecentRecaps() {
-    const today = getToday();
-    if (activeFilter !== 'all') { document.getElementById('recent-recaps').innerHTML = ''; return; }
-
-    // Find the next upcoming session to determine "primary" campaign
-    const next = sessions.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
-    const primaryCampaign = next ? next.campaign : null;
-
-    const campaigns = ['frostmaiden', 'strahd', 'rokugan'];
-    const lastSessions = [];
-    campaigns.forEach(c => {
-        const past = sessions.filter(s => s.campaign === c && parseDate(s.date) < today && s.status !== "cancelled");
-        if (past.length === 0) return;
-        lastSessions.push({ campaign: c, session: past[past.length - 1] });
-    });
-    if (lastSessions.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
-
-    // Exclude the primary campaign (already shown in hero), keep only others
-    const others = lastSessions.filter(x => x.campaign !== primaryCampaign);
-    if (others.length === 0) { document.getElementById('recent-recaps').innerHTML = ''; return; }
-
-    function buildCard(item) {
-        const s = item.session; const c = item.campaign;
-        let recapBlock = '';
-        if (s.recapHtml || s.recap) {
-            const text = s.recapHtml ? stripHtml(s.recapHtml) : s.recap;
-            recapBlock = `<div class="lsc-recap">${escapeHtml(text)}</div>`;
-        } else {
-            recapBlock = `<div class="lsc-no-recap" onclick="goToSession('${s.date}')">No recap yet — tap to add</div>`;
-        }
-        let actions = '<div class="lsc-actions">';
-        if (s.recapHtml || s.recap) {
-            actions += `<button class="lsc-read-btn" onclick="openReaderModal('${s.date}')">Read Full</button>`;
-        }
-        actions += `<button class="lsc-edit-btn" onclick="goToSession('${s.date}')">Edit</button>`;
-        if (s.recapHtml || s.recap) { actions += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${c}','${s.date}',true,event)">Share</button>`; }
-        if (s.pdfUrl) { actions += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
-        actions += '</div>';
-        return `<div class="last-session-card ${c}"><div class="lsc-top"><div class="lsc-campaign">${campaignIcons[c]} ${campaignNames[c]}</div><div class="lsc-date">${formatDateShort(s.date)}</div></div>${recapBlock}${actions}</div>`;
-    }
-
-    // Always collapsed by default — just the header toggle with all other campaigns inside
-    // Build campaign dot indicators for the header
-    const otherCampaigns = [...new Set(others.map(o => o.campaign))];
-    let dotsHtml = '<span class="ls-dots">';
-    otherCampaigns.forEach(c => { dotsHtml += `<span class="ls-dot ${c}"></span>`; });
-    dotsHtml += '</span>';
-
-    let html = '<div class="last-sessions-section">';
-    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-label">${dotsHtml} Other Campaign Recaps</span><span class="ls-toggle">${lastSessionsExpanded ? 'Hide' : 'Show'}</span></button>`;
-    html += `<div class="last-sessions-extra${lastSessionsExpanded ? ' open' : ''}" id="last-sessions-extra">`;
-    others.forEach(item => { html += buildCard(item); });
-    html += '</div></div>';
-    document.getElementById('recent-recaps').innerHTML = html;
-}
-window.toggleLastSessions = function() {
-    lastSessionsExpanded = !lastSessionsExpanded;
-    const h = document.querySelector('.last-sessions-header');
-    const e = document.getElementById('last-sessions-extra');
-    if (h) {
-        h.classList.toggle('open', lastSessionsExpanded);
-        const toggle = h.querySelector('.ls-toggle');
-        if (toggle) toggle.textContent = lastSessionsExpanded ? 'Hide' : 'Show';
-    }
-    if (e) e.classList.toggle('open', lastSessionsExpanded);
-};
+function renderRecentRecaps() { document.getElementById('recent-recaps').innerHTML = ''; }
 window.openReaderModal = function(ds) {
     const s = sessions.find(x => x.date === ds); if (!s) return;
     const modal = document.getElementById('reader-modal');
@@ -2041,15 +1979,15 @@ function renderCampaignPage(campaign) {
         html += `<button class="view-btn active" data-view="list">List</button>`;
         html += `<button class="view-btn" data-view="calendar">Calendar</button>`;
         html += `</div>`;
-        html += `<div class="controls-left">`;
-        html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
-        html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
-        html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
-        html += `</div>`;
-        html += `</div>`;
         html += `<div class="controls-sub-row">`;
         html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
         html += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
+        html += `</div>`;
+        html += `</div>`;
+        html += `<div class="controls-time-row">`;
+        html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
+        html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
+        html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
         html += `</div>`;
         html += `</div>`;
 
