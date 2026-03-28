@@ -1914,7 +1914,8 @@ function renderSessionCard(s, gi, ci) {
         else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
         recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span></div></div>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}</div></div>`;
+    const shareSessionHtml = `<div class="session-detail-section" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px"><button class="share-btn" onclick="event.stopPropagation(); shareLink('${s.campaign}','${s.date}',false,event)">Share Session</button></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}${shareSessionHtml}</div></div>`;
 }
 
 function renderList() {
@@ -2165,11 +2166,8 @@ function applyRoute(r) {
             return;
         } else if (r.date) {
             setTimeout(() => {
-                // Show past sessions on campaign page if needed
-                if (typeof campaignSortNewest !== 'undefined') {
-                    const card = document.querySelector(`[data-session-date="${r.date}"]`);
-                    if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(r.date); }, 300); }
-                }
+                const card = document.querySelector(`[data-session-date="${r.date}"]`);
+                if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(r.date); }, 300); }
                 _suppressHashUpdate = false;
             }, 200);
             return;
