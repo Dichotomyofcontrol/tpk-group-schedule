@@ -92,10 +92,13 @@
         }
         .sign-out-btn:hover { color: var(--text); border-color: var(--text-dim); }
 
+        /* ===== SECTION DIVIDER ===== */
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
         /* ===== STATS BAR — Row 2 (clickable filters) ===== */
         .stats-bar {
             display: flex; align-items: center; justify-content: center;
-            gap: 6px; padding: 12px 0; flex-wrap: wrap;
+            gap: 6px; padding: 16px 0; flex-wrap: wrap;
         }
         .stat-filter {
             display: flex; align-items: center; gap: 6px;
@@ -128,9 +131,13 @@
         /* ===== CONTROLS ROW — Row 3 ===== */
         .controls-row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 0 16px; gap: 12px; flex-wrap: wrap;
+            padding: 0 0 8px; gap: 12px; flex-wrap: wrap;
         }
         .controls-left { display: flex; gap: 4px; }
+        .controls-sub-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 0 12px; gap: 12px; flex-wrap: wrap;
+        }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
             border: 1px solid var(--border); background: transparent;
@@ -240,7 +247,6 @@
         .month-pill.special { color: var(--special-primary); border-color: var(--special-primary); background: rgba(206,147,216,0.1); }
         .month-sessions { overflow: hidden; transition: max-height 0.3s ease; }
         .month-sessions.collapsed { max-height: 0 !important; }
-        .collapse-all-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
         .collapse-all-btn {
             font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 4px 12px;
             border-radius: 100px; border: 1px solid var(--border); background: transparent;
@@ -353,9 +359,9 @@
         }
         .recap-cta:hover { background: rgba(79,195,247,0.18); border-color: var(--frostmaiden-primary); }
         .sort-toggle {
-            font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 4px 10px;
-            border-radius: 5px; border: 1px solid var(--border); background: transparent;
-            color: var(--text-dim); cursor: pointer; transition: all 0.2s; margin-left: auto;
+            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 4px 12px;
+            border-radius: 100px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .sort-toggle:hover { color: var(--text); border-color: var(--text-dim); }
         .past-sessions-container .session-card:hover { opacity: 1; }
@@ -935,6 +941,8 @@
             <!-- Recent recaps for all campaigns -->
             <div id="recent-recaps"></div>
 
+            <hr class="section-divider">
+
             <!-- Row 2: Stats as filters -->
             <div class="stats-bar" id="stats-bar"></div>
 
@@ -949,6 +957,10 @@
                     <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
                     <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                 </div>
+            </div>
+            <div class="controls-sub-row">
+                <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
             </div>
 
             <!-- Content -->
@@ -1114,6 +1126,7 @@ let sessions = [];
 let activeFilter = "all";
 let activeView = "list";
 let activeTimeFilter = "all";
+let homeSortNewest = false;
 let cancelPendingSession = null;
 let currentPage = "home";
 let pastSessionsVisible = false;
@@ -1348,7 +1361,9 @@ window.toggleAllMonths = function() {
         if (body) body.classList.toggle('collapsed', allMonthsCollapsed);
         if (allMonthsCollapsed) collapsedMonths.add(k); else collapsedMonths.delete(k);
     });
-    const btn = document.getElementById('collapse-all-btn');
+    // Update the correct collapse button based on which page is active
+    const isCampaign = document.querySelector('.campaign-page.active');
+    const btn = isCampaign ? document.getElementById('campaign-collapse-btn') : document.getElementById('home-collapse-btn');
     if (btn) btn.textContent = allMonthsCollapsed ? 'Expand All' : 'Collapse All';
 };
 
@@ -1781,6 +1796,12 @@ window.setTimeFilter = function(t) {
     document.querySelectorAll('[data-time]').forEach(b => b.classList.toggle('active', b.dataset.time === t));
     renderList(); renderCalendar();
 };
+window.toggleHomeSort = function() {
+    homeSortNewest = !homeSortNewest;
+    const btn = document.getElementById('home-sort-btn');
+    if (btn) btn.innerHTML = homeSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First';
+    renderList();
+};
 
 
 function renderSessionCard(s, gi, ci) {
@@ -1822,42 +1843,40 @@ function renderList() {
     const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
     if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
     activeQuills = {};
-    let html = `<div class="collapse-all-row"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button></div>`;
+    // Update button text for sort and collapse
+    const sortBtn = document.getElementById('home-sort-btn');
+    if (sortBtn) sortBtn.innerHTML = homeSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First';
+    const colBtn = document.getElementById('home-collapse-btn');
+    if (colBtn) colBtn.textContent = allMonthsCollapsed ? 'Expand All' : 'Collapse All';
+    let html = '';
+
+    // Helper to group and render sessions
+    function groupAndRender(list, reverseSort) {
+        const sorted = [...list].sort((a,b) => homeSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
+        const g = {}; sorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
+        const keys = Object.keys(g).sort(); if (homeSortNewest || reverseSort) keys.reverse();
+        keys.forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
+    }
 
     if (activeTimeFilter === 'upcoming') {
         const upcoming = filtered.filter(s => parseDate(s.date) >= today);
-        if (upcoming.length > 0) {
-            const g = {}; upcoming.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-            Object.keys(g).sort().forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
-        } else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
+        if (upcoming.length > 0) { groupAndRender(upcoming, false); }
+        else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
 
     } else if (activeTimeFilter === 'past') {
         const past = filtered.filter(s => parseDate(s.date) < today);
-        if (past.length > 0) {
-            const g = {}; past.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-            Object.keys(g).sort().reverse().forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
-        } else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No past sessions.</div></div>`; }
+        if (past.length > 0) { groupAndRender(past, true); }
+        else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No past sessions.</div></div>`; }
 
     } else {
         const mainList = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
         const olderPast = filtered.filter(s => parseDate(s.date) < twoWeeksAgo);
-        const recentPastDates = new Set(filtered.filter(s => { const d = parseDate(s.date); return d < today && d >= twoWeeksAgo; }).map(s => s.date));
-        if (mainList.length > 0) {
-            const g = {}; mainList.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-            Object.keys(g).sort().forEach((k, gi) => {
-                html += monthGroupOpen(k, g[k]);
-                g[k].forEach((s,i) => {
-                    const isRecentPast = recentPastDates.has(s.date);
-                    html += isRecentPast ? `<div class="recent-past-wrap">${renderSessionCard(s, gi, i)}</div>` : renderSessionCard(s, gi, i);
-                });
-                html += monthGroupClose();
-            });
-        } else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
+        if (mainList.length > 0) { groupAndRender(mainList, false); }
+        else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No upcoming sessions.</div></div>`; }
         if (olderPast.length > 0) {
             html += `<button class="past-sessions-toggle${pastSessionsVisible?' open':''}" onclick="togglePastSessions()"><span class="toggle-arrow">&#9654;</span> Past Sessions (${olderPast.length})</button>`;
             html += `<div class="past-sessions-container${pastSessionsVisible?' open':''}">`;
-            const g = {}; olderPast.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
-            Object.keys(g).sort().reverse().forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
+            groupAndRender(olderPast, true);
             html += `</div>`;
         }
     }
@@ -1912,13 +1931,13 @@ function renderCampaignPage(campaign) {
     }
     html += `</div></div>`;
 
-    // Last session recap — separate card
+    // Last session recap — separate card (same style as home page recap-display)
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     if (lastPast) {
         html += `<div class="campaign-overview">`;
         html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         if (lastPast.recapHtml || lastPast.recap) {
-            html += `<div class="campaign-last-recap"><div class="campaign-last-recap-text">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div></div>`;
+            html += `<div class="recap-display">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
             html += `<div class="recap-actions" style="margin-top:8px"><button class="copy-recap-btn" onclick="copyRecapText('${lastPast.date}', this)">Copy</button><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
         } else {
             html += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.date}"></div></div>`;
@@ -1931,24 +1950,25 @@ function renderCampaignPage(campaign) {
         html += `</div>`;
     }
 
-    // Stats bar — single campaign pill (mirrors home page stats bar)
+    // Divider + Stats bar + Controls — mirrors home page exactly
     if (cs.length > 0) {
+        html += `<hr class="section-divider">`;
         html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
 
-        // Controls row — mirrors home page layout exactly
+        // Controls row — same layout as home: left = time filters, right (empty on campaign since no list/calendar toggle)
         html += `<div class="controls-row">`;
         html += `<div class="controls-left">`;
         html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
         html += `</div>`;
-        html += `<div class="controls-left">`;
-        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')" style="margin-left:0">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
-        html += `</div>`;
         html += `</div>`;
 
-        // Collapse all + session list (mirrors home page list view)
-        html += `<div class="collapse-all-row"><button class="collapse-all-btn" id="collapse-all-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button></div>`;
+        // Sub-row: sort + collapse (mirrors home page)
+        html += `<div class="controls-sub-row">`;
+        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        html += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
+        html += `</div>`;
 
         // Filter sessions based on time filter
         let displaySessions = cs;
