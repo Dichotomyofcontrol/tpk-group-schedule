@@ -877,6 +877,27 @@
             .pass-form input { width: 180px; padding: 10px 14px; font-size: 0.85rem; }
             .pass-form button { padding: 10px 18px; font-size: 0.82rem; }
         }
+
+        /* ===== SHARE BUTTONS ===== */
+        .share-btn {
+            background: none; border: 1px solid var(--border); border-radius: 6px;
+            color: var(--text-dim); cursor: pointer; padding: 5px 10px; font-size: 0.75rem;
+            font-family: 'Inter', sans-serif; transition: all 0.2s; display: inline-flex;
+            align-items: center; gap: 4px; white-space: nowrap;
+        }
+        .share-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .share-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; }
+        .campaign-page-header .share-btn { margin-left: auto; }
+
+        /* ===== SHARE TOAST ===== */
+        .share-toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text); padding: 10px 20px; font-size: 0.85rem; font-family: 'Inter', sans-serif;
+            z-index: 9999; opacity: 0; transition: opacity 0.25s ease, transform 0.25s ease;
+            pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .share-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -1013,6 +1034,7 @@
             <div class="campaign-page-header">
                 <button class="campaign-back-btn" onclick="navigateTo('home')">&larr; Back</button>
                 <div class="campaign-page-title" id="campaign-page-title"></div>
+                <button class="share-btn" id="campaign-share-btn" onclick="shareLink(currentPage)">Share</button>
             </div>
             <div id="campaign-page-content"></div>
         </div>
@@ -1656,6 +1678,7 @@ function renderHero() {
         if (lastSession.recapHtml || lastSession.recap) {
             recapBlock += `<div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
             recapBlock += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastSession.date}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastSession.date}')">Edit</button>`;
+            recapBlock += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${lastSession.campaign}','${lastSession.date}',true,event)">Share</button>`;
             if (lastSession.pdfUrl) { recapBlock += `<a class="lsc-pdf" href="${escapeHtml(lastSession.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
             recapBlock += `</div>`;
         } else {
@@ -1703,6 +1726,7 @@ function renderRecentRecaps() {
             actions += `<button class="lsc-read-btn" onclick="openReaderModal('${s.date}')">Read Full</button>`;
         }
         actions += `<button class="lsc-edit-btn" onclick="goToSession('${s.date}')">Edit</button>`;
+        if (s.recapHtml || s.recap) { actions += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${c}','${s.date}',true,event)">Share</button>`; }
         if (s.pdfUrl) { actions += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
         actions += '</div>';
         return `<div class="last-session-card ${c}"><div class="lsc-top"><div class="lsc-campaign">${campaignIcons[c]} ${campaignNames[c]}</div><div class="lsc-date">${formatDateShort(s.date)}</div></div>${recapBlock}${actions}</div>`;
@@ -1743,6 +1767,7 @@ window.openReaderModal = function(ds) {
     document.getElementById('reader-body').innerHTML = s.recapHtml || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
     let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">Copy</button>`;
     footer += `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
+    footer += `<button class="share-btn" onclick="shareLink('${s.campaign}','${ds}',true,event)">Share</button>`;
     if (s.pdfUrl) { footer += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF Recap</a>`; }
     document.getElementById('reader-footer').innerHTML = footer;
     overlay.classList.add('open');
@@ -1995,6 +2020,7 @@ function renderCampaignPage(campaign) {
         if (lastPast.recapHtml || lastPast.recap) {
             html += `<div class="hero-recap">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
             html += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.date}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.date}')">Edit</button>`;
+            html += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
             if (lastPast.pdfUrl) { html += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
             html += `</div>`;
         } else {
@@ -2100,6 +2126,123 @@ window.calendarGoToSession = function(ds) {
         const card = document.querySelector(`[data-session-date="${ds}"]`);
         if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
     }, 100);
+};
+
+// ===== HASH ROUTING =====
+const validCampaigns = ['frostmaiden', 'strahd', 'rokugan', 'special'];
+let _suppressHashUpdate = false;
+let _initialRouteApplied = false;
+
+function buildHash(campaign, date, full) {
+    let h = '#' + campaign;
+    if (date) h += '/' + date;
+    if (full) h += '/full';
+    return h;
+}
+
+function setHash(hash) {
+    if (_suppressHashUpdate) return;
+    history.pushState(null, '', hash || '#');
+}
+
+function parseHash() {
+    const h = window.location.hash.replace(/^#\/?/, '');
+    if (!h) return { page: 'home' };
+    const parts = h.split('/');
+    const campaign = parts[0];
+    if (!validCampaigns.includes(campaign)) return { page: 'home' };
+    return { page: campaign, date: parts[1] || null, full: parts[2] === 'full' };
+}
+
+function applyRoute(r) {
+    _suppressHashUpdate = true;
+    if (r.page === 'home') {
+        if (currentPage !== 'home') navigateTo('home');
+    } else {
+        if (currentPage !== r.page) navigateTo(r.page);
+        if (r.date && r.full) {
+            setTimeout(() => { openReaderModal(r.date); _suppressHashUpdate = false; }, 200);
+            return;
+        } else if (r.date) {
+            setTimeout(() => {
+                // Show past sessions on campaign page if needed
+                if (typeof campaignSortNewest !== 'undefined') {
+                    const card = document.querySelector(`[data-session-date="${r.date}"]`);
+                    if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(r.date); }, 300); }
+                }
+                _suppressHashUpdate = false;
+            }, 200);
+            return;
+        }
+    }
+    _suppressHashUpdate = false;
+}
+
+window.addEventListener('hashchange', () => applyRoute(parseHash()));
+
+// Patch navigateTo to update hash
+const _origNavigateTo = window.navigateTo;
+window.navigateTo = function(page) {
+    _origNavigateTo(page);
+    if (page === 'home') setHash('#');
+    else setHash(buildHash(page));
+};
+
+// Patch openReaderModal to update hash
+const _origOpenReaderModal = window.openReaderModal;
+window.openReaderModal = function(ds) {
+    _origOpenReaderModal(ds);
+    const s = sessions.find(x => x.date === ds);
+    if (s) setHash(buildHash(s.campaign, ds, true));
+};
+
+// Patch closeReaderModal to update hash
+const _origCloseReaderModal = window.closeReaderModal;
+window.closeReaderModal = function() {
+    _origCloseReaderModal();
+    if (currentPage !== 'home') setHash(buildHash(currentPage));
+    else setHash('#');
+};
+
+// Hook into renderAll to apply initial route from hash after first data load
+const _origRenderAll = renderAll;
+renderAll = function() {
+    _origRenderAll();
+    if (!_initialRouteApplied) {
+        _initialRouteApplied = true;
+        const r = parseHash();
+        if (r.page !== 'home') {
+            setTimeout(() => applyRoute(r), 100);
+        }
+    }
+};
+
+// ===== SHARE LINK HELPER =====
+const shareIconSvg = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function showShareToast(msg) {
+    let toast = document.getElementById('share-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'share-toast';
+        toast.className = 'share-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg || 'Link copied!';
+    toast.classList.add('visible');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('visible'), 2000);
+}
+
+window.shareLink = function(campaign, date, full, evt) {
+    if (evt) evt.stopPropagation();
+    const hash = buildHash(campaign, date, full);
+    const url = window.location.origin + window.location.pathname + hash;
+    if (navigator.share) {
+        navigator.share({ title: 'Six in the TPK', url: url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => showShareToast()).catch(() => showShareToast('Could not copy link'));
+    }
 };
 </script>
 </body>
