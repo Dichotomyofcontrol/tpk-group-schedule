@@ -95,6 +95,13 @@
         /* ===== SECTION DIVIDER ===== */
         .section-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
+        /* ===== SECTION HEADINGS — prominent labels outside tiles ===== */
+        .section-heading {
+            font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
+            color: var(--text); margin: 28px 0 12px; letter-spacing: 0.02em;
+        }
+        .section-heading:first-child { margin-top: 0; }
+
         /* ===== CONTROLS PANEL — wraps stats + controls in a distinct section ===== */
         .controls-panel {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
@@ -142,7 +149,7 @@
         .controls-left { display: flex; gap: 4px; }
         .controls-sub-row {
             display: flex; align-items: center; justify-content: flex-end;
-            padding: 0 0 4px; gap: 8px; flex-wrap: wrap;
+            padding: 0 0 4px; gap: 0; flex-wrap: wrap;
         }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
@@ -254,8 +261,8 @@
         .month-sessions { overflow: hidden; transition: max-height 0.3s ease; }
         .month-sessions.collapsed { max-height: 0 !important; }
         .collapse-all-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 4px 12px;
-            border-radius: 100px; border: 1px solid var(--border); background: transparent;
+            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 5px 14px;
+            border-radius: 0 6px 6px 0; border: 1px solid var(--border); background: transparent;
             color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .collapse-all-btn:hover { color: var(--text); border-color: var(--text-dim); }
@@ -365,9 +372,9 @@
         }
         .recap-cta:hover { background: rgba(79,195,247,0.18); border-color: var(--frostmaiden-primary); }
         .sort-toggle {
-            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 4px 12px;
-            border-radius: 100px; border: 1px solid var(--border); background: transparent;
-            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 5px 14px;
+            border-radius: 6px 0 0 6px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s; border-right: none;
         }
         .sort-toggle:hover { color: var(--text); border-color: var(--text-dim); }
         .past-sessions-container .session-card:hover { opacity: 1; }
@@ -616,7 +623,6 @@
         .copy-recap-btn.copied { color: #4caf50; border-color: #4caf50; }
 
         /* ===== PARTY MANAGEMENT ===== */
-        .roster-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
         .edit-party-btn {
             font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 3px 10px;
             border-radius: 100px; border: 1px solid var(--border); background: transparent;
@@ -959,11 +965,14 @@
         <!-- HOME VIEW -->
         <div id="home-view">
             <!-- Hero: Next session countdown + last recap -->
+            <div class="section-heading">Up Next</div>
             <div id="hero-section"></div>
 
             <!-- Recent recaps for all campaigns -->
             <div id="recent-recaps"></div>
 
+            <!-- Section heading for sessions -->
+            <div class="section-heading">Sessions</div>
             <!-- Controls panel: stats + view/time toggles + sort/collapse -->
             <div class="controls-panel">
                 <div class="stats-bar" id="stats-bar"></div>
@@ -1934,8 +1943,8 @@ function renderCampaignPage(campaign) {
     // Party roster — standalone section with player cards
     const roster = campaignRosters[campaign] || [];
     const chars = campaignCharacters[campaign] || {};
+    html += `<div class="section-heading" style="display:flex;align-items:center;justify-content:space-between">Party<button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')" style="font-size:0.7rem">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
     html += `<div class="campaign-overview">`;
-    html += `<div class="roster-header"><div class="campaign-overview-label" style="margin-bottom:0">Party</div><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
     html += `<div class="campaign-roster" id="roster-${campaign}">`;
     if (partyEditMode === campaign) {
         roster.forEach((p, idx) => {
@@ -1970,24 +1979,22 @@ function renderCampaignPage(campaign) {
     // Last session recap — separate card (same style as home page recap-display)
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     if (lastPast) {
+        html += `<div class="section-heading">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         html += `<div class="campaign-overview">`;
-        html += `<div class="campaign-overview-label">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         if (lastPast.recapHtml || lastPast.recap) {
-            html += `<div class="recap-display">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
-            html += `<div class="recap-actions" style="margin-top:8px"><button class="copy-recap-btn" onclick="copyRecapText('${lastPast.date}', this)">Copy</button><button class="recap-edit-btn" onclick="editRecap('${lastPast.date}'); goToSession('${lastPast.date}')">Edit Recap</button></div>`;
+            html += `<div class="hero-recap">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
+            html += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.date}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.date}')">Edit</button>`;
+            if (lastPast.pdfUrl) { html += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
+            html += `</div>`;
         } else {
-            html += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.date}"></div></div>`;
-            html += `<div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-overview-${lastPast.date}">Saved!</span></div>`;
+            html += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.date}')">No recap yet — tap to add one</div>`;
         }
-        html += `<div style="margin-top:10px"><div class="pdf-upload-area">`;
-        if (lastPast.pdfUrl) { html += `<a class="campaign-last-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; ${escapeHtml(lastPast.pdfName || 'View PDF Recap')}</a><label class="pdf-upload-btn" style="margin-left:8px">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label><button class="delete-btn" onclick="deletePdf('${lastPast.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
-        else { html += `<label class="pdf-upload-btn">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${lastPast.date}',this)"></label>`; }
-        html += `<span class="pdf-upload-status" id="pdf-status-${lastPast.date}"></span></div></div>`;
         html += `</div>`;
     }
 
     // Divider + Stats bar + Controls — mirrors home page exactly
     if (cs.length > 0) {
+        html += `<div class="section-heading">Sessions</div>`;
         html += `<div class="controls-panel">`;
         html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
         html += `<div class="controls-row">`;
