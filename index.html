@@ -102,6 +102,14 @@
         }
         .section-heading:first-child { margin-top: 0; }
 
+        /* ===== SESSIONS WRAPPER — background region for the entire sessions section ===== */
+        .sessions-wrapper {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px; margin-bottom: 20px;
+        }
+        .sessions-wrapper .section-heading { margin-top: 0; }
+        body.light .sessions-wrapper { background: rgba(0,0,0,0.02); }
+
         /* ===== CONTROLS PANEL — wraps stats + controls in a distinct section ===== */
         .controls-panel {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
@@ -149,7 +157,7 @@
         .controls-left { display: flex; gap: 4px; }
         .controls-sub-row {
             display: flex; align-items: center; justify-content: flex-end;
-            padding: 0 0 4px; gap: 8px; flex-wrap: wrap;
+            padding: 0 0 4px; gap: 0; flex-wrap: wrap;
         }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
@@ -262,7 +270,7 @@
         .month-sessions.collapsed { max-height: 0 !important; }
         .collapse-all-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
-            border-radius: 6px; border: 1px solid var(--border); background: transparent;
+            border-radius: 0 6px 6px 0; border: 1px solid var(--border); background: transparent;
             color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .collapse-all-btn:hover { color: var(--text); border-color: var(--text-dim); }
@@ -373,7 +381,7 @@
         .recap-cta:hover { background: rgba(79,195,247,0.18); border-color: var(--frostmaiden-primary); }
         .sort-toggle {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
-            border-radius: 6px; border: 1px solid var(--border); background: transparent;
+            border-radius: 6px 0 0 6px; border: 1px solid var(--border); border-right: none; background: transparent;
             color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .sort-toggle:hover { color: var(--text); border-color: var(--text-dim); }
@@ -971,31 +979,33 @@
             <!-- Recent recaps for all campaigns -->
             <div id="recent-recaps"></div>
 
-            <!-- Section heading for sessions -->
-            <div class="section-heading">Sessions</div>
-            <!-- Controls panel: stats + view/time toggles + sort/collapse -->
-            <div class="controls-panel">
-                <div class="stats-bar" id="stats-bar"></div>
-                <div class="controls-row">
-                    <div class="controls-left">
-                        <button class="view-btn active" data-view="list">List</button>
-                        <button class="view-btn" data-view="calendar">Calendar</button>
+            <!-- Sessions wrapper -->
+            <div class="sessions-wrapper">
+                <div class="section-heading">Sessions</div>
+                <!-- Controls panel: stats + view/time toggles + sort/collapse -->
+                <div class="controls-panel">
+                    <div class="stats-bar" id="stats-bar"></div>
+                    <div class="controls-row">
+                        <div class="controls-left">
+                            <button class="view-btn active" data-view="list">List</button>
+                            <button class="view-btn" data-view="calendar">Calendar</button>
+                        </div>
+                        <div class="controls-left">
+                            <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
+                            <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
+                            <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                        </div>
                     </div>
-                    <div class="controls-left">
-                        <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
-                        <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
-                        <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                    <div class="controls-sub-row">
+                        <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                        <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
                     </div>
                 </div>
-                <div class="controls-sub-row">
-                    <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
-                    <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
-                </div>
-            </div>
 
-            <!-- Content -->
-            <div id="list-view"><div class="loading"><div class="loading-spinner"></div><br>Loading sessions...</div></div>
-            <div id="calendar-view" style="display:none"></div>
+                <!-- Content -->
+                <div id="list-view"><div class="loading"><div class="loading-spinner"></div><br>Loading sessions...</div></div>
+                <div id="calendar-view" style="display:none"></div>
+            </div>
         </div>
 
         <!-- CAMPAIGN PAGE -->
@@ -1995,6 +2005,7 @@ function renderCampaignPage(campaign) {
 
     // Divider + Stats bar + Controls — mirrors home page exactly
     if (cs.length > 0) {
+        html += `<div class="sessions-wrapper">`;
         html += `<div class="section-heading">Sessions</div>`;
         html += `<div class="controls-panel">`;
         html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
@@ -2027,6 +2038,7 @@ function renderCampaignPage(campaign) {
         } else {
             html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${campaignTimeFilter} sessions.</div></div>`;
         }
+        html += `</div>`; // close sessions-wrapper
     }
     if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     document.getElementById('campaign-page-content').innerHTML = html;
