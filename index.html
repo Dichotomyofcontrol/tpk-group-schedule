@@ -93,12 +93,18 @@
         .sign-out-btn:hover { color: var(--text); border-color: var(--text-dim); }
 
         /* ===== SECTION DIVIDER ===== */
-        .section-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+        .section-divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+        /* ===== CONTROLS PANEL — wraps stats + controls in a distinct section ===== */
+        .controls-panel {
+            background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px 20px 8px; margin-bottom: 20px;
+        }
 
         /* ===== STATS BAR — Row 2 (clickable filters) ===== */
         .stats-bar {
             display: flex; align-items: center; justify-content: center;
-            gap: 6px; padding: 16px 0; flex-wrap: wrap;
+            gap: 6px; padding: 0 0 12px; flex-wrap: wrap;
         }
         .stat-filter {
             display: flex; align-items: center; gap: 6px;
@@ -135,8 +141,8 @@
         }
         .controls-left { display: flex; gap: 4px; }
         .controls-sub-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 0 12px; gap: 12px; flex-wrap: wrap;
+            display: flex; align-items: center; justify-content: flex-end;
+            padding: 0 0 4px; gap: 8px; flex-wrap: wrap;
         }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
@@ -402,7 +408,7 @@
         /* ===== HERO SECTION ===== */
         .hero-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-            padding: 20px 24px; margin-bottom: 16px; position: relative; overflow: hidden;
+            padding: 20px 24px; margin-top: 20px; margin-bottom: 0; position: relative; overflow: hidden;
         }
         .hero-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
         .hero-card.frostmaiden::before { background: var(--frostmaiden-primary); }
@@ -430,7 +436,7 @@
         .hero-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
 
         /* ===== LAST SESSIONS (collapsible) ===== */
-        .last-sessions-section { margin-bottom: 16px; }
+        .last-sessions-section { margin-bottom: 0; margin-top: 8px; }
         .last-sessions-header {
             display: flex; align-items: center; gap: 8px; padding: 10px 0;
             border: none; background: none; color: var(--text-dim); font-family: 'Cinzel', serif;
@@ -941,26 +947,24 @@
             <!-- Recent recaps for all campaigns -->
             <div id="recent-recaps"></div>
 
-            <hr class="section-divider">
-
-            <!-- Row 2: Stats as filters -->
-            <div class="stats-bar" id="stats-bar"></div>
-
-            <!-- Row 3: View toggle + time filter -->
-            <div class="controls-row">
-                <div class="controls-left">
-                    <button class="view-btn active" data-view="list">List</button>
-                    <button class="view-btn" data-view="calendar">Calendar</button>
+            <!-- Controls panel: stats + view/time toggles + sort/collapse -->
+            <div class="controls-panel">
+                <div class="stats-bar" id="stats-bar"></div>
+                <div class="controls-row">
+                    <div class="controls-left">
+                        <button class="view-btn active" data-view="list">List</button>
+                        <button class="view-btn" data-view="calendar">Calendar</button>
+                    </div>
+                    <div class="controls-left">
+                        <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
+                        <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
+                        <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                    </div>
                 </div>
-                <div class="controls-left">
-                    <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
-                    <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
-                    <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                <div class="controls-sub-row">
+                    <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                    <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
                 </div>
-            </div>
-            <div class="controls-sub-row">
-                <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
-                <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
             </div>
 
             <!-- Content -->
@@ -1952,22 +1956,20 @@ function renderCampaignPage(campaign) {
 
     // Divider + Stats bar + Controls — mirrors home page exactly
     if (cs.length > 0) {
-        html += `<hr class="section-divider">`;
+        html += `<div class="controls-panel">`;
         html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
-
-        // Controls row — same layout as home: left = time filters, right (empty on campaign since no list/calendar toggle)
         html += `<div class="controls-row">`;
+        html += `<div class="controls-left"></div>`;
         html += `<div class="controls-left">`;
         html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
         html += `</div>`;
         html += `</div>`;
-
-        // Sub-row: sort + collapse (mirrors home page)
         html += `<div class="controls-sub-row">`;
         html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
         html += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
+        html += `</div>`;
         html += `</div>`;
 
         // Filter sessions based on time filter
