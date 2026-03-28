@@ -149,7 +149,7 @@
         .controls-left { display: flex; gap: 4px; }
         .controls-sub-row {
             display: flex; align-items: center; justify-content: flex-end;
-            padding: 0 0 4px; gap: 0; flex-wrap: wrap;
+            padding: 0 0 4px; gap: 8px; flex-wrap: wrap;
         }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
@@ -261,8 +261,8 @@
         .month-sessions { overflow: hidden; transition: max-height 0.3s ease; }
         .month-sessions.collapsed { max-height: 0 !important; }
         .collapse-all-btn {
-            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 5px 14px;
-            border-radius: 0 6px 6px 0; border: 1px solid var(--border); background: transparent;
+            font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
+            border-radius: 6px; border: 1px solid var(--border); background: transparent;
             color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .collapse-all-btn:hover { color: var(--text); border-color: var(--text-dim); }
@@ -372,9 +372,9 @@
         }
         .recap-cta:hover { background: rgba(79,195,247,0.18); border-color: var(--frostmaiden-primary); }
         .sort-toggle {
-            font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 5px 14px;
-            border-radius: 6px 0 0 6px; border: 1px solid var(--border); background: transparent;
-            color: var(--text-dim); cursor: pointer; transition: all 0.2s; border-right: none;
+            font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
+            border-radius: 6px; border: 1px solid var(--border); background: transparent;
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
         }
         .sort-toggle:hover { color: var(--text); border-color: var(--text-dim); }
         .past-sessions-container .session-card:hover { opacity: 1; }
@@ -1943,8 +1943,9 @@ function renderCampaignPage(campaign) {
     // Party roster — standalone section with player cards
     const roster = campaignRosters[campaign] || [];
     const chars = campaignCharacters[campaign] || {};
-    html += `<div class="section-heading" style="display:flex;align-items:center;justify-content:space-between">Party<button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')" style="font-size:0.7rem">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
+    html += `<div class="section-heading">Party</div>`;
     html += `<div class="campaign-overview">`;
+    html += `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
     html += `<div class="campaign-roster" id="roster-${campaign}">`;
     if (partyEditMode === campaign) {
         roster.forEach((p, idx) => {
