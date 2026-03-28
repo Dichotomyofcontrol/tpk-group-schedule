@@ -152,17 +152,13 @@
         /* ===== CONTROLS ROW — Row 3 ===== */
         .controls-row {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 0 8px; gap: 8px; flex-wrap: nowrap;
+            padding: 0 0 8px; gap: 12px; flex-wrap: wrap;
         }
-        .controls-left { display: flex; gap: 4px; flex-shrink: 0; }
+        .controls-left { display: flex; gap: 4px; }
         .controls-sub-row {
             display: flex; align-items: center; justify-content: flex-end;
-            padding: 0 0 4px; gap: 4px; flex-wrap: nowrap;
+            padding: 0 0 4px; gap: 4px; flex-wrap: wrap;
         }
-        .controls-time-row {
-            display: flex; padding: 0 0 8px; gap: 0;
-        }
-        .controls-time-row .view-btn { flex: 1; text-align: center; }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
             border: 1px solid var(--border); background: transparent;
@@ -828,7 +824,12 @@
             .stat-filter { padding: 6px 10px; }
             .stat-filter .sf-count { font-size: 0.9rem; }
             .stat-filter .sf-label { font-size: 0.6rem; }
-            .controls-row { padding: 0 0 10px; }
+            .controls-row {
+                flex-direction: column; align-items: stretch; gap: 6px; padding: 0 0 6px;
+            }
+            .controls-row .controls-left { justify-content: space-between; }
+            .controls-row .controls-left .view-btn { flex: 1; text-align: center; }
+            .controls-sub-row { justify-content: space-between; padding: 0 0 6px; }
             .session-card { padding: 10px 12px; }
             .session-date { width: 36px; }
             .session-date .day-num { font-size: 1.15rem; }
@@ -1015,15 +1016,15 @@
                             <button class="view-btn active" data-view="list">List</button>
                             <button class="view-btn" data-view="calendar">Calendar</button>
                         </div>
-                        <div class="controls-sub-row">
-                            <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
-                            <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
+                        <div class="controls-left">
+                            <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
+                            <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
+                            <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                         </div>
                     </div>
-                    <div class="controls-time-row">
-                        <button class="view-btn active" data-time="all" onclick="setTimeFilter('all')">All</button>
-                        <button class="view-btn" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
-                        <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                    <div class="controls-sub-row">
+                        <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                        <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
                     </div>
                 </div>
 
@@ -1979,15 +1980,15 @@ function renderCampaignPage(campaign) {
         html += `<button class="view-btn active" data-view="list">List</button>`;
         html += `<button class="view-btn" data-view="calendar">Calendar</button>`;
         html += `</div>`;
-        html += `<div class="controls-sub-row">`;
-        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
-        html += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
-        html += `</div>`;
-        html += `</div>`;
-        html += `<div class="controls-time-row">`;
+        html += `<div class="controls-left">`;
         html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
+        html += `</div>`;
+        html += `</div>`;
+        html += `<div class="controls-sub-row">`;
+        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        html += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
         html += `</div>`;
         html += `</div>`;
 
