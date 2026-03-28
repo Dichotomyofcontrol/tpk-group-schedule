@@ -436,18 +436,35 @@
         .hero-no-recap { font-size: 0.78rem; color: var(--text-dim); font-style: italic; }
 
         /* ===== LAST SESSIONS (collapsible) ===== */
-        .last-sessions-section { margin-bottom: 0; margin-top: 8px; }
+        .last-sessions-section { margin: 20px 0; }
         .last-sessions-header {
-            display: flex; align-items: center; gap: 8px; padding: 10px 0;
-            border: none; background: none; color: var(--text-dim); font-family: 'Cinzel', serif;
-            font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em;
-            cursor: pointer; width: 100%; transition: color 0.2s;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 18px; width: 100%;
+            border: 1px solid var(--border); border-radius: 12px;
+            background: var(--surface);
+            color: var(--text); font-family: 'Inter', sans-serif;
+            font-size: 0.82rem; font-weight: 500;
+            cursor: pointer; transition: all 0.2s;
         }
-        .last-sessions-header:hover { color: var(--text); }
-        .last-sessions-header .ls-arrow { transition: transform 0.2s; font-size: 0.55rem; font-family: 'Inter', sans-serif; }
-        .last-sessions-header.open .ls-arrow { transform: rotate(90deg); }
+        .last-sessions-header:hover { border-color: var(--text-dim); background: var(--surface-hover); }
+        .last-sessions-header .ls-label { display: flex; align-items: center; gap: 10px; }
+        .last-sessions-header .ls-dots {
+            display: flex; gap: 4px;
+        }
+        .last-sessions-header .ls-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .last-sessions-header .ls-dot.frostmaiden { background: var(--frostmaiden-primary); }
+        .last-sessions-header .ls-dot.strahd { background: var(--strahd-primary); }
+        .last-sessions-header .ls-dot.rokugan { background: var(--rokugan-primary); }
+        .last-sessions-header .ls-dot.special { background: var(--special-primary); }
+        .last-sessions-header .ls-toggle {
+            font-size: 0.7rem; color: var(--text-dim); padding: 3px 10px;
+            border: 1px solid var(--border); border-radius: 100px; transition: all 0.2s;
+        }
+        .last-sessions-header:hover .ls-toggle { color: var(--text); border-color: var(--text-dim); }
         .last-sessions-list { display: flex; flex-direction: column; gap: 10px; }
-        .last-sessions-extra { display: none; margin-top: 10px; }
+        .last-sessions-extra { display: none; margin-top: 12px; }
         .last-sessions-extra.open { display: flex; flex-direction: column; gap: 10px; }
         .last-session-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
@@ -1238,19 +1255,24 @@ function updateCancelStates() {
         a.innerHTML = c ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">&#10005;</button>`;
     });
 }
-window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = document.querySelector(`[data-session-date="${sd}"]`).querySelector('.session-action'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
+// Helper: find session card in the active container (avoids hidden home page duplicates)
+function findSessionCard(sd) {
+    const container = document.querySelector('.campaign-page.active') ? document.getElementById('campaign-page-content') : document.getElementById('list-view');
+    return container ? container.querySelector(`[data-session-date="${sd}"]`) : document.querySelector(`[data-session-date="${sd}"]`);
+}
+window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = findSessionCard(sd).querySelector('.session-action'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
 window.confirmCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "cancelled" }); cancelPendingSession = null; } catch(e) { console.error(e); } };
-window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = document.querySelector(`[data-session-date="${cancelPendingSession}"]`).querySelector('.session-action'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">&#10005;</button>`; cancelPendingSession = null; };
+window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = findSessionCard(cancelPendingSession).querySelector('.session-action'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">&#10005;</button>`; cancelPendingSession = null; };
 window.undoCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "active" }); } catch(e) { console.error(e); } };
-window.initiateDeleteSession = function(sd) { const a = document.querySelector(`[data-session-date="${sd}"]`).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
+window.initiateDeleteSession = function(sd) { const a = findSessionCard(sd).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
 window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
-window.cancelDeleteSession = function(sd) { const c = document.querySelector(`[data-session-date="${sd}"]`); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
-window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const chip = document.querySelector(`[data-session-date="${sd}"] .att-chip[onclick*="'${p}'"]`); if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
+window.cancelDeleteSession = function(sd) { const c = findSessionCard(sd); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
+window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
 
 // ===== RECAP & PDF =====
 window.toggleSessionExpand = function(sd, ev) {
     if (ev && ev.target.closest('.session-detail')) return;
-    const card = document.querySelector(`[data-session-date="${sd}"]`); if (!card) return;
+    const card = findSessionCard(sd); if (!card) return;
     const was = card.classList.contains('expanded'); card.classList.toggle('expanded');
     if (!was) {
         const el = card.querySelector('.recap-editor');
@@ -1269,7 +1291,7 @@ window.saveRecap = async function(sd) {
 };
 window.editRecap = function(sd) {
     const s = sessions.find(x => x.date === sd); if (!s) return;
-    const card = document.querySelector(`[data-session-date="${sd}"]`); const d = card.querySelector('.recap-display'); if (!d) return;
+    const card = findSessionCard(sd); if (!card) return; const d = card.querySelector('.recap-display'); if (!d) return;
     d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">Save</button><span class="recap-saved-msg" id="recap-msg-${sd}">Saved!</span></div>`;
     delete activeQuills[sd]; const el = document.getElementById(`recap-editor-${sd}`);
     activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
@@ -1668,8 +1690,14 @@ function renderRecentRecaps() {
     }
 
     // Always collapsed by default — just the header toggle with all other campaigns inside
+    // Build campaign dot indicators for the header
+    const otherCampaigns = [...new Set(others.map(o => o.campaign))];
+    let dotsHtml = '<span class="ls-dots">';
+    otherCampaigns.forEach(c => { dotsHtml += `<span class="ls-dot ${c}"></span>`; });
+    dotsHtml += '</span>';
+
     let html = '<div class="last-sessions-section">';
-    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-arrow">&#9654;</span> Recaps from Other Campaigns</button>`;
+    html += `<button class="last-sessions-header${lastSessionsExpanded ? ' open' : ''}" onclick="toggleLastSessions()"><span class="ls-label">${dotsHtml} Other Campaign Recaps</span><span class="ls-toggle">${lastSessionsExpanded ? 'Hide' : 'Show'}</span></button>`;
     html += `<div class="last-sessions-extra${lastSessionsExpanded ? ' open' : ''}" id="last-sessions-extra">`;
     others.forEach(item => { html += buildCard(item); });
     html += '</div></div>';
@@ -1679,7 +1707,11 @@ window.toggleLastSessions = function() {
     lastSessionsExpanded = !lastSessionsExpanded;
     const h = document.querySelector('.last-sessions-header');
     const e = document.getElementById('last-sessions-extra');
-    if (h) h.classList.toggle('open', lastSessionsExpanded);
+    if (h) {
+        h.classList.toggle('open', lastSessionsExpanded);
+        const toggle = h.querySelector('.ls-toggle');
+        if (toggle) toggle.textContent = lastSessionsExpanded ? 'Hide' : 'Show';
+    }
     if (e) e.classList.toggle('open', lastSessionsExpanded);
 };
 window.openReaderModal = function(ds) {
@@ -1959,7 +1991,10 @@ function renderCampaignPage(campaign) {
         html += `<div class="controls-panel">`;
         html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
         html += `<div class="controls-row">`;
-        html += `<div class="controls-left"></div>`;
+        html += `<div class="controls-left">`;
+        html += `<button class="view-btn active" data-view="list">List</button>`;
+        html += `<button class="view-btn" data-view="calendar">Calendar</button>`;
+        html += `</div>`;
         html += `<div class="controls-left">`;
         html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
         html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
