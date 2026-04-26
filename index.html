@@ -318,6 +318,19 @@
         .undo-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
         .delete-btn { font-family: 'Inter', sans-serif; font-size: 0.63rem; padding: 3px 7px; border-radius: 5px; border: 1px solid rgba(239,83,80,0.3); background: rgba(239,83,80,0.1); color: var(--strahd-primary); cursor: pointer; transition: all 0.2s; }
         .delete-btn:hover { background: rgba(239,83,80,0.25); }
+        .edit-session-btn { font-family: 'Inter', sans-serif; font-size: 0.63rem; padding: 3px 7px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+        .edit-session-btn:hover { color: var(--frostmaiden-primary); border-color: var(--frostmaiden-primary); }
+        .session-edit-form { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--surface); border-radius: 10px; }
+        .edit-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .edit-field { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 120px; }
+        .edit-field label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+        .edit-field input, .edit-field select { font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; }
+        .edit-field input:focus, .edit-field select:focus { border-color: var(--frostmaiden-primary); }
+        .edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+        .edit-save-btn { font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 6px 16px; border-radius: 6px; border: none; background: var(--frostmaiden-primary); color: var(--bg); cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .edit-save-btn:hover { opacity: 0.85; }
+        .edit-cancel-btn { font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
+        .edit-cancel-btn:hover { border-color: var(--text-dim); color: var(--text); }
         .delete-confirm-text { font-size: 0.68rem; color: var(--strahd-primary); white-space: nowrap; }
         .cancel-confirm { font-size: 0.7rem; color: var(--strahd-primary); white-space: nowrap; margin-right: 4px; }
 
@@ -1333,6 +1346,78 @@ window.undoCancelSession = async function(sd) { try { await updateDoc(doc(db, "s
 window.initiateDeleteSession = function(sd) { const a = findSessionCard(sd).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
 window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
 window.cancelDeleteSession = function(sd) { const c = findSessionCard(sd); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
+window.openEditSession = function(sd) {
+    const s = sessions.find(x => x.date === sd);
+    if (!s) return;
+    const card = findSessionCard(sd);
+    if (!card) return;
+    const campaignOptions = Object.keys(campaignNames).map(c => `<option value="${c}"${c === s.campaign ? ' selected' : ''}>${campaignNames[c]}</option>`).join('');
+    const editHtml = `<div class="session-edit-form" onclick="event.stopPropagation()">
+        <div class="edit-row">
+            <div class="edit-field"><label>Date</label><input type="date" id="edit-date-${sd}" value="${s.date}"></div>
+            <div class="edit-field"><label>Time</label><input type="text" id="edit-time-${sd}" value="${s.time}"></div>
+            <div class="edit-field"><label>Duration</label><input type="text" id="edit-dur-${sd}" value="${s.duration}"></div>
+        </div>
+        <div class="edit-row">
+            <div class="edit-field"><label>GM</label><input type="text" id="edit-gm-${sd}" value="${s.gm}"></div>
+            <div class="edit-field"><label>Campaign</label><select id="edit-camp-${sd}">${campaignOptions}</select></div>
+        </div>
+        <div class="edit-actions">
+            <button class="edit-cancel-btn" onclick="event.stopPropagation(); cancelEditSession('${sd}')">Cancel</button>
+            <button class="edit-save-btn" onclick="event.stopPropagation(); saveEditSession('${sd}')">Save</button>
+        </div>
+    </div>`;
+    card.querySelector('.session-card-header').style.display = 'none';
+    card.querySelector('.session-detail').style.display = 'none';
+    card.insertAdjacentHTML('afterbegin', editHtml);
+    card.classList.remove('expanded');
+};
+window.cancelEditSession = function(sd) {
+    const card = findSessionCard(sd);
+    if (!card) return;
+    const form = card.querySelector('.session-edit-form');
+    if (form) form.remove();
+    card.querySelector('.session-card-header').style.display = '';
+    card.querySelector('.session-detail').style.display = '';
+};
+window.saveEditSession = async function(sd) {
+    const card = findSessionCard(sd);
+    if (!card) return;
+    const newDate = document.getElementById(`edit-date-${sd}`).value;
+    const newTime = document.getElementById(`edit-time-${sd}`).value;
+    const newDur = document.getElementById(`edit-dur-${sd}`).value;
+    const newGm = document.getElementById(`edit-gm-${sd}`).value;
+    const newCamp = document.getElementById(`edit-camp-${sd}`).value;
+    const s = sessions.find(x => x.date === sd);
+    if (!s) return;
+    try {
+        if (newDate !== sd) {
+            const existing = sessions.find(x => x.date === newDate);
+            if (existing) { alert('A session already exists on that date.'); return; }
+            const roster = campaignRosters[newCamp] || [];
+            const attendance = {};
+            roster.forEach(p => { attendance[p] = "in"; });
+            await setDoc(doc(db, "sessions", newDate), {
+                date: newDate, time: newTime, gm: newGm, duration: newDur, campaign: newCamp,
+                attendance: newCamp !== s.campaign ? attendance : (s.attendance || attendance),
+                roster: newCamp !== s.campaign ? roster : (s.roster || roster),
+                status: s.status || "active",
+                recapHtml: s.recapHtml || null, recap: s.recap || null,
+                pdfUrl: s.pdfUrl || null, pdfName: s.pdfName || null
+            });
+            await deleteDoc(doc(db, "sessions", sd));
+        } else {
+            const updates = { time: newTime, gm: newGm, duration: newDur, campaign: newCamp };
+            if (newCamp !== s.campaign) {
+                updates.roster = campaignRosters[newCamp] || [];
+                const att = {};
+                updates.roster.forEach(p => { att[p] = "in"; });
+                updates.attendance = att;
+            }
+            await updateDoc(doc(db, "sessions", sd), updates);
+        }
+    } catch(e) { console.error("Edit error:", e); alert('Error saving changes.'); }
+};
 window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
 
 // ===== RECAP & PDF =====
@@ -1854,7 +1939,8 @@ function renderSessionCard(s, gi, ci) {
     const isPast = d < today;
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const isRecentPast = isPast && d >= twoWeeksAgo;
-    const actionHtml = isCancelled ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : isPast ? `<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">&#10005;</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
+    const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${s.date}')">&#9998;</button>`;
+    const actionHtml = isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
     // CTA for recent past sessions missing recap or PDF
     let ctaHtml = '';
     if (isRecentPast && !isCancelled) {
