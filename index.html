@@ -1330,8 +1330,10 @@ function updateCancelStates() {
         const d = card.getAttribute('data-session-date'); if (!d) return;
         const s = sessions.find(x => x.date === d); if (!s) return;
         const c = s.status === "cancelled"; card.classList.toggle('cancelled', c);
+        const today = getToday(); const isPast = parseDate(d) < today;
+        const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${d}')">&#9998;</button>`;
         const a = card.querySelector('.session-action'); if (!a) return;
-        a.innerHTML = c ? `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">&#10005;</button>`;
+        a.innerHTML = c ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">&#10005;</button>`;
     });
 }
 // Helper: find session card in the active container (avoids hidden home page duplicates)
@@ -1416,6 +1418,8 @@ window.saveEditSession = async function(sd) {
             }
             await updateDoc(doc(db, "sessions", sd), updates);
         }
+        renderAll();
+        if (currentPage !== 'home') renderCampaignPage(currentPage);
     } catch(e) { console.error("Edit error:", e); alert('Error saving changes.'); }
 };
 window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
