@@ -1302,9 +1302,8 @@ async function initApp() {
     let firstLoad = true; let prevCount = 0;
     onSnapshot(q, (snapshot) => {
         sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
-        if (firstLoad) { renderAll(); prevCount = sessions.length; firstLoad = false; }
-        else if (sessions.length !== prevCount) { renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); prevCount = sessions.length; }
-        else { updateAttendanceChips(); updateCancelStates(); }
+        renderAll();
+        if (currentPage !== 'home') renderCampaignPage(currentPage);
     });
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1418,8 +1417,6 @@ window.saveEditSession = async function(sd) {
             }
             await updateDoc(doc(db, "sessions", sd), updates);
         }
-        renderAll();
-        if (currentPage !== 'home') renderCampaignPage(currentPage);
     } catch(e) { console.error("Edit error:", e); alert('Error saving changes.'); }
 };
 window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
