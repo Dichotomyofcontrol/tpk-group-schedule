@@ -2300,3 +2300,176 @@ function renderCalendar() {
     const today = getToday();
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const visibleCal = profileSessions();
+    let filtered = activeFilter === "all" ? visibleCal : visibleCal.filter(s => s.campaign === activeFilter);
+    if (activeTimeFilter === 'upcoming') filtered = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
+    else if (activeTimeFilter === 'past') filtered = filtered.filter(s => parseDate(s.date) < today);
+    const sm = {}; filtered.forEach(s => { (sm[s.date] = sm[s.date] || []).push(s); });
+    const am = new Set(); filtered.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
+    const todayDate = new Date(); const ts = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
+    let html = '';
+    months.forEach(k => {
+        const [y,m] = k.split('-').map(Number); const fd = new Date(y,m-1,1).getDay(); const dim = new Date(y,m,0).getDate();
+        html += `<div class="cal-month"><div class="month-label">${getMonthLabel(k)}</div><div class="cal-header">${dayNames.map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-body">`;
+        for (let i = 0; i < fd; i++) html += `<div class="cal-day empty"></div>`;
+        for (let day = 1; day <= dim; day++) {
+            const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+            const dayList = sm[ds]; const tc = ds === ts ? ' today' : '';
+            if (dayList) {
+                const dots = dayList.map(s => `<div class="cal-dot" style="background:var(--${s.campaign}-primary)"></div>`).join('');
+                html += `<div class="cal-day has-session ${dayList[0].campaign}${tc}" onclick="calendarGoToSession('${dayList[0].id}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
+            }
+            else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
+        }
+        html += `</div></div>`;
+    });
+    document.getElementById('calendar-view').innerHTML = html;
+}
+window.showTooltip = function(ev, ds) {
+    const dayList = sessions.filter(x => x.date === ds); if (!dayList.length) return;
+    const tip = document.getElementById('tooltip');
+    let inner = '';
+    dayList.forEach((s, i) => {
+        const r = s.roster || []; const a = s.attendance || {};
+        const inL = r.filter(p => (a[p]||"in") === "in"); const outL = r.filter(p => a[p] === "out");
+        let att = ''; if (inL.length) att += `<br>✅ ${inL.join(', ')}`; if (outL.length) att += `<br>❌ ${outL.join(', ')}`;
+        const t = s.title ? ` — ${escapeHtml(s.title)}` : '';
+        inner += `<div class="tooltip-campaign" style="color:var(--${s.campaign}-primary)${i ? ';margin-top:8px' : ''}">${campaignIcons[s.campaign]} ${campaignNames[s.campaign]}${t}</div><div class="tooltip-detail">${i === 0 ? formatDate(s.date) + '<br>' : ''}GM: ${s.gm} · ${s.time} · ${s.duration}${att}</div>`;
+    });
+    tip.innerHTML = inner;
+    tip.classList.add('show'); const rect = ev.target.getBoundingClientRect();
+    tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px'; tip.style.top = (rect.bottom + 8) + 'px';
+};
+window.hideTooltip = function() { document.getElementById('tooltip').classList.remove('show'); };
+window.calendarGoToSession = function(ds) {
+    hideTooltip();
+    // Switch to list view
+    activeView = 'list';
+    document.querySelectorAll('.view-btn').forEach(b => { b.classList.toggle('active', b.dataset.view === 'list'); });
+    document.getElementById('list-view').style.display = 'block';
+    document.getElementById('calendar-view').style.display = 'none';
+    // Check if session is in the past and show past sessions if needed
+    const s = sessionById(ds);
+    if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) { pastSessionsVisible = true; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.add('open'); if (c) c.classList.add('open'); }
+    // Scroll to card and expand it
+    setTimeout(() => {
+        const card = document.querySelector(`[data-session-id="${ds}"]`) || document.querySelector(`[data-session-date="${ds}"]`);
+        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
+    }, 100);
+};
+
+// ===== HASH ROUTING =====
+const validCampaigns = ['frostmaiden', 'strahd', 'special', 'drawsteel', 'leyfarers', 'beerovia'];
+let _suppressHashUpdate = false;
+let _initialRouteApplied = false;
+
+function buildHash(campaign, date, full) {
+    let h = '#' + campaign;
+    if (date) h += '/' + date;
+    if (full) h += '/full';
+    return h;
+}
+
+function setHash(hash) {
+    if (_suppressHashUpdate) return;
+    history.pushState(null, '', hash || '#');
+}
+
+function parseHash() {
+    const h = window.location.hash.replace(/^#\/?/, '');
+    if (!h) return { page: 'home' };
+    const parts = h.split('/');
+    const campaign = parts[0];
+    if (!validCampaigns.includes(campaign)) return { page: 'home' };
+    return { page: campaign, date: parts[1] || null, full: parts[2] === 'full' };
+}
+
+function applyRoute(r) {
+    _suppressHashUpdate = true;
+    if (r.page === 'home') {
+        if (currentPage !== 'home') navigateTo('home');
+    } else {
+        if (currentPage !== r.page) navigateTo(r.page);
+        if (r.date && r.full) {
+            setTimeout(() => { openReaderModal(r.date); _suppressHashUpdate = false; }, 200);
+            return;
+        } else if (r.date) {
+            setTimeout(() => {
+                const card = document.querySelector(`[data-session-id="${r.date}"]`) || document.querySelector(`[data-session-date="${r.date}"]`);
+                if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(r.date); }, 300); }
+                _suppressHashUpdate = false;
+            }, 200);
+            return;
+        }
+    }
+    _suppressHashUpdate = false;
+}
+
+window.addEventListener('hashchange', () => applyRoute(parseHash()));
+
+// Patch navigateTo to update hash
+const _origNavigateTo = window.navigateTo;
+window.navigateTo = function(page) {
+    _origNavigateTo(page);
+    if (page === 'home') setHash('#');
+    else setHash(buildHash(page));
+};
+
+// Patch openReaderModal to update hash
+const _origOpenReaderModal = window.openReaderModal;
+window.openReaderModal = function(ds) {
+    _origOpenReaderModal(ds);
+    const s = sessionById(ds);
+    if (s) setHash(buildHash(s.campaign, s.date, true));
+};
+
+// Patch closeReaderModal to update hash
+const _origCloseReaderModal = window.closeReaderModal;
+window.closeReaderModal = function() {
+    _origCloseReaderModal();
+    if (currentPage !== 'home') setHash(buildHash(currentPage));
+    else setHash('#');
+};
+
+// Hook into renderAll to apply initial route from hash after first data load
+const _origRenderAll = renderAll;
+renderAll = function() {
+    _origRenderAll();
+    if (!_initialRouteApplied) {
+        _initialRouteApplied = true;
+        const r = parseHash();
+        if (r.page !== 'home') {
+            setTimeout(() => applyRoute(r), 100);
+        }
+    }
+};
+
+// ===== SHARE LINK HELPER =====
+const shareIconSvg = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function showShareToast(msg) {
+    let toast = document.getElementById('share-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'share-toast';
+        toast.className = 'share-toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg || 'Link copied!';
+    toast.classList.add('visible');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('visible'), 2000);
+}
+
+window.shareLink = function(campaign, date, full, evt) {
+    if (evt) evt.stopPropagation();
+    const hash = buildHash(campaign, date, full);
+    const url = window.location.origin + window.location.pathname + hash;
+    if (navigator.share) {
+        navigator.share({ title: 'Six in the TPK', url: url }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(url).then(() => showShareToast()).catch(() => showShareToast('Could not copy link'));
+    }
+};
+</script>
+</body>
+</html>
