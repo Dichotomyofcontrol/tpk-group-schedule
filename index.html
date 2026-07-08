@@ -1032,6 +1032,7 @@
     </div>
     <div class="nav-divider"></div>
     <button class="nav-add-btn" onclick="openAddSession()">+ Add Session</button>
+    <button class="nav-add-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
 </div>
 
 <!-- Add Session Modal -->
@@ -1062,6 +1063,40 @@
         <div class="form-buttons">
             <button class="submit-btn" onclick="submitAddSession()">Add Session</button>
             <button class="cancel-form-btn" onclick="closeAddSession()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Schedule Update Modal -->
+<div class="add-form-overlay" id="bulk-form-overlay" onclick="closeBulkUpdate()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Manage Campaign Schedule</h3>
+        <div class="form-row">
+            <div class="form-group"><label>Campaign</label>
+                <select id="bulk-campaign" onchange="updateBulkPreview()">
+                    <option value="frostmaiden">Rime of the Frostmaiden</option>
+                    <option value="strahd">Curse of Strahd</option>
+                    <option value="drawsteel">Draw Steel: Mini Campaign</option>
+                    <option value="leyfarers">Leyfarers</option>
+                    <option value="beerovia">Beerovia</option>
+                    <option value="special">Special</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>From Date</label><input type="date" id="bulk-start" onchange="updateBulkPreview()"></div>
+            <div class="form-group"><label>To Date <span style="color:var(--text-dim);font-weight:400">(blank = all future)</span></label><input type="date" id="bulk-end" onchange="updateBulkPreview()"></div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--text-dim);margin:4px 0 10px">Leave a field blank to keep it unchanged on those sessions.</div>
+        <div class="form-row">
+            <div class="form-group"><label>New Time</label><input type="text" id="bulk-time" placeholder="e.g. 1:30 PM"></div>
+            <div class="form-group"><label>New GM</label><input type="text" id="bulk-gm" placeholder="unchanged"></div>
+            <div class="form-group"><label>New Duration</label><input type="text" id="bulk-duration" placeholder="unchanged"></div>
+        </div>
+        <div id="bulk-preview" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px"></div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="applyBulkUpdate()">Apply Changes</button>
+            <button class="cancel-form-btn" onclick="closeBulkUpdate()">Cancel</button>
         </div>
     </div>
 </div>
@@ -1245,12 +1280,12 @@ const seedSessions = [
     { date: "2026-06-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-06-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
     { date: "2026-07-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
-    { date: "2026-07-11", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-07-25", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-08-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-08-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-09-05", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-09-19", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-07-11", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-07-25", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-08", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-22", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-09-05", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-09-19", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
     { date: "2026-08-24", time: "6:30 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "The Tithe", level: "Level 2" },
     { date: "2026-09-11", time: "6:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Blood o' the Vine", level: "Level 6" },
     { date: "2026-09-12", time: "11:00 AM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Ghost Hunter's Haunting (1 of 3)", level: "Level 3" },
@@ -1373,6 +1408,56 @@ window.submitAddSession = async function() {
     roster.forEach(p => { attendance[p] = "in"; });
     try { await setDoc(doc(db, "sessions", docId), { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" }); closeAddSession(); }
     catch (err) { console.error("Error adding session:", err); alert('Error adding session.'); }
+};
+
+// ===== BULK SCHEDULE UPDATE =====
+function bulkTargets() {
+    const campaign = document.getElementById('bulk-campaign').value;
+    const start = document.getElementById('bulk-start').value;
+    const end = document.getElementById('bulk-end').value;
+    if (!start) return [];
+    return sessions.filter(s => s.campaign === campaign && s.date >= start && (!end || s.date <= end));
+}
+window.updateBulkPreview = function() {
+    const p = document.getElementById('bulk-preview'); if (!p) return;
+    const start = document.getElementById('bulk-start').value;
+    if (!start) { p.textContent = 'Pick a start date to see affected sessions.'; return; }
+    const t = bulkTargets();
+    p.textContent = t.length ? `${t.length} session${t.length > 1 ? 's' : ''} will be updated (${formatDateShort(t[0].date)} – ${formatDateShort(t[t.length-1].date)}).` : 'No sessions match that range.';
+};
+window.openBulkUpdate = function() {
+    closeNav();
+    const today = new Date();
+    document.getElementById('bulk-start').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    document.getElementById('bulk-end').value = '';
+    document.getElementById('bulk-time').value = '';
+    document.getElementById('bulk-gm').value = '';
+    document.getElementById('bulk-duration').value = '';
+    updateBulkPreview();
+    document.getElementById('bulk-form-overlay').classList.add('open');
+};
+window.closeBulkUpdate = function() { document.getElementById('bulk-form-overlay').classList.remove('open'); };
+window.applyBulkUpdate = async function() {
+    const start = document.getElementById('bulk-start').value;
+    if (!start) { alert('Pick a start date.'); return; }
+    const time = document.getElementById('bulk-time').value.trim();
+    const gm = document.getElementById('bulk-gm').value.trim();
+    const dur = document.getElementById('bulk-duration').value.trim();
+    if (!time && !gm && !dur) { alert('Enter at least one change (time, GM, or duration).'); return; }
+    const targets = bulkTargets();
+    if (!targets.length) { alert('No sessions match that range.'); return; }
+    const campaign = document.getElementById('bulk-campaign').value;
+    const end = document.getElementById('bulk-end').value;
+    const changes = [time && `time → ${time}`, gm && `GM → ${gm}`, dur && `duration → ${dur}`].filter(Boolean).join(', ');
+    if (!confirm(`Update ${targets.length} ${campaignNames[campaign]} session${targets.length > 1 ? 's' : ''} ${end ? `between ${start} and ${end}` : `from ${start} onward`}?\n\n${changes}`)) return;
+    const updates = {};
+    if (time) updates.time = time;
+    if (gm) updates.gm = gm;
+    if (dur) updates.duration = dur;
+    try {
+        for (const s of targets) { await updateDoc(doc(db, "sessions", s.id), updates); }
+        closeBulkUpdate();
+    } catch(e) { console.error("Bulk update error:", e); alert('Error applying updates — some sessions may not have been changed.'); }
 };
 
 // ===== FIREBASE =====
@@ -2215,176 +2300,3 @@ function renderCalendar() {
     const today = getToday();
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const visibleCal = profileSessions();
-    let filtered = activeFilter === "all" ? visibleCal : visibleCal.filter(s => s.campaign === activeFilter);
-    if (activeTimeFilter === 'upcoming') filtered = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
-    else if (activeTimeFilter === 'past') filtered = filtered.filter(s => parseDate(s.date) < today);
-    const sm = {}; filtered.forEach(s => { (sm[s.date] = sm[s.date] || []).push(s); });
-    const am = new Set(); filtered.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
-    const todayDate = new Date(); const ts = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
-    let html = '';
-    months.forEach(k => {
-        const [y,m] = k.split('-').map(Number); const fd = new Date(y,m-1,1).getDay(); const dim = new Date(y,m,0).getDate();
-        html += `<div class="cal-month"><div class="month-label">${getMonthLabel(k)}</div><div class="cal-header">${dayNames.map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-body">`;
-        for (let i = 0; i < fd; i++) html += `<div class="cal-day empty"></div>`;
-        for (let day = 1; day <= dim; day++) {
-            const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            const dayList = sm[ds]; const tc = ds === ts ? ' today' : '';
-            if (dayList) {
-                const dots = dayList.map(s => `<div class="cal-dot" style="background:var(--${s.campaign}-primary)"></div>`).join('');
-                html += `<div class="cal-day has-session ${dayList[0].campaign}${tc}" onclick="calendarGoToSession('${dayList[0].id}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
-            }
-            else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
-        }
-        html += `</div></div>`;
-    });
-    document.getElementById('calendar-view').innerHTML = html;
-}
-window.showTooltip = function(ev, ds) {
-    const dayList = sessions.filter(x => x.date === ds); if (!dayList.length) return;
-    const tip = document.getElementById('tooltip');
-    let inner = '';
-    dayList.forEach((s, i) => {
-        const r = s.roster || []; const a = s.attendance || {};
-        const inL = r.filter(p => (a[p]||"in") === "in"); const outL = r.filter(p => a[p] === "out");
-        let att = ''; if (inL.length) att += `<br>\u2705 ${inL.join(', ')}`; if (outL.length) att += `<br>\u274C ${outL.join(', ')}`;
-        const t = s.title ? ` \u2014 ${escapeHtml(s.title)}` : '';
-        inner += `<div class="tooltip-campaign" style="color:var(--${s.campaign}-primary)${i ? ';margin-top:8px' : ''}">${campaignIcons[s.campaign]} ${campaignNames[s.campaign]}${t}</div><div class="tooltip-detail">${i === 0 ? formatDate(s.date) + '<br>' : ''}GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${att}</div>`;
-    });
-    tip.innerHTML = inner;
-    tip.classList.add('show'); const rect = ev.target.getBoundingClientRect();
-    tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px'; tip.style.top = (rect.bottom + 8) + 'px';
-};
-window.hideTooltip = function() { document.getElementById('tooltip').classList.remove('show'); };
-window.calendarGoToSession = function(ds) {
-    hideTooltip();
-    // Switch to list view
-    activeView = 'list';
-    document.querySelectorAll('.view-btn').forEach(b => { b.classList.toggle('active', b.dataset.view === 'list'); });
-    document.getElementById('list-view').style.display = 'block';
-    document.getElementById('calendar-view').style.display = 'none';
-    // Check if session is in the past and show past sessions if needed
-    const s = sessionById(ds);
-    if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) { pastSessionsVisible = true; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.add('open'); if (c) c.classList.add('open'); }
-    // Scroll to card and expand it
-    setTimeout(() => {
-        const card = document.querySelector(`[data-session-id="${ds}"]`) || document.querySelector(`[data-session-date="${ds}"]`);
-        if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
-    }, 100);
-};
-
-// ===== HASH ROUTING =====
-const validCampaigns = ['frostmaiden', 'strahd', 'special', 'drawsteel', 'leyfarers', 'beerovia'];
-let _suppressHashUpdate = false;
-let _initialRouteApplied = false;
-
-function buildHash(campaign, date, full) {
-    let h = '#' + campaign;
-    if (date) h += '/' + date;
-    if (full) h += '/full';
-    return h;
-}
-
-function setHash(hash) {
-    if (_suppressHashUpdate) return;
-    history.pushState(null, '', hash || '#');
-}
-
-function parseHash() {
-    const h = window.location.hash.replace(/^#\/?/, '');
-    if (!h) return { page: 'home' };
-    const parts = h.split('/');
-    const campaign = parts[0];
-    if (!validCampaigns.includes(campaign)) return { page: 'home' };
-    return { page: campaign, date: parts[1] || null, full: parts[2] === 'full' };
-}
-
-function applyRoute(r) {
-    _suppressHashUpdate = true;
-    if (r.page === 'home') {
-        if (currentPage !== 'home') navigateTo('home');
-    } else {
-        if (currentPage !== r.page) navigateTo(r.page);
-        if (r.date && r.full) {
-            setTimeout(() => { openReaderModal(r.date); _suppressHashUpdate = false; }, 200);
-            return;
-        } else if (r.date) {
-            setTimeout(() => {
-                const card = document.querySelector(`[data-session-date="${r.date}"]`);
-                if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(r.date); }, 300); }
-                _suppressHashUpdate = false;
-            }, 200);
-            return;
-        }
-    }
-    _suppressHashUpdate = false;
-}
-
-window.addEventListener('hashchange', () => applyRoute(parseHash()));
-
-// Patch navigateTo to update hash
-const _origNavigateTo = window.navigateTo;
-window.navigateTo = function(page) {
-    _origNavigateTo(page);
-    if (page === 'home') setHash('#');
-    else setHash(buildHash(page));
-};
-
-// Patch openReaderModal to update hash
-const _origOpenReaderModal = window.openReaderModal;
-window.openReaderModal = function(ds) {
-    _origOpenReaderModal(ds);
-    const s = sessions.find(x => x.date === ds);
-    if (s) setHash(buildHash(s.campaign, ds, true));
-};
-
-// Patch closeReaderModal to update hash
-const _origCloseReaderModal = window.closeReaderModal;
-window.closeReaderModal = function() {
-    _origCloseReaderModal();
-    if (currentPage !== 'home') setHash(buildHash(currentPage));
-    else setHash('#');
-};
-
-// Hook into renderAll to apply initial route from hash after first data load
-const _origRenderAll = renderAll;
-renderAll = function() {
-    _origRenderAll();
-    if (!_initialRouteApplied) {
-        _initialRouteApplied = true;
-        const r = parseHash();
-        if (r.page !== 'home') {
-            setTimeout(() => applyRoute(r), 100);
-        }
-    }
-};
-
-// ===== SHARE LINK HELPER =====
-const shareIconSvg = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-function showShareToast(msg) {
-    let toast = document.getElementById('share-toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'share-toast';
-        toast.className = 'share-toast';
-        document.body.appendChild(toast);
-    }
-    toast.textContent = msg || 'Link copied!';
-    toast.classList.add('visible');
-    clearTimeout(toast._timer);
-    toast._timer = setTimeout(() => toast.classList.remove('visible'), 2000);
-}
-
-window.shareLink = function(campaign, date, full, evt) {
-    if (evt) evt.stopPropagation();
-    const hash = buildHash(campaign, date, full);
-    const url = window.location.origin + window.location.pathname + hash;
-    if (navigator.share) {
-        navigator.share({ title: 'Six in the TPK', url: url }).catch(() => {});
-    } else {
-        navigator.clipboard.writeText(url).then(() => showShareToast()).catch(() => showShareToast('Could not copy link'));
-    }
-};
-</script>
-</body>
-</html>
