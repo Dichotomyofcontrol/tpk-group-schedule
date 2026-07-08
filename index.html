@@ -963,10 +963,6 @@
         <div class="nav-campaign-dot strahd"></div>
         <div class="nav-item-info"><span class="nav-label">Curse of Strahd</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
-    <div class="nav-item" onclick="navigateTo('rokugan')">
-        <div class="nav-campaign-dot rokugan"></div>
-        <div class="nav-item-info"><span class="nav-label">Adventures in Rokugan</span><span class="nav-sub">All sessions &amp; recaps</span></div>
-    </div>
     <div class="nav-item" onclick="navigateTo('drawsteel')">
         <div class="nav-campaign-dot drawsteel"></div>
         <div class="nav-item-info"><span class="nav-label">Draw Steel: Mini Campaign</span><span class="nav-sub">All sessions &amp; recaps</span></div>
@@ -989,7 +985,6 @@
                 <select id="new-session-campaign">
                     <option value="frostmaiden">Rime of the Frostmaiden</option>
                     <option value="strahd">Curse of Strahd</option>
-                    <option value="rokugan">Adventures in Rokugan</option>
                     <option value="drawsteel">Draw Steel: Mini Campaign</option>
                     <option value="special">Special</option>
                 </select>
@@ -1159,44 +1154,33 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 const PASSPHRASE = "__SITE_PASSPHRASE__";
-const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", rokugan: "Adventures in Rokugan", special: "Special", drawsteel: "Draw Steel: Mini Campaign" };
-const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", rokugan: "\u2694\uFE0F", special: "\u2728", drawsteel: "\uD83D\uDDE1\uFE0F" };
+const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "Special", drawsteel: "Draw Steel: Mini Campaign" };
+const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", special: "\u2728", drawsteel: "\uD83D\uDDE1\uFE0F" };
 const campaignRosters = {
     frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
-    rokugan: ["Ryn", "Cooter", "Rosie", "Gordo"],
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
     special: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     drawsteel: []
 };
 // Character details: campaign -> name -> { charClass, subclass, level, imageUrl }
-const campaignCharacters = { frostmaiden: {}, strahd: {}, rokugan: {}, special: {}, drawsteel: {} };
+const campaignCharacters = { frostmaiden: {}, strahd: {}, special: {}, drawsteel: {} };
 const seedSessions = [
     { date: "2026-04-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
-    { date: "2026-04-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-04-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-04-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
     { date: "2026-04-29", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
-    { date: "2026-05-06", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-05-13", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
-    { date: "2026-05-20", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-05-27", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
-    { date: "2026-06-03", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-06-10", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
-    { date: "2026-06-17", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-06-20", time: "5:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "special" },
     { date: "2026-06-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-06-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
-    { date: "2026-07-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-07-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
-    { date: "2026-07-15", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-07-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
     { date: "2026-07-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
-    { date: "2026-07-29", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-08-05", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
-    { date: "2026-08-12", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-08-19", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
     { date: "2026-08-21", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
-    { date: "2026-08-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "rokugan" },
     { date: "2026-09-02", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-09-09", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-09-16", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
@@ -1256,9 +1240,8 @@ window.navigateTo = function(page) {
     if (page === 'home') items[0].classList.add('active');
     else if (page === 'frostmaiden') items[1].classList.add('active');
     else if (page === 'strahd') items[2].classList.add('active');
-    else if (page === 'rokugan') items[3].classList.add('active');
-    else if (page === 'drawsteel') items[4].classList.add('active');
-    else if (page === 'special') items[5].classList.add('active');
+    else if (page === 'drawsteel') items[3].classList.add('active');
+    else if (page === 'special') items[4].classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
     else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
@@ -1289,11 +1272,11 @@ window.submitAddSession = async function() {
 
 // ===== FIREBASE =====
 async function seedFirestore() {
+    // Only seed a completely empty database (first-time setup).
+    // Never "backfill" individual dates — that resurrects sessions the user deleted.
     const snap = await getDocs(collection(db, "sessions"));
-    const existing = new Set(); snap.forEach(d => existing.add(d.id));
-    const missing = seedSessions.filter(s => !existing.has(s.date));
-    if (missing.length === 0) return;
-    for (const s of missing) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
+    if (!snap.empty) return;
+    for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
 }
 async function initApp() {
     await loadSavedRosters();
@@ -1501,7 +1484,7 @@ function stripHtml(h) { const d = document.createElement('div'); d.innerHTML = h
 // ===== COLLAPSIBLE MONTHS =====
 let collapsedMonths = new Set();
 let allMonthsCollapsed = false;
-const pillLabels = { frostmaiden: 'Frost', strahd: 'Strahd', rokugan: 'Roku', special: 'Special' };
+const pillLabels = { frostmaiden: 'Frost', strahd: 'Strahd', special: 'Special' };
 
 function monthPills(sessionList) {
     const counts = {};
@@ -1906,12 +1889,12 @@ window.goToSession = function(ds) {
 
 // Stats bar = filters
 function renderStatsBar() {
-    const counts = { frostmaiden:0, strahd:0, rokugan:0, drawsteel:0, special:0 };
+    const counts = { frostmaiden:0, strahd:0, drawsteel:0, special:0 };
     sessions.forEach(s => { if (s.status !== "cancelled") counts[s.campaign] = (counts[s.campaign] || 0) + 1; });
     const total = Object.values(counts).reduce((a,b) => a+b, 0);
-    const shortNames = { frostmaiden:'Frost', strahd:'Strahd', rokugan:'Roku', drawsteel:'Steel', special:'Special' };
+    const shortNames = { frostmaiden:'Frost', strahd:'Strahd', drawsteel:'Steel', special:'Special' };
     let html = `<button class="stat-filter all-filter${activeFilter === 'all' ? ' active' : ''}" onclick="setFilter('all')"><span class="sf-count">${total}</span><span class="sf-label">All</span></button>`;
-    ['frostmaiden','strahd','rokugan','drawsteel','special'].forEach(c => {
+    ['frostmaiden','strahd','drawsteel','special'].forEach(c => {
         if (counts[c] === 0) return;
         html += `<button class="stat-filter ${c}${activeFilter === c ? ' active' : ''}" onclick="setFilter('${c}')"><span class="sf-count">${counts[c]}</span><span class="sf-label">${shortNames[c]}</span></button>`;
     });
@@ -2171,7 +2154,7 @@ window.calendarGoToSession = function(ds) {
 };
 
 // ===== HASH ROUTING =====
-const validCampaigns = ['frostmaiden', 'strahd', 'rokugan', 'special'];
+const validCampaigns = ['frostmaiden', 'strahd', 'special'];
 let _suppressHashUpdate = false;
 let _initialRouteApplied = false;
 
