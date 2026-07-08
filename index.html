@@ -20,9 +20,15 @@
             --special-primary: #ce93d8;
             --special-bg: #1f0f24;
             --special-accent: #e1bee7;
-            --drawsteel-primary: #4caf50;
-            --drawsteel-bg: #0f2410;
-            --drawsteel-accent: #81c784;
+            --drawsteel-primary: #f5c518;
+            --drawsteel-bg: #272005;
+            --drawsteel-accent: #ffe066;
+            --leyfarers-primary: #4caf50;
+            --leyfarers-bg: #0f2410;
+            --leyfarers-accent: #81c784;
+            --beerovia-primary: #ff9800;
+            --beerovia-bg: #2a1804;
+            --beerovia-accent: #ffb74d;
             --bg: #0e0e12;
             --surface: #1a1a24;
             --surface-hover: #22222e;
@@ -139,6 +145,8 @@
         .stat-filter.strahd .sf-count { color: var(--strahd-primary); }
         .stat-filter.rokugan .sf-count { color: var(--rokugan-primary); }
         .stat-filter.drawsteel .sf-count { color: var(--drawsteel-primary); }
+        .stat-filter.leyfarers .sf-count { color: var(--leyfarers-primary); }
+        .stat-filter.beerovia .sf-count { color: var(--beerovia-primary); }
         .stat-filter.special .sf-count { color: var(--special-primary); }
         .stat-filter.active { border-color: transparent; }
         .stat-filter.active.all-filter { background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg)); border-color: var(--border); }
@@ -146,6 +154,8 @@
         .stat-filter.active.strahd { background: var(--strahd-bg); border-color: var(--strahd-primary); }
         .stat-filter.active.rokugan { background: var(--rokugan-bg); border-color: var(--rokugan-primary); }
         .stat-filter.active.drawsteel { background: var(--drawsteel-bg); border-color: var(--drawsteel-primary); }
+        .stat-filter.active.leyfarers { background: var(--leyfarers-bg); border-color: var(--leyfarers-primary); }
+        .stat-filter.active.beerovia { background: var(--beerovia-bg); border-color: var(--beerovia-primary); }
         .stat-filter.active.special { background: var(--special-bg); border-color: var(--special-primary); }
         .stat-filter.active .sf-label { color: var(--text); }
         .stat-filter.all-filter .sf-count {
@@ -204,6 +214,8 @@
         .nav-campaign-dot.strahd { background: var(--strahd-primary); }
         .nav-campaign-dot.rokugan { background: var(--rokugan-primary); }
         .nav-campaign-dot.drawsteel { background: var(--drawsteel-primary); }
+        .nav-campaign-dot.leyfarers { background: var(--leyfarers-primary); }
+        .nav-campaign-dot.beerovia { background: var(--beerovia-primary); }
         .nav-campaign-dot.special { background: var(--special-primary); }
         .nav-item .nav-label { font-size: 0.85rem; font-weight: 500; color: var(--text); }
         .nav-item .nav-sub { font-size: 0.7rem; color: var(--text-dim); }
@@ -261,6 +273,13 @@
             text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim);
             transition: color 0.2s;
         }
+        .profile-select {
+            font-family: 'Inter', sans-serif; font-size: 0.75rem;
+            background: var(--surface); color: var(--text-dim);
+            border: 1px solid var(--border); border-radius: 8px;
+            padding: 6px 12px; cursor: pointer; transition: all 0.2s;
+        }
+        .profile-select:hover, .profile-select:focus { color: var(--text); border-color: var(--text-dim); outline: none; }
         .month-pills { display: flex; gap: 4px; flex-wrap: wrap; }
         .month-pill {
             font-family: 'Inter', sans-serif; font-size: 0.62rem; font-weight: 600;
@@ -272,6 +291,9 @@
         .month-pill.strahd { color: var(--strahd-primary); border-color: var(--strahd-primary); background: rgba(239,83,80,0.1); }
         .month-pill.rokugan { color: var(--rokugan-primary); border-color: var(--rokugan-primary); background: rgba(240,165,0,0.1); }
         .month-pill.special { color: var(--special-primary); border-color: var(--special-primary); background: rgba(206,147,216,0.1); }
+        .month-pill.drawsteel { color: var(--drawsteel-primary); border-color: var(--drawsteel-primary); background: rgba(245,197,24,0.1); }
+        .month-pill.leyfarers { color: var(--leyfarers-primary); border-color: var(--leyfarers-primary); background: rgba(76,175,80,0.1); }
+        .month-pill.beerovia { color: var(--beerovia-primary); border-color: var(--beerovia-primary); background: rgba(255,152,0,0.1); }
         .month-sessions { overflow: hidden; transition: max-height 0.3s ease; }
         .month-sessions.collapsed { max-height: 0 !important; }
         .collapse-all-btn {
@@ -293,6 +315,8 @@
         .session-card.rokugan::before { background: var(--rokugan-primary); }
         .session-card.special::before { background: var(--special-primary); }
         .session-card.drawsteel::before { background: var(--drawsteel-primary); }
+        .session-card.leyfarers::before { background: var(--leyfarers-primary); }
+        .session-card.beerovia::before { background: var(--beerovia-primary); }
         .session-card.cancelled { opacity: 0.5; }
         .session-card.cancelled::before { background: var(--text-dim); }
         .session-card.cancelled .session-campaign { text-decoration: line-through; }
@@ -305,6 +329,8 @@
         .session-card.rokugan .day-num { color: var(--rokugan-primary); }
         .session-card.special .day-num { color: var(--special-primary); }
         .session-card.drawsteel .day-num { color: var(--drawsteel-primary); }
+        .session-card.leyfarers .day-num { color: var(--leyfarers-primary); }
+        .session-card.beerovia .day-num { color: var(--beerovia-primary); }
         .session-card.cancelled .day-num { color: var(--text-dim); }
         .session-divider { width: 1px; height: 32px; background: var(--border); flex-shrink: 0; }
         .session-info { flex: 1; min-width: 0; }
@@ -431,12 +457,16 @@
         .cal-day.rokugan { border-left: 2px solid var(--rokugan-primary); }
         .cal-day.special { border-left: 2px solid var(--special-primary); }
         .cal-day.drawsteel { border-left: 2px solid var(--drawsteel-primary); }
+        .cal-day.leyfarers { border-left: 2px solid var(--leyfarers-primary); }
+        .cal-day.beerovia { border-left: 2px solid var(--beerovia-primary); }
         .cal-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 3px; }
         .cal-day.frostmaiden .cal-dot { background: var(--frostmaiden-primary); }
         .cal-day.strahd .cal-dot { background: var(--strahd-primary); }
         .cal-day.rokugan .cal-dot { background: var(--rokugan-primary); }
         .cal-day.special .cal-dot { background: var(--special-primary); }
         .cal-day.drawsteel .cal-dot { background: var(--drawsteel-primary); }
+        .cal-day.leyfarers .cal-dot { background: var(--leyfarers-primary); }
+        .cal-day.beerovia .cal-dot { background: var(--beerovia-primary); }
 
         .tooltip { position: fixed; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; z-index: 50; pointer-events: none; opacity: 0; transition: opacity 0.15s; max-width: 280px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
         .tooltip.show { opacity: 1; }
@@ -453,6 +483,8 @@
         .hero-card.strahd::before { background: var(--strahd-primary); }
         .hero-card.rokugan::before { background: var(--rokugan-primary); }
         .hero-card.drawsteel::before { background: var(--drawsteel-primary); }
+        .hero-card.leyfarers::before { background: var(--leyfarers-primary); }
+        .hero-card.beerovia::before { background: var(--beerovia-primary); }
         .hero-card.special::before { background: var(--special-primary); }
         .hero-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
         .hero-campaign { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; }
@@ -460,6 +492,8 @@
         .hero-card.strahd .hero-campaign { color: var(--strahd-primary); }
         .hero-card.rokugan .hero-campaign { color: var(--rokugan-primary); }
         .hero-card.drawsteel .hero-campaign { color: var(--drawsteel-primary); }
+        .hero-card.leyfarers .hero-campaign { color: var(--leyfarers-primary); }
+        .hero-card.beerovia .hero-campaign { color: var(--beerovia-primary); }
         .hero-card.special .hero-campaign { color: var(--special-primary); }
         .hero-countdown { font-size: 0.82rem; color: var(--text-dim); }
         .hero-countdown strong { color: var(--text); font-weight: 600; }
@@ -498,6 +532,9 @@
         .last-sessions-header .ls-dot.strahd { background: var(--strahd-primary); }
         .last-sessions-header .ls-dot.rokugan { background: var(--rokugan-primary); }
         .last-sessions-header .ls-dot.special { background: var(--special-primary); }
+        .last-sessions-header .ls-dot.drawsteel { background: var(--drawsteel-primary); }
+        .last-sessions-header .ls-dot.leyfarers { background: var(--leyfarers-primary); }
+        .last-sessions-header .ls-dot.beerovia { background: var(--beerovia-primary); }
         .last-sessions-header .ls-toggle {
             font-size: 0.7rem; color: var(--text-dim); padding: 3px 10px;
             border: 1px solid var(--border); border-radius: 100px; transition: all 0.2s;
@@ -515,12 +552,18 @@
         .last-session-card.strahd::before { background: var(--strahd-primary); }
         .last-session-card.rokugan::before { background: var(--rokugan-primary); }
         .last-session-card.special::before { background: var(--special-primary); }
+        .last-session-card.drawsteel::before { background: var(--drawsteel-primary); }
+        .last-session-card.leyfarers::before { background: var(--leyfarers-primary); }
+        .last-session-card.beerovia::before { background: var(--beerovia-primary); }
         .lsc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
         .lsc-campaign { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: 600; }
         .last-session-card.frostmaiden .lsc-campaign { color: var(--frostmaiden-primary); }
         .last-session-card.strahd .lsc-campaign { color: var(--strahd-primary); }
         .last-session-card.rokugan .lsc-campaign { color: var(--rokugan-primary); }
         .last-session-card.special .lsc-campaign { color: var(--special-primary); }
+        .last-session-card.drawsteel .lsc-campaign { color: var(--drawsteel-primary); }
+        .last-session-card.leyfarers .lsc-campaign { color: var(--leyfarers-primary); }
+        .last-session-card.beerovia .lsc-campaign { color: var(--beerovia-primary); }
         .lsc-date { font-size: 0.72rem; color: var(--text-dim); }
         .lsc-recap { font-size: 0.82rem; color: var(--text); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
         .lsc-recap p { margin-bottom: 4px; }
@@ -560,6 +603,9 @@
         .reader-modal.strahd::before { background: var(--strahd-primary); }
         .reader-modal.rokugan::before { background: var(--rokugan-primary); }
         .reader-modal.special::before { background: var(--special-primary); }
+        .reader-modal.drawsteel::before { background: var(--drawsteel-primary); }
+        .reader-modal.leyfarers::before { background: var(--leyfarers-primary); }
+        .reader-modal.beerovia::before { background: var(--beerovia-primary); }
         .reader-header {
             display: flex; align-items: center; justify-content: space-between;
             padding: 18px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;
@@ -569,6 +615,9 @@
         .reader-modal.strahd .reader-title { color: var(--strahd-primary); }
         .reader-modal.rokugan .reader-title { color: var(--rokugan-primary); }
         .reader-modal.special .reader-title { color: var(--special-primary); }
+        .reader-modal.drawsteel .reader-title { color: var(--drawsteel-primary); }
+        .reader-modal.leyfarers .reader-title { color: var(--leyfarers-primary); }
+        .reader-modal.beerovia .reader-title { color: var(--beerovia-primary); }
         .reader-date { font-size: 0.75rem; color: var(--text-dim); margin-left: 10px; }
         .reader-close {
             background: none; border: 1px solid var(--border); border-radius: 6px;
@@ -820,7 +869,9 @@
         body.light .stat-filter.active.frostmaiden { background: rgba(79,195,247,0.15); }
         body.light .stat-filter.active.strahd { background: rgba(239,83,80,0.15); }
         body.light .stat-filter.active.rokugan { background: rgba(240,165,0,0.15); }
-        body.light .stat-filter.active.drawsteel { background: rgba(76,175,80,0.15); }
+        body.light .stat-filter.active.drawsteel { background: rgba(245,197,24,0.15); }
+        body.light .stat-filter.active.leyfarers { background: rgba(76,175,80,0.15); }
+        body.light .stat-filter.active.beerovia { background: rgba(255,152,0,0.15); }
         body.light .stat-filter.active.special { background: rgba(206,147,216,0.15); }
         body.light .stat-filter.active.all-filter { background: rgba(0,0,0,0.06); }
         /* Light mode: remove grey boxes on recaps */
@@ -967,6 +1018,14 @@
         <div class="nav-campaign-dot drawsteel"></div>
         <div class="nav-item-info"><span class="nav-label">Draw Steel: Mini Campaign</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
+    <div class="nav-item" onclick="navigateTo('leyfarers')">
+        <div class="nav-campaign-dot leyfarers"></div>
+        <div class="nav-item-info"><span class="nav-label">Leyfarers</span><span class="nav-sub">All sessions &amp; recaps</span></div>
+    </div>
+    <div class="nav-item" onclick="navigateTo('beerovia')">
+        <div class="nav-campaign-dot beerovia"></div>
+        <div class="nav-item-info"><span class="nav-label">Beerovia</span><span class="nav-sub">All sessions &amp; recaps</span></div>
+    </div>
     <div class="nav-item" onclick="navigateTo('special')">
         <div class="nav-campaign-dot special"></div>
         <div class="nav-item-info"><span class="nav-label">Special Sessions</span><span class="nav-sub">One-shots &amp; events</span></div>
@@ -986,6 +1045,8 @@
                     <option value="frostmaiden">Rime of the Frostmaiden</option>
                     <option value="strahd">Curse of Strahd</option>
                     <option value="drawsteel">Draw Steel: Mini Campaign</option>
+                    <option value="leyfarers">Leyfarers</option>
+                    <option value="beerovia">Beerovia</option>
                     <option value="special">Special</option>
                 </select>
             </div>
@@ -1047,6 +1108,12 @@
                             <button class="view-btn active" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
                             <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                         </div>
+                    </div>
+                    <div class="controls-sub-row" style="justify-content:flex-start">
+                        <select id="profile-select" class="profile-select" onchange="setProfile(this.value)">
+                            <option value="standard">Standard</option>
+                            <option value="ST">ST</option>
+                        </select>
                     </div>
                     <div class="controls-sub-row">
                         <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
@@ -1154,16 +1221,18 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 const PASSPHRASE = "__SITE_PASSPHRASE__";
-const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "Special", drawsteel: "Draw Steel: Mini Campaign" };
-const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", special: "\u2728", drawsteel: "\uD83D\uDDE1\uFE0F" };
+const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "Special", drawsteel: "Draw Steel: Mini Campaign", leyfarers: "Leyfarers", beerovia: "Beerovia" };
+const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", special: "\u2728", drawsteel: "\uD83D\uDDE1\uFE0F", leyfarers: "\uD83E\uDDED", beerovia: "\uD83C\uDF7A" };
 const campaignRosters = {
     frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
     special: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
-    drawsteel: []
+    drawsteel: [],
+    leyfarers: [],
+    beerovia: ["Seth"]
 };
 // Character details: campaign -> name -> { charClass, subclass, level, imageUrl }
-const campaignCharacters = { frostmaiden: {}, strahd: {}, special: {}, drawsteel: {} };
+const campaignCharacters = { frostmaiden: {}, strahd: {}, special: {}, drawsteel: {}, leyfarers: {}, beerovia: {} };
 const seedSessions = [
     { date: "2026-04-01", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-04-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
@@ -1176,6 +1245,25 @@ const seedSessions = [
     { date: "2026-06-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-06-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
     { date: "2026-07-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
+    { date: "2026-07-11", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-07-25", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-09-05", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-09-19", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-24", time: "6:30 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "The Tithe", level: "Level 2" },
+    { date: "2026-09-11", time: "6:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Blood o' the Vine", level: "Level 6" },
+    { date: "2026-09-12", time: "11:00 AM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Ghost Hunter's Haunting (1 of 3)", level: "Level 3" },
+    { date: "2026-09-12", time: "3:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Siege of Lekar", level: "Level 9" },
+    { date: "2026-09-12", time: "7:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Eyes of the Darklord", level: "Level 10" },
+    { date: "2026-09-13", time: "11:00 AM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Tower of Traitors", level: "Level 11" },
+    { date: "2026-09-13", time: "3:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Scrolls of the Dead", level: "Level 12" },
+    { date: "2026-09-16", time: "6:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Trial of Hearts", level: "Level 8" },
+    { date: "2026-09-19", time: "2:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "The Shadowborn Sword (1 of 2)", level: "Level 10" },
+    { date: "2026-09-19", time: "7:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Isles of Agony", level: "Level 5" },
+    { date: "2026-09-20", time: "2:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Vault of the Elder", level: "Level 11" },
+    { date: "2026-09-20", time: "6:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Shadow of the Black Rose", level: "Level 14" },
+    { date: "2026-10-12", time: "TBD", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Secrets of Avernus", level: "Level 16" },
     { date: "2026-07-22", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
     { date: "2026-07-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
     { date: "2026-08-05", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
@@ -1207,6 +1295,20 @@ const seedSessions = [
 
 let sessions = [];
 let activeFilter = "all";
+// ===== PROFILES =====
+// 'standard' hides profile-specific campaigns; 'ST' (Seth) sees everything incl. Leyfarers
+let activeProfile = localStorage.getItem('tpk_profile') || 'standard';
+const profileHiddenCampaigns = { standard: ['leyfarers', 'beerovia'], ST: [] };
+function profileSessions() {
+    const hidden = profileHiddenCampaigns[activeProfile] || [];
+    return hidden.length ? sessions.filter(s => !hidden.includes(s.campaign)) : sessions;
+}
+window.setProfile = function(p) {
+    activeProfile = p; localStorage.setItem('tpk_profile', p);
+    const hidden = profileHiddenCampaigns[p] || [];
+    if (hidden.includes(activeFilter)) activeFilter = 'all';
+    renderAll();
+};
 let activeView = "list";
 let activeTimeFilter = "upcoming";
 let homeSortNewest = false;
@@ -1241,7 +1343,9 @@ window.navigateTo = function(page) {
     else if (page === 'frostmaiden') items[1].classList.add('active');
     else if (page === 'strahd') items[2].classList.add('active');
     else if (page === 'drawsteel') items[3].classList.add('active');
-    else if (page === 'special') items[4].classList.add('active');
+    else if (page === 'leyfarers') items[4].classList.add('active');
+    else if (page === 'beerovia') items[5].classList.add('active');
+    else if (page === 'special') items[6].classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
     else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
@@ -1260,13 +1364,14 @@ window.submitAddSession = async function() {
     const dateVal = document.getElementById('new-session-date').value;
     const campaign = document.getElementById('new-session-campaign').value;
     if (!dateVal) { alert('Please select a date.'); return; }
-    if (sessions.find(s => s.date === dateVal)) { alert('A session already exists on that date.'); return; }
+    // Multiple sessions per date are allowed — use a unique doc id when the date is taken
+    const docId = sessions.find(s => s.id === dateVal || s.date === dateVal) ? `${dateVal}-${Date.now().toString(36)}` : dateVal;
     const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
     const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
     const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
     const roster = campaignRosters[campaign] || []; const attendance = {};
     roster.forEach(p => { attendance[p] = "in"; });
-    try { await setDoc(doc(db, "sessions", dateVal), { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" }); closeAddSession(); }
+    try { await setDoc(doc(db, "sessions", docId), { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" }); closeAddSession(); }
     catch (err) { console.error("Error adding session:", err); alert('Error adding session.'); }
 };
 
@@ -1276,15 +1381,18 @@ async function seedFirestore() {
     // Never "backfill" individual dates — that resurrects sessions the user deleted.
     const snap = await getDocs(collection(db, "sessions"));
     if (!snap.empty) return;
-    for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); await setDoc(doc(db, "sessions", s.date), { ...s, attendance, roster, status: "active" }); }
+    const usedIds = new Set();
+    for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); let id = s.date; if (usedIds.has(id)) id = `${s.date}-${timeVal(s.time)}`; usedIds.add(id); await setDoc(doc(db, "sessions", id), { ...s, attendance, roster, status: "active" }); }
 }
 async function initApp() {
+    const ps = document.getElementById('profile-select'); if (ps) ps.value = activeProfile;
     await loadSavedRosters();
     await seedFirestore();
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true; let prevCount = 0;
     onSnapshot(q, (snapshot) => {
         sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
+        sessions.sort((a,b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
         renderAll();
         if (currentPage !== 'home') renderCampaignPage(currentPage);
     });
@@ -1303,25 +1411,30 @@ function updateAttendanceChips() {
     document.querySelectorAll('.att-chip').forEach(chip => {
         const oc = chip.getAttribute('onclick'); if (!oc) return;
         const m = oc.match(/toggleAttendance\('([^']+)',\s*'([^']+)'\)/); if (!m) return;
-        const s = sessions.find(x => x.date === m[1]); if (!s) return;
+        const s = sessionById(m[1]); if (!s) return;
         chip.className = `att-chip ${(s.attendance && s.attendance[m[2]]) || "in"}`;
     });
 }
 function updateCancelStates() {
     document.querySelectorAll('.session-card').forEach(card => {
-        const d = card.getAttribute('data-session-date'); if (!d) return;
-        const s = sessions.find(x => x.date === d); if (!s) return;
+        const d = card.getAttribute('data-session-id') || card.getAttribute('data-session-date'); if (!d) return;
+        const s = sessionById(d); if (!s) return;
         const c = s.status === "cancelled"; card.classList.toggle('cancelled', c);
-        const today = getToday(); const isPast = parseDate(d) < today;
+        const today = getToday(); const isPast = parseDate(s.date) < today;
         const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${d}')">&#9998;</button>`;
         const a = card.querySelector('.session-action'); if (!a) return;
         a.innerHTML = c ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">&#10005;</button>`;
     });
 }
+// Helper: look up a session by doc id (falls back to date for old share links)
+function sessionById(k) {
+    return sessions.find(x => x.id === k) || sessions.find(x => x.date === k);
+}
 // Helper: find session card in the active container (avoids hidden home page duplicates)
 function findSessionCard(sd) {
     const container = document.querySelector('.campaign-page.active') ? document.getElementById('campaign-page-content') : document.getElementById('list-view');
-    return container ? container.querySelector(`[data-session-date="${sd}"]`) : document.querySelector(`[data-session-date="${sd}"]`);
+    const root = container || document;
+    return root.querySelector(`[data-session-id="${sd}"]`) || root.querySelector(`[data-session-date="${sd}"]`);
 }
 window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = findSessionCard(sd).querySelector('.session-action'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
 window.confirmCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "cancelled" }); cancelPendingSession = null; } catch(e) { console.error(e); } };
@@ -1331,7 +1444,7 @@ window.initiateDeleteSession = function(sd) { const a = findSessionCard(sd).quer
 window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
 window.cancelDeleteSession = function(sd) { const c = findSessionCard(sd); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
 window.openEditSession = function(sd) {
-    const s = sessions.find(x => x.date === sd);
+    const s = sessionById(sd);
     if (!s) return;
     const card = findSessionCard(sd);
     if (!card) return;
@@ -1345,6 +1458,10 @@ window.openEditSession = function(sd) {
         <div class="edit-row">
             <div class="edit-field"><label>GM</label><input type="text" id="edit-gm-${sd}" value="${s.gm}"></div>
             <div class="edit-field"><label>Campaign</label><select id="edit-camp-${sd}">${campaignOptions}</select></div>
+        </div>
+        <div class="edit-row">
+            <div class="edit-field"><label>Title (optional)</label><input type="text" id="edit-title-${sd}" value="${escapeHtml(s.title || '')}" placeholder="e.g. Siege of Lekar"></div>
+            <div class="edit-field"><label>Level (optional)</label><input type="text" id="edit-level-${sd}" value="${escapeHtml(s.level || '')}" placeholder="e.g. Level 9"></div>
         </div>
         <div class="edit-actions">
             <button class="edit-cancel-btn" onclick="event.stopPropagation(); cancelEditSession('${sd}')">Cancel</button>
@@ -1372,37 +1489,23 @@ window.saveEditSession = async function(sd) {
     const newDur = document.getElementById(`edit-dur-${sd}`).value;
     const newGm = document.getElementById(`edit-gm-${sd}`).value;
     const newCamp = document.getElementById(`edit-camp-${sd}`).value;
-    const s = sessions.find(x => x.date === sd);
+    const newTitle = (document.getElementById(`edit-title-${sd}`) || {}).value || '';
+    const newLevel = (document.getElementById(`edit-level-${sd}`) || {}).value || '';
+    const s = sessionById(sd);
     if (!s) return;
     try {
-        if (newDate !== sd) {
-            const existing = sessions.find(x => x.date === newDate);
-            if (existing) { alert('A session already exists on that date.'); return; }
-            const roster = campaignRosters[newCamp] || [];
-            const attendance = {};
-            roster.forEach(p => { attendance[p] = "in"; });
-            await setDoc(doc(db, "sessions", newDate), {
-                date: newDate, time: newTime, gm: newGm, duration: newDur, campaign: newCamp,
-                attendance: newCamp !== s.campaign ? attendance : (s.attendance || attendance),
-                roster: newCamp !== s.campaign ? roster : (s.roster || roster),
-                status: s.status || "active",
-                recapHtml: s.recapHtml || null, recap: s.recap || null,
-                pdfUrl: s.pdfUrl || null, pdfName: s.pdfName || null
-            });
-            await deleteDoc(doc(db, "sessions", sd));
-        } else {
-            const updates = { time: newTime, gm: newGm, duration: newDur, campaign: newCamp };
-            if (newCamp !== s.campaign) {
-                updates.roster = campaignRosters[newCamp] || [];
-                const att = {};
-                updates.roster.forEach(p => { att[p] = "in"; });
-                updates.attendance = att;
-            }
-            await updateDoc(doc(db, "sessions", sd), updates);
+        // Sessions are keyed by doc id, so date changes are a simple field update
+        const updates = { date: newDate, time: newTime, gm: newGm, duration: newDur, campaign: newCamp, title: newTitle, level: newLevel };
+        if (newCamp !== s.campaign) {
+            updates.roster = campaignRosters[newCamp] || [];
+            const att = {};
+            updates.roster.forEach(p => { att[p] = "in"; });
+            updates.attendance = att;
         }
+        await updateDoc(doc(db, "sessions", s.id), updates);
     } catch(e) { console.error("Edit error:", e); alert('Error saving changes.'); }
 };
-window.toggleAttendance = async function(sd, p) { const s = sessions.find(x => x.date === sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", sd), u); };
+window.toggleAttendance = async function(sd, p) { const s = sessionById(sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", s.id), u); };
 
 // ===== RECAP & PDF =====
 window.toggleSessionExpand = function(sd, ev) {
@@ -1413,7 +1516,7 @@ window.toggleSessionExpand = function(sd, ev) {
         const el = card.querySelector('.recap-editor');
         if (el && !activeQuills[sd]) {
             activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
-            const s = sessions.find(x => x.date === sd);
+            const s = sessionById(sd);
             if (s && s.recapHtml) activeQuills[sd].root.innerHTML = s.recapHtml;
         }
     }
@@ -1425,7 +1528,7 @@ window.saveRecap = async function(sd) {
     try { await updateDoc(doc(db, "sessions", sd), data); const m = document.getElementById(`recap-msg-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } if (!text) { setTimeout(() => renderAll(), 500); } } catch(e) { console.error(e); }
 };
 window.editRecap = function(sd) {
-    const s = sessions.find(x => x.date === sd); if (!s) return;
+    const s = sessionById(sd); if (!s) return;
     const card = findSessionCard(sd); if (!card) return; const d = card.querySelector('.recap-display'); if (!d) return;
     d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">Save</button><span class="recap-saved-msg" id="recap-msg-${sd}">Saved!</span></div>`;
     delete activeQuills[sd]; const el = document.getElementById(`recap-editor-${sd}`);
@@ -1450,13 +1553,13 @@ window.uploadPdf = function(sd, inputEl) {
 };
 
 window.deletePdf = async function(sd) {
-    const s = sessions.find(x => x.date === sd); if (!s || !s.pdfUrl) return;
+    const s = sessionById(sd); if (!s || !s.pdfUrl) return;
     if (!confirm('Delete this PDF recap?')) return;
     try {
         // Try to delete from storage if it's a clean URL
         const pdfPath = s.pdfUrl.startsWith('/recaps/') ? s.pdfUrl.slice(1) : null;
         if (pdfPath) { try { await deleteObject(storageRef(storage, pdfPath)); } catch(e) { console.warn('Storage delete failed (may not exist):', e); } }
-        await updateDoc(doc(db, "sessions", sd), { pdfUrl: '', pdfName: '' });
+        await updateDoc(doc(db, "sessions", s.id), { pdfUrl: '', pdfName: '' });
         if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage);
     } catch(e) { console.error(e); alert('Failed to delete PDF.'); }
 };
@@ -1473,6 +1576,7 @@ window.saveOverviewRecap = async function(sd) {
 // ===== RENDER =====
 function renderAll() { renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
+function timeVal(t) { if (!t) return 0; const m = String(t).match(/(\d+):(\d+)\s*(AM|PM)?/i); if (!m) return 0; let h = (+m[1]) % 12; if ((m[3]||'').toUpperCase() === 'PM') h += 12; return h * 60 + (+m[2]); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
 function formatDateShort(ds) { return parseDate(ds).toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
 function getMonthKey(ds) { const d = parseDate(ds); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
@@ -1484,7 +1588,7 @@ function stripHtml(h) { const d = document.createElement('div'); d.innerHTML = h
 // ===== COLLAPSIBLE MONTHS =====
 let collapsedMonths = new Set();
 let allMonthsCollapsed = false;
-const pillLabels = { frostmaiden: 'Frost', strahd: 'Strahd', special: 'Special' };
+const pillLabels = { frostmaiden: 'Frost', strahd: 'Strahd', special: 'Special', drawsteel: 'Steel', leyfarers: 'Ley', beerovia: 'Beer' };
 
 function monthPills(sessionList) {
     const counts = {};
@@ -1757,7 +1861,8 @@ window.executePartyAction = async function(scope) {
 // ===== HERO: Next session + last recap =====
 function renderHero() {
     const today = getToday();
-    const filtered = activeFilter === 'all' ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    const visible = profileSessions();
+    const filtered = activeFilter === 'all' ? visible : visible.filter(s => s.campaign === activeFilter);
     const next = filtered.find(s => parseDate(s.date) >= today && s.status !== "cancelled");
     if (!next) { document.getElementById('hero-section').innerHTML = ''; return; }
     const d = parseDate(next.date); const diff = Math.ceil((d - today) / 86400000);
@@ -1771,22 +1876,23 @@ function renderHero() {
         recapBlock += `<div class="hero-label">Last Time — ${formatDateShort(lastSession.date)}</div>`;
         if (lastSession.recapHtml || lastSession.recap) {
             recapBlock += `<div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
-            recapBlock += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastSession.date}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastSession.date}')">Edit</button>`;
+            recapBlock += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastSession.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastSession.id}')">Edit</button>`;
             recapBlock += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${lastSession.campaign}','${lastSession.date}',true,event)">Share</button>`;
             if (lastSession.pdfUrl) { recapBlock += `<a class="lsc-pdf" href="${escapeHtml(lastSession.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
             recapBlock += `</div>`;
         } else {
-            recapBlock += `<div class="lsc-no-recap" onclick="goToSession('${lastSession.date}')">No recap yet — tap to add one</div>`;
+            recapBlock += `<div class="lsc-no-recap" onclick="goToSession('${lastSession.id}')">No recap yet — tap to add one</div>`;
         }
         recapBlock += `</div>`;
     }
-    document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
+    const heroTitle = next.title ? ` &mdash; ${escapeHtml(next.title)}` : '';
+    document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}${heroTitle}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
 }
 
 // ===== LAST SESSIONS: Collapsible section =====
 function renderRecentRecaps() { document.getElementById('recent-recaps').innerHTML = ''; }
 window.openReaderModal = function(ds) {
-    const s = sessions.find(x => x.date === ds); if (!s) return;
+    const s = sessionById(ds); if (!s) return;
     const modal = document.getElementById('reader-modal');
     const overlay = document.getElementById('reader-overlay');
     modal.className = `reader-modal ${s.campaign}`;
@@ -1809,7 +1915,7 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeRea
 
 // ===== COPY RECAP =====
 window.copyRecapText = function(sd, btn) {
-    const s = sessions.find(x => x.date === sd); if (!s) return;
+    const s = sessionById(sd); if (!s) return;
     const text = s.recapHtml ? stripHtml(s.recapHtml) : (s.recap || '');
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
@@ -1874,7 +1980,7 @@ window.goToSession = function(ds) {
     document.getElementById('list-view').style.display = 'block';
     document.getElementById('calendar-view').style.display = 'none';
     // Show past sessions if needed
-    const s = sessions.find(x => x.date === ds);
+    const s = sessionById(ds);
     if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) {
         pastSessionsVisible = true;
         const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container');
@@ -1882,19 +1988,19 @@ window.goToSession = function(ds) {
     }
     // Scroll to card and expand
     setTimeout(() => {
-        const card = document.querySelector(`[data-session-date="${ds}"]`);
+        const card = document.querySelector(`[data-session-id="${ds}"]`) || document.querySelector(`[data-session-date="${ds}"]`);
         if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
     }, 100);
 };
 
 // Stats bar = filters
 function renderStatsBar() {
-    const counts = { frostmaiden:0, strahd:0, drawsteel:0, special:0 };
-    sessions.forEach(s => { if (s.status !== "cancelled") counts[s.campaign] = (counts[s.campaign] || 0) + 1; });
+    const counts = { frostmaiden:0, strahd:0, drawsteel:0, leyfarers:0, beerovia:0, special:0 };
+    profileSessions().forEach(s => { if (s.status !== "cancelled") counts[s.campaign] = (counts[s.campaign] || 0) + 1; });
     const total = Object.values(counts).reduce((a,b) => a+b, 0);
-    const shortNames = { frostmaiden:'Frost', strahd:'Strahd', drawsteel:'Steel', special:'Special' };
+    const shortNames = { frostmaiden:'Frost', strahd:'Strahd', drawsteel:'Steel', leyfarers:'Ley', beerovia:'Beer', special:'Special' };
     let html = `<button class="stat-filter all-filter${activeFilter === 'all' ? ' active' : ''}" onclick="setFilter('all')"><span class="sf-count">${total}</span><span class="sf-label">All</span></button>`;
-    ['frostmaiden','strahd','drawsteel','special'].forEach(c => {
+    ['frostmaiden','strahd','drawsteel','leyfarers','beerovia','special'].forEach(c => {
         if (counts[c] === 0) return;
         html += `<button class="stat-filter ${c}${activeFilter === c ? ' active' : ''}" onclick="setFilter('${c}')"><span class="sf-count">${counts[c]}</span><span class="sf-label">${shortNames[c]}</span></button>`;
     });
@@ -1918,13 +2024,14 @@ function renderSessionCard(s, gi, ci) {
     const d = parseDate(s.date); const dn = d.getDate(); const dw = dayNames[d.getDay()];
     const roster = s.roster || campaignRosters[s.campaign] || [];
     const att = s.attendance || {}; const isCancelled = s.status === "cancelled";
-    let attHtml = ''; roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.date}','${p}')" title="Toggle">${p}</button>`; });
+    let attHtml = ''; roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.id || s.date}','${p}')" title="Toggle">${p}</button>`; });
     const today = getToday();
     const isPast = d < today;
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const isRecentPast = isPast && d >= twoWeeksAgo;
-    const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${s.date}')">&#9998;</button>`;
-    const actionHtml = isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${s.date}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${s.date}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${s.date}')">&#10005;</button>`;
+    const sid = s.id || s.date;
+    const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${sid}')">&#9998;</button>`;
+    const actionHtml = isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sid}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${sid}')">&#10005;</button>`;
     // CTA for recent past sessions missing recap or PDF
     let ctaHtml = '';
     if (isRecentPast && !isCancelled) {
@@ -1938,21 +2045,24 @@ function renderSessionCard(s, gi, ci) {
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
         recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
-        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${s.date}', this)">Copy</button><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${s.date}')">Edit</button></div>`; }
-        else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${s.date}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${s.date}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${s.date}">Saved!</span></div>`; }
+        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button></div>`; }
+        else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${sid}">Saved!</span></div>`; }
         recapHtml += `</div><div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
-        if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${s.date}')" style="margin-left:4px">&#10005; Delete</button>`; }
-        else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${s.date}',this)"></label>`; }
-        recapHtml += `<span class="pdf-upload-status" id="pdf-status-${s.date}"></span></div></div>`;
+        if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${sid}')" style="margin-left:4px">&#10005; Delete</button>`; }
+        else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label>`; }
+        recapHtml += `<span class="pdf-upload-status" id="pdf-status-${sid}"></span></div></div>`;
     }
     const shareSessionHtml = `<div class="session-detail-section" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px"><button class="share-btn" onclick="event.stopPropagation(); shareLink('${s.campaign}','${s.date}',false,event)">Share Session</button></div>`;
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-date="${s.date}" onclick="toggleSessionExpand('${s.date}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${campaignNames[s.campaign]}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}${shareSessionHtml}</div></div>`;
+    const titleHtml = s.title ? `${campaignNames[s.campaign]} &mdash; ${escapeHtml(s.title)}` : campaignNames[s.campaign];
+    const levelHtml = s.level ? ` \u00b7 ${escapeHtml(s.level)}` : '';
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}${shareSessionHtml}</div></div>`;
 }
 
 function renderList() {
     const today = getToday();
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    const filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    const visible = profileSessions();
+    const filtered = activeFilter === "all" ? visible : visible.filter(s => s.campaign === activeFilter);
     if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
     activeQuills = {};
     const sortBtn = document.getElementById('home-sort-btn');
@@ -2039,12 +2149,12 @@ function renderCampaignPage(campaign) {
         html += `<div class="campaign-overview">`;
         if (lastPast.recapHtml || lastPast.recap) {
             html += `<div class="hero-recap">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
-            html += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.date}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.date}')">Edit</button>`;
+            html += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.id}')">Edit</button>`;
             html += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
             if (lastPast.pdfUrl) { html += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
             html += `</div>`;
         } else {
-            html += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.date}')">No recap yet — tap to add one</div>`;
+            html += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.id}')">No recap yet — tap to add one</div>`;
         }
         html += `</div>`;
     }
@@ -2091,9 +2201,9 @@ function renderCampaignPage(campaign) {
     document.getElementById('campaign-page-content').innerHTML = html;
     // Initialize Quill for overview recap editor if present
     if (lastPast && !(lastPast.recapHtml || lastPast.recap)) {
-        const el = document.getElementById(`recap-editor-overview-${lastPast.date}`);
+        const el = document.getElementById(`recap-editor-overview-${lastPast.id}`);
         if (el) {
-            const key = `overview-${lastPast.date}`;
+            const key = `overview-${lastPast.id}`;
             activeQuills[key] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
         }
     }
@@ -2104,10 +2214,11 @@ window.setCampaignTimeFilter = function(t, campaign) { campaignTimeFilter = t; c
 function renderCalendar() {
     const today = getToday();
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    let filtered = activeFilter === "all" ? sessions : sessions.filter(s => s.campaign === activeFilter);
+    const visibleCal = profileSessions();
+    let filtered = activeFilter === "all" ? visibleCal : visibleCal.filter(s => s.campaign === activeFilter);
     if (activeTimeFilter === 'upcoming') filtered = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
     else if (activeTimeFilter === 'past') filtered = filtered.filter(s => parseDate(s.date) < today);
-    const sm = {}; filtered.forEach(s => { sm[s.date] = s; });
+    const sm = {}; filtered.forEach(s => { (sm[s.date] = sm[s.date] || []).push(s); });
     const am = new Set(); filtered.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
     const todayDate = new Date(); const ts = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
     let html = '';
@@ -2117,8 +2228,11 @@ function renderCalendar() {
         for (let i = 0; i < fd; i++) html += `<div class="cal-day empty"></div>`;
         for (let day = 1; day <= dim; day++) {
             const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-            const s = sm[ds]; const tc = ds === ts ? ' today' : '';
-            if (s) html += `<div class="cal-day has-session ${s.campaign}${tc}" onclick="calendarGoToSession('${ds}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div class="cal-dot"></div></div>`;
+            const dayList = sm[ds]; const tc = ds === ts ? ' today' : '';
+            if (dayList) {
+                const dots = dayList.map(s => `<div class="cal-dot" style="background:var(--${s.campaign}-primary)"></div>`).join('');
+                html += `<div class="cal-day has-session ${dayList[0].campaign}${tc}" onclick="calendarGoToSession('${dayList[0].id}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
+            }
             else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
         }
         html += `</div></div>`;
@@ -2126,12 +2240,17 @@ function renderCalendar() {
     document.getElementById('calendar-view').innerHTML = html;
 }
 window.showTooltip = function(ev, ds) {
-    const s = sessions.find(x => x.date === ds); if (!s) return;
+    const dayList = sessions.filter(x => x.date === ds); if (!dayList.length) return;
     const tip = document.getElementById('tooltip');
-    const r = s.roster || []; const a = s.attendance || {};
-    const inL = r.filter(p => (a[p]||"in") === "in"); const outL = r.filter(p => a[p] === "out");
-    let att = ''; if (inL.length) att += `<br>\u2705 ${inL.join(', ')}`; if (outL.length) att += `<br>\u274C ${outL.join(', ')}`;
-    tip.innerHTML = `<div class="tooltip-campaign" style="color:var(--${s.campaign}-primary)">${campaignIcons[s.campaign]} ${campaignNames[s.campaign]}</div><div class="tooltip-detail">${formatDate(s.date)}<br>GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${att}</div>`;
+    let inner = '';
+    dayList.forEach((s, i) => {
+        const r = s.roster || []; const a = s.attendance || {};
+        const inL = r.filter(p => (a[p]||"in") === "in"); const outL = r.filter(p => a[p] === "out");
+        let att = ''; if (inL.length) att += `<br>\u2705 ${inL.join(', ')}`; if (outL.length) att += `<br>\u274C ${outL.join(', ')}`;
+        const t = s.title ? ` \u2014 ${escapeHtml(s.title)}` : '';
+        inner += `<div class="tooltip-campaign" style="color:var(--${s.campaign}-primary)${i ? ';margin-top:8px' : ''}">${campaignIcons[s.campaign]} ${campaignNames[s.campaign]}${t}</div><div class="tooltip-detail">${i === 0 ? formatDate(s.date) + '<br>' : ''}GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${att}</div>`;
+    });
+    tip.innerHTML = inner;
     tip.classList.add('show'); const rect = ev.target.getBoundingClientRect();
     tip.style.left = Math.min(rect.left, window.innerWidth - 280) + 'px'; tip.style.top = (rect.bottom + 8) + 'px';
 };
@@ -2144,17 +2263,17 @@ window.calendarGoToSession = function(ds) {
     document.getElementById('list-view').style.display = 'block';
     document.getElementById('calendar-view').style.display = 'none';
     // Check if session is in the past and show past sessions if needed
-    const s = sessions.find(x => x.date === ds);
+    const s = sessionById(ds);
     if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) { pastSessionsVisible = true; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.add('open'); if (c) c.classList.add('open'); }
     // Scroll to card and expand it
     setTimeout(() => {
-        const card = document.querySelector(`[data-session-date="${ds}"]`);
+        const card = document.querySelector(`[data-session-id="${ds}"]`) || document.querySelector(`[data-session-date="${ds}"]`);
         if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(ds); }, 300); }
     }, 100);
 };
 
 // ===== HASH ROUTING =====
-const validCampaigns = ['frostmaiden', 'strahd', 'special'];
+const validCampaigns = ['frostmaiden', 'strahd', 'special', 'drawsteel', 'leyfarers', 'beerovia'];
 let _suppressHashUpdate = false;
 let _initialRouteApplied = false;
 
