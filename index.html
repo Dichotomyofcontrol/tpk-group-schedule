@@ -1685,7 +1685,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -2176,6 +2176,18 @@ document.addEventListener('keydown', (e) => {
     if (nav && nav.classList.contains('open')) { if (window.closeNav) closeNav(); return; }
     const open = [...document.querySelectorAll('.add-form-overlay.open')];
     if (open.length) { closeCampaignMenu(); open[open.length - 1].classList.remove('open'); }
+});
+// Focus trap: keep Tab within the open modal.
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const openList = [...document.querySelectorAll('.add-form-overlay.open')];
+    const open = openList[openList.length - 1]; if (!open) return;
+    const f = open.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (!open.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
 let _preModalFocus = null;
 const _modalFocusObserver = new MutationObserver((muts) => {
@@ -2933,6 +2945,8 @@ function renderProfilePanel() {
             <div class="profile-reg-error" id="profile-reg-error"></div>
         </div>`;
     }
+    html += `<button class="profile-action" onclick="exportMyData()">Download my data</button>`;
+    if (currentUser) html += `<button class="profile-action profile-signout" onclick="deleteAccountFromProfile()">Delete account</button>`;
     html += `<button class="profile-action profile-signout" onclick="logout()">Sign out</button>`;
     html += `</div>`;
     body.innerHTML = html;
@@ -2971,6 +2985,38 @@ window.resetPasswordFromProfile = async function() {
     const me = myEmail(); if (!me) return;
     try { await sendPasswordResetEmail(auth, me); alert(`Password reset email sent to ${me}.`); }
     catch (e) { alert('Could not send reset email (' + (e.code || 'error') + ').'); }
+};
+window.exportMyData = function() {
+    const me = myEmail();
+    const data = {
+        account: me || (pollParticipant().name + ' (guest)'),
+        exportedAt: new Date().toISOString(),
+        campaigns: visibleCampaignList().map(c => ({ id: c, name: campaignName(c), access: accessReason(c) })),
+        characters: visibleCampaignList().flatMap(c => (campaignRosters[c] || []).map(p => ({ campaign: campaignName(c), name: p, ...(campaignCharacters[c] || {})[p] }))),
+        sessions: profileSessions().map(s => ({ campaign: campaignName(s.campaign), date: s.date, time: s.time, gm: s.gm, duration: s.duration, status: s.status, recap: s.recap || stripHtml(sanitizeRecapHtml(s.recapHtml || '')) })),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'six-in-the-tpk-export.json'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+window.deleteAccountFromProfile = async function() {
+    const me = myEmail(); if (!me || !auth.currentUser) return;
+    const owned = Object.values(allCampaigns).filter(c => c.owner === me && !c.deleted);
+    if (owned.length) { alert(`You still own ${owned.length} campaign${owned.length > 1 ? 's' : ''}. Transfer or delete ${owned.length > 1 ? 'them' : 'it'} first (each campaign's ⚙ Settings), then delete your account.`); return; }
+    if (!confirm('Permanently delete your account? This cannot be undone. Your characters and any campaign history stay, but you lose access and are removed from campaigns you joined.')) return;
+    try {
+        // Best-effort cleanup: drop from campaign shares + delete the profile grant doc.
+        for (const [key, members] of Object.entries(allShares)) {
+            if ((members || []).includes(me)) { try { await updateDoc(doc(db, "shares", key), { members: arrayRemove(me) }); } catch (_) {} }
+        }
+        try { await deleteDoc(doc(db, "profiles", me)); } catch (_) {}
+        await deleteUser(auth.currentUser);   // onAuthStateChanged then starts a fresh anonymous session
+        alert('Your account has been deleted.');
+    } catch (e) {
+        if (e.code === 'auth/requires-recent-login') alert('For security, sign out and sign back in, then delete your account.');
+        else alert('Could not delete the account (' + (e.code || 'error') + ').');
+    }
 };
 window.openJoinCode = function() {
     if (typeof closeNav === 'function') closeNav();
@@ -4135,7 +4181,8 @@ function buildCalendarHtml(list) {
             const dayList = sm[ds]; const tc = ds === ts ? ' today' : '';
             if (dayList) {
                 const dots = dayList.map(s => `<div class="cal-dot" style="background:${campaignColor(s.campaign)}"></div>`).join('');
-                html += `<div class="cal-day has-session ${dayList[0].campaign}${tc}" onclick="calendarGoToSession('${dayList[0].id}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
+                const lbl = `${dayList.length} session${dayList.length > 1 ? 's' : ''} on ${formatDate(ds)}`;
+                html += `<div class="cal-day has-session ${dayList[0].campaign}${tc}" role="button" tabindex="0" aria-label="${lbl}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calendarGoToSession('${dayList[0].id}')}" onclick="calendarGoToSession('${dayList[0].id}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()" onfocus="showTooltip(event,'${ds}')" onblur="hideTooltip()"><span>${day}</span><div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
             }
             else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
         }
@@ -4170,14 +4217,18 @@ window.showTooltip = function(ev, ds) {
 window.hideTooltip = function() { document.getElementById('tooltip').classList.remove('show'); };
 window.calendarGoToSession = function(ds) {
     hideTooltip();
-    // Switch to list view
-    activeView = 'list';
-    document.querySelectorAll('.view-btn').forEach(b => { b.classList.toggle('active', b.dataset.view === 'list'); });
-    document.getElementById('list-view').style.display = 'block';
-    document.getElementById('calendar-view').style.display = 'none';
-    // Check if session is in the past and show past sessions if needed
     const s = sessionById(ds);
-    if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) { pastSessionsVisible = true; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.add('open'); if (c) c.classList.add('open'); }
+    if (currentPage !== 'home') {
+        // Campaign page: switch its calendar back to the list, then scroll to the card.
+        campaignView = 'list';
+        renderCampaignPage(currentPage);
+    } else {
+        activeView = 'list';
+        document.querySelectorAll('#home-view .view-btn').forEach(b => { b.classList.toggle('active', b.dataset.view === 'list'); });
+        document.getElementById('list-view').style.display = 'block';
+        document.getElementById('calendar-view').style.display = 'none';
+        if (s && parseDate(s.date) < getToday() && !pastSessionsVisible) { pastSessionsVisible = true; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.add('open'); if (c) c.classList.add('open'); }
+    }
     // Scroll to card and expand it
     setTimeout(() => {
         const card = document.querySelector(`[data-session-id="${ds}"]`) || document.querySelector(`[data-session-date="${ds}"]`);
