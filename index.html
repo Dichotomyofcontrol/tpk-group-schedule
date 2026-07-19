@@ -316,6 +316,15 @@
         .invite-chip .chip-x { cursor: pointer; color: var(--text-dim); font-weight: 600; padding: 0 2px; }
         .invite-chip .chip-x:hover { color: var(--strahd-primary); }
         .invite-current-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 4px 0 8px; }
+        .join-code {
+            font-family: 'Cinzel', 'Inter', serif; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.15em;
+            padding: 8px 16px; background: var(--bg); border: 1px dashed var(--frostmaiden-primary);
+            border-radius: 8px; color: var(--frostmaiden-primary); user-select: all;
+        }
+        .join-code.small { font-size: 0.82rem; padding: 5px 10px; letter-spacing: 0.1em; }
+        .code-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+        .code-row-label { font-size: 0.82rem; font-weight: 500; color: var(--text); min-width: 80px; }
+        .code-row .seg-btn { font-size: 0.72rem; padding: 5px 10px; }
         .gate-mode-link {
             background: none; border: none; color: var(--text-dim); font-family: 'Inter', sans-serif;
             font-size: 0.75rem; cursor: pointer; margin-top: 10px; text-decoration: underline; text-underline-offset: 3px;
@@ -1030,7 +1039,7 @@
     <h1>Six in the TPK</h1>
     <div class="subtitle">Campaign Schedule</div>
     <div class="pass-form">
-        <input type="password" id="pass-input" placeholder="Enter passphrase" autocomplete="off">
+        <input type="password" id="pass-input" placeholder="Passphrase or invite code" autocomplete="off">
         <button onclick="checkPassword()">Enter</button>
     </div>
     <div class="pass-error" id="pass-error"></div>
@@ -1176,6 +1185,15 @@
         </div>
         <div id="invite-scope-hint" style="font-size:0.72rem;color:var(--text-dim);margin:2px 0 10px"></div>
         <div id="invite-current"></div>
+        <div id="invite-code-section" style="display:none">
+            <div class="invite-current-label" style="margin-top:12px">Or share join codes</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:8px">Each player gets their own code — they enter it on the front page instead of the passphrase. No email or account needed, and it works on any device. Revoke a single player's code any time.</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+                <input type="text" id="code-name" placeholder="Player name" maxlength="20" style="flex:1;font-family:'Inter',sans-serif;font-size:0.82rem;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none">
+                <button type="button" class="seg-btn" style="border-radius:6px" onclick="generateJoinCode()">Generate Code</button>
+            </div>
+            <div id="invite-code-display"></div>
+        </div>
         <div class="form-buttons">
             <button class="submit-btn" onclick="submitInvite()">Add &amp; Email Invite</button>
             <button class="cancel-form-btn" onclick="closeInvite()">Close</button>
@@ -1452,21 +1470,30 @@ const FALLBACK_USER_CAMPAIGNS = { 'sthomas131@gmail.com': ['leyfarers', 'beerovi
 let currentUser = null;
 let userCampaigns = [];
 let allShares = {};   // `${owner}__${campaign}` -> [member emails]
+// Join codes: bearer keys for people who don't want an account.
+// codes/{CODE} doc -> { owner, campaign }. Redeemed codes live in localStorage.
+let allCodes = {};    // CODE -> { owner, campaign }
+let redeemedCodes = [];
+try { redeemedCodes = JSON.parse(localStorage.getItem('tpk_codes') || '[]'); } catch(e) { redeemedCodes = []; }
+let codesLoaded = false;
+function codeGrants() { return redeemedCodes.map(c => allCodes[c]).filter(Boolean); }
+function codeGrantsCampaign(c) { return codeGrants().some(g => g.campaign === c); }
 function myEmail() { return currentUser && currentUser.email ? currentUser.email.toLowerCase() : null; }
 function shareKey(owner, campaign) { return `${owner}__${campaign}`; }
 function shareMembers(owner, campaign) { return allShares[shareKey(owner, campaign)] || []; }
 function sessionVisible(s) {
     if (s.owner) {
+        if (codeGrants().some(g => g.owner === s.owner && g.campaign === s.campaign)) return true;
         const me = myEmail(); if (!me) return false;
         return s.owner === me || (s.invited || []).includes(me) || shareMembers(s.owner, s.campaign).includes(me);
     }
-    return PUBLIC_CAMPAIGNS.includes(s.campaign) || userCampaigns.includes(s.campaign);
+    return PUBLIC_CAMPAIGNS.includes(s.campaign) || userCampaigns.includes(s.campaign) || codeGrantsCampaign(s.campaign);
 }
 function profileSessions() { return sessions.filter(sessionVisible); }
 // Can the current viewer manage (edit/cancel/recap/invite) this session?
 function canManage(s) { return !s.owner || s.owner === myEmail(); }
 function campaignVisible(c) {
-    return PUBLIC_CAMPAIGNS.includes(c) || userCampaigns.includes(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
+    return PUBLIC_CAMPAIGNS.includes(c) || userCampaigns.includes(c) || codeGrantsCampaign(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
 function updateAccessUI() {
     ['leyfarers', 'beerovia'].forEach(c => {
@@ -1496,10 +1523,30 @@ const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 // ===== AUTH =====
-window.checkPassword = function() {
-    const input = document.getElementById('pass-input').value.trim().toLowerCase();
-    if (input === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); }
-    else { document.getElementById('pass-error').textContent = "Wrong passphrase. Try again."; }
+window.checkPassword = async function() {
+    const raw = document.getElementById('pass-input').value.trim();
+    const errEl = document.getElementById('pass-error');
+    if (raw.toLowerCase() === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); return; }
+    // Not the passphrase — try it as a join code
+    const code = raw.toUpperCase();
+    if (code) {
+        try {
+            const snap = await getDoc(doc(db, "codes", code));
+            if (snap.exists()) {
+                const g = snap.data();
+                allCodes[code] = { owner: g.owner, campaign: g.campaign, label: g.label || '' };
+                if (!redeemedCodes.includes(code)) { redeemedCodes.push(code); localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes)); }
+                showApp(); renderAll();
+                // Welcome them into the party (optional character add)
+                joinPartyCampaign = g.campaign;
+                document.getElementById('join-party-title').textContent = `Welcome${g.label ? ', ' + g.label : ''}! Add your character to ${campaignNames[g.campaign] || g.campaign}?`;
+                ['jp-name','jp-class','jp-subclass','jp-level'].forEach(id => { document.getElementById(id).value = ''; });
+                document.getElementById('join-party-overlay').classList.add('open');
+                return;
+            }
+        } catch(e) { console.error("Code check error:", e); }
+    }
+    errEl.textContent = "Wrong passphrase or code. Try again.";
 };
 let gateCreateMode = false;
 window.toggleGateMode = function() {
@@ -1526,6 +1573,7 @@ window.emailSignIn = async function() {
 };
 window.logout = function() {
     sessionStorage.removeItem('tpk_auth');
+    localStorage.removeItem('tpk_codes'); redeemedCodes = [];
     signOut(auth).catch(() => {});
     currentUser = null; userCampaigns = [];
     if (!campaignVisible(activeFilter)) activeFilter = 'all';
@@ -1565,7 +1613,8 @@ onAuthStateChanged(auth, async (user) => {
         }
     }
 });
-if (sessionStorage.getItem('tpk_auth') === 'true') showApp();
+// Passphrase entry (this tab) or previously redeemed join codes (this device) skip the gate
+if (sessionStorage.getItem('tpk_auth') === 'true' || redeemedCodes.length) showApp();
 
 // ===== NAV =====
 window.openNav = function() { document.getElementById('nav-overlay').classList.add('open'); document.getElementById('nav-menu').classList.add('open'); };
@@ -1665,7 +1714,51 @@ function updateInviteUI() {
         pendInv.forEach(i => { html += `<span class="invite-chip">${escapeHtml(i.email)} <span class="chip-scope">pending</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(i.email)}','campaign')">&times;</span></span>`; });
     }
     document.getElementById('invite-current').innerHTML = html;
+    // Join code section (campaign scope only) — one code per player
+    const codeSection = document.getElementById('invite-code-section');
+    codeSection.style.display = inviteScope === 'campaign' ? '' : 'none';
+    if (inviteScope === 'campaign') {
+        const me2 = myEmail();
+        const myCodes = Object.keys(allCodes).filter(c => allCodes[c].owner === me2 && allCodes[c].campaign === campaign);
+        const disp = document.getElementById('invite-code-display');
+        disp.innerHTML = myCodes.map(c => {
+            const label = allCodes[c].label || 'Unnamed';
+            return `<div class="code-row"><span class="code-row-label">${escapeHtml(label)}</span><span class="join-code small">${escapeHtml(c)}</span><div class="seg-pair"><button type="button" class="seg-btn seg-left" onclick="copyJoinCode('${escapeHtml(c)}')">Copy</button><button type="button" class="seg-btn seg-right" onclick="revokeJoinCode('${escapeHtml(c)}')">Revoke</button></div></div>`;
+        }).join('');
+    }
 }
+function randomCodeSuffix(len) {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    const buf = new Uint32Array(len); crypto.getRandomValues(buf);
+    let out = ''; for (let i = 0; i < len; i++) out += chars[buf[i] % chars.length];
+    return out;
+}
+window.generateJoinCode = async function() {
+    const me = myEmail(); if (!me || !inviteCampaign) return;
+    const campaign = inviteCampaign;
+    const label = document.getElementById('code-name').value.trim();
+    if (!label) { alert("Enter the player's name so you know whose code this is."); return; }
+    const prefix = (campaign || 'TPK').replace(/[^a-z]/gi, '').slice(0, 4).toUpperCase();
+    let code = `${prefix}-${randomCodeSuffix(4)}`;
+    while (allCodes[code]) code = `${prefix}-${randomCodeSuffix(4)}`;
+    try {
+        await setDoc(doc(db, "codes", code), { owner: me, campaign, label });
+        allCodes[code] = { owner: me, campaign, label };
+        document.getElementById('code-name').value = '';
+        updateInviteUI();
+    } catch(e) { console.error("Generate code error:", e); alert('Error creating the code.'); }
+};
+window.revokeJoinCode = async function(code) {
+    const me = myEmail(); if (!me) return;
+    const g = allCodes[code]; if (!g || g.owner !== me) return;
+    if (!confirm(`Revoke ${g.label ? g.label + "'s" : 'this'} code? They will lose access on their next visit.`)) return;
+    try { await deleteDoc(doc(db, "codes", code)); delete allCodes[code]; updateInviteUI(); }
+    catch(e) { console.error("Revoke code error:", e); }
+};
+window.copyJoinCode = function(code) {
+    const clip = navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject();
+    clip.then(() => showShareToast('Code copied!')).catch(() => window.prompt('Copy this code:', code));
+};
 window.removeInviteEmail = async function(email, scope) {
     const me = myEmail(); if (!me) return;
     try {
@@ -1870,6 +1963,24 @@ async function initApp() {
         allInvites = [];
         snap.forEach(d => { allInvites.push({ id: d.id, ...d.data() }); });
         checkPendingInvites();
+    });
+    onSnapshot(collection(db, "codes"), (snap) => {
+        allCodes = {};
+        snap.forEach(d => { const x = d.data(); allCodes[d.id] = { owner: x.owner, campaign: x.campaign, label: x.label || '' }; });
+        codesLoaded = true;
+        // Prune revoked codes from this device
+        const valid = redeemedCodes.filter(c => allCodes[c]);
+        if (valid.length !== redeemedCodes.length) {
+            redeemedCodes = valid;
+            localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes));
+            // If codes were their only way in, send them back to the gate
+            if (!redeemedCodes.length && !currentUser && sessionStorage.getItem('tpk_auth') !== 'true') {
+                document.getElementById('app').style.display = 'none';
+                document.getElementById('password-gate').style.display = 'flex';
+            }
+        }
+        renderAll();
+        if (currentPage !== 'home') renderCampaignPage(currentPage);
     });
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true; let prevCount = 0;
