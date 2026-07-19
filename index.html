@@ -1060,6 +1060,21 @@
         .multi-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin: 0 6px 6px 0; font-size: 0.78rem; color: var(--text); }
         .multi-chip .chip-x { cursor: pointer; color: var(--text-dim); font-size: 1rem; line-height: 1; }
         .multi-chip .chip-x:hover { color: var(--strahd-primary); }
+        .cs-divider { height: 1px; background: var(--border); margin: 16px 0; }
+        .cs-actions { display: flex; flex-direction: column; gap: 12px; }
+        .readonly-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--text-dim); margin-bottom: 16px; }
+        /* ===== Home campaign grid (redesign) ===== */
+        .campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 28px; }
+        .campaign-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--cc); border-radius: 12px; padding: 16px; cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+        .campaign-card:hover { transform: translateY(-2px); border-color: var(--cc); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .cc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .cc-icon { font-size: 1.3rem; line-height: 1; }
+        .cc-name { font-family: 'Cinzel', serif; font-weight: 700; font-size: 0.95rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cc-next { font-size: 1rem; font-weight: 600; color: var(--text); }
+        .cc-next-label { display: block; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cc); font-weight: 700; margin-bottom: 3px; }
+        .cc-rel { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-dim); margin-top: 2px; }
+        .cc-next.cc-none { color: var(--text-dim); font-weight: 400; font-size: 0.9rem; }
+        .cc-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -1321,6 +1336,51 @@
     </div>
 </div>
 
+<!-- Campaign Settings Modal (3f) -->
+<div class="add-form-overlay" id="campaign-settings-overlay" onclick="closeCampaignSettings()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3 id="cs-title">Campaign Settings</h3>
+        <div class="form-row">
+            <div class="form-group" style="flex:2"><label>Name</label><input type="text" id="cs-name" maxlength="40"></div>
+            <div class="form-group" style="flex:0 0 64px"><label>Icon</label><input type="text" id="cs-icon" maxlength="2"></div>
+        </div>
+        <div class="form-group"><label>Color</label><div id="cs-swatches" class="swatch-row"></div></div>
+        <div class="form-buttons"><button class="submit-btn" onclick="saveCampaignMeta()">Save changes</button></div>
+        <div class="cs-divider"></div>
+        <div class="cs-actions">
+            <button class="profile-action" id="cs-archive-btn" onclick="toggleArchiveCampaign()">Archive campaign</button>
+            <div class="form-group"><label>Transfer ownership</label>
+                <div style="display:flex;gap:8px">
+                    <select id="cs-transfer" style="flex:1"></select>
+                    <button type="button" class="seg-btn" style="border-radius:6px" onclick="transferCampaign()">Transfer</button>
+                </div>
+            </div>
+            <button class="profile-action profile-signout" onclick="showDeleteSection()">Delete campaign…</button>
+            <div id="cs-delete-section" style="display:none;border:1px solid var(--strahd-primary);border-radius:8px;padding:12px">
+                <div style="font-size:0.76rem;color:var(--text-dim);margin-bottom:10px">This removes the campaign. Members are notified and can archive, dismiss, or (if named below) take it over. It's permanently purged once no one holds it.</div>
+                <div class="form-group"><label>Hand off to (optional)</label><select id="cs-successor"></select></div>
+                <div class="form-group"><label>Type DELETE to confirm</label><input type="text" id="cs-delete-confirm" placeholder="DELETE" style="text-transform:uppercase"></div>
+                <button class="submit-btn" style="background:var(--strahd-primary);color:#fff" onclick="deleteCampaign()">Delete campaign</button>
+            </div>
+        </div>
+        <div class="form-buttons"><button class="cancel-form-btn" onclick="closeCampaignSettings()">Close</button></div>
+    </div>
+</div>
+
+<!-- Campaign Removed Notification (3f) -->
+<div class="add-form-overlay" id="campaign-notif-overlay">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Campaign removed</h3>
+        <div id="cn-text" style="font-size:0.88rem;color:var(--text);line-height:1.5;margin-bottom:8px"></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:16px">Archive keeps a read-only copy for you · Dismiss removes it · Take over makes it yours.</div>
+        <div class="form-buttons">
+            <button class="submit-btn" id="cn-takeover-btn" onclick="cnTakeover()" style="display:none">Take over</button>
+            <button class="profile-action" style="max-width:none" onclick="cnArchive()">Archive (read-only)</button>
+            <button class="cancel-form-btn" onclick="cnDismiss()">Dismiss</button>
+        </div>
+    </div>
+</div>
+
 <!-- Main App -->
 <div id="app">
     <div class="top-bar-wrap" id="top-bar-wrap">
@@ -1348,7 +1408,10 @@
                 <button class="submit-btn" id="empty-create-btn" style="max-width:240px;margin:0 auto 8px;display:none" onclick="openNewCampaign()">+ Create a campaign</button>
                 <button class="cancel-form-btn" style="max-width:240px;margin:0 auto" onclick="openJoinCode()">Join with a code</button>
             </div>
-            <!-- Hero: Next session countdown + last recap -->
+            <!-- Campaign grid (prominent, click → campaign page) -->
+            <div class="section-heading">Campaigns</div>
+            <div id="campaign-grid" class="campaign-grid"></div>
+            <!-- Up Next: slim band, next session across all campaigns -->
             <div class="section-heading">Up Next</div>
             <div id="hero-section"></div>
 
@@ -1357,10 +1420,9 @@
 
             <!-- Sessions wrapper -->
             <div class="sessions-wrapper">
-                <div class="section-heading">Sessions</div>
-                <!-- Controls panel: stats + view/time toggles + sort/collapse -->
+                <div class="section-heading">All Sessions</div>
+                <!-- Controls panel: view/time toggles + sort/collapse -->
                 <div class="controls-panel">
-                    <div class="stats-bar" id="stats-bar"></div>
                     <div class="controls-row">
                         <div class="controls-left">
                             <button class="view-btn active" data-view="list">List</button>
@@ -1389,7 +1451,8 @@
             <div class="campaign-page-header">
                 <button class="campaign-back-btn" onclick="navigateTo('home')">&larr; Back</button>
                 <div class="campaign-page-title" id="campaign-page-title"></div>
-                <button class="share-btn" id="campaign-manage-btn" style="margin-left:auto;display:none" onclick="openCampaignSchedule()">&#9881; Schedule</button>
+                <button class="share-btn" id="campaign-settings-btn" style="margin-left:auto;display:none" onclick="openCampaignSettings()">&#9881; Settings</button>
+                <button class="share-btn" id="campaign-manage-btn" style="display:none" onclick="openCampaignSchedule()">&#128197; Schedule</button>
                 <button class="share-btn" id="campaign-share-btn" onclick="shareCurrentCampaign()">Share</button>
             </div>
             <div id="campaign-page-content"></div>
@@ -1486,8 +1549,11 @@ const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", spe
 // Hardcoded fallback colors for the original campaigns (match the :root CSS vars).
 const campaignColorsDefault = { frostmaiden: '#4fc3f7', strahd: '#ef5350', special: '#ce93d8', drawsteel: '#f5c518', leyfarers: '#4caf50', beerovia: '#ff9800' };
 // ===== CAMPAIGNS AS DATA (Phase 3) =====
-// Live campaign docs: id -> { id, name, icon, color, owner, archived?, deleted?, ... }
+// Live campaign docs: id -> { id, name, icon, color, owner, archived?, deleted?, deletedBy?, successor?, ... }
 let allCampaigns = {};
+// Campaign-delete notifications: `${email}__${campaign}` -> { email, campaign, deletedBy, status:'pending'|'archived'|'dismissed' }
+let allNotifications = {};
+function myNotifStatus(c) { const me = myEmail(); const n = me && allNotifications[`${me}__${c}`]; return n ? n.status : null; }
 // One-time migration: existing campaigns become owned by the DM. Access is code/invite/owner only.
 const MIGRATION_OWNER = 'sthomas131@gmail.com';
 const CAMPAIGN_MIGRATION = ['frostmaiden', 'strahd', 'drawsteel', 'special', 'leyfarers', 'beerovia'];
@@ -1540,8 +1606,8 @@ function navCampaignList() {
     Object.keys(campaignNames).forEach(c => set.add(c));
     sessions.forEach(s => { if (s.campaign) set.add(s.campaign); });
     return [...set].filter(c => {
-        if (isDeleted(c)) return false;
-        if (canManageCampaign(c)) return true;                              // owners always see their campaign
+        if (isDeleted(c)) return myNotifStatus(c) === 'archived';           // members keep a read-only entry if they archived it
+        if (isCampaignOwner(c)) return true;                                // owners see their campaign (incl. archived, to restore)
         return sessions.some(s => s.campaign === c && sessionVisible(s));   // else only if a session is visible
     }).sort((a, b) => {
         const ia = ORIGINAL_ORDER.indexOf(a), ib = ORIGINAL_ORDER.indexOf(b);
@@ -1656,7 +1722,15 @@ function campaignShareMembers(c) { const o = campaignOwner(c); return o ? shareM
 // Can the viewer access campaign c at all? (owner / code / share / profile-invite)
 function campaignAccessible(c) {
     const me = myEmail();
-    if (me && campaignOwner(c) === me) return true;
+    if (isDeleted(c)) {
+        // A tombstoned campaign is reachable only via a personal notification
+        // (pending = still to resolve, archived = kept read-only) or as the successor.
+        const st = myNotifStatus(c);
+        if (st === 'pending' || st === 'archived') return true;
+        if (me && allCampaigns[c] && allCampaigns[c].successor === me) return true;
+        return false;
+    }
+    if (me && campaignOwner(c) === me) return true;   // active or archived
     if (codeGrantsCampaign(c)) return true;
     if (me && campaignShareMembers(c).includes(me)) return true;
     if (me && userCampaigns.includes(c)) return true;
@@ -1673,17 +1747,16 @@ function sessionVisible(s) {
     return campaignAccessible(s.campaign);
 }
 function profileSessions() { return sessions.filter(sessionVisible); }
-// Can the viewer manage (edit/cancel/recap/invite) this session? Bridge users are read-only.
+// Can the viewer manage (edit/cancel/recap/invite) this session? Archived/deleted → read-only.
 function canManage(s) {
+    if (isArchived(s.campaign) || isDeleted(s.campaign)) return false;
     if (s.owner) return s.owner === myEmail();
     const me = myEmail();
     return !!me && campaignOwner(s.campaign) === me;   // "Everyone" sessions: campaign owner only
 }
-// Can the viewer manage a whole campaign (schedule/settings/invite)?
-function canManageCampaign(c) {
-    const me = myEmail();
-    return !!me && campaignOwner(c) === me;
-}
+function isCampaignOwner(c) { const me = myEmail(); return !!me && campaignOwner(c) === me; }
+// Can the viewer manage a whole campaign's schedule/sessions? (not while archived/deleted)
+function canManageCampaign(c) { return isCampaignOwner(c) && !isArchived(c) && !isDeleted(c); }
 function campaignVisible(c) {
     return campaignAccessible(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
@@ -1826,6 +1899,7 @@ onAuthStateChanged(auth, async (user) => {
         showApp();
         if (appStarted) { renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); }
         checkPendingInvites();
+        checkCampaignNotifications();
     } else {
         userCampaigns = [];
         updateAccessUI();
@@ -1904,6 +1978,134 @@ function populateCampaignDropdown(selId, opt) {
     sel.innerHTML = html;
     if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
 }
+// ===== CAMPAIGN LIFECYCLE (3f) =====
+// Email members of a campaign = campaign-level share members (accepted invites land here).
+function campaignMemberEmails(c) { const o = campaignOwner(c); return o ? [...shareMembers(o, c)] : []; }
+let csCampaign = null, csColor = CAMPAIGN_SWATCHES[0];
+window.openCampaignSettings = function() {
+    const c = currentPage; if (!c || !isCampaignOwner(c)) return;
+    csCampaign = c; csColor = campaignColor(c);
+    document.getElementById('cs-title').textContent = `${campaignName(c)} — Settings`;
+    document.getElementById('cs-name').value = campaignName(c);
+    document.getElementById('cs-icon').value = campaignIcon(c);
+    renderCsSwatches();
+    document.getElementById('cs-archive-btn').textContent = isArchived(c) ? 'Restore campaign' : 'Archive campaign';
+    // populate successor + transfer options (campaign members)
+    const members = campaignMemberEmails(c);
+    const opts = members.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+    document.getElementById('cs-transfer').innerHTML = `<option value="">Choose a member…</option>` + opts;
+    document.getElementById('cs-successor').innerHTML = `<option value="">No successor</option>` + opts;
+    document.getElementById('cs-delete-confirm').value = '';
+    document.getElementById('cs-delete-section').style.display = 'none';
+    document.getElementById('campaign-settings-overlay').classList.add('open');
+};
+window.closeCampaignSettings = function() { document.getElementById('campaign-settings-overlay').classList.remove('open'); };
+function renderCsSwatches() {
+    const el = document.getElementById('cs-swatches'); if (!el) return;
+    el.innerHTML = CAMPAIGN_SWATCHES.map(c => `<span class="swatch${c === csColor ? ' active' : ''}" style="background:${c}" onclick="pickCsSwatch('${c}')"></span>`).join('');
+}
+window.pickCsSwatch = function(c) { csColor = c; renderCsSwatches(); };
+window.saveCampaignMeta = async function() {
+    const c = csCampaign; if (!c) return;
+    const name = document.getElementById('cs-name').value.trim(); if (!name) { alert('Name cannot be empty.'); return; }
+    const icon = document.getElementById('cs-icon').value.trim() || '🎲';
+    try {
+        await updateDoc(doc(db, "campaigns", c), { name, icon, color: csColor });
+        if (allCampaigns[c]) { allCampaigns[c].name = name; allCampaigns[c].icon = icon; allCampaigns[c].color = csColor; }
+        renderCampaignTheme(); updateAccessUI(); renderCampaignPage(c);
+        closeCampaignSettings();
+    } catch (e) { console.error("Save campaign error:", e); alert('Could not save — try again.'); }
+};
+window.toggleArchiveCampaign = async function() {
+    const c = csCampaign; if (!c) return;
+    const next = !isArchived(c);
+    try {
+        await updateDoc(doc(db, "campaigns", c), { archived: next });
+        if (allCampaigns[c]) allCampaigns[c].archived = next;
+        closeCampaignSettings(); updateAccessUI();
+        if (next) window.navigateTo('home'); else renderCampaignPage(c);
+    } catch (e) { console.error("Archive error:", e); alert('Could not archive — try again.'); }
+};
+window.transferCampaign = async function() {
+    const c = csCampaign; if (!c) return;
+    const to = document.getElementById('cs-transfer').value;
+    if (!to) { alert('Choose a member to transfer to.'); return; }
+    if (!confirm(`Transfer ownership of ${campaignName(c)} to ${to}? You'll become a regular member.`)) return;
+    try {
+        await updateDoc(doc(db, "campaigns", c), { owner: to });
+        if (allCampaigns[c]) allCampaigns[c].owner = to;
+        closeCampaignSettings(); updateAccessUI(); window.navigateTo('home');
+    } catch (e) { console.error("Transfer error:", e); alert('Could not transfer — try again.'); }
+};
+window.showDeleteSection = function() { document.getElementById('cs-delete-section').style.display = ''; };
+window.deleteCampaign = async function() {
+    const c = csCampaign; if (!c) return;
+    if (document.getElementById('cs-delete-confirm').value.trim().toUpperCase() !== 'DELETE') { alert('Type DELETE to confirm.'); return; }
+    const successor = document.getElementById('cs-successor').value || null;
+    const me = myEmail();
+    const notify = new Set(campaignMemberEmails(c)); if (successor) notify.add(successor); notify.delete(me);
+    try {
+        await updateDoc(doc(db, "campaigns", c), { deleted: true, deletedBy: me, deletedAt: Date.now(), successor });
+        if (allCampaigns[c]) { allCampaigns[c].deleted = true; allCampaigns[c].deletedBy = me; allCampaigns[c].successor = successor; }
+        if (notify.size === 0) { await purgeCampaign(c); }   // no one to notify → purge now
+        else { for (const email of notify) { await setDoc(doc(db, "notifications", `${email}__${c}`), { email, campaign: c, deletedBy: me, kind: 'campaign-deleted', status: 'pending', createdAt: Date.now() }); } }
+        closeCampaignSettings(); updateAccessUI(); window.navigateTo('home');
+    } catch (e) { console.error("Delete campaign error:", e); alert('Could not delete — try again.'); }
+};
+async function purgeCampaign(c) {
+    // Cascade: delete the campaign's sessions, its notifications, then the campaign doc.
+    try {
+        for (const s of sessions.filter(x => x.campaign === c)) { await deleteDoc(doc(db, "sessions", s.id)); }
+        for (const n of Object.values(allNotifications).filter(x => x.campaign === c)) { await deleteDoc(doc(db, "notifications", n.id)); }
+        await deleteDoc(doc(db, "campaigns", c));
+        delete allCampaigns[c];
+    } catch (e) { console.error("Purge error:", e); }
+}
+async function maybePurgeCampaign(c) {
+    if (!isDeleted(c)) return;
+    const holders = Object.values(allNotifications).filter(n => n.campaign === c && (n.status === 'pending' || n.status === 'archived'));
+    if (holders.length === 0) await purgeCampaign(c);
+}
+// ----- Member-side: resolve campaign-deleted notifications -----
+let campaignNotifQueue = [];
+function checkCampaignNotifications() {
+    const me = myEmail(); if (!me || !appStarted) return;
+    if (document.getElementById('campaign-notif-overlay').classList.contains('open')) return;
+    campaignNotifQueue = Object.values(allNotifications).filter(n => n.email === me && n.status === 'pending' && n.kind === 'campaign-deleted');
+    showNextCampaignNotif();
+}
+function showNextCampaignNotif() {
+    if (!campaignNotifQueue.length) return;
+    const n = campaignNotifQueue[0]; const c = n.campaign;
+    const who = n.deletedBy ? n.deletedBy.split('@')[0] : 'The organizer';
+    document.getElementById('cn-text').innerHTML = `<strong>${escapeHtml(who)}</strong> deleted <strong>${escapeHtml(campaignName(c))}</strong>.`;
+    const isSucc = allCampaigns[c] && allCampaigns[c].successor === myEmail();
+    document.getElementById('cn-takeover-btn').style.display = isSucc ? '' : 'none';
+    document.getElementById('campaign-notif-overlay').classList.add('open');
+}
+async function resolveNotif(status) {
+    const n = campaignNotifQueue.shift(); if (!n) return; const c = n.campaign;
+    document.getElementById('campaign-notif-overlay').classList.remove('open');
+    try {
+        await updateDoc(doc(db, "notifications", n.id), { status });
+        if (allNotifications[n.id]) allNotifications[n.id].status = status;
+        if (status === 'dismissed') await maybePurgeCampaign(c);
+    } catch (e) { console.error("Resolve notif error:", e); }
+    updateAccessUI(); renderAll(); showNextCampaignNotif();
+}
+window.cnArchive = function() { return resolveNotif('archived'); };
+window.cnDismiss = function() { return resolveNotif('dismissed'); };
+window.cnTakeover = async function() {
+    const n = campaignNotifQueue.shift(); if (!n) return; const c = n.campaign; const me = myEmail();
+    document.getElementById('campaign-notif-overlay').classList.remove('open');
+    try {
+        await updateDoc(doc(db, "campaigns", c), { owner: me, deleted: false, deletedBy: null, successor: null });
+        if (allCampaigns[c]) { allCampaigns[c].owner = me; allCampaigns[c].deleted = false; allCampaigns[c].successor = null; }
+        // The campaign is alive again — clear everyone's notifications for it.
+        for (const other of Object.values(allNotifications).filter(x => x.campaign === c)) { await deleteDoc(doc(db, "notifications", other.id)); delete allNotifications[other.id]; }
+    } catch (e) { console.error("Take over error:", e); }
+    updateAccessUI(); renderAll(); window.navigateTo(c);
+};
 // ===== SCHEDULE MODAL (3e) =====
 let addMode = 'one';
 let multiDates = [];
@@ -2538,6 +2740,12 @@ async function initApp() {
         renderAll();
         if (currentPage !== 'home') renderCampaignPage(currentPage);
     }, (e) => console.error("campaigns listener:", e));
+    onSnapshot(collection(db, "notifications"), (snap) => {
+        allNotifications = {};
+        snap.forEach(d => { allNotifications[d.id] = { id: d.id, ...d.data() }; });
+        updateAccessUI(); renderAll();
+        checkCampaignNotifications();
+    }, (e) => console.error("notifications listener:", e));
     onSnapshot(collection(db, "shares"), (snap) => {
         allShares = {};
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
@@ -2757,7 +2965,7 @@ window.saveOverviewRecap = async function(sd) {
 };
 
 // ===== RENDER =====
-function renderAll() { updateAccessUI(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
+function renderAll() { updateAccessUI(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
 function timeVal(t) { if (!t) return 0; const m = String(t).match(/(\d+):(\d+)\s*(AM|PM)?/i); if (!m) return 0; let h = (+m[1]) % 12; if ((m[3]||'').toUpperCase() === 'PM') h += 12; return h * 60 + (+m[2]); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
@@ -3178,16 +3386,41 @@ window.goToSession = function(ds) {
 
 // Stats bar = filters
 function renderStatsBar() {
-    const counts = { frostmaiden:0, strahd:0, drawsteel:0, leyfarers:0, beerovia:0, special:0 };
+    const el = document.getElementById('stats-bar'); if (!el) return;   // replaced by the campaign grid (home redesign)
+    const counts = {};
     profileSessions().forEach(s => { if (s.status !== "cancelled") counts[s.campaign] = (counts[s.campaign] || 0) + 1; });
     const total = Object.values(counts).reduce((a,b) => a+b, 0);
-    const shortNames = { frostmaiden:'Frost', strahd:'Strahd', drawsteel:'Steel', leyfarers:'Ley', beerovia:'Beer', special:'Special' };
     let html = `<button class="stat-filter all-filter${activeFilter === 'all' ? ' active' : ''}" onclick="setFilter('all')"><span class="sf-count">${total}</span><span class="sf-label">All</span></button>`;
-    ['frostmaiden','strahd','drawsteel','leyfarers','beerovia','special'].forEach(c => {
-        if (counts[c] === 0) return;
-        html += `<button class="stat-filter ${c}${activeFilter === c ? ' active' : ''}" onclick="setFilter('${c}')"><span class="sf-count">${counts[c]}</span><span class="sf-label">${shortNames[c]}</span></button>`;
+    navCampaignList().forEach(c => {
+        if (!counts[c]) return;
+        html += `<button class="stat-filter ${c}${activeFilter === c ? ' active' : ''}" onclick="setFilter('${c}')"><span class="sf-count">${counts[c]}</span><span class="sf-label">${escapeHtml(campaignName(c))}</span></button>`;
     });
-    document.getElementById('stats-bar').innerHTML = html;
+    el.innerHTML = html;
+}
+// ----- Home campaign grid (prominent cards → campaign page) -----
+function renderCampaignGrid() {
+    const el = document.getElementById('campaign-grid'); if (!el) return;
+    const today = getToday();
+    const list = navCampaignList();
+    el.innerHTML = list.map(c => {
+        const cs = sessions.filter(s => s.campaign === c && sessionVisible(s) && s.status !== 'cancelled');
+        const upcoming = cs.filter(s => parseDate(s.date) >= today).sort((a, b) => a.date.localeCompare(b.date));
+        const next = upcoming[0];
+        let nextLine;
+        if (next) {
+            const days = Math.round((parseDate(next.date) - today) / 86400000);
+            const rel = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `in ${days} days`;
+            nextLine = `<div class="cc-next"><span class="cc-next-label">Next session</span>${formatDateShort(next.date)}${next.time ? ' · ' + escapeHtml(next.time) : ''}<span class="cc-rel">${rel}</span></div>`;
+        } else {
+            nextLine = `<div class="cc-next cc-none"><span class="cc-next-label">Next session</span>None scheduled</div>`;
+        }
+        const tag = isArchived(c) ? ' · archived' : '';
+        return `<div class="campaign-card" style="--cc:${campaignColor(c)}" onclick="navigateTo('${c}')">`
+            + `<div class="cc-top"><span class="cc-icon">${campaignIcon(c)}</span><span class="cc-name">${escapeHtml(campaignName(c))}</span></div>`
+            + nextLine
+            + `<div class="cc-count">${cs.length} session${cs.length === 1 ? '' : 's'}${tag}</div>`
+            + `</div>`;
+    }).join('');
 }
 window.setFilter = function(f) { activeFilter = f; renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); };
 window.setTimeFilter = function(t) {
@@ -3299,15 +3532,19 @@ window.togglePastSessions = function() { pastSessionsVisible = !pastSessionsVisi
 function renderCampaignPage(campaign) {
     const today = getToday();
     document.getElementById('campaign-page-title').innerHTML = `${campaignIcon(campaign)} ${escapeHtml(campaignName(campaign))}`;
-    document.getElementById('campaign-page-title').style.color = `var(--${campaign}-primary)`;
+    document.getElementById('campaign-page-title').style.color = campaignColor(campaign);
     const manageBtn = document.getElementById('campaign-manage-btn');
     if (manageBtn) manageBtn.style.display = canManageCampaign(campaign) ? '' : 'none';
+    const settingsBtn = document.getElementById('campaign-settings-btn');
+    if (settingsBtn) settingsBtn.style.display = isCampaignOwner(campaign) ? '' : 'none';
     const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
     const upcoming = cs.filter(s => parseDate(s.date) >= today);
     const past = cs.filter(s => parseDate(s.date) < today);
     const nonCancelled = cs.filter(s => s.status !== 'cancelled').length;
     activeQuills = {};
     let html = '';
+    if (isArchived(campaign)) html += `<div class="readonly-banner">&#128193; This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
+    else if (isDeleted(campaign)) html += `<div class="readonly-banner">&#128465; This campaign was removed — read-only.</div>`;
 
     // Party roster — standalone section with player cards
     const roster = campaignRosters[campaign] || [];
