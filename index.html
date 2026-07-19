@@ -66,6 +66,13 @@
         .pass-form button:hover { background: var(--surface-hover); border-color: var(--frostmaiden-primary); }
         .pass-error { color: var(--strahd-primary); font-size: 0.8rem; min-height: 1.2em; }
         .pass-hint { color: var(--text-dim); font-size: 0.75rem; margin-top: 24px; opacity: 0.5; }
+        .gate-divider { display: flex; align-items: center; gap: 12px; width: 320px; max-width: 80vw; margin: 18px 0 14px; color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
+        .gate-divider::before, .gate-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+        .email-form { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .email-form input { font-family: 'Inter', sans-serif; font-size: 0.9rem; padding: 12px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; width: 280px; max-width: 80vw; }
+        .email-form input:focus { border-color: var(--frostmaiden-primary); }
+        .email-form button { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 12px 24px; border-radius: 8px; border: 1px solid var(--border); background: linear-gradient(135deg, var(--frostmaiden-bg), var(--strahd-bg)); color: var(--text); cursor: pointer; width: 280px; max-width: 80vw; }
+        .email-form button:hover { background: var(--surface-hover); border-color: var(--frostmaiden-primary); }
 
         /* ===== MAIN APP ===== */
         #app { display: none; }
@@ -273,13 +280,14 @@
             text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-dim);
             transition: color 0.2s;
         }
-        .profile-select {
-            font-family: 'Inter', sans-serif; font-size: 0.75rem;
+        .user-chip {
+            font-family: 'Inter', sans-serif; font-size: 0.7rem;
             background: var(--surface); color: var(--text-dim);
-            border: 1px solid var(--border); border-radius: 8px;
-            padding: 6px 12px; cursor: pointer; transition: all 0.2s;
+            border: 1px solid var(--border); border-radius: 100px;
+            padding: 5px 12px; max-width: 180px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        .profile-select:hover, .profile-select:focus { color: var(--text); border-color: var(--text-dim); outline: none; }
+        @media (max-width: 600px) { .user-chip { display: none !important; } }
         .month-pills { display: flex; gap: 4px; flex-wrap: wrap; }
         .month-pill {
             font-family: 'Inter', sans-serif; font-size: 0.62rem; font-weight: 600;
@@ -993,6 +1001,13 @@
         <button onclick="checkPassword()">Enter</button>
     </div>
     <div class="pass-error" id="pass-error"></div>
+    <div class="gate-divider"><span>or sign in with email</span></div>
+    <div class="email-form">
+        <input type="email" id="email-input" placeholder="Email" autocomplete="email">
+        <input type="password" id="email-pass-input" placeholder="Password" autocomplete="current-password">
+        <button onclick="emailSignIn()">Sign In</button>
+    </div>
+    <div class="pass-error" id="email-error"></div>
     <div class="pass-hint">Password Available in Discord</div>
 </div>
 
@@ -1018,11 +1033,11 @@
         <div class="nav-campaign-dot drawsteel"></div>
         <div class="nav-item-info"><span class="nav-label">Draw Steel: Mini Campaign</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
-    <div class="nav-item" onclick="navigateTo('leyfarers')">
+    <div class="nav-item" id="nav-leyfarers" style="display:none" onclick="navigateTo('leyfarers')">
         <div class="nav-campaign-dot leyfarers"></div>
         <div class="nav-item-info"><span class="nav-label">Leyfarers</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
-    <div class="nav-item" onclick="navigateTo('beerovia')">
+    <div class="nav-item" id="nav-beerovia" style="display:none" onclick="navigateTo('beerovia')">
         <div class="nav-campaign-dot beerovia"></div>
         <div class="nav-item-info"><span class="nav-label">Beerovia</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
@@ -1046,8 +1061,8 @@
                     <option value="frostmaiden">Rime of the Frostmaiden</option>
                     <option value="strahd">Curse of Strahd</option>
                     <option value="drawsteel">Draw Steel: Mini Campaign</option>
-                    <option value="leyfarers">Leyfarers</option>
-                    <option value="beerovia">Beerovia</option>
+                    <option value="leyfarers" class="opt-leyfarers" hidden>Leyfarers</option>
+                    <option value="beerovia" class="opt-beerovia" hidden>Beerovia</option>
                     <option value="special">Special</option>
                 </select>
             </div>
@@ -1077,8 +1092,8 @@
                     <option value="frostmaiden">Rime of the Frostmaiden</option>
                     <option value="strahd">Curse of Strahd</option>
                     <option value="drawsteel">Draw Steel: Mini Campaign</option>
-                    <option value="leyfarers">Leyfarers</option>
-                    <option value="beerovia">Beerovia</option>
+                    <option value="leyfarers" class="opt-leyfarers" hidden>Leyfarers</option>
+                    <option value="beerovia" class="opt-beerovia" hidden>Beerovia</option>
                     <option value="special">Special</option>
                 </select>
             </div>
@@ -1111,6 +1126,7 @@
                     <div class="top-bar-logo">Six in the TPK</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
+                    <span class="user-chip" id="user-chip" style="display:none"></span>
                     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
                     <button class="sign-out-btn" onclick="logout()">Sign Out</button>
                 </div>
@@ -1143,12 +1159,6 @@
                             <button class="view-btn active" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
                             <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                         </div>
-                    </div>
-                    <div class="controls-sub-row" style="justify-content:flex-start">
-                        <select id="profile-select" class="profile-select" onchange="setProfile(this.value)">
-                            <option value="standard">Standard</option>
-                            <option value="ST">ST</option>
-                        </select>
                     </div>
                     <div class="controls-sub-row">
                         <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
@@ -1242,6 +1252,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -1254,6 +1265,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const auth = getAuth(app);
 
 const PASSPHRASE = "__SITE_PASSPHRASE__";
 const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "Special", drawsteel: "Draw Steel: Mini Campaign", leyfarers: "Leyfarers", beerovia: "Beerovia" };
@@ -1280,12 +1292,10 @@ const seedSessions = [
     { date: "2026-06-24", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "frostmaiden" },
     { date: "2026-06-26", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "strahd" },
     { date: "2026-07-08", time: "6:00 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "drawsteel" },
-    { date: "2026-07-11", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-07-25", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-08-08", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-08-22", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-09-05", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
-    { date: "2026-09-19", time: "1:30 PM", gm: "Max Hobbs", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-07-16", time: "6:00 PM", gm: "Sage", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-07-30", time: "6:00 PM", gm: "Sage", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-13", time: "6:00 PM", gm: "Sage", duration: "4 hrs", campaign: "leyfarers" },
+    { date: "2026-08-27", time: "6:00 PM", gm: "Sage", duration: "4 hrs", campaign: "leyfarers" },
     { date: "2026-08-24", time: "6:30 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "The Tithe", level: "Level 2" },
     { date: "2026-09-11", time: "6:00 PM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Blood o' the Vine", level: "Level 6" },
     { date: "2026-09-12", time: "11:00 AM", gm: "TBD", duration: "4 hrs", campaign: "beerovia", title: "Ghost Hunter's Haunting (1 of 3)", level: "Level 3" },
@@ -1330,20 +1340,32 @@ const seedSessions = [
 
 let sessions = [];
 let activeFilter = "all";
-// ===== PROFILES =====
-// 'standard' hides profile-specific campaigns; 'ST' (Seth) sees everything incl. Leyfarers
-let activeProfile = localStorage.getItem('tpk_profile') || 'standard';
-const profileHiddenCampaigns = { standard: ['leyfarers', 'beerovia'], ST: [] };
+// ===== CAMPAIGN VISIBILITY =====
+// Public campaigns are visible to everyone (passphrase entry).
+// Personal campaigns (leyfarers, beerovia) only appear for a signed-in email user
+// whose profile grants them — via Firestore doc profiles/{email} { campaigns: [...] },
+// with a built-in fallback map so no console setup is needed for known users.
+const PUBLIC_CAMPAIGNS = ['frostmaiden', 'strahd', 'drawsteel', 'special'];
+const FALLBACK_USER_CAMPAIGNS = { 'sthomas131@gmail.com': ['leyfarers', 'beerovia'] };
+let currentUser = null;
+let userCampaigns = [];
+function visibleCampaigns() { return PUBLIC_CAMPAIGNS.concat(userCampaigns); }
+function campaignVisible(c) { return visibleCampaigns().includes(c); }
 function profileSessions() {
-    const hidden = profileHiddenCampaigns[activeProfile] || [];
-    return hidden.length ? sessions.filter(s => !hidden.includes(s.campaign)) : sessions;
+    return sessions.filter(s => campaignVisible(s.campaign));
 }
-window.setProfile = function(p) {
-    activeProfile = p; localStorage.setItem('tpk_profile', p);
-    const hidden = profileHiddenCampaigns[p] || [];
-    if (hidden.includes(activeFilter)) activeFilter = 'all';
-    renderAll();
-};
+function updateAccessUI() {
+    ['leyfarers', 'beerovia'].forEach(c => {
+        const nav = document.getElementById('nav-' + c);
+        if (nav) nav.style.display = campaignVisible(c) ? '' : 'none';
+        document.querySelectorAll('.opt-' + c).forEach(o => { o.hidden = !campaignVisible(c); });
+    });
+    const chip = document.getElementById('user-chip');
+    if (chip) {
+        chip.textContent = currentUser ? (currentUser.email || '') : '';
+        chip.style.display = currentUser ? '' : 'none';
+    }
+}
 let activeView = "list";
 let activeTimeFilter = "upcoming";
 let homeSortNewest = false;
@@ -1362,9 +1384,59 @@ window.checkPassword = function() {
     if (input === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); }
     else { document.getElementById('pass-error').textContent = "Wrong passphrase. Try again."; }
 };
-window.logout = function() { sessionStorage.removeItem('tpk_auth'); document.getElementById('app').style.display = 'none'; document.getElementById('password-gate').style.display = 'flex'; };
+window.emailSignIn = async function() {
+    const email = document.getElementById('email-input').value.trim();
+    const pass = document.getElementById('email-pass-input').value;
+    const err = document.getElementById('email-error');
+    err.textContent = '';
+    if (!email || !pass) { err.textContent = "Enter your email and password."; return; }
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        // onAuthStateChanged handles the rest
+    } catch (e) {
+        err.textContent = "Sign-in failed. Check your email and password.";
+    }
+};
+window.logout = function() {
+    sessionStorage.removeItem('tpk_auth');
+    signOut(auth).catch(() => {});
+    currentUser = null; userCampaigns = [];
+    if (!campaignVisible(activeFilter)) activeFilter = 'all';
+    if (currentPage !== 'home' && !campaignVisible(currentPage)) currentPage = 'home';
+    updateAccessUI();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('password-gate').style.display = 'flex';
+};
 document.getElementById('pass-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') window.checkPassword(); });
-function showApp() { document.getElementById('password-gate').style.display = 'none'; document.getElementById('app').style.display = 'block'; initApp(); }
+document.getElementById('email-pass-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') window.emailSignIn(); });
+let appStarted = false;
+function showApp() {
+    document.getElementById('password-gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    updateAccessUI();
+    if (!appStarted) { appStarted = true; initApp(); }
+}
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    if (user) {
+        const email = (user.email || '').toLowerCase();
+        userCampaigns = FALLBACK_USER_CAMPAIGNS[email] || [];
+        try {
+            const p = await getDoc(doc(db, 'profiles', email));
+            if (p.exists() && Array.isArray(p.data().campaigns)) userCampaigns = p.data().campaigns;
+        } catch (e) { /* keep fallback */ }
+        showApp();
+        if (appStarted) { renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); }
+    } else {
+        userCampaigns = [];
+        updateAccessUI();
+        if (appStarted && sessionStorage.getItem('tpk_auth') === 'true') {
+            if (!campaignVisible(activeFilter)) activeFilter = 'all';
+            if (currentPage !== 'home' && !campaignVisible(currentPage)) window.navigateTo('home');
+            renderAll();
+        }
+    }
+});
 if (sessionStorage.getItem('tpk_auth') === 'true') showApp();
 
 // ===== NAV =====
@@ -1470,7 +1542,6 @@ async function seedFirestore() {
     for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); let id = s.date; if (usedIds.has(id)) id = `${s.date}-${timeVal(s.time)}`; usedIds.add(id); await setDoc(doc(db, "sessions", id), { ...s, attendance, roster, status: "active" }); }
 }
 async function initApp() {
-    const ps = document.getElementById('profile-select'); if (ps) ps.value = activeProfile;
     await loadSavedRosters();
     await seedFirestore();
     const q = query(collection(db, "sessions"), orderBy("date"));
