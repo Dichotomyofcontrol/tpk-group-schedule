@@ -3401,11 +3401,20 @@ function renderStatsBar() {
 function renderCampaignGrid() {
     const el = document.getElementById('campaign-grid'); if (!el) return;
     const today = getToday();
-    const list = navCampaignList();
-    el.innerHTML = list.map(c => {
+    // Sort cards by soonest upcoming session (top-left = next to play); campaigns with
+    // no upcoming session fall to the end, then alphabetical.
+    const rows = navCampaignList().map(c => {
         const cs = sessions.filter(s => s.campaign === c && sessionVisible(s) && s.status !== 'cancelled');
         const upcoming = cs.filter(s => parseDate(s.date) >= today).sort((a, b) => a.date.localeCompare(b.date));
-        const next = upcoming[0];
+        return { c, cs, next: upcoming[0] || null };
+    });
+    rows.sort((a, b) => {
+        if (a.next && b.next) return a.next.date.localeCompare(b.next.date);
+        if (a.next) return -1;
+        if (b.next) return 1;
+        return campaignName(a.c).localeCompare(campaignName(b.c));
+    });
+    el.innerHTML = rows.map(({ c, cs, next }) => {
         let nextLine;
         if (next) {
             const days = Math.round((parseDate(next.date) - today) / 86400000);
