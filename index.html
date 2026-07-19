@@ -325,6 +325,7 @@
         .code-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
         .code-row-label { font-size: 0.82rem; font-weight: 500; color: var(--text); min-width: 80px; }
         .code-row .seg-btn { font-size: 0.72rem; padding: 5px 10px; }
+        .invite-section { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 12px; }
         .gate-mode-link {
             background: none; border: none; color: var(--text-dim); font-family: 'Inter', sans-serif;
             font-size: 0.75rem; cursor: pointer; margin-top: 10px; text-decoration: underline; text-underline-offset: 3px;
@@ -1172,9 +1173,6 @@
     <div class="add-session-modal" onclick="event.stopPropagation()">
         <h3>Invite Someone</h3>
         <div id="invite-context" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px"></div>
-        <div class="form-row">
-            <div class="form-group" style="flex:1"><label>Their Email</label><input type="email" id="invite-email" placeholder="friend@email.com" autocomplete="off"></div>
-        </div>
         <div class="form-row" id="invite-scope-row">
             <div class="form-group"><label>Invite To</label>
                 <div class="seg-pair">
@@ -1183,19 +1181,25 @@
                 </div>
             </div>
         </div>
-        <div id="invite-scope-hint" style="font-size:0.72rem;color:var(--text-dim);margin:2px 0 10px"></div>
-        <div id="invite-current"></div>
-        <div id="invite-code-section" style="display:none">
-            <div class="invite-current-label" style="margin-top:12px">Or share join codes</div>
+        <div class="invite-section">
+            <div class="invite-current-label">Invite by Email</div>
+            <div id="invite-scope-hint" style="font-size:0.72rem;color:var(--text-dim);margin-bottom:8px"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <input type="email" id="invite-email" placeholder="friend@email.com" autocomplete="off" style="flex:1;font-family:'Inter',sans-serif;font-size:0.85rem;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none">
+                <button type="button" class="seg-btn" style="border-radius:6px" onclick="submitInvite()">Send Invite</button>
+            </div>
+            <div id="invite-current" style="margin-top:10px"></div>
+        </div>
+        <div class="invite-section" id="invite-code-section" style="display:none">
+            <div class="invite-current-label">Or Share a Join Code</div>
             <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:8px">Each player gets their own code — they enter it on the front page instead of the passphrase. No email or account needed, and it works on any device. Revoke a single player's code any time.</div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-                <input type="text" id="code-name" placeholder="Player name" maxlength="20" style="flex:1;font-family:'Inter',sans-serif;font-size:0.82rem;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none">
+                <input type="text" id="code-name" placeholder="Player name" maxlength="20" style="flex:1;font-family:'Inter',sans-serif;font-size:0.85rem;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none">
                 <button type="button" class="seg-btn" style="border-radius:6px" onclick="generateJoinCode()">Generate Code</button>
             </div>
             <div id="invite-code-display"></div>
         </div>
         <div class="form-buttons">
-            <button class="submit-btn" onclick="submitInvite()">Add &amp; Email Invite</button>
             <button class="cancel-form-btn" onclick="closeInvite()">Close</button>
         </div>
     </div>
@@ -1746,7 +1750,7 @@ window.generateJoinCode = async function() {
         allCodes[code] = { owner: me, campaign, label };
         document.getElementById('code-name').value = '';
         updateInviteUI();
-    } catch(e) { console.error("Generate code error:", e); alert('Error creating the code.'); }
+    } catch(e) { console.error("Generate code error:", e); alert(`Error creating the code${e && e.code ? ` (${e.code})` : ''}.`); }
 };
 window.revokeJoinCode = async function(code) {
     const me = myEmail(); if (!me) return;
@@ -1797,7 +1801,7 @@ window.submitInvite = async function() {
             await setDoc(doc(db, "invites", invId), { email, campaign, invitedBy: me, owner: me, status: 'pending' }, { merge: true });
             if (!allInvites.some(i => i.id === invId)) allInvites.push({ id: invId, email, campaign, invitedBy: me, owner: me, status: 'pending' });
         }
-    } catch(e) { console.error("Invite error:", e); alert('Error saving the invite.'); return; }
+    } catch(e) { console.error("Invite error:", e); alert(`Error saving the invite${e && e.code ? ` (${e.code})` : ''}.`); return; }
     document.getElementById('invite-email').value = '';
     updateInviteUI();
     // Open a pre-filled email so they know how to get in
