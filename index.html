@@ -1065,15 +1065,15 @@
         <div class="nav-item-info"><span class="nav-label">Home</span><span class="nav-sub">Schedule overview</span></div>
     </div>
     <div class="nav-divider"></div>
-    <div class="nav-item" onclick="navigateTo('frostmaiden')">
+    <div class="nav-item" id="nav-frostmaiden" onclick="navigateTo('frostmaiden')">
         <div class="nav-campaign-dot frostmaiden"></div>
         <div class="nav-item-info"><span class="nav-label">Rime of the Frostmaiden</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
-    <div class="nav-item" onclick="navigateTo('strahd')">
+    <div class="nav-item" id="nav-strahd" onclick="navigateTo('strahd')">
         <div class="nav-campaign-dot strahd"></div>
         <div class="nav-item-info"><span class="nav-label">Curse of Strahd</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
-    <div class="nav-item" onclick="navigateTo('drawsteel')">
+    <div class="nav-item" id="nav-drawsteel" onclick="navigateTo('drawsteel')">
         <div class="nav-campaign-dot drawsteel"></div>
         <div class="nav-item-info"><span class="nav-label">Draw Steel: Mini Campaign</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
@@ -1085,13 +1085,13 @@
         <div class="nav-campaign-dot beerovia"></div>
         <div class="nav-item-info"><span class="nav-label">Beerovia</span><span class="nav-sub">All sessions &amp; recaps</span></div>
     </div>
-    <div class="nav-item" onclick="navigateTo('special')">
+    <div class="nav-item" id="nav-special" onclick="navigateTo('special')">
         <div class="nav-campaign-dot special"></div>
         <div class="nav-item-info"><span class="nav-label">Special Sessions</span><span class="nav-sub">One-shots &amp; events</span></div>
     </div>
     <div class="nav-divider"></div>
-    <button class="nav-add-btn" onclick="openAddSession()">+ Add Session</button>
-    <button class="nav-add-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
+    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()">+ Add Session</button>
+    <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
 </div>
 
 <!-- Add Session Modal -->
@@ -1471,6 +1471,8 @@ let activeFilter = "all";
 // doc with `members: [emails]` — also covers future sessions the owner adds).
 const PUBLIC_CAMPAIGNS = ['frostmaiden', 'strahd', 'drawsteel', 'special'];
 const FALLBACK_USER_CAMPAIGNS = { 'sthomas131@gmail.com': ['leyfarers', 'beerovia'] };
+// Emails treated as full group members — same access as the shared passphrase.
+const GROUP_EMAILS = ['sthomas131@gmail.com'];
 let currentUser = null;
 let userCampaigns = [];
 let allShares = {};   // `${owner}__${campaign}` -> [member emails]
@@ -1483,6 +1485,9 @@ let codesLoaded = false;
 function codeGrants() { return redeemedCodes.map(c => allCodes[c]).filter(Boolean); }
 function codeGrantsCampaign(c) { return codeGrants().some(g => g.campaign === c); }
 function myEmail() { return currentUser && currentUser.email ? currentUser.email.toLowerCase() : null; }
+// A "group member" is anyone in via the shared passphrase, or a whitelisted email.
+// Only group members see & edit the public (unowned) campaigns.
+function isGroupMember() { return sessionStorage.getItem('tpk_auth') === 'true' || GROUP_EMAILS.includes(myEmail()); }
 function shareKey(owner, campaign) { return `${owner}__${campaign}`; }
 function shareMembers(owner, campaign) { return allShares[shareKey(owner, campaign)] || []; }
 function sessionVisible(s) {
@@ -1491,21 +1496,41 @@ function sessionVisible(s) {
         const me = myEmail(); if (!me) return false;
         return s.owner === me || (s.invited || []).includes(me) || shareMembers(s.owner, s.campaign).includes(me);
     }
-    return PUBLIC_CAMPAIGNS.includes(s.campaign) || userCampaigns.includes(s.campaign) || codeGrantsCampaign(s.campaign);
+    // Unowned/legacy session:
+    if (codeGrantsCampaign(s.campaign)) return true;         // guest scoped to the one campaign their code is for
+    if (userCampaigns.includes(s.campaign)) return true;     // leyfarers/beerovia via profile grant or fallback
+    if (PUBLIC_CAMPAIGNS.includes(s.campaign)) return isGroupMember();  // public campaigns: passphrase group only
+    return false;
 }
 function profileSessions() { return sessions.filter(sessionVisible); }
-// Can the current viewer manage (edit/cancel/recap/invite) this session?
-function canManage(s) { return !s.owner || s.owner === myEmail(); }
+// Can the current viewer manage (edit/cancel/recap/invite) this session? Guests are read-only.
+function canManage(s) {
+    if (s.owner) return s.owner === myEmail();
+    if (PUBLIC_CAMPAIGNS.includes(s.campaign)) return isGroupMember();  // public sessions: group members only
+    return userCampaigns.includes(s.campaign);               // leyfarers/beerovia manageable by their profile holder
+}
 function campaignVisible(c) {
-    return PUBLIC_CAMPAIGNS.includes(c) || userCampaigns.includes(c) || codeGrantsCampaign(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
+    if (codeGrantsCampaign(c)) return true;
+    if (userCampaigns.includes(c)) return true;
+    if (PUBLIC_CAMPAIGNS.includes(c)) return isGroupMember();
+    return sessions.some(s => s.campaign === c && sessionVisible(s));
 }
 function updateAccessUI() {
+    // Public campaign nav items — hidden from non-group guests
+    ['frostmaiden', 'strahd', 'drawsteel', 'special'].forEach(c => {
+        const nav = document.getElementById('nav-' + c);
+        if (nav) nav.style.display = campaignVisible(c) ? '' : 'none';
+    });
     ['leyfarers', 'beerovia'].forEach(c => {
         const nav = document.getElementById('nav-' + c);
         if (nav) nav.style.display = campaignVisible(c) ? '' : 'none';
         // Signed-in users may add their own sessions to any campaign
         document.querySelectorAll('.opt-' + c).forEach(o => { o.hidden = !(currentUser || campaignVisible(c)); });
     });
+    // Add Session / Manage Schedule are for group members and owners, not read-only guests
+    const canEdit = isGroupMember() || !!currentUser;
+    const addBtn = document.getElementById('nav-add-btn'); if (addBtn) addBtn.style.display = canEdit ? '' : 'none';
+    const mgmtBtn = document.getElementById('nav-manage-btn'); if (mgmtBtn) mgmtBtn.style.display = canEdit ? '' : 'none';
     const chip = document.getElementById('user-chip');
     if (chip) {
         chip.textContent = currentUser ? (currentUser.email || '') : '';
@@ -1983,6 +2008,7 @@ async function initApp() {
                 document.getElementById('password-gate').style.display = 'flex';
             }
         }
+        updateAccessUI();
         renderAll();
         if (currentPage !== 'home') renderCampaignPage(currentPage);
     });
