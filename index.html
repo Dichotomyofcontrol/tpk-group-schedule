@@ -488,10 +488,28 @@
         /* ===== CAMPAIGN PAGE ===== */
         .campaign-page { display: none; }
         .campaign-page.active { display: block; }
-        .campaign-page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-        .campaign-back-btn { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); cursor: pointer; padding: 5px 12px; font-size: 0.78rem; font-family: 'Inter', sans-serif; transition: all 0.2s; }
-        .campaign-back-btn:hover { color: var(--text); border-color: var(--text-dim); }
-        .campaign-page-title { font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700; }
+        /* ===== Campaign page header (redesign) ===== */
+        .campaign-page-header { margin-bottom: 28px; }
+        .cp-back { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 2px 0; font-size: 0.8rem; font-family: 'Inter', sans-serif; margin-bottom: 16px; transition: color 0.15s; }
+        .cp-back:hover { color: var(--text); }
+        .cp-hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 2px solid var(--cp-accent, var(--border)); }
+        .cp-identity { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .cp-icon { font-size: 2rem; line-height: 1; flex-shrink: 0; }
+        .cp-titles { min-width: 0; }
+        .cp-title { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.4rem; line-height: 1.15; color: var(--cp-accent, var(--text)); overflow-wrap: anywhere; }
+        .cp-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 5px; }
+        .cp-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .cp-btn { font-family: 'Inter', sans-serif; font-size: 0.8rem; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s; }
+        .cp-btn:hover { border-color: var(--text-dim); background: var(--surface-hover); }
+        .cp-menu { position: relative; }
+        .cp-menu-list { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 6px; min-width: 210px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 50; display: none; }
+        .cp-menu-list.open { display: block; }
+        .cp-menu-list button { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 9px 10px; border-radius: 6px; cursor: pointer; }
+        .cp-menu-list button:hover { background: var(--surface-hover); }
+        .cp-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .cp-section-head .section-heading { margin: 0; }
+        .cp-section-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        @media (max-width: 600px) { .cp-title { font-size: 1.15rem; } .cp-icon { font-size: 1.6rem; } .cp-hero { align-items: flex-start; } }
 
         /* ===== CALENDAR ===== */
         .cal-month { margin-bottom: 32px; }
@@ -1448,12 +1466,27 @@
 
         <!-- CAMPAIGN PAGE -->
         <div id="campaign-page" class="campaign-page">
-            <div class="campaign-page-header">
-                <button class="campaign-back-btn" onclick="navigateTo('home')">&larr; Back</button>
-                <div class="campaign-page-title" id="campaign-page-title"></div>
-                <button class="share-btn" id="campaign-settings-btn" style="margin-left:auto;display:none" onclick="openCampaignSettings()">&#9881; Settings</button>
-                <button class="share-btn" id="campaign-manage-btn" style="display:none" onclick="openCampaignSchedule()">&#128197; Schedule</button>
-                <button class="share-btn" id="campaign-share-btn" onclick="shareCurrentCampaign()">Share</button>
+            <div class="campaign-page-header" id="campaign-page-header">
+                <button class="cp-back" onclick="navigateTo('home')">&larr; All campaigns</button>
+                <div class="cp-hero">
+                    <div class="cp-identity">
+                        <span class="cp-icon" id="cp-icon"></span>
+                        <div class="cp-titles">
+                            <div class="cp-title" id="campaign-page-title"></div>
+                            <div class="cp-sub" id="cp-sub"></div>
+                        </div>
+                    </div>
+                    <div class="cp-actions">
+                        <button class="cp-btn" onclick="shareCurrentCampaign()">&#128279; Share</button>
+                        <div class="cp-menu" id="campaign-manage-menu" style="display:none">
+                            <button class="cp-btn cp-btn-primary" onclick="toggleCampaignMenu(event)">&#9881; Manage &#9662;</button>
+                            <div class="cp-menu-list" id="cp-menu-list">
+                                <button id="cp-menu-schedule" onclick="closeCampaignMenu(); openCampaignSchedule()">&#128197; Bulk-edit schedule</button>
+                                <button onclick="closeCampaignMenu(); openCampaignSettings()">&#9881; Campaign settings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="campaign-page-content"></div>
         </div>
@@ -2000,6 +2033,9 @@ window.openCampaignSettings = function() {
     document.getElementById('campaign-settings-overlay').classList.add('open');
 };
 window.closeCampaignSettings = function() { document.getElementById('campaign-settings-overlay').classList.remove('open'); };
+window.toggleCampaignMenu = function(e) { if (e) e.stopPropagation(); document.getElementById('cp-menu-list').classList.toggle('open'); };
+window.closeCampaignMenu = function() { const m = document.getElementById('cp-menu-list'); if (m) m.classList.remove('open'); };
+document.addEventListener('click', (e) => { const menu = document.getElementById('campaign-manage-menu'); if (menu && !menu.contains(e.target)) closeCampaignMenu(); });
 function renderCsSwatches() {
     const el = document.getElementById('cs-swatches'); if (!el) return;
     el.innerHTML = CAMPAIGN_SWATCHES.map(c => `<span class="swatch${c === csColor ? ' active' : ''}" style="background:${c}" onclick="pickCsSwatch('${c}')"></span>`).join('');
@@ -3540,16 +3576,22 @@ window.togglePastSessions = function() { pastSessionsVisible = !pastSessionsVisi
 
 function renderCampaignPage(campaign) {
     const today = getToday();
-    document.getElementById('campaign-page-title').innerHTML = `${campaignIcon(campaign)} ${escapeHtml(campaignName(campaign))}`;
-    document.getElementById('campaign-page-title').style.color = campaignColor(campaign);
-    const manageBtn = document.getElementById('campaign-manage-btn');
-    if (manageBtn) manageBtn.style.display = canManageCampaign(campaign) ? '' : 'none';
-    const settingsBtn = document.getElementById('campaign-settings-btn');
-    if (settingsBtn) settingsBtn.style.display = isCampaignOwner(campaign) ? '' : 'none';
     const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
     const upcoming = cs.filter(s => parseDate(s.date) >= today);
     const past = cs.filter(s => parseDate(s.date) < today);
     const nonCancelled = cs.filter(s => s.status !== 'cancelled').length;
+    // Header (redesign): identity + context subtitle + consolidated owner menu
+    document.getElementById('cp-icon').textContent = campaignIcon(campaign);
+    document.getElementById('campaign-page-title').textContent = campaignName(campaign);
+    const cpHeader = document.getElementById('campaign-page-header');
+    if (cpHeader) cpHeader.style.setProperty('--cp-accent', campaignColor(campaign));
+    const nextUp = [...upcoming].filter(s => s.status !== 'cancelled').sort((a, b) => a.date.localeCompare(b.date))[0];
+    const subEl = document.getElementById('cp-sub');
+    if (subEl) subEl.textContent = `${nonCancelled} session${nonCancelled === 1 ? '' : 's'}${nextUp ? ` · Next ${formatDateShort(nextUp.date)}` : ''}`;
+    const manageMenu = document.getElementById('campaign-manage-menu');
+    if (manageMenu) manageMenu.style.display = isCampaignOwner(campaign) ? '' : 'none';
+    const schedItem = document.getElementById('cp-menu-schedule');
+    if (schedItem) schedItem.style.display = canManageCampaign(campaign) ? '' : 'none';
     activeQuills = {};
     let html = '';
     if (isArchived(campaign)) html += `<div class="readonly-banner">&#128193; This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
@@ -3558,10 +3600,12 @@ function renderCampaignPage(campaign) {
     // Party roster — standalone section with player cards
     const roster = campaignRosters[campaign] || [];
     const chars = campaignCharacters[campaign] || {};
-    html += `<div class="section-heading">Party</div>`;
+    const canManageParty = canManageCampaign(campaign);
+    const partyActions = canManageParty
+        ? `<div class="cp-section-actions"><button class="edit-party-btn" onclick="openCampaignInvite('${campaign}')">+ Invite</button><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit'}</button></div>`
+        : '';
+    html += `<div class="cp-section-head"><span class="section-heading">Party</span>${partyActions}</div>`;
     html += `<div class="campaign-overview">`;
-    const inviteBtn = currentUser ? `<button class="edit-party-btn" onclick="openCampaignInvite('${campaign}')">+ Invite Player</button>` : '';
-    html += `<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">${inviteBtn}<button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
     html += `<div class="campaign-roster" id="roster-${campaign}">`;
     if (partyEditMode === campaign) {
         roster.forEach((p, idx) => {
