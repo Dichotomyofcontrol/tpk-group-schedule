@@ -1445,6 +1445,28 @@ const auth = getAuth(app);
 const PASSPHRASE = "__SITE_PASSPHRASE__";
 const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "Special", drawsteel: "Draw Steel: Mini Campaign", leyfarers: "Leyfarers", beerovia: "Beerovia" };
 const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", special: "\u2728", drawsteel: "\uD83D\uDDE1\uFE0F", leyfarers: "\uD83E\uDDED", beerovia: "\uD83C\uDF7A" };
+// Hardcoded fallback colors for the original campaigns (match the :root CSS vars).
+const campaignColorsDefault = { frostmaiden: '#4fc3f7', strahd: '#ef5350', special: '#ce93d8', drawsteel: '#f5c518', leyfarers: '#4caf50', beerovia: '#ff9800' };
+// ===== CAMPAIGNS AS DATA (Phase 3) =====
+// Live campaign docs: id -> { id, name, icon, color, owner, bridge, archived?, deleted?, ... }
+let allCampaigns = {};
+// One-time migration: existing campaigns become owned by the DM. The 4 formerly-public
+// campaigns keep bridge:true (passphrase grants read-only access); leyfarers/beerovia don't.
+const MIGRATION_OWNER = 'sthomas131@gmail.com';
+const CAMPAIGN_MIGRATION = [
+    { id: 'frostmaiden', bridge: true },
+    { id: 'strahd', bridge: true },
+    { id: 'drawsteel', bridge: true },
+    { id: 'special', bridge: true },
+    { id: 'leyfarers', bridge: false },
+    { id: 'beerovia', bridge: false },
+];
+// Accessors: prefer live campaign data, fall back to the hardcoded originals.
+function campaignName(c) { return (allCampaigns[c] && allCampaigns[c].name) || campaignNames[c] || c; }
+function campaignIcon(c) { return (allCampaigns[c] && allCampaigns[c].icon) || campaignIcons[c] || ''; }
+function campaignColor(c) { return (allCampaigns[c] && allCampaigns[c].color) || campaignColorsDefault[c] || '#888888'; }
+function campaignOwner(c) { return allCampaigns[c] && allCampaigns[c].owner || null; }
+function isBridgeCampaign(c) { return !!(allCampaigns[c] && allCampaigns[c].bridge); }
 const campaignRosters = {
     frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
@@ -2209,9 +2231,34 @@ async function seedFirestore() {
     const usedIds = new Set();
     for (const s of seedSessions) { const roster = campaignRosters[s.campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; }); let id = s.date; if (usedIds.has(id)) id = `${s.date}-${timeVal(s.time)}`; usedIds.add(id); await setDoc(doc(db, "sessions", id), { ...s, attendance, roster, status: "active" }); }
 }
+async function seedCampaigns() {
+    // One-time migration: only seed if the campaigns collection is empty.
+    const snap = await getDocs(collection(db, "campaigns"));
+    if (!snap.empty) return;
+    for (const c of CAMPAIGN_MIGRATION) {
+        await setDoc(doc(db, "campaigns", c.id), {
+            name: campaignNames[c.id] || c.id,
+            icon: campaignIcons[c.id] || '',
+            color: campaignColorsDefault[c.id] || '#888888',
+            owner: MIGRATION_OWNER,
+            bridge: !!c.bridge,
+            createdAt: Date.now(),
+        });
+    }
+}
 async function initApp() {
     await loadSavedRosters();
     await seedFirestore();
+    // Migration is non-fatal: if the campaigns rule isn't in place yet, the app still
+    // loads on hardcoded fallbacks rather than breaking.
+    try { await seedCampaigns(); } catch (e) { console.error("Campaign migration skipped:", e); }
+    onSnapshot(collection(db, "campaigns"), (snap) => {
+        allCampaigns = {};
+        snap.forEach(d => { allCampaigns[d.id] = { id: d.id, ...d.data() }; });
+        updateAccessUI();
+        renderAll();
+        if (currentPage !== 'home') renderCampaignPage(currentPage);
+    }, (e) => console.error("campaigns listener:", e));
     onSnapshot(collection(db, "shares"), (snap) => {
         allShares = {};
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
