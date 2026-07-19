@@ -1031,6 +1031,26 @@
             pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
         .share-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+        /* ===== Profile / Account panel ===== */
+        #home-view.campaigns-empty > *:not(#no-campaigns-banner) { display: none; }
+        .profile-identity { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 4px; word-break: break-word; }
+        .profile-guest-tag { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+        .profile-section-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 16px 0 8px; }
+        .profile-list { display: flex; flex-direction: column; gap: 6px; }
+        .profile-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+        .profile-row-main { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text); min-width: 0; }
+        .profile-row-main span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-tag { font-size: 0.66rem; color: var(--text-dim); white-space: nowrap; flex-shrink: 0; }
+        .profile-empty { font-size: 0.82rem; color: var(--text-dim); padding: 4px 0; }
+        .profile-accept-btn { flex-shrink: 0; font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 12px; background: var(--frostmaiden-primary); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+        .profile-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+        .profile-action { font-family: 'Inter', sans-serif; font-size: 0.85rem; padding: 10px; background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; text-align: center; }
+        .profile-action:hover { border-color: var(--frostmaiden-primary); }
+        .profile-signout { color: var(--text-dim); }
+        .profile-register { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 4px; }
+        .profile-register-hint { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 10px; }
+        .profile-register input { width: 100%; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.85rem; padding: 8px 10px; margin-bottom: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); outline: none; }
+        .profile-reg-error { color: #e06c6c; font-size: 0.75rem; min-height: 1em; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -1090,7 +1110,8 @@
         <div class="nav-item-info"><span class="nav-label">Special Sessions</span><span class="nav-sub">One-shots &amp; events</span></div>
     </div>
     <div class="nav-divider"></div>
-    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()">+ Add Session</button>
+    <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()">&#128100; Your Account</button>
+    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">+ Add Session</button>
     <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
 </div>
 
@@ -1238,6 +1259,31 @@
     </div>
 </div>
 
+<!-- Profile / Account Modal -->
+<div class="add-form-overlay" id="profile-overlay" onclick="closeProfile()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Your Account</h3>
+        <div id="profile-body"></div>
+        <div class="form-buttons">
+            <button class="cancel-form-btn" onclick="closeProfile()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Join a Campaign (in-app code entry) Modal -->
+<div class="add-form-overlay" id="join-code-overlay" onclick="closeJoinCode()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Join a Campaign</h3>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px">Enter the join code your organizer sent you.</div>
+        <input type="text" id="join-code-input" placeholder="e.g. STRA-K3M7" maxlength="20" style="width:100%;font-family:'Inter',sans-serif;font-size:0.9rem;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;text-transform:uppercase">
+        <div class="profile-reg-error" id="join-code-error"></div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="submitJoinCode()">Join</button>
+            <button class="cancel-form-btn" onclick="closeJoinCode()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- Main App -->
 <div id="app">
     <div class="top-bar-wrap" id="top-bar-wrap">
@@ -1258,6 +1304,12 @@
     <div class="container">
         <!-- HOME VIEW -->
         <div id="home-view">
+            <div id="no-campaigns-banner" class="empty-state" style="display:none">
+                <div class="icon">&#127914;</div>
+                <div style="font-weight:600;font-size:1rem;color:var(--text);margin-bottom:6px">You're not in any campaigns yet</div>
+                <div style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px">Join one with a code from your organizer.</div>
+                <button class="submit-btn" style="max-width:240px;margin:0 auto" onclick="openJoinCode()">+ Join a campaign</button>
+            </div>
             <!-- Hero: Next session countdown + last recap -->
             <div class="section-heading">Up Next</div>
             <div id="hero-section"></div>
@@ -1533,11 +1585,26 @@ function updateAccessUI() {
     const mgmtBtn = document.getElementById('nav-manage-btn'); if (mgmtBtn) mgmtBtn.style.display = canEdit ? '' : 'none';
     const chip = document.getElementById('user-chip');
     if (chip) {
-        chip.textContent = currentUser ? (currentUser.email || '') : '';
-        chip.style.display = currentUser ? '' : 'none';
+        if (currentUser) {
+            chip.textContent = currentUser.email || '';
+            chip.style.display = '';
+        } else if (codeGrants().length) {
+            const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))];
+            chip.textContent = `${labels[0] || 'Guest'} · guest`;
+            chip.style.display = '';
+        } else {
+            chip.style.display = 'none';
+        }
+        chip.style.cursor = 'pointer';
+        chip.title = 'Your account';
+        chip.onclick = () => { if (window.openProfile) window.openProfile(); };
     }
+    // Account entry always available inside the app (works on mobile where the chip is hidden)
+    const acctBtn = document.getElementById('nav-account-btn');
+    if (acctBtn) acctBtn.style.display = '';
     const visRow = document.getElementById('session-visibility-row');
     if (visRow) visRow.style.display = currentUser ? '' : 'none';
+    updateEmptyState();
 }
 let activeView = "list";
 let activeTimeFilter = "upcoming";
@@ -1552,28 +1619,41 @@ const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 // ===== AUTH =====
+// Redeem a join code (used by the gate and the in-app "Join a campaign" flow).
+// Returns { ok, campaign, label, already } or { ok:false, reason }.
+async function redeemCode(rawCode) {
+    const code = (rawCode || '').trim().toUpperCase();
+    if (!code) return { ok: false, reason: 'empty' };
+    try {
+        const snap = await getDoc(doc(db, "codes", code));
+        if (!snap.exists()) return { ok: false, reason: 'notfound' };
+        const g = snap.data();
+        allCodes[code] = { owner: g.owner, campaign: g.campaign, label: g.label || '' };
+        const already = redeemedCodes.includes(code);
+        if (!already) { redeemedCodes.push(code); localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes)); }
+        return { ok: true, code, campaign: g.campaign, label: g.label || '', already };
+    } catch (e) { console.error("Code redeem error:", e); return { ok: false, reason: 'error' }; }
+}
+// Open the optional "add your character" prompt for a freshly joined campaign.
+function promptJoinParty(campaign, label, welcome) {
+    joinPartyCampaign = campaign;
+    const name = campaignNames[campaign] || campaign;
+    document.getElementById('join-party-title').textContent = welcome
+        ? `Welcome${label ? ', ' + label : ''}! Add your character to ${name}?`
+        : `Add your character to ${name}?`;
+    ['jp-name','jp-class','jp-subclass','jp-level'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('join-party-overlay').classList.add('open');
+}
 window.checkPassword = async function() {
     const raw = document.getElementById('pass-input').value.trim();
     const errEl = document.getElementById('pass-error');
     if (raw.toLowerCase() === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); return; }
     // Not the passphrase — try it as a join code
-    const code = raw.toUpperCase();
-    if (code) {
-        try {
-            const snap = await getDoc(doc(db, "codes", code));
-            if (snap.exists()) {
-                const g = snap.data();
-                allCodes[code] = { owner: g.owner, campaign: g.campaign, label: g.label || '' };
-                if (!redeemedCodes.includes(code)) { redeemedCodes.push(code); localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes)); }
-                showApp(); renderAll();
-                // Welcome them into the party (optional character add)
-                joinPartyCampaign = g.campaign;
-                document.getElementById('join-party-title').textContent = `Welcome${g.label ? ', ' + g.label : ''}! Add your character to ${campaignNames[g.campaign] || g.campaign}?`;
-                ['jp-name','jp-class','jp-subclass','jp-level'].forEach(id => { document.getElementById(id).value = ''; });
-                document.getElementById('join-party-overlay').classList.add('open');
-                return;
-            }
-        } catch(e) { console.error("Code check error:", e); }
+    const result = await redeemCode(raw);
+    if (result.ok) {
+        showApp(); renderAll();
+        promptJoinParty(result.campaign, result.label, true);
+        return;
     }
     errEl.textContent = "Wrong passphrase or code. Try again.";
 };
@@ -1855,10 +1935,8 @@ function showNextInvitePrompt() {
     document.getElementById('accept-invite-text').innerHTML = `<strong>${escapeHtml(inv.invitedBy ? inv.invitedBy.split('@')[0] : 'Someone')}</strong> invited you to join <strong style="color:var(--${inv.campaign}-primary)">${campaignNames[inv.campaign] || inv.campaign}</strong>.`;
     document.getElementById('accept-invite-overlay').classList.add('open');
 }
-window.acceptInvite = async function() {
-    const inv = inviteQueue.shift(); if (!inv) return;
-    document.getElementById('accept-invite-overlay').classList.remove('open');
-    const me = myEmail();
+async function acceptInviteObj(inv) {
+    const me = myEmail(); if (!inv || !me) return;
     try {
         await updateDoc(doc(db, "invites", inv.id), { status: 'accepted' });
         if (inv.owner) {
@@ -1869,13 +1947,143 @@ window.acceptInvite = async function() {
         await setDoc(doc(db, "profiles", me), { campaigns: arrayUnion(inv.campaign) }, { merge: true });
         if (!userCampaigns.includes(inv.campaign)) userCampaigns.push(inv.campaign);
         const local = allInvites.find(i => i.id === inv.id); if (local) local.status = 'accepted';
-        renderAll();
+        updateAccessUI(); renderAll();
     } catch(e) { console.error("Accept invite error:", e); }
     // Offer to add their character to the party
-    joinPartyCampaign = inv.campaign;
-    document.getElementById('join-party-title').textContent = `Add your character to ${campaignNames[inv.campaign] || inv.campaign}?`;
-    ['jp-name','jp-class','jp-subclass','jp-level'].forEach(id => { document.getElementById(id).value = ''; });
-    document.getElementById('join-party-overlay').classList.add('open');
+    promptJoinParty(inv.campaign, '', false);
+}
+window.acceptInvite = async function() {
+    const inv = inviteQueue.shift(); if (!inv) return;
+    document.getElementById('accept-invite-overlay').classList.remove('open');
+    await acceptInviteObj(inv);
+};
+window.acceptInviteFromProfile = async function(id) {
+    const inv = allInvites.find(i => i.id === id && i.status === 'pending'); if (!inv) return;
+    document.getElementById('profile-overlay').classList.remove('open');
+    await acceptInviteObj(inv);
+};
+
+// ===== PROFILE / ACCOUNT =====
+function accessReason(c) {
+    const me = myEmail();
+    if (me && sessions.some(s => s.campaign === c && s.owner === me)) return 'you own this';
+    if (codeGrantsCampaign(c)) return 'via code';
+    if (PUBLIC_CAMPAIGNS.includes(c) && isGroupMember()) return 'group member';
+    if (userCampaigns.includes(c)) return 'invited';
+    return 'shared with you';
+}
+function visibleCampaignList() {
+    const set = new Set();
+    sessions.forEach(s => { if (sessionVisible(s)) set.add(s.campaign); });
+    Object.keys(campaignNames).forEach(c => { if (campaignVisible(c)) set.add(c); });
+    return [...set];
+}
+function hasAnyCampaign() { return visibleCampaignList().length > 0; }
+function updateEmptyState() {
+    const home = document.getElementById('home-view');
+    const banner = document.getElementById('no-campaigns-banner');
+    if (!home || !banner) return;
+    const inApp = !!currentUser || codeGrants().length > 0 || isGroupMember();
+    const empty = inApp && !hasAnyCampaign();
+    banner.style.display = empty ? '' : 'none';
+    home.classList.toggle('campaigns-empty', empty);
+}
+window.openProfile = function() {
+    if (typeof closeNav === 'function') closeNav();
+    renderProfilePanel();
+    document.getElementById('profile-overlay').classList.add('open');
+};
+window.closeProfile = function() { document.getElementById('profile-overlay').classList.remove('open'); };
+function renderProfilePanel() {
+    const body = document.getElementById('profile-body');
+    if (!body) return;
+    const me = myEmail();
+    let html = '';
+    if (currentUser) {
+        html += `<div class="profile-identity">${escapeHtml(currentUser.email || 'Signed in')}</div>`;
+    } else if (codeGrants().length) {
+        const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))];
+        html += `<div class="profile-identity">${escapeHtml(labels[0] || 'Guest')} <span class="profile-guest-tag">guest</span></div>`;
+    } else {
+        html += `<div class="profile-identity">Group member</div>`;
+    }
+    const camps = visibleCampaignList();
+    html += `<div class="profile-section-label">Your Campaigns</div>`;
+    if (camps.length) {
+        html += `<div class="profile-list">`;
+        camps.forEach(c => {
+            html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot ${c}"></span><span>${escapeHtml(campaignNames[c] || c)}</span></div><span class="profile-tag">${accessReason(c)}</span></div>`;
+        });
+        html += `</div>`;
+    } else {
+        html += `<div class="profile-empty">You're not in any campaigns yet.</div>`;
+    }
+    if (me) {
+        const pending = allInvites.filter(i => i.email === me && i.status === 'pending');
+        if (pending.length) {
+            html += `<div class="profile-section-label">Pending Invites</div><div class="profile-list">`;
+            pending.forEach(inv => {
+                html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot ${inv.campaign}"></span><span>${escapeHtml(campaignNames[inv.campaign] || inv.campaign)}</span></div><button class="profile-accept-btn" onclick="acceptInviteFromProfile('${inv.id}')">Accept</button></div>`;
+            });
+            html += `</div>`;
+        }
+    }
+    html += `<div class="profile-actions">`;
+    html += `<button class="profile-action" onclick="openJoinCode()">+ Join a campaign</button>`;
+    if (!currentUser) {
+        html += `<div class="profile-register">
+            <div class="profile-section-label">Create an account</div>
+            <div class="profile-register-hint">Save your access and get invited to more campaigns by email.</div>
+            <input type="email" id="profile-reg-email" placeholder="Email" autocomplete="email">
+            <input type="password" id="profile-reg-pass" placeholder="Password (6+ chars)" autocomplete="new-password">
+            <button class="profile-action" onclick="registerFromProfile()">Create account</button>
+            <div class="profile-reg-error" id="profile-reg-error"></div>
+        </div>`;
+    }
+    html += `<button class="profile-action profile-signout" onclick="logout()">Sign out</button>`;
+    html += `</div>`;
+    body.innerHTML = html;
+}
+window.registerFromProfile = async function() {
+    const email = document.getElementById('profile-reg-email').value.trim();
+    const pass = document.getElementById('profile-reg-pass').value;
+    const err = document.getElementById('profile-reg-error');
+    err.textContent = '';
+    if (!email || !pass) { err.textContent = 'Enter an email and password.'; return; }
+    try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+        closeProfile(); // onAuthStateChanged takes over from here
+    } catch(e) {
+        if (e.code === 'auth/email-already-in-use') err.textContent = 'That email already has an account — sign in from the front page.';
+        else if (e.code === 'auth/weak-password') err.textContent = 'Password too weak — use at least 6 characters.';
+        else if (e.code === 'auth/invalid-email') err.textContent = 'That email address looks invalid.';
+        else err.textContent = "Couldn't create the account — try again.";
+    }
+};
+window.openJoinCode = function() {
+    if (typeof closeNav === 'function') closeNav();
+    document.getElementById('join-code-input').value = '';
+    document.getElementById('join-code-error').textContent = '';
+    document.getElementById('join-code-overlay').classList.add('open');
+};
+window.closeJoinCode = function() { document.getElementById('join-code-overlay').classList.remove('open'); };
+window.submitJoinCode = async function() {
+    const raw = document.getElementById('join-code-input').value;
+    const err = document.getElementById('join-code-error');
+    err.textContent = '';
+    const result = await redeemCode(raw);
+    if (!result.ok) {
+        if (result.reason === 'empty') err.textContent = 'Enter a code.';
+        else if (result.reason === 'notfound') err.textContent = "That code doesn't match any campaign.";
+        else err.textContent = 'Something went wrong — try again.';
+        return;
+    }
+    closeJoinCode();
+    closeProfile();
+    updateAccessUI(); renderAll();
+    if (currentPage !== 'home') renderCampaignPage(currentPage);
+    if (result.already) { showShareToast(`You already have access to ${campaignNames[result.campaign] || result.campaign}.`); return; }
+    promptJoinParty(result.campaign, result.label, true);
 };
 window.laterInvite = function() {
     // Leave it pending — they'll be asked again next visit
