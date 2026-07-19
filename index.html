@@ -1140,6 +1140,29 @@
         .ac-choice:hover { border-color: var(--frostmaiden-primary); background: var(--surface-hover); }
         .ac-choice-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
         .ac-choice-sub { font-size: 0.75rem; color: var(--text-dim); }
+        /* ===== Availability polls ===== */
+        .poll-card { background: var(--surface); border: 1px solid var(--frostmaiden-primary); border-radius: 12px; padding: 16px; margin-bottom: 24px; }
+        .poll-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .poll-title { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1rem; color: var(--text); }
+        .poll-sub { font-size: 0.75rem; color: var(--text-dim); margin: 4px 0 12px; }
+        .poll-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .poll-date { font-size: 0.85rem; font-weight: 600; color: var(--text); min-width: 96px; display: flex; align-items: center; gap: 6px; }
+        .poll-best-tag { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em; background: var(--leyfarers-primary); color: #06210a; border-radius: 4px; padding: 1px 5px; font-weight: 700; }
+        .poll-votes { display: flex; gap: 4px; }
+        .poll-vote { display: inline-flex; align-items: center; gap: 4px; font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; }
+        .poll-vote.poll-yes.active { background: rgba(76,175,80,0.18); border-color: var(--leyfarers-primary); color: var(--leyfarers-primary); }
+        .poll-vote.poll-maybe.active { background: rgba(245,197,24,0.18); border-color: var(--drawsteel-primary); color: var(--drawsteel-primary); }
+        .poll-vote.poll-no.active { background: rgba(239,83,80,0.18); border-color: var(--strahd-primary); color: var(--strahd-primary); }
+        .poll-tally { font-size: 0.72rem; color: var(--text-dim); margin-left: auto; white-space: nowrap; }
+        .poll-confirm { padding: 5px 12px; font-size: 0.72rem; }
+        .poll-empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; font-size: 0.85rem; color: var(--text-dim); }
+        .poll-banner { display: flex; align-items: center; gap: 10px; background: rgba(79,195,247,0.12); border: 1px solid var(--frostmaiden-primary); border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; cursor: pointer; font-size: 0.85rem; color: var(--text); }
+        .poll-banner:hover { background: rgba(79,195,247,0.18); }
+        .poll-banner .pb-go { margin-left: auto; color: var(--text-dim); font-size: 0.75rem; }
+        @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-tally { margin-left: 0; } }
+        /* ===== Accessibility ===== */
+        :focus-visible { outline: 2px solid var(--frostmaiden-primary); outline-offset: 2px; border-radius: 4px; }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
     </style>
 </head>
 <body>
@@ -1421,6 +1444,25 @@
     </div>
 </div>
 
+<!-- Create Availability Poll -->
+<div class="add-form-overlay" id="create-poll-overlay" onclick="closeCreatePoll()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Ask "When can we play?"</h3>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px">Propose a few candidate dates. Players tap Yes / Maybe / No, and you confirm the winner.</div>
+        <div class="form-group" style="margin-bottom:14px"><label>Title (optional)</label><input type="text" id="poll-title" placeholder="When can we play?" maxlength="60"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Add a candidate date</label><input type="date" id="poll-date-input"></div>
+            <div class="form-group" style="flex:0 0 70px"><label>&nbsp;</label><button type="button" class="seg-btn" style="border-radius:6px;width:100%" onclick="addPollDate()">Add</button></div>
+        </div>
+        <div id="poll-date-list" class="sched-preview" style="margin-bottom:14px"></div>
+        <div class="form-group" style="margin-bottom:14px"><label>Time (optional)</label><input type="text" id="poll-time" placeholder="e.g. 6:00 PM"></div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="submitCreatePoll()">Open poll</button>
+            <button class="cancel-form-btn" onclick="closeCreatePoll()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <!-- Campaign Settings Modal (3f) -->
 <div class="add-form-overlay" id="campaign-settings-overlay" onclick="closeCampaignSettings()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
@@ -1493,6 +1535,8 @@
                 <button class="submit-btn" id="empty-create-btn" style="max-width:240px;margin:0 auto 8px;display:none" onclick="openNewCampaign()">+ Create a campaign</button>
                 <button class="cancel-form-btn" style="max-width:240px;margin:0 auto" onclick="openJoinCode()">Join with a code</button>
             </div>
+            <!-- Open availability polls needing this user's response -->
+            <div id="poll-banners"></div>
             <!-- Campaign grid (prominent, click → campaign page) -->
             <div class="section-heading">Campaigns</div>
             <div id="campaign-grid" class="campaign-grid"></div>
@@ -1626,7 +1670,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -1651,6 +1695,7 @@ const campaignColorsDefault = { frostmaiden: '#4fc3f7', strahd: '#ef5350', speci
 let allCampaigns = {};
 // Campaign-delete notifications: `${email}__${campaign}` -> { email, campaign, deletedBy, status:'pending'|'archived'|'dismissed' }
 let allNotifications = {};
+let allPolls = {};   // id -> { campaign, owner, title, dates[], time, responses{}, status, confirmedDate, ... }
 let renamedSpecial = false;
 function myNotifStatus(c) { const me = myEmail(); const n = me && allNotifications[`${me}__${c}`]; return n ? n.status : null; }
 // One-time migration: existing campaigns become owned by the DM. Access is code/invite/owner only.
@@ -1987,9 +2032,12 @@ function showApp() {
     if (!appStarted) { appStarted = true; initApp(); }
 }
 onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user) {
-        const email = (user.email || '').toLowerCase();
+    // Anonymous sessions give code/guest users a Firestore auth token (so rules can require
+    // authentication) but are treated as guests in the app — a real account needs an email.
+    const account = (user && user.email) ? user : null;
+    currentUser = account;
+    if (account) {
+        const email = account.email.toLowerCase();
         userCampaigns = FALLBACK_USER_CAMPAIGNS[email] || [];
         try {
             const p = await getDoc(doc(db, 'profiles', email));
@@ -2000,6 +2048,9 @@ onAuthStateChanged(auth, async (user) => {
         checkPendingInvites();
         checkCampaignNotifications();
     } else {
+        // No account. If there's no session at all, get an anonymous token so the app keeps
+        // working once Firestore rules require authentication.
+        if (!user) { signInAnonymously(auth).catch(e => console.error('Anonymous sign-in failed — enable Anonymous auth in Firebase:', e)); }
         userCampaigns = [];
         updateAccessUI();
         if (appStarted && redeemedCodes.length) {
@@ -2102,6 +2153,27 @@ window.closeCampaignSettings = function() { document.getElementById('campaign-se
 window.toggleCampaignMenu = function(e) { if (e) e.stopPropagation(); document.getElementById('cp-menu-list').classList.toggle('open'); };
 window.closeCampaignMenu = function() { const m = document.getElementById('cp-menu-list'); if (m) m.classList.remove('open'); };
 document.addEventListener('click', (e) => { const menu = document.getElementById('campaign-manage-menu'); if (menu && !menu.contains(e.target)) closeCampaignMenu(); });
+// ===== A11y: Escape closes the top overlay; focus moves into an opened modal and back on close =====
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const nav = document.getElementById('nav-menu');
+    if (nav && nav.classList.contains('open')) { if (window.closeNav) closeNav(); return; }
+    const open = [...document.querySelectorAll('.add-form-overlay.open')];
+    if (open.length) { closeCampaignMenu(); open[open.length - 1].classList.remove('open'); }
+});
+let _preModalFocus = null;
+const _modalFocusObserver = new MutationObserver((muts) => {
+    muts.forEach(m => {
+        const el = m.target;
+        if (!el.classList || !el.classList.contains('add-form-overlay')) return;
+        if (el.classList.contains('open')) {
+            _preModalFocus = document.activeElement;
+            const f = el.querySelector('input:not([type=hidden]), select, textarea, button');
+            if (f) setTimeout(() => { try { f.focus(); } catch (_) {} }, 30);
+        } else if (_preModalFocus) { try { _preModalFocus.focus(); } catch (_) {} _preModalFocus = null; }
+    });
+});
+document.querySelectorAll('.add-form-overlay').forEach(o => _modalFocusObserver.observe(o, { attributes: true, attributeFilter: ['class'] }));
 function renderCsSwatches() {
     const el = document.getElementById('cs-swatches'); if (!el) return;
     el.innerHTML = CAMPAIGN_SWATCHES.map(c => `<span class="swatch${c === csColor ? ' active' : ''}" style="background:${c}" onclick="pickCsSwatch('${c}')"></span>`).join('');
@@ -2208,6 +2280,143 @@ window.cnTakeover = async function() {
     } catch (e) { console.error("Take over error:", e); }
     updateAccessUI(); renderAll(); window.navigateTo(c);
 };
+// ===== AVAILABILITY POLLS ("When can we play?") =====
+// Participant identity for votes: account email, else code label. Sanitized so it's a safe map key.
+function pollParticipant() {
+    const me = myEmail();
+    if (me) return { key: me.replace(/[^a-z0-9]/gi, '_'), name: me };
+    const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))];
+    const nm = labels[0] || 'Guest';
+    return { key: 'g_' + nm.replace(/[^a-z0-9]/gi, '_'), name: nm };
+}
+function campaignOpenPoll(c) { return Object.values(allPolls).find(p => p.campaign === c && p.status === 'open') || null; }
+function pollTally(poll, date) {
+    let yes = 0, maybe = 0, no = 0;
+    Object.values(poll.responses || {}).forEach(e => {
+        const v = e.votes && e.votes[date];
+        if (v === 'yes') yes++; else if (v === 'maybe') maybe++; else if (v === 'no') no++;
+    });
+    return { yes, maybe, no };
+}
+function pollBestDate(poll) {
+    let best = null, bestScore = -Infinity;
+    (poll.dates || []).forEach(d => {
+        const t = pollTally(poll, d);
+        const score = t.yes * 2 + t.maybe - t.no * 3;   // penalize No heavily; earliest wins ties (strict >)
+        if (score > bestScore) { bestScore = score; best = d; }
+    });
+    return best;
+}
+function myPollVote(poll, date) { const e = (poll.responses || {})[pollParticipant().key]; return e && e.votes ? e.votes[date] || null : null; }
+function pollNeedsMyResponse(poll) {
+    const e = (poll.responses || {})[pollParticipant().key];
+    if (!e || !e.votes) return true;
+    return (poll.dates || []).some(d => !e.votes[d]);
+}
+function pollNonResponders(poll) {
+    // Names known to the poll that haven't voted at all (best-effort; based on prior responders + roster)
+    return Object.values(poll.responses || {}).filter(e => !e.votes || !Object.keys(e.votes).length).map(e => e.name);
+}
+window.votePoll = async function(pollId, date, vote) {
+    const poll = allPolls[pollId]; if (!poll || poll.status !== 'open') return;
+    const { key, name } = pollParticipant();
+    if (!poll.responses) poll.responses = {};
+    if (!poll.responses[key]) poll.responses[key] = { name, votes: {} };
+    // toggle off if tapping the same vote again
+    if (poll.responses[key].votes[date] === vote) delete poll.responses[key].votes[date];
+    else poll.responses[key].votes[date] = vote;
+    poll.responses[key].name = name;
+    renderCampaignPage(poll.campaign); renderAll();
+    try { await updateDoc(doc(db, "polls", pollId), { [`responses.${key}`]: poll.responses[key] }); }
+    catch (e) { console.error("vote error:", e); }
+};
+window.confirmPoll = async function(pollId, date) {
+    const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
+    if (!confirm(`Confirm the session on ${formatDateShort(date)}? This schedules it and closes the poll.`)) return;
+    const c = poll.campaign;
+    const roster = campaignRosters[c] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; });
+    const docId = `${date}-${Date.now().toString(36)}-poll`;
+    try {
+        await setDoc(doc(db, "sessions", docId), { date, time: poll.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active" });
+        await updateDoc(doc(db, "polls", pollId), { status: 'confirmed', confirmedDate: date, confirmedSessionId: docId });
+        if (allPolls[pollId]) { allPolls[pollId].status = 'confirmed'; allPolls[pollId].confirmedDate = date; }
+        renderCampaignPage(c); renderAll();
+    } catch (e) { console.error("confirm poll error:", e); alert('Could not confirm — try again.'); }
+};
+window.deletePoll = async function(pollId) {
+    const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
+    if (!confirm('Delete this availability poll? Responses will be lost.')) return;
+    try { await deleteDoc(doc(db, "polls", pollId)); delete allPolls[pollId]; renderCampaignPage(poll.campaign); renderAll(); }
+    catch (e) { console.error("delete poll error:", e); }
+};
+// ----- Create-poll modal -----
+let pollCampaign = null, pollDates = [];
+window.openCreatePoll = function() {
+    const c = currentPage; if (!c || !canManageCampaign(c)) return;
+    pollCampaign = c; pollDates = [];
+    document.getElementById('poll-title').value = '';
+    document.getElementById('poll-time').value = '';
+    const t = new Date(); t.setDate(t.getDate() + 7);
+    document.getElementById('poll-date-input').value = t.toISOString().split('T')[0];
+    renderPollDateList();
+    document.getElementById('create-poll-overlay').classList.add('open');
+};
+window.closeCreatePoll = function() { document.getElementById('create-poll-overlay').classList.remove('open'); };
+window.addPollDate = function() {
+    const v = document.getElementById('poll-date-input').value;
+    if (v && !pollDates.includes(v)) { pollDates.push(v); pollDates.sort(); }
+    renderPollDateList();
+};
+window.removePollDate = function(d) { pollDates = pollDates.filter(x => x !== d); renderPollDateList(); };
+function renderPollDateList() {
+    const el = document.getElementById('poll-date-list'); if (!el) return;
+    el.innerHTML = pollDates.length
+        ? pollDates.map(d => `<span class="multi-chip">${formatDateShort(d)}<span class="chip-x" onclick="removePollDate('${d}')">&times;</span></span>`).join('')
+        : '<span style="color:var(--text-dim)">Add at least 2 candidate dates.</span>';
+}
+window.submitCreatePoll = async function() {
+    const c = pollCampaign; if (!c) return;
+    if (pollDates.length < 2) { alert('Add at least 2 candidate dates.'); return; }
+    const id = `${c}-${Date.now().toString(36)}`;
+    const data = { campaign: c, owner: myEmail(), title: document.getElementById('poll-title').value.trim() || 'When can we play?',
+        dates: [...pollDates], time: document.getElementById('poll-time').value.trim(), responses: {}, status: 'open', createdAt: Date.now() };
+    try {
+        await setDoc(doc(db, "polls", id), data);
+        allPolls[id] = { id, ...data };
+        closeCreatePoll(); renderCampaignPage(c); renderAll();
+    } catch (e) { console.error("create poll error:", e); alert('Could not create the poll — try again.'); }
+};
+// ----- Poll rendering (campaign page section) -----
+const VOTE_META = { yes: { label: 'Yes', mark: '✓' }, maybe: { label: 'Maybe', mark: '~' }, no: { label: 'No', mark: '✗' } };
+function renderPollSection(campaign) {
+    const poll = campaignOpenPoll(campaign);
+    const owner = canManageCampaign(campaign);
+    if (!poll) {
+        return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">&#128197; Ask when to play</button></div>` : '';
+    }
+    const best = pollBestDate(poll);
+    const anyVotes = Object.values(poll.responses || {}).some(e => e.votes && Object.keys(e.votes).length);
+    let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">&#128197; ${escapeHtml(poll.title)}</span>`;
+    if (owner) h += `<div class="cp-section-actions"><button class="edit-party-btn" onclick="deletePoll('${poll.id}')">Delete</button></div>`;
+    h += `</div>`;
+    h += `<div class="poll-sub">Tap a response for each date${poll.time ? ` · ${escapeHtml(poll.time)}` : ''}.</div>`;
+    poll.dates.forEach(d => {
+        const t = pollTally(poll, d);
+        const mine = myPollVote(poll, d);
+        const isBest = anyVotes && d === best;
+        h += `<div class="poll-row${isBest ? ' poll-best' : ''}">`;
+        h += `<div class="poll-date">${formatDateShort(d)}${isBest ? '<span class="poll-best-tag">Best</span>' : ''}</div>`;
+        h += `<div class="poll-votes">`;
+        ['yes', 'maybe', 'no'].forEach(v => {
+            h += `<button class="poll-vote poll-${v}${mine === v ? ' active' : ''}" aria-pressed="${mine === v}" aria-label="${VOTE_META[v].label} for ${formatDateShort(d)}" onclick="votePoll('${poll.id}','${d}','${v}')">${VOTE_META[v].mark}<span class="poll-vote-lbl">${VOTE_META[v].label}</span></button>`;
+        });
+        h += `</div>`;
+        h += `<div class="poll-tally" title="${t.yes} yes · ${t.maybe} maybe · ${t.no} no">${t.yes}✓ ${t.maybe}~ ${t.no}✗</div>`;
+        if (owner) h += `<button class="cp-btn poll-confirm" onclick="confirmPoll('${poll.id}','${d}')">Confirm</button>`;
+        h += `</div>`;
+    });
+    return `<div class="poll-wrap">${h}</div></div>`;
+}
 // ===== SCHEDULE MODAL (3e) =====
 let addMode = 'one';
 let multiDates = [];
@@ -2895,6 +3104,12 @@ async function initApp() {
         updateAccessUI(); renderAll();
         checkCampaignNotifications();
     }, (e) => console.error("notifications listener:", e));
+    onSnapshot(collection(db, "polls"), (snap) => {
+        allPolls = {};
+        snap.forEach(d => { allPolls[d.id] = { id: d.id, ...d.data() }; });
+        renderAll();
+        if (currentPage !== 'home') renderCampaignPage(currentPage);
+    }, (e) => console.error("polls listener:", e));
     onSnapshot(collection(db, "shares"), (snap) => {
         allShares = {};
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
@@ -3056,7 +3271,7 @@ window.toggleSessionExpand = function(sd, ev) {
         if (el && !activeQuills[sd]) {
             activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
             const s = sessionById(sd);
-            if (s && s.recapHtml) activeQuills[sd].root.innerHTML = s.recapHtml;
+            if (s && s.recapHtml) activeQuills[sd].root.innerHTML = sanitizeRecapHtml(s.recapHtml);
         }
     }
 };
@@ -3114,7 +3329,12 @@ window.saveOverviewRecap = async function(sd) {
 };
 
 // ===== RENDER =====
-function renderAll() { updateAccessUI(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
+function renderPollBanners() {
+    const el = document.getElementById('poll-banners'); if (!el) return;
+    const open = Object.values(allPolls).filter(p => p.status === 'open' && campaignAccessible(p.campaign) && pollNeedsMyResponse(p));
+    el.innerHTML = open.map(p => `<div class="poll-banner" onclick="navigateTo('${p.campaign}')"><span>&#128197;</span><span><strong>${escapeHtml(campaignName(p.campaign))}</strong> — vote on when to play next</span><span class="pb-go">Respond &rsaquo;</span></div>`).join('');
+}
+function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
 function timeVal(t) { if (!t) return 0; const m = String(t).match(/(\d+):(\d+)\s*(AM|PM)?/i); if (!m) return 0; let h = (+m[1]) % 12; if ((m[3]||'').toUpperCase() === 'PM') h += 12; return h * 60 + (+m[2]); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
@@ -3124,6 +3344,37 @@ function getMonthLabel(k) { const [y,m] = k.split('-'); return `${monthNames[par
 function getToday() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
 function escapeHtml(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
 function stripHtml(h) { const d = document.createElement('div'); d.innerHTML = h; return d.textContent || d.innerText || ''; }
+// Allowlist sanitizer for recap HTML — recaps are user content stored in Firestore and
+// rendered via innerHTML, so this strips scripts, event handlers, and unsafe URLs to
+// prevent stored XSS. Keeps the small tag set Quill produces.
+const RECAP_ALLOWED_TAGS = new Set(['P','BR','STRONG','B','EM','I','U','S','OL','UL','LI','A','H1','H2','H3','BLOCKQUOTE','SPAN','DIV','PRE','CODE']);
+function sanitizeRecapHtml(dirty) {
+    if (!dirty) return '';
+    const root = document.createElement('div');
+    root.innerHTML = String(dirty);
+    (function walk(node) {
+        [...node.childNodes].forEach(child => {
+            if (child.nodeType === 8) { child.remove(); return; }              // comments
+            if (child.nodeType !== 1) return;                                    // keep text
+            if (!RECAP_ALLOWED_TAGS.has(child.tagName)) {                         // drop disallowed element, keep its text
+                child.replaceWith(document.createTextNode(child.textContent || ''));
+                return;
+            }
+            [...child.attributes].forEach(attr => {
+                const name = attr.name.toLowerCase();
+                if (child.tagName === 'A' && name === 'href') {
+                    if (/^(https?:|mailto:)/i.test((attr.value || '').trim())) return;
+                    child.removeAttribute(attr.name); return;
+                }
+                if (name === 'class' && /^ql-align-(left|center|right|justify)$/.test(attr.value)) return;
+                child.removeAttribute(attr.name);                                // drop style, on*, etc.
+            });
+            if (child.tagName === 'A') { child.setAttribute('target', '_blank'); child.setAttribute('rel', 'noopener noreferrer'); }
+            walk(child);
+        });
+    })(root);
+    return root.innerHTML;
+}
 
 // ===== COLLAPSIBLE MONTHS =====
 let collapsedMonths = new Set();
@@ -3415,7 +3666,7 @@ function renderHero() {
         recapBlock += `<div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px">`;
         recapBlock += `<div class="hero-label">Last Time — ${formatDateShort(lastSession.date)}</div>`;
         if (lastSession.recapHtml || lastSession.recap) {
-            recapBlock += `<div class="hero-recap">${lastSession.recapHtml || escapeHtml(lastSession.recap)}</div>`;
+            recapBlock += `<div class="hero-recap">${sanitizeRecapHtml(lastSession.recapHtml) || escapeHtml(lastSession.recap)}</div>`;
             recapBlock += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastSession.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastSession.id}')">Edit</button>`;
             recapBlock += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${lastSession.campaign}','${lastSession.date}',true,event)">Share</button>`;
             if (lastSession.pdfUrl) { recapBlock += `<a class="lsc-pdf" href="${escapeHtml(lastSession.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
@@ -3438,7 +3689,7 @@ window.openReaderModal = function(ds) {
     modal.className = `reader-modal ${s.campaign}`;
     document.getElementById('reader-title').textContent = campaignName(s.campaign);
     document.getElementById('reader-date').textContent = formatDate(s.date);
-    document.getElementById('reader-body').innerHTML = s.recapHtml || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
+    document.getElementById('reader-body').innerHTML = sanitizeRecapHtml(s.recapHtml) || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
     let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">Copy</button>`;
     footer += `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
     footer += `<button class="share-btn" onclick="shareLink('${s.campaign}','${ds}',true,event)">Share</button>`;
@@ -3624,7 +3875,7 @@ function renderSessionCard(s, gi, ci) {
         const hasRecap = !!(s.recapHtml || s.recap);
         if (mine || hasRecap) {
             recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
-            if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button>${mine ? `<button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button>` : ''}</div>`; }
+            if (hasRecap) { recapHtml += `<div class="recap-display">${sanitizeRecapHtml(s.recapHtml) || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button>${mine ? `<button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button>` : ''}</div>`; }
             else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${sid}">Saved!</span></div>`; }
             recapHtml += `</div>`;
         }
@@ -3748,14 +3999,14 @@ function renderCampaignPage(campaign) {
         partyHtml += `</div></div>`;
     }
 
-    // ----- Main column: Last Session + Sessions -----
-    let mainHtml = '';
+    // ----- Main column: Availability poll + Last Session + Sessions -----
+    let mainHtml = renderPollSection(campaign);
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     if (lastPast) {
         mainHtml += `<div class="section-heading">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         mainHtml += `<div class="campaign-overview lsc-card" style="border-left:3px solid ${campaignColor(campaign)}">`;
         if (lastPast.recapHtml || lastPast.recap) {
-            mainHtml += `<div class="hero-recap">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
+            mainHtml += `<div class="hero-recap">${sanitizeRecapHtml(lastPast.recapHtml) || escapeHtml(lastPast.recap)}</div>`;
             mainHtml += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.id}')">Edit</button>`;
             mainHtml += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
             if (lastPast.pdfUrl) { mainHtml += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
