@@ -1109,6 +1109,9 @@
         .profile-char { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 4px 0 4px 18px; font-size: 0.8rem; }
         .profile-char-nm { color: var(--text); }
         .profile-char-mt { color: var(--text-dim); font-size: 0.72rem; text-align: right; }
+        .profile-row-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .profile-leave { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 3px 9px; cursor: pointer; }
+        .profile-leave:hover { color: var(--strahd-primary); border-color: var(--strahd-primary); }
         /* ===== Schedule modal (3e) ===== */
         .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-sizing: border-box; }
@@ -1159,7 +1162,18 @@
         .poll-banner { display: flex; align-items: center; gap: 10px; background: rgba(79,195,247,0.12); border: 1px solid var(--frostmaiden-primary); border-radius: 10px; padding: 12px 14px; margin-bottom: 20px; cursor: pointer; font-size: 0.85rem; color: var(--text); }
         .poll-banner:hover { background: rgba(79,195,247,0.18); }
         .poll-banner .pb-go { margin-left: auto; color: var(--text-dim); font-size: 0.75rem; }
-        @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-tally { margin-left: 0; } }
+        .poll-add-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px; }
+        .poll-add-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+        .poll-add-row input { padding: 9px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.85rem; font-family: 'Inter', sans-serif; min-width: 0; }
+        .poll-add-row input[type=date] { flex: 1.4; } .poll-add-row input[type=text] { flex: 1; }
+        .poll-add-btn { flex: 0 0 auto; padding: 9px 14px; }
+        .poll-slot-list { display: flex; flex-direction: column; gap: 6px; }
+        .poll-slot { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
+        .poll-slot-dt { font-size: 0.85rem; color: var(--text); font-weight: 500; }
+        .poll-slot-x { background: none; border: none; color: var(--text-dim); font-size: 1.15rem; line-height: 1; cursor: pointer; padding: 0 4px; }
+        .poll-slot-x:hover { color: var(--strahd-primary); }
+        .poll-slot-empty { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
+        @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-tally { margin-left: 0; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Accessibility ===== */
         :focus-visible { outline: 2px solid var(--frostmaiden-primary); outline-offset: 2px; border-radius: 4px; }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
@@ -1448,15 +1462,16 @@
 <div class="add-form-overlay" id="create-poll-overlay" onclick="closeCreatePoll()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
         <h3>Ask "When can we play?"</h3>
-        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px">Propose a few candidate dates. Players tap Yes / Maybe / No, and you confirm the winner.</div>
-        <div class="form-group" style="margin-bottom:14px"><label>Title (optional)</label><input type="text" id="poll-title" placeholder="When can we play?" maxlength="60"></div>
-        <div class="form-row">
-            <div class="form-group"><label>Add a candidate date</label><input type="date" id="poll-date-input"></div>
-            <div class="form-group" style="flex:0 0 70px"><label>&nbsp;</label><button type="button" class="seg-btn" style="border-radius:6px;width:100%" onclick="addPollDate()">Add</button></div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:16px">Propose a few date &amp; time options — several on the same day is fine. Players tap Yes / Maybe / No, and you confirm the winner.</div>
+        <div class="form-group" style="margin-bottom:16px"><label>Title (optional)</label><input type="text" id="poll-title" placeholder="When can we play?" maxlength="60"></div>
+        <label class="poll-add-label">Add options</label>
+        <div class="poll-add-row">
+            <input type="date" id="poll-date-input" aria-label="Option date">
+            <input type="text" id="poll-time-input" placeholder="6:00 PM" aria-label="Option time">
+            <button type="button" class="cp-btn cp-btn-primary poll-add-btn" onclick="addPollSlot()">&#43; Add</button>
         </div>
-        <div id="poll-date-list" class="sched-preview" style="margin-bottom:14px"></div>
-        <div class="form-group" style="margin-bottom:14px"><label>Time (optional)</label><input type="text" id="poll-time" placeholder="e.g. 6:00 PM"></div>
-        <div class="form-buttons">
+        <div id="poll-slot-list" class="poll-slot-list"></div>
+        <div class="form-buttons" style="margin-top:20px">
             <button class="submit-btn" onclick="submitCreatePoll()">Open poll</button>
             <button class="cancel-form-btn" onclick="closeCreatePoll()">Cancel</button>
         </div>
@@ -1946,6 +1961,7 @@ let currentPage = "home";
 let pastSessionsVisible = false;
 let campaignSortNewest = false;
 let campaignTimeFilter = 'upcoming';
+let campaignView = 'list';   // per-campaign-page list/calendar toggle
 let activeQuills = {};
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -2072,7 +2088,7 @@ window.navigateTo = function(page) {
     const activeItem = document.getElementById('nav-' + page);
     if (activeItem) activeItem.classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
-    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
+    else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; campaignView = 'list'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
 // ===== RECURRENCE ENGINE (3e) — verified in recurrence_test.mjs =====
 function fmtDateLocal(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -2281,7 +2297,7 @@ window.cnTakeover = async function() {
     updateAccessUI(); renderAll(); window.navigateTo(c);
 };
 // ===== AVAILABILITY POLLS ("When can we play?") =====
-// Participant identity for votes: account email, else code label. Sanitized so it's a safe map key.
+// Each option is a date + time slot (multiple per day allowed). Votes are keyed by option id.
 function pollParticipant() {
     const me = myEmail();
     if (me) return { key: me.replace(/[^a-z0-9]/gi, '_'), name: me };
@@ -2289,57 +2305,58 @@ function pollParticipant() {
     const nm = labels[0] || 'Guest';
     return { key: 'g_' + nm.replace(/[^a-z0-9]/gi, '_'), name: nm };
 }
+function pollOptions(poll) {
+    if (Array.isArray(poll.options)) return poll.options;
+    return (poll.dates || []).map((d, i) => ({ id: 'o' + i, date: d, time: poll.time || '' }));   // legacy shape
+}
+function optionLabel(o) { return formatDateShort(o.date) + (o.time ? ' · ' + o.time : ''); }
 function campaignOpenPoll(c) { return Object.values(allPolls).find(p => p.campaign === c && p.status === 'open') || null; }
-function pollTally(poll, date) {
+function pollTally(poll, optId) {
     let yes = 0, maybe = 0, no = 0;
     Object.values(poll.responses || {}).forEach(e => {
-        const v = e.votes && e.votes[date];
+        const v = e.votes && e.votes[optId];
         if (v === 'yes') yes++; else if (v === 'maybe') maybe++; else if (v === 'no') no++;
     });
     return { yes, maybe, no };
 }
-function pollBestDate(poll) {
+function pollBestOption(poll) {
     let best = null, bestScore = -Infinity;
-    (poll.dates || []).forEach(d => {
-        const t = pollTally(poll, d);
-        const score = t.yes * 2 + t.maybe - t.no * 3;   // penalize No heavily; earliest wins ties (strict >)
-        if (score > bestScore) { bestScore = score; best = d; }
+    pollOptions(poll).forEach(o => {
+        const t = pollTally(poll, o.id);
+        const score = t.yes * 2 + t.maybe - t.no * 3;   // penalize No heavily; earliest listed wins ties
+        if (score > bestScore) { bestScore = score; best = o; }
     });
     return best;
 }
-function myPollVote(poll, date) { const e = (poll.responses || {})[pollParticipant().key]; return e && e.votes ? e.votes[date] || null : null; }
+function myPollVote(poll, optId) { const e = (poll.responses || {})[pollParticipant().key]; return e && e.votes ? e.votes[optId] || null : null; }
 function pollNeedsMyResponse(poll) {
     const e = (poll.responses || {})[pollParticipant().key];
     if (!e || !e.votes) return true;
-    return (poll.dates || []).some(d => !e.votes[d]);
+    return pollOptions(poll).some(o => !e.votes[o.id]);
 }
-function pollNonResponders(poll) {
-    // Names known to the poll that haven't voted at all (best-effort; based on prior responders + roster)
-    return Object.values(poll.responses || {}).filter(e => !e.votes || !Object.keys(e.votes).length).map(e => e.name);
-}
-window.votePoll = async function(pollId, date, vote) {
+window.votePoll = async function(pollId, optId, vote) {
     const poll = allPolls[pollId]; if (!poll || poll.status !== 'open') return;
     const { key, name } = pollParticipant();
     if (!poll.responses) poll.responses = {};
     if (!poll.responses[key]) poll.responses[key] = { name, votes: {} };
-    // toggle off if tapping the same vote again
-    if (poll.responses[key].votes[date] === vote) delete poll.responses[key].votes[date];
-    else poll.responses[key].votes[date] = vote;
+    if (poll.responses[key].votes[optId] === vote) delete poll.responses[key].votes[optId];   // tap again to clear
+    else poll.responses[key].votes[optId] = vote;
     poll.responses[key].name = name;
     renderCampaignPage(poll.campaign); renderAll();
     try { await updateDoc(doc(db, "polls", pollId), { [`responses.${key}`]: poll.responses[key] }); }
     catch (e) { console.error("vote error:", e); }
 };
-window.confirmPoll = async function(pollId, date) {
+window.confirmPoll = async function(pollId, optId) {
     const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
-    if (!confirm(`Confirm the session on ${formatDateShort(date)}? This schedules it and closes the poll.`)) return;
+    const opt = pollOptions(poll).find(o => o.id === optId); if (!opt) return;
+    if (!confirm(`Confirm the session for ${optionLabel(opt)}? This schedules it and closes the poll.`)) return;
     const c = poll.campaign;
     const roster = campaignRosters[c] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; });
-    const docId = `${date}-${Date.now().toString(36)}-poll`;
+    const docId = `${opt.date}-${Date.now().toString(36)}-poll`;
     try {
-        await setDoc(doc(db, "sessions", docId), { date, time: poll.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active" });
-        await updateDoc(doc(db, "polls", pollId), { status: 'confirmed', confirmedDate: date, confirmedSessionId: docId });
-        if (allPolls[pollId]) { allPolls[pollId].status = 'confirmed'; allPolls[pollId].confirmedDate = date; }
+        await setDoc(doc(db, "sessions", docId), { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active" });
+        await updateDoc(doc(db, "polls", pollId), { status: 'confirmed', confirmedDate: opt.date, confirmedTime: opt.time || '', confirmedSessionId: docId });
+        if (allPolls[pollId]) allPolls[pollId].status = 'confirmed';
         renderCampaignPage(c); renderAll();
     } catch (e) { console.error("confirm poll error:", e); alert('Could not confirm — try again.'); }
 };
@@ -2349,37 +2366,40 @@ window.deletePoll = async function(pollId) {
     try { await deleteDoc(doc(db, "polls", pollId)); delete allPolls[pollId]; renderCampaignPage(poll.campaign); renderAll(); }
     catch (e) { console.error("delete poll error:", e); }
 };
-// ----- Create-poll modal -----
-let pollCampaign = null, pollDates = [];
+// ----- Create-poll modal: date + time options -----
+let pollCampaign = null, pollSlots = [];
 window.openCreatePoll = function() {
     const c = currentPage; if (!c || !canManageCampaign(c)) return;
-    pollCampaign = c; pollDates = [];
+    pollCampaign = c; pollSlots = [];
     document.getElementById('poll-title').value = '';
-    document.getElementById('poll-time').value = '';
     const t = new Date(); t.setDate(t.getDate() + 7);
     document.getElementById('poll-date-input').value = t.toISOString().split('T')[0];
-    renderPollDateList();
+    document.getElementById('poll-time-input').value = '6:00 PM';
+    renderPollSlotList();
     document.getElementById('create-poll-overlay').classList.add('open');
 };
 window.closeCreatePoll = function() { document.getElementById('create-poll-overlay').classList.remove('open'); };
-window.addPollDate = function() {
-    const v = document.getElementById('poll-date-input').value;
-    if (v && !pollDates.includes(v)) { pollDates.push(v); pollDates.sort(); }
-    renderPollDateList();
+window.addPollSlot = function() {
+    const date = document.getElementById('poll-date-input').value;
+    const time = document.getElementById('poll-time-input').value.trim();
+    if (!date) { alert('Pick a date first.'); return; }
+    if (pollSlots.some(s => s.date === date && s.time === time)) { renderPollSlotList(); return; }
+    pollSlots.push({ id: 'o' + Date.now().toString(36) + pollSlots.length, date, time });
+    pollSlots.sort((a, b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
+    renderPollSlotList();
 };
-window.removePollDate = function(d) { pollDates = pollDates.filter(x => x !== d); renderPollDateList(); };
-function renderPollDateList() {
-    const el = document.getElementById('poll-date-list'); if (!el) return;
-    el.innerHTML = pollDates.length
-        ? pollDates.map(d => `<span class="multi-chip">${formatDateShort(d)}<span class="chip-x" onclick="removePollDate('${d}')">&times;</span></span>`).join('')
-        : '<span style="color:var(--text-dim)">Add at least 2 candidate dates.</span>';
+window.removePollSlot = function(id) { pollSlots = pollSlots.filter(s => s.id !== id); renderPollSlotList(); };
+function renderPollSlotList() {
+    const el = document.getElementById('poll-slot-list'); if (!el) return;
+    if (!pollSlots.length) { el.innerHTML = '<div class="poll-slot-empty">No options yet — add at least two.</div>'; return; }
+    el.innerHTML = pollSlots.map(s => `<div class="poll-slot"><span class="poll-slot-dt">${formatDateShort(s.date)}${s.time ? ' · ' + escapeHtml(s.time) : ''}</span><button type="button" class="poll-slot-x" aria-label="Remove option" onclick="removePollSlot('${s.id}')">&times;</button></div>`).join('');
 }
 window.submitCreatePoll = async function() {
     const c = pollCampaign; if (!c) return;
-    if (pollDates.length < 2) { alert('Add at least 2 candidate dates.'); return; }
+    if (pollSlots.length < 2) { alert('Add at least 2 date/time options.'); return; }
     const id = `${c}-${Date.now().toString(36)}`;
     const data = { campaign: c, owner: myEmail(), title: document.getElementById('poll-title').value.trim() || 'When can we play?',
-        dates: [...pollDates], time: document.getElementById('poll-time').value.trim(), responses: {}, status: 'open', createdAt: Date.now() };
+        options: pollSlots.map(s => ({ id: s.id, date: s.date, time: s.time })), responses: {}, status: 'open', createdAt: Date.now() };
     try {
         await setDoc(doc(db, "polls", id), data);
         allPolls[id] = { id, ...data };
@@ -2394,28 +2414,28 @@ function renderPollSection(campaign) {
     if (!poll) {
         return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">&#128197; Ask when to play</button></div>` : '';
     }
-    const best = pollBestDate(poll);
+    const options = pollOptions(poll);
+    const best = pollBestOption(poll);
     const anyVotes = Object.values(poll.responses || {}).some(e => e.votes && Object.keys(e.votes).length);
     let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">&#128197; ${escapeHtml(poll.title)}</span>`;
     if (owner) h += `<div class="cp-section-actions"><button class="edit-party-btn" onclick="deletePoll('${poll.id}')">Delete</button></div>`;
-    h += `</div>`;
-    h += `<div class="poll-sub">Tap a response for each date${poll.time ? ` · ${escapeHtml(poll.time)}` : ''}.</div>`;
-    poll.dates.forEach(d => {
-        const t = pollTally(poll, d);
-        const mine = myPollVote(poll, d);
-        const isBest = anyVotes && d === best;
+    h += `</div><div class="poll-sub">Tap a response for each option.</div>`;
+    options.forEach(o => {
+        const t = pollTally(poll, o.id);
+        const mine = myPollVote(poll, o.id);
+        const isBest = anyVotes && best && o.id === best.id;
         h += `<div class="poll-row${isBest ? ' poll-best' : ''}">`;
-        h += `<div class="poll-date">${formatDateShort(d)}${isBest ? '<span class="poll-best-tag">Best</span>' : ''}</div>`;
+        h += `<div class="poll-date">${optionLabel(o)}${isBest ? '<span class="poll-best-tag">Best</span>' : ''}</div>`;
         h += `<div class="poll-votes">`;
         ['yes', 'maybe', 'no'].forEach(v => {
-            h += `<button class="poll-vote poll-${v}${mine === v ? ' active' : ''}" aria-pressed="${mine === v}" aria-label="${VOTE_META[v].label} for ${formatDateShort(d)}" onclick="votePoll('${poll.id}','${d}','${v}')">${VOTE_META[v].mark}<span class="poll-vote-lbl">${VOTE_META[v].label}</span></button>`;
+            h += `<button class="poll-vote poll-${v}${mine === v ? ' active' : ''}" aria-pressed="${mine === v}" aria-label="${VOTE_META[v].label} for ${optionLabel(o)}" onclick="votePoll('${poll.id}','${o.id}','${v}')">${VOTE_META[v].mark}<span class="poll-vote-lbl">${VOTE_META[v].label}</span></button>`;
         });
         h += `</div>`;
         h += `<div class="poll-tally" title="${t.yes} yes · ${t.maybe} maybe · ${t.no} no">${t.yes}✓ ${t.maybe}~ ${t.no}✗</div>`;
-        if (owner) h += `<button class="cp-btn poll-confirm" onclick="confirmPoll('${poll.id}','${d}')">Confirm</button>`;
+        if (owner) h += `<button class="cp-btn poll-confirm" onclick="confirmPoll('${poll.id}','${o.id}')">Confirm</button>`;
         h += `</div>`;
     });
-    return `<div class="poll-wrap">${h}</div></div>`;
+    return `${h}</div>`;
 }
 // ===== SCHEDULE MODAL (3e) =====
 let addMode = 'one';
@@ -2790,6 +2810,36 @@ window.acceptInviteFromProfile = async function(id) {
 };
 
 // ===== PROFILE / ACCOUNT =====
+// Leave a campaign — forget any join code (guest) and drop account membership (share + profile grant).
+window.leaveCampaign = async function(c) {
+    const me = myEmail();
+    if (me && campaignOwner(c) === me) { alert("You own this campaign — use its Settings to archive, transfer, or delete it."); return; }
+    if (!confirm(`Leave ${campaignName(c)}? You'll lose access to it on this device.`)) return;
+    // Guest: forget the join code(s) for this campaign on this device.
+    const before = redeemedCodes.length;
+    redeemedCodes = redeemedCodes.filter(code => !(allCodes[code] && allCodes[code].campaign === c));
+    if (redeemedCodes.length !== before) localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes));
+    // Account: remove from the campaign share + profile grant.
+    if (me) {
+        try {
+            const owner = campaignOwner(c);
+            const key = owner ? shareKey(owner, c) : null;
+            if (key && (allShares[key] || []).includes(me)) {
+                await updateDoc(doc(db, "shares", key), { members: arrayRemove(me) });
+                allShares[key] = allShares[key].filter(x => x !== me);
+            }
+            if (userCampaigns.includes(c)) {
+                await setDoc(doc(db, "profiles", me), { campaigns: arrayRemove(c) }, { merge: true });
+                userCampaigns = userCampaigns.filter(x => x !== c);
+            }
+        } catch (e) { console.error("leave campaign error:", e); }
+    }
+    if (currentPage === c) window.navigateTo('home');
+    updateAccessUI(); renderAll();
+    if (document.getElementById('profile-overlay').classList.contains('open')) renderProfilePanel();
+    // A guest who left their only campaign has no access left — send them back to the gate.
+    if (!redeemedCodes.length && !currentUser) { document.getElementById('app').style.display = 'none'; document.getElementById('password-gate').style.display = 'flex'; }
+};
 function accessReason(c) {
     const me = myEmail();
     if (me && campaignOwner(c) === me) return 'you own this';
@@ -2840,7 +2890,9 @@ function renderProfilePanel() {
     if (camps.length) {
         html += `<div class="profile-list">`;
         camps.forEach(c => {
-            html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot" style="background:${campaignColor(c)}"></span><span>${escapeHtml(campaignName(c))}</span></div><span class="profile-tag">${accessReason(c)}</span></div>`;
+            const owned = !!me && campaignOwner(c) === me;
+            const leave = owned ? '' : `<button class="profile-leave" onclick="leaveCampaign('${c}')">Leave</button>`;
+            html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot" style="background:${campaignColor(c)}"></span><span>${escapeHtml(campaignName(c))}</span></div><div class="profile-row-side"><span class="profile-tag">${accessReason(c)}</span>${leave}</div></div>`;
         });
         html += `</div>`;
     } else {
@@ -4021,8 +4073,8 @@ function renderCampaignPage(campaign) {
         mainHtml += `<div class="section-heading">Sessions</div>`;
         mainHtml += `<div class="controls-bar">`;
         mainHtml += `<div class="seg-group">`;
-        mainHtml += `<button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>`;
-        mainHtml += `<button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>`;
+        mainHtml += `<button class="view-btn view-icon${campaignView==='list'?' active':''}" title="List view" aria-label="List view" onclick="setCampaignView('list','${campaign}')">&#9776;</button>`;
+        mainHtml += `<button class="view-btn view-icon${campaignView==='calendar'?' active':''}" title="Calendar view" aria-label="Calendar view" onclick="setCampaignView('calendar','${campaign}')">&#128197;</button>`;
         mainHtml += `</div>`;
         mainHtml += `<div class="seg-group">`;
         mainHtml += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
@@ -4038,7 +4090,9 @@ function renderCampaignPage(campaign) {
         let displaySessions = cs;
         if (campaignTimeFilter === 'upcoming') displaySessions = cs.filter(s => parseDate(s.date) >= twoWeeksAgo);
         else if (campaignTimeFilter === 'past') displaySessions = past;
-        if (displaySessions.length > 0) {
+        if (campaignView === 'calendar') {
+            mainHtml += `<div class="calendar-view">${buildCalendarHtml(displaySessions)}</div>`;
+        } else if (displaySessions.length > 0) {
             const allSorted = [...displaySessions].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
             const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
             const sortedKeys = Object.keys(g).sort(); if (campaignSortNewest) sortedKeys.reverse();
@@ -4062,18 +4116,14 @@ function renderCampaignPage(campaign) {
         }
     }
 }
+window.setCampaignView = function(v, campaign) { campaignView = v; renderCampaignPage(campaign); };
 window.toggleCampaignSort = function(campaign) { campaignSortNewest = !campaignSortNewest; renderCampaignPage(campaign); };
 window.setCampaignTimeFilter = function(t, campaign) { campaignTimeFilter = t; collapsedMonths.clear(); allMonthsCollapsed = false; renderCampaignPage(campaign); };
 
-function renderCalendar() {
-    const today = getToday();
-    const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    const visibleCal = profileSessions();
-    let filtered = activeFilter === "all" ? visibleCal : visibleCal.filter(s => s.campaign === activeFilter);
-    if (activeTimeFilter === 'upcoming') filtered = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
-    else if (activeTimeFilter === 'past') filtered = filtered.filter(s => parseDate(s.date) < today);
-    const sm = {}; filtered.forEach(s => { (sm[s.date] = sm[s.date] || []).push(s); });
-    const am = new Set(); filtered.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
+function buildCalendarHtml(list) {
+    const sm = {}; list.forEach(s => { (sm[s.date] = sm[s.date] || []).push(s); });
+    const am = new Set(); list.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
+    if (!months.length) return `<div class="empty-state"><div class="icon">&#128197;</div><div>No sessions to show.</div></div>`;
     const todayDate = new Date(); const ts = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
     let html = '';
     months.forEach(k => {
@@ -4084,14 +4134,23 @@ function renderCalendar() {
             const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
             const dayList = sm[ds]; const tc = ds === ts ? ' today' : '';
             if (dayList) {
-                const dots = dayList.map(s => `<div class="cal-dot" style="background:var(--${s.campaign}-primary)"></div>`).join('');
+                const dots = dayList.map(s => `<div class="cal-dot" style="background:${campaignColor(s.campaign)}"></div>`).join('');
                 html += `<div class="cal-day has-session ${dayList[0].campaign}${tc}" onclick="calendarGoToSession('${dayList[0].id}')" onmouseenter="showTooltip(event,'${ds}')" onmouseleave="hideTooltip()"><span>${day}</span><div style="display:flex;gap:2px;justify-content:center">${dots}</div></div>`;
             }
             else html += `<div class="cal-day${tc}"><span>${day}</span></div>`;
         }
         html += `</div></div>`;
     });
-    document.getElementById('calendar-view').innerHTML = html;
+    return html;
+}
+function renderCalendar() {
+    const today = getToday();
+    const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const visibleCal = profileSessions();
+    let filtered = activeFilter === "all" ? visibleCal : visibleCal.filter(s => s.campaign === activeFilter);
+    if (activeTimeFilter === 'upcoming') filtered = filtered.filter(s => parseDate(s.date) >= twoWeeksAgo);
+    else if (activeTimeFilter === 'past') filtered = filtered.filter(s => parseDate(s.date) < today);
+    document.getElementById('calendar-view').innerHTML = buildCalendarHtml(filtered);
 }
 window.showTooltip = function(ev, ds) {
     const dayList = profileSessions().filter(x => x.date === ds); if (!dayList.length) return;
