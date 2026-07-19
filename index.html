@@ -190,6 +190,7 @@
         .view-btn:first-child { border-radius: 6px 0 0 6px; }
         .view-btn:last-child { border-radius: 0 6px 6px 0; }
         .view-btn.active { background: var(--surface); color: var(--text); border-color: var(--text-dim); }
+        .view-btn.view-icon { font-size: 1rem; padding: 5px 12px; line-height: 1; }
 
         /* ===== SLIDE-OUT NAV ===== */
         .nav-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; }
@@ -249,7 +250,12 @@
         .form-group label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
         .form-group input, .form-group select { padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 0.85rem; font-family: 'Inter', sans-serif; }
         .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--frostmaiden-primary); }
-        .customize-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-dim); cursor: pointer; background: none; border: none; padding: 4px 0; margin-bottom: 8px; }
+        .customize-toggle { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-dim); cursor: pointer; background: none; border: none; padding: 4px 0; margin: 6px 0 8px; }
+        /* Even vertical rhythm between the stacked sections of the Add-to-Schedule modal */
+        #add-form-fields > .form-group,
+        #add-form-fields > #new-campaign-fields,
+        #add-form-fields > [id^="mode-"] { margin-bottom: 16px; }
+        #add-form-fields .form-group label { margin-bottom: 2px; }
         .customize-toggle:hover { color: var(--text); }
         .customize-fields { display: none; }
         .customize-fields.open { display: block; }
@@ -510,6 +516,22 @@
         .cp-section-head .section-heading { margin: 0; }
         .cp-section-actions { display: flex; gap: 8px; flex-shrink: 0; }
         @media (max-width: 600px) { .cp-title { font-size: 1.15rem; } .cp-icon { font-size: 1.6rem; } .cp-hero { align-items: flex-start; } }
+        /* Two-column campaign layout: sessions (main) + party (sidebar) */
+        .cp-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+        .cp-main { min-width: 0; }
+        .cp-side .cp-section-head { margin-bottom: 12px; }
+        .party-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px; }
+        .party-list { display: flex; flex-direction: column; gap: 2px; }
+        .party-row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+        .party-row:hover { background: var(--surface-hover); }
+        .party-av { width: 34px; height: 34px; border-radius: 50%; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; color: var(--text); overflow: hidden; flex-shrink: 0; }
+        .party-av img { width: 100%; height: 100%; object-fit: cover; }
+        .party-body { min-width: 0; }
+        .party-nm { font-size: 0.85rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .party-mt { font-size: 0.72rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .party-empty { font-size: 0.82rem; color: var(--text-dim); padding: 6px; }
+        .cp-side .editing-roster { grid-template-columns: 1fr; }
+        @media (max-width: 900px) { .cp-layout { grid-template-columns: 1fr; gap: 20px; } .cp-side { order: -1; } }
 
         /* ===== CALENDAR ===== */
         .cal-month { margin-bottom: 32px; }
@@ -1069,6 +1091,16 @@
         .profile-register-hint { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 10px; }
         .profile-register input { width: 100%; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.85rem; padding: 8px 10px; margin-bottom: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); outline: none; }
         .profile-reg-error { color: #e06c6c; font-size: 0.75rem; min-height: 1em; margin-top: 4px; }
+        .profile-account-actions { display: flex; gap: 14px; margin-top: 6px; }
+        .profile-mini { background: none; border: none; padding: 0; color: var(--frostmaiden-primary); font-family: 'Inter', sans-serif; font-size: 0.75rem; cursor: pointer; }
+        .profile-mini:hover { text-decoration: underline; }
+        .profile-charcamp { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 12px 0 4px; font-size: 0.82rem; font-weight: 600; color: var(--text); }
+        .profile-charcamp:hover .profile-charcamp-go { color: var(--text); }
+        .profile-charcamp-nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-charcamp-go { margin-left: auto; font-size: 0.72rem; font-weight: 400; color: var(--text-dim); flex-shrink: 0; }
+        .profile-char { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 4px 0 4px 18px; font-size: 0.8rem; }
+        .profile-char-nm { color: var(--text); }
+        .profile-char-mt { color: var(--text-dim); font-size: 0.72rem; text-align: right; }
         /* ===== Schedule modal (3e) ===== */
         .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-sizing: border-box; }
@@ -1093,6 +1125,13 @@
         .cc-rel { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-dim); margin-top: 2px; }
         .cc-next.cc-none { color: var(--text-dim); font-weight: 400; font-size: 0.9rem; }
         .cc-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 12px; }
+        /* ===== Nav grouping + Add-campaign chooser ===== */
+        .nav-section-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); font-weight: 600; margin: 4px 4px 10px; }
+        .ac-choices { display: flex; flex-direction: column; gap: 12px; margin: 4px 0 8px; }
+        .ac-choice { text-align: left; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+        .ac-choice:hover { border-color: var(--frostmaiden-primary); background: var(--surface-hover); }
+        .ac-choice-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+        .ac-choice-sub { font-size: 0.75rem; color: var(--text-dim); }
     </style>
 </head>
 <body>
@@ -1127,11 +1166,13 @@
         <div class="nav-item-info"><span class="nav-label">Home</span><span class="nav-sub">Schedule overview</span></div>
     </div>
     <div class="nav-divider"></div>
+    <div class="nav-section-label">Campaigns</div>
     <div id="nav-campaigns"></div>
     <div class="nav-divider"></div>
+    <div class="nav-section-label" id="nav-actions-label">Actions</div>
     <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()">&#128100; Your Account</button>
-    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">+ Add to Schedule</button>
-    <button class="nav-add-btn" id="nav-newcampaign-btn" onclick="openNewCampaign()" style="margin-top:8px">&#43; New Campaign</button>
+    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">&#43; Add to Schedule</button>
+    <button class="nav-add-btn" id="nav-addcampaign-btn" onclick="openAddCampaign()" style="margin-top:8px">&#43; Add Campaign</button>
     <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
 </div>
 
@@ -1354,6 +1395,24 @@
     </div>
 </div>
 
+<!-- Add Campaign chooser (create or join) -->
+<div class="add-form-overlay" id="add-campaign-overlay" onclick="closeAddCampaign()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Add a Campaign</h3>
+        <div class="ac-choices">
+            <button class="ac-choice" id="ac-create" onclick="closeAddCampaign(); openNewCampaign()">
+                <div class="ac-choice-title">&#43; Create a new campaign</div>
+                <div class="ac-choice-sub">Start your own — name it, pick a color, and add sessions.</div>
+            </button>
+            <button class="ac-choice" onclick="closeAddCampaign(); openJoinCode()">
+                <div class="ac-choice-title">&#128273; Join with a code</div>
+                <div class="ac-choice-sub">Enter a join code your organizer sent you.</div>
+            </button>
+        </div>
+        <div class="form-buttons"><button class="cancel-form-btn" onclick="closeAddCampaign()">Cancel</button></div>
+    </div>
+</div>
+
 <!-- Campaign Settings Modal (3f) -->
 <div class="add-form-overlay" id="campaign-settings-overlay" onclick="closeCampaignSettings()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
@@ -1443,8 +1502,8 @@
                 <div class="controls-panel">
                     <div class="controls-row">
                         <div class="controls-left">
-                            <button class="view-btn active" data-view="list">List</button>
-                            <button class="view-btn" data-view="calendar">Calendar</button>
+                            <button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>
+                            <button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>
                         </div>
                         <div class="controls-left">
                             <button class="view-btn" data-time="all" onclick="setTimeFilter('all')">All</button>
@@ -1561,7 +1620,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -1577,7 +1636,7 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 const PASSPHRASE = "__SITE_PASSPHRASE__";
-const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "Special", drawsteel: "Draw Steel: Mini Campaign", leyfarers: "Leyfarers", beerovia: "Beerovia" };
+const campaignNames = { frostmaiden: "Rime of the Frostmaiden", strahd: "Curse of Strahd", special: "One-Shots", drawsteel: "Draw Steel: Mini Campaign", leyfarers: "Leyfarers", beerovia: "Beerovia" };
 const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", special: "\u2728", drawsteel: "\uD83D\uDDE1\uFE0F", leyfarers: "\uD83E\uDDED", beerovia: "\uD83C\uDF7A" };
 // Hardcoded fallback colors for the original campaigns (match the :root CSS vars).
 const campaignColorsDefault = { frostmaiden: '#4fc3f7', strahd: '#ef5350', special: '#ce93d8', drawsteel: '#f5c518', leyfarers: '#4caf50', beerovia: '#ff9800' };
@@ -1586,6 +1645,7 @@ const campaignColorsDefault = { frostmaiden: '#4fc3f7', strahd: '#ef5350', speci
 let allCampaigns = {};
 // Campaign-delete notifications: `${email}__${campaign}` -> { email, campaign, deletedBy, status:'pending'|'archived'|'dismissed' }
 let allNotifications = {};
+let renamedSpecial = false;
 function myNotifStatus(c) { const me = myEmail(); const n = me && allNotifications[`${me}__${c}`]; return n ? n.status : null; }
 // One-time migration: existing campaigns become owned by the DM. Access is code/invite/owner only.
 const MIGRATION_OWNER = 'sthomas131@gmail.com';
@@ -1802,8 +1862,8 @@ function updateAccessUI() {
     // Add Session / Manage Schedule are for signed-in owners, not read-only guests
     const canEdit = !!currentUser;
     const addBtn = document.getElementById('nav-add-btn'); if (addBtn) addBtn.style.display = canEdit ? '' : 'none';
-    const newCampBtn = document.getElementById('nav-newcampaign-btn'); if (newCampBtn) newCampBtn.style.display = canEdit ? '' : 'none';
     const mgmtBtn = document.getElementById('nav-manage-btn'); if (mgmtBtn) mgmtBtn.style.display = canEdit ? '' : 'none';
+    // Add Campaign is available to everyone (guests can Join with a code); Create is gated inside.
     const chip = document.getElementById('user-chip');
     if (chip) {
         if (currentUser) {
@@ -2164,10 +2224,17 @@ window.openAddSession = function() {
     document.getElementById('add-form-overlay').classList.add('open');
 };
 window.openNewCampaign = function() {
+    if (!currentUser) { openJoinCode(); return; }   // creating needs an account; guests join by code
     openAddSession();
     document.getElementById('new-session-campaign').value = '__new__';
     onNewCampaignToggle(); applyDefaultVisibility();
 };
+window.openAddCampaign = function() {
+    if (typeof closeNav === 'function') closeNav();
+    if (!currentUser) { openJoinCode(); return; }   // guests: straight to Join with a code
+    document.getElementById('add-campaign-overlay').classList.add('open');
+};
+window.closeAddCampaign = function() { document.getElementById('add-campaign-overlay').classList.remove('open'); };
 window.closeAddSession = function() {
     document.getElementById('add-form-overlay').classList.remove('open');
     const succ = document.getElementById('add-success'); if (succ) succ.style.display = 'none';
@@ -2546,6 +2613,7 @@ function renderProfilePanel() {
     let html = '';
     if (currentUser) {
         html += `<div class="profile-identity">${escapeHtml(currentUser.email || 'Signed in')}</div>`;
+        html += `<div class="profile-account-actions"><button class="profile-mini" onclick="changeEmailFromProfile()">Change email</button><button class="profile-mini" onclick="resetPasswordFromProfile()">Reset password</button></div>`;
     } else if (codeGrants().length) {
         const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))];
         html += `<div class="profile-identity">${escapeHtml(labels[0] || 'Guest')} <span class="profile-guest-tag">guest</span></div>`;
@@ -2572,6 +2640,19 @@ function renderProfilePanel() {
             });
             html += `</div>`;
         }
+    }
+    // Characters across your campaigns (tap a campaign to open it and edit the party)
+    const charCamps = camps.filter(c => (campaignRosters[c] || []).length);
+    if (charCamps.length) {
+        html += `<div class="profile-section-label">Characters</div>`;
+        charCamps.forEach(c => {
+            html += `<div class="profile-charcamp" onclick="closeProfile(); navigateTo('${c}')"><span class="nav-campaign-dot" style="background:${campaignColor(c)}"></span><span class="profile-charcamp-nm">${escapeHtml(campaignName(c))}</span><span class="profile-charcamp-go">Open &rsaquo;</span></div>`;
+            (campaignRosters[c] || []).forEach(p => {
+                const ch = (campaignCharacters[c] || {})[p] || {};
+                const meta = [ch.charClass ? ch.charClass + (ch.subclass ? ' · ' + ch.subclass : '') : '', ch.level ? 'Lvl ' + ch.level : ''].filter(Boolean).join(' · ');
+                html += `<div class="profile-char"><span class="profile-char-nm">${escapeHtml(p)}</span>${meta ? `<span class="profile-char-mt">${escapeHtml(meta)}</span>` : ''}</div>`;
+            });
+        });
     }
     html += `<div class="profile-actions">`;
     html += `<button class="profile-action" onclick="openJoinCode()">+ Join a campaign</button>`;
@@ -2604,6 +2685,25 @@ window.registerFromProfile = async function() {
         else if (e.code === 'auth/invalid-email') err.textContent = 'That email address looks invalid.';
         else err.textContent = "Couldn't create the account — try again.";
     }
+};
+window.changeEmailFromProfile = async function() {
+    if (!auth.currentUser) return;
+    const next = prompt("Enter your new email. We'll send a confirmation link there — your email changes once you click it.");
+    if (!next || !next.trim()) return;
+    try {
+        await verifyBeforeUpdateEmail(auth.currentUser, next.trim());
+        alert(`Confirmation link sent to ${next.trim()}. Click it to finish changing your email.`);
+    } catch (e) {
+        if (e.code === 'auth/requires-recent-login') alert('For security, please sign out and sign back in, then change your email.');
+        else if (e.code === 'auth/email-already-in-use') alert('That email is already in use by another account.');
+        else if (e.code === 'auth/invalid-email') alert('That email address looks invalid.');
+        else alert('Could not update email (' + (e.code || 'error') + ').');
+    }
+};
+window.resetPasswordFromProfile = async function() {
+    const me = myEmail(); if (!me) return;
+    try { await sendPasswordResetEmail(auth, me); alert(`Password reset email sent to ${me}.`); }
+    catch (e) { alert('Could not send reset email (' + (e.code || 'error') + ').'); }
 };
 window.openJoinCode = function() {
     if (typeof closeNav === 'function') closeNav();
@@ -2771,6 +2871,13 @@ async function initApp() {
     onSnapshot(collection(db, "campaigns"), (snap) => {
         allCampaigns = {};
         snap.forEach(d => { allCampaigns[d.id] = { id: d.id, ...d.data() }; });
+        // One-time: the original "Special" bucket is now "One-Shots".
+        if (!renamedSpecial && allCampaigns['special'] && allCampaigns['special'].name === 'Special') {
+            renamedSpecial = true;
+            updateDoc(doc(db, "campaigns", "special"), { name: 'One-Shots' })
+                .then(() => { if (allCampaigns['special']) allCampaigns['special'].name = 'One-Shots'; })
+                .catch((e) => console.error("Rename Special skipped:", e));
+        }
         renderCampaignTheme();
         updateAccessUI();
         renderAll();
@@ -3593,91 +3700,85 @@ function renderCampaignPage(campaign) {
     const schedItem = document.getElementById('cp-menu-schedule');
     if (schedItem) schedItem.style.display = canManageCampaign(campaign) ? '' : 'none';
     activeQuills = {};
-    let html = '';
-    if (isArchived(campaign)) html += `<div class="readonly-banner">&#128193; This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
-    else if (isDeleted(campaign)) html += `<div class="readonly-banner">&#128465; This campaign was removed — read-only.</div>`;
+    let banner = '';
+    if (isArchived(campaign)) banner = `<div class="readonly-banner">&#128193; This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
+    else if (isDeleted(campaign)) banner = `<div class="readonly-banner">&#128465; This campaign was removed — read-only.</div>`;
 
-    // Party roster — standalone section with player cards
+    // ----- Party (sidebar) -----
     const roster = campaignRosters[campaign] || [];
     const chars = campaignCharacters[campaign] || {};
     const canManageParty = canManageCampaign(campaign);
     const partyActions = canManageParty
         ? `<div class="cp-section-actions"><button class="edit-party-btn" onclick="openCampaignInvite('${campaign}')">+ Invite</button><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit'}</button></div>`
         : '';
-    html += `<div class="cp-section-head"><span class="section-heading">Party</span>${partyActions}</div>`;
-    html += `<div class="campaign-overview">`;
-    html += `<div class="campaign-roster" id="roster-${campaign}">`;
+    let partyHtml = `<div class="cp-section-head"><span class="section-heading">Party</span>${partyActions}</div>`;
     if (partyEditMode === campaign) {
+        partyHtml += `<div class="campaign-overview"><div class="campaign-roster editing-roster" id="roster-${campaign}">`;
         roster.forEach((p, idx) => {
             const c = chars[p] || {};
             const avatarInner = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
-            html += `<div class="player-card editing" data-idx="${idx}">`;
-            html += `<div class="player-avatar editable" onclick="triggerAvatarUpload('${campaign}',${idx})"><input type="file" accept="image/*" style="display:none" id="avatar-input-${idx}" onchange="uploadAvatar('${campaign}',${idx},this)">${avatarInner}<div class="player-avatar-overlay">Upload</div></div>`;
-            html += `<div class="player-edit-fields">`;
-            html += `<input class="player-edit-input" id="edit-name-${idx}" value="${escapeHtml(p)}" placeholder="Name" maxlength="20">`;
-            html += `<input class="player-edit-input" id="edit-class-${idx}" value="${escapeHtml(c.charClass||'')}" placeholder="Class" maxlength="30">`;
-            html += `<input class="player-edit-input" id="edit-subclass-${idx}" value="${escapeHtml(c.subclass||'')}" placeholder="Subclass" maxlength="30">`;
-            html += `<input class="player-edit-input" id="edit-level-${idx}" value="${c.level||''}" placeholder="Lvl" maxlength="3" style="width:50px;margin:0 auto">`;
-            html += `</div>`;
-            html += `<div class="player-card-actions"><button class="player-card-btn save" onclick="saveCharacterEdits('${campaign}',${idx})">Save</button><button class="player-card-btn remove" onclick="startRemovePartyMember('${campaign}',${idx})">Remove</button></div>`;
-            html += `</div>`;
+            partyHtml += `<div class="player-card editing" data-idx="${idx}">`
+                + `<div class="player-avatar editable" onclick="triggerAvatarUpload('${campaign}',${idx})"><input type="file" accept="image/*" style="display:none" id="avatar-input-${idx}" onchange="uploadAvatar('${campaign}',${idx},this)">${avatarInner}<div class="player-avatar-overlay">Upload</div></div>`
+                + `<div class="player-edit-fields">`
+                + `<input class="player-edit-input" id="edit-name-${idx}" value="${escapeHtml(p)}" placeholder="Name" maxlength="20">`
+                + `<input class="player-edit-input" id="edit-class-${idx}" value="${escapeHtml(c.charClass||'')}" placeholder="Class" maxlength="30">`
+                + `<input class="player-edit-input" id="edit-subclass-${idx}" value="${escapeHtml(c.subclass||'')}" placeholder="Subclass" maxlength="30">`
+                + `<input class="player-edit-input" id="edit-level-${idx}" value="${c.level||''}" placeholder="Lvl" maxlength="3" style="width:50px;margin:0 auto">`
+                + `</div>`
+                + `<div class="player-card-actions"><button class="player-card-btn save" onclick="saveCharacterEdits('${campaign}',${idx})">Save</button><button class="player-card-btn remove" onclick="startRemovePartyMember('${campaign}',${idx})">Remove</button></div>`
+                + `</div>`;
         });
-        html += `<div class="roster-add-card" onclick="startAddPartyMember('${campaign}')"><span class="add-icon">+</span><span>Add</span></div>`;
+        partyHtml += `<div class="roster-add-card" onclick="startAddPartyMember('${campaign}')"><span class="add-icon">+</span><span>Add</span></div>`;
+        partyHtml += `</div></div>`;
     } else {
+        partyHtml += `<div class="party-panel"><div class="party-list" id="roster-${campaign}">`;
+        if (!roster.length) partyHtml += `<div class="party-empty">No party members yet.</div>`;
         roster.forEach(p => {
             const c = chars[p] || {};
-            const avatarInner = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
-            html += `<div class="player-card" onclick="openPlayerDetail('${campaign}','${escapeHtml(p)}')">`;
-            html += `<div class="player-avatar">${avatarInner}</div>`;
-            html += `<div class="player-name">${escapeHtml(p)}</div>`;
-            if (c.charClass) { const fullClass = c.charClass + (c.subclass ? ' · '+c.subclass : ''); html += `<div class="player-class" title="${escapeHtml(fullClass)}">${escapeHtml(c.charClass)}${c.subclass ? ' · '+escapeHtml(c.subclass) : ''}</div>`; }
-            if (c.level) { html += `<div class="player-level">Lvl ${c.level}</div>`; }
-            html += `</div>`;
+            const av = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
+            const meta = [c.charClass ? (c.charClass + (c.subclass ? ' · ' + c.subclass : '')) : '', c.level ? 'Lvl ' + c.level : ''].filter(Boolean).join(' · ');
+            partyHtml += `<div class="party-row" onclick="openPlayerDetail('${campaign}','${escapeHtml(p)}')"><div class="party-av">${av}</div><div class="party-body"><div class="party-nm">${escapeHtml(p)}</div>${meta ? `<div class="party-mt">${escapeHtml(meta)}</div>` : ''}</div></div>`;
         });
+        partyHtml += `</div></div>`;
     }
-    html += `</div></div>`;
 
-    // Last session recap — separate card (same style as home page recap-display)
+    // ----- Main column: Last Session + Sessions -----
+    let mainHtml = '';
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     if (lastPast) {
-        html += `<div class="section-heading">Last Session — ${formatDateShort(lastPast.date)}</div>`;
-        html += `<div class="campaign-overview">`;
+        mainHtml += `<div class="section-heading">Last Session — ${formatDateShort(lastPast.date)}</div>`;
+        mainHtml += `<div class="campaign-overview lsc-card" style="border-left:3px solid ${campaignColor(campaign)}">`;
         if (lastPast.recapHtml || lastPast.recap) {
-            html += `<div class="hero-recap">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
-            html += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.id}')">Edit</button>`;
-            html += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
-            if (lastPast.pdfUrl) { html += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
-            html += `</div>`;
+            mainHtml += `<div class="hero-recap">${lastPast.recapHtml || escapeHtml(lastPast.recap)}</div>`;
+            mainHtml += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.id}')">Edit</button>`;
+            mainHtml += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
+            if (lastPast.pdfUrl) { mainHtml += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
+            mainHtml += `</div>`;
         } else {
-            html += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.id}')">No recap yet — tap to add one</div>`;
+            mainHtml += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.id}')">No recap yet — tap to add one</div>`;
         }
-        html += `</div>`;
+        mainHtml += `</div>`;
     }
-
-    // Divider + Stats bar + Controls — mirrors home page exactly
     if (cs.length > 0) {
-        html += `<div class="sessions-wrapper">`;
-        html += `<div class="section-heading">Sessions</div>`;
-        html += `<div class="controls-panel">`;
-        html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${escapeHtml(campaignName(campaign))}</span></button></div>`;
-        html += `<div class="controls-row">`;
-        html += `<div class="controls-left">`;
-        html += `<button class="view-btn active" data-view="list">List</button>`;
-        html += `<button class="view-btn" data-view="calendar">Calendar</button>`;
-        html += `</div>`;
-        html += `<div class="controls-left">`;
-        html += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
-        html += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
-        html += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
-        html += `</div>`;
-        html += `</div>`;
-        html += `<div class="controls-sub-row">`;
-        html += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
-        html += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
-        html += `</div>`;
-        html += `</div>`;
-
-        // Filter sessions based on time filter
+        mainHtml += `<div class="sessions-wrapper">`;
+        mainHtml += `<div class="section-heading">Sessions</div>`;
+        mainHtml += `<div class="controls-panel">`;
+        mainHtml += `<div class="controls-row">`;
+        mainHtml += `<div class="controls-left">`;
+        mainHtml += `<button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>`;
+        mainHtml += `<button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>`;
+        mainHtml += `</div>`;
+        mainHtml += `<div class="controls-left">`;
+        mainHtml += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
+        mainHtml += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
+        mainHtml += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
+        mainHtml += `</div>`;
+        mainHtml += `</div>`;
+        mainHtml += `<div class="controls-sub-row">`;
+        mainHtml += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        mainHtml += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
+        mainHtml += `</div>`;
+        mainHtml += `</div>`;
         const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
         let displaySessions = cs;
         if (campaignTimeFilter === 'upcoming') displaySessions = cs.filter(s => parseDate(s.date) >= twoWeeksAgo);
@@ -3686,14 +3787,17 @@ function renderCampaignPage(campaign) {
             const allSorted = [...displaySessions].sort((a, b) => campaignSortNewest ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date));
             const g = {}; allSorted.forEach(s => { const k = getMonthKey(s.date); if (!g[k]) g[k] = []; g[k].push(s); });
             const sortedKeys = Object.keys(g).sort(); if (campaignSortNewest) sortedKeys.reverse();
-            sortedKeys.forEach((k, gi) => { html += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { html += renderSessionCard(s, gi, i); }); html += monthGroupClose(); });
+            sortedKeys.forEach((k, gi) => { mainHtml += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { mainHtml += renderSessionCard(s, gi, i); }); mainHtml += monthGroupClose(); });
         } else {
-            html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${campaignTimeFilter} sessions.</div></div>`;
+            mainHtml += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${campaignTimeFilter} sessions.</div></div>`;
         }
-        html += `</div>`; // close sessions-wrapper
+        mainHtml += `</div>`;
+    } else {
+        mainHtml += `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
     }
-    if (cs.length === 0) html = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
-    document.getElementById('campaign-page-content').innerHTML = html;
+
+    document.getElementById('campaign-page-content').innerHTML =
+        `${banner}<div class="cp-layout"><main class="cp-main">${mainHtml}</main><aside class="cp-side">${partyHtml}</aside></div>`;
     // Initialize Quill for overview recap editor if present
     if (lastPast && !(lastPast.recapHtml || lastPast.recap)) {
         const el = document.getElementById(`recap-editor-overview-${lastPast.id}`);
