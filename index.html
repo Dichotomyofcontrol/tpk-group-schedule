@@ -181,6 +181,14 @@
             display: flex; align-items: center; justify-content: flex-end;
             padding: 0 0 4px; gap: 4px; flex-wrap: wrap;
         }
+        /* Slim controls toolbar (replaces the thick controls card) */
+        .controls-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .seg-group { display: flex; }
+        .seg-group .view-btn:not(:first-child) { margin-left: -1px; }
+        .controls-right { margin-left: auto; display: flex; gap: 2px; align-items: center; }
+        .ctrl-link { font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 6px 10px; border-radius: 6px; border: 1px solid transparent; background: none; color: var(--text-dim); cursor: pointer; white-space: nowrap; transition: color 0.15s, background 0.15s; }
+        .ctrl-link:hover { color: var(--text); background: var(--surface-hover); }
+        @media (max-width: 600px) { .controls-right { margin-left: 0; width: 100%; justify-content: space-between; } .seg-group { flex: 1; } .seg-group .view-btn { flex: 1; text-align: center; } }
         .view-btn {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 14px;
             border: 1px solid var(--border); background: transparent;
@@ -1498,22 +1506,20 @@
             <!-- Sessions wrapper -->
             <div class="sessions-wrapper">
                 <div class="section-heading">All Sessions</div>
-                <!-- Controls panel: view/time toggles + sort/collapse -->
-                <div class="controls-panel">
-                    <div class="controls-row">
-                        <div class="controls-left">
-                            <button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>
-                            <button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>
-                        </div>
-                        <div class="controls-left">
-                            <button class="view-btn" data-time="all" onclick="setTimeFilter('all')">All</button>
-                            <button class="view-btn active" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
-                            <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
-                        </div>
+                <!-- Slim controls toolbar -->
+                <div class="controls-bar">
+                    <div class="seg-group">
+                        <button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>
+                        <button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>
                     </div>
-                    <div class="controls-sub-row">
-                        <button class="sort-toggle" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
-                        <button class="collapse-all-btn" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
+                    <div class="seg-group">
+                        <button class="view-btn" data-time="all" onclick="setTimeFilter('all')">All</button>
+                        <button class="view-btn active" data-time="upcoming" onclick="setTimeFilter('upcoming')">Upcoming</button>
+                        <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
+                    </div>
+                    <div class="controls-right">
+                        <button class="ctrl-link" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                        <button class="ctrl-link" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
                     </div>
                 </div>
 
@@ -3762,21 +3768,19 @@ function renderCampaignPage(campaign) {
     if (cs.length > 0) {
         mainHtml += `<div class="sessions-wrapper">`;
         mainHtml += `<div class="section-heading">Sessions</div>`;
-        mainHtml += `<div class="controls-panel">`;
-        mainHtml += `<div class="controls-row">`;
-        mainHtml += `<div class="controls-left">`;
+        mainHtml += `<div class="controls-bar">`;
+        mainHtml += `<div class="seg-group">`;
         mainHtml += `<button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>`;
         mainHtml += `<button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>`;
         mainHtml += `</div>`;
-        mainHtml += `<div class="controls-left">`;
+        mainHtml += `<div class="seg-group">`;
         mainHtml += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
         mainHtml += `<button class="view-btn${campaignTimeFilter==='upcoming'?' active':''}" onclick="setCampaignTimeFilter('upcoming','${campaign}')">Upcoming</button>`;
         mainHtml += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
         mainHtml += `</div>`;
-        mainHtml += `</div>`;
-        mainHtml += `<div class="controls-sub-row">`;
-        mainHtml += `<button class="sort-toggle" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
-        mainHtml += `<button class="collapse-all-btn" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
+        mainHtml += `<div class="controls-right">`;
+        mainHtml += `<button class="ctrl-link" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        mainHtml += `<button class="ctrl-link" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
         mainHtml += `</div>`;
         mainHtml += `</div>`;
         const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
