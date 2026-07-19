@@ -1119,6 +1119,7 @@
 <div class="add-form-overlay" id="add-form-overlay" onclick="closeAddSession()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
         <h3>Add New Session</h3>
+        <div id="add-form-fields">
         <div class="form-row">
             <div class="form-group"><label>Date</label><input type="date" id="new-session-date"></div>
             <div class="form-group"><label>Campaign</label>
@@ -1151,6 +1152,17 @@
         <div class="form-buttons">
             <button class="submit-btn" onclick="submitAddSession()">Add Session</button>
             <button class="cancel-form-btn" onclick="closeAddSession()">Cancel</button>
+        </div>
+        </div>
+        <div id="add-success" style="display:none;text-align:center;padding:8px 0">
+            <div style="font-size:2rem;line-height:1;margin-bottom:8px;color:var(--leyfarers-primary)">&#10003;</div>
+            <div style="font-weight:600;color:var(--text);margin-bottom:4px">Session added</div>
+            <div id="add-success-detail" style="font-size:0.8rem;color:var(--text-dim);margin-bottom:16px"></div>
+            <div class="form-buttons" style="justify-content:center">
+                <button class="submit-btn" onclick="viewAddedSession()">View session</button>
+                <button class="cancel-form-btn" onclick="addAnotherSession()">Add another</button>
+                <button class="cancel-form-btn" onclick="closeAddSession()">Done</button>
+            </div>
         </div>
     </div>
 </div>
@@ -1280,6 +1292,19 @@
         <div class="form-buttons">
             <button class="submit-btn" onclick="submitJoinCode()">Join</button>
             <button class="cancel-form-btn" onclick="closeJoinCode()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Bridge (passphrase) welcome — optional account nudge -->
+<div class="add-form-overlay" id="bridge-welcome-overlay" onclick="dismissBridgeWelcome()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Welcome!</h3>
+        <div style="font-size:0.85rem;color:var(--text);line-height:1.5;margin-bottom:8px">You're viewing the group schedule as a guest.</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:16px">Create a free account (optional) to RSVP, get invited to campaigns, and keep your access on any device.</div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="bridgeCreateAccount()">Create an account</button>
+            <button class="cancel-form-btn" onclick="dismissBridgeWelcome()">Maybe later</button>
         </div>
     </div>
 </div>
@@ -1453,6 +1478,8 @@ let allCampaigns = {};
 // One-time migration: existing campaigns become owned by the DM. The 4 formerly-public
 // campaigns keep bridge:true (passphrase grants read-only access); leyfarers/beerovia don't.
 const MIGRATION_OWNER = 'sthomas131@gmail.com';
+// The 4 originals that grant passphrase (bridge) access — also the pre-migration fallback.
+const ORIGINAL_BRIDGE = ['frostmaiden', 'strahd', 'drawsteel', 'special'];
 const CAMPAIGN_MIGRATION = [
     { id: 'frostmaiden', bridge: true },
     { id: 'strahd', bridge: true },
@@ -1461,12 +1488,22 @@ const CAMPAIGN_MIGRATION = [
     { id: 'leyfarers', bridge: false },
     { id: 'beerovia', bridge: false },
 ];
-// Accessors: prefer live campaign data, fall back to the hardcoded originals.
+// Accessors: prefer live campaign data; fall back to the hardcoded originals so the app
+// still behaves correctly if campaign docs haven't loaded (or the migration hasn't run yet).
 function campaignName(c) { return (allCampaigns[c] && allCampaigns[c].name) || campaignNames[c] || c; }
 function campaignIcon(c) { return (allCampaigns[c] && allCampaigns[c].icon) || campaignIcons[c] || ''; }
 function campaignColor(c) { return (allCampaigns[c] && allCampaigns[c].color) || campaignColorsDefault[c] || '#888888'; }
-function campaignOwner(c) { return allCampaigns[c] && allCampaigns[c].owner || null; }
-function isBridgeCampaign(c) { return !!(allCampaigns[c] && allCampaigns[c].bridge); }
+function campaignOwner(c) {
+    if (allCampaigns[c]) return allCampaigns[c].owner || null;
+    if (campaignNames[c]) return MIGRATION_OWNER;   // original campaign, pre-migration
+    return null;
+}
+function isBridgeCampaign(c) {
+    if (allCampaigns[c]) return !!allCampaigns[c].bridge;
+    return ORIGINAL_BRIDGE.includes(c);             // pre-migration fallback
+}
+function isArchived(c) { return !!(allCampaigns[c] && allCampaigns[c].archived); }
+function isDeleted(c) { return !!(allCampaigns[c] && allCampaigns[c].deleted); }
 const campaignRosters = {
     frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
@@ -1544,10 +1581,8 @@ let activeFilter = "all";
 // `owner: email` and are visible only to the owner, per-session invitees
 // (`invited: [emails]`), and campaign-level invitees (shares/{owner}__{campaign}
 // doc with `members: [emails]` — also covers future sessions the owner adds).
-const PUBLIC_CAMPAIGNS = ['frostmaiden', 'strahd', 'drawsteel', 'special'];
+// Legacy profile/fallback grants (accepted invites land here too). Kept as one access path.
 const FALLBACK_USER_CAMPAIGNS = { 'sthomas131@gmail.com': ['leyfarers', 'beerovia'] };
-// Emails treated as full group members — same access as the shared passphrase.
-const GROUP_EMAILS = ['sthomas131@gmail.com'];
 let currentUser = null;
 let userCampaigns = [];
 let allShares = {};   // `${owner}__${campaign}` -> [member emails]
@@ -1560,41 +1595,46 @@ let codesLoaded = false;
 function codeGrants() { return redeemedCodes.map(c => allCodes[c]).filter(Boolean); }
 function codeGrantsCampaign(c) { return codeGrants().some(g => g.campaign === c); }
 function myEmail() { return currentUser && currentUser.email ? currentUser.email.toLowerCase() : null; }
-// A "group member" is anyone in via the shared passphrase, or a whitelisted email.
-// Only group members see & edit the public (unowned) campaigns.
-function isGroupMember() { return sessionStorage.getItem('tpk_auth') === 'true' || GROUP_EMAILS.includes(myEmail()); }
+// Passphrase = temporary read-only "bridge" to campaigns flagged bridge:true.
+function isBridge() { return sessionStorage.getItem('tpk_auth') === 'true'; }
 function shareKey(owner, campaign) { return `${owner}__${campaign}`; }
 function shareMembers(owner, campaign) { return allShares[shareKey(owner, campaign)] || []; }
+// Members shared into a campaign — shares are keyed by the campaign's owner.
+function campaignShareMembers(c) { const o = campaignOwner(c); return o ? shareMembers(o, c) : []; }
+// Can the viewer access campaign c at all? (owner / code / share / profile-invite / bridge)
+function campaignAccessible(c) {
+    const me = myEmail();
+    if (me && campaignOwner(c) === me) return true;
+    if (codeGrantsCampaign(c)) return true;
+    if (me && campaignShareMembers(c).includes(me)) return true;
+    if (me && userCampaigns.includes(c)) return true;
+    if (isBridgeCampaign(c) && isBridge()) return true;    // passphrase bridge: read-only
+    return false;
+}
 function sessionVisible(s) {
     if (s.owner) {
+        // "Just Me" / private session: only the owner + explicit per-session/campaign grants.
         if (codeGrants().some(g => g.owner === s.owner && g.campaign === s.campaign)) return true;
         const me = myEmail(); if (!me) return false;
         return s.owner === me || (s.invited || []).includes(me) || shareMembers(s.owner, s.campaign).includes(me);
     }
-    // Unowned/legacy session:
-    if (codeGrantsCampaign(s.campaign)) return true;         // guest scoped to the one campaign their code is for
-    if (userCampaigns.includes(s.campaign)) return true;     // leyfarers/beerovia via profile grant or fallback
-    if (PUBLIC_CAMPAIGNS.includes(s.campaign)) return isGroupMember();  // public campaigns: passphrase group only
-    return false;
+    // "Everyone" session: visible to anyone who can access the campaign.
+    return campaignAccessible(s.campaign);
 }
 function profileSessions() { return sessions.filter(sessionVisible); }
-// Can the current viewer manage (edit/cancel/recap/invite) this session? Guests are read-only.
+// Can the viewer manage (edit/cancel/recap/invite) this session? Bridge users are read-only.
 function canManage(s) {
     if (s.owner) return s.owner === myEmail();
-    if (PUBLIC_CAMPAIGNS.includes(s.campaign)) return isGroupMember();  // public sessions: group members only
-    return userCampaigns.includes(s.campaign);               // leyfarers/beerovia manageable by their profile holder
+    const me = myEmail();
+    return !!me && campaignOwner(s.campaign) === me;   // "Everyone" sessions: campaign owner only
 }
-// Can the viewer manage a whole campaign (schedule/settings)? Public → group members;
-// otherwise only if they can manage its sessions (owner, or legacy profile holder).
+// Can the viewer manage a whole campaign (schedule/settings/invite)?
 function canManageCampaign(c) {
-    if (PUBLIC_CAMPAIGNS.includes(c)) return isGroupMember();
-    return sessions.some(s => s.campaign === c && sessionVisible(s) && canManage(s));
+    const me = myEmail();
+    return !!me && campaignOwner(c) === me;
 }
 function campaignVisible(c) {
-    if (codeGrantsCampaign(c)) return true;
-    if (userCampaigns.includes(c)) return true;
-    if (PUBLIC_CAMPAIGNS.includes(c)) return isGroupMember();
-    return sessions.some(s => s.campaign === c && sessionVisible(s));
+    return campaignAccessible(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
 function updateAccessUI() {
     // Public campaign nav items — hidden from non-group guests
@@ -1608,8 +1648,8 @@ function updateAccessUI() {
         // Signed-in users may add their own sessions to any campaign
         document.querySelectorAll('.opt-' + c).forEach(o => { o.hidden = !(currentUser || campaignVisible(c)); });
     });
-    // Add Session / Manage Schedule are for group members and owners, not read-only guests
-    const canEdit = isGroupMember() || !!currentUser;
+    // Add Session / Manage Schedule are for signed-in owners, not read-only bridge/guests
+    const canEdit = !!currentUser;
     const addBtn = document.getElementById('nav-add-btn'); if (addBtn) addBtn.style.display = canEdit ? '' : 'none';
     const mgmtBtn = document.getElementById('nav-manage-btn'); if (mgmtBtn) mgmtBtn.style.display = canEdit ? '' : 'none';
     const chip = document.getElementById('user-chip');
@@ -1676,7 +1716,13 @@ function promptJoinParty(campaign, label, welcome) {
 window.checkPassword = async function() {
     const raw = document.getElementById('pass-input').value.trim();
     const errEl = document.getElementById('pass-error');
-    if (raw.toLowerCase() === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); return; }
+    if (raw.toLowerCase() === PASSPHRASE) {
+        sessionStorage.setItem('tpk_auth', 'true');
+        showApp();
+        // Bridge access is read-only — nudge them to create an account (optional).
+        setTimeout(() => { const o = document.getElementById('bridge-welcome-overlay'); if (o) o.classList.add('open'); }, 400);
+        return;
+    }
     // Not the passphrase — try it as a join code
     const result = await redeemCode(raw);
     if (result.ok) {
@@ -1778,7 +1824,30 @@ window.openAddSession = function() {
     if (currentUser) window.setSessionVisibility('private');
     document.getElementById('add-form-overlay').classList.add('open');
 };
-window.closeAddSession = function() { document.getElementById('add-form-overlay').classList.remove('open'); };
+window.closeAddSession = function() {
+    document.getElementById('add-form-overlay').classList.remove('open');
+    // Reset to the form view for next time
+    const succ = document.getElementById('add-success'); if (succ) succ.style.display = 'none';
+    const fields = document.getElementById('add-form-fields'); if (fields) fields.style.display = '';
+};
+let lastAddedSession = null;
+function showAddSuccess(campaign, dateVal) {
+    document.getElementById('add-form-fields').style.display = 'none';
+    document.getElementById('add-success-detail').textContent = `${campaignName(campaign)} · ${formatDateShort(dateVal)}`;
+    document.getElementById('add-success').style.display = '';
+}
+window.addAnotherSession = function() {
+    document.getElementById('add-success').style.display = 'none';
+    document.getElementById('add-form-fields').style.display = '';
+    const t = new Date(); t.setDate(t.getDate() + 1);
+    document.getElementById('new-session-date').value = t.toISOString().split('T')[0];
+    ['new-session-time','new-session-gm','new-session-duration'].forEach(id => { document.getElementById(id).value = ''; });
+};
+window.viewAddedSession = function() {
+    const c = lastAddedSession && lastAddedSession.campaign;
+    closeAddSession();
+    if (c) window.navigateTo(c);
+};
 window.toggleCustomizeFields = function() {
     const f = document.getElementById('customize-fields'); const a = document.getElementById('customize-arrow');
     f.classList.toggle('open'); a.innerHTML = f.classList.contains('open') ? '&#9660;' : '&#9654;';
@@ -1804,8 +1873,18 @@ window.submitAddSession = async function() {
     roster.forEach(p => { attendance[p] = "in"; });
     const data = { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" };
     if (isPrivate) { data.owner = myEmail(); data.invited = []; }
-    try { await setDoc(doc(db, "sessions", docId), data); closeAddSession(); }
-    catch (err) { console.error("Error adding session:", err); alert('Error adding session.'); }
+    const btn = document.querySelector('#add-form-fields .submit-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+    try {
+        await setDoc(doc(db, "sessions", docId), data);
+        lastAddedSession = { id: docId, campaign, date: dateVal };
+        showAddSuccess(campaign, dateVal);
+    } catch (err) {
+        console.error("Error adding session:", err);
+        alert('Error adding session — please try again.');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Add Session'; }
+    }
 };
 
 // ===== INVITES =====
@@ -1993,18 +2072,21 @@ window.acceptInviteFromProfile = async function(id) {
 };
 
 // ===== PROFILE / ACCOUNT =====
+window.dismissBridgeWelcome = function() { const o = document.getElementById('bridge-welcome-overlay'); if (o) o.classList.remove('open'); };
+window.bridgeCreateAccount = function() { dismissBridgeWelcome(); if (window.openProfile) window.openProfile(); };
 function accessReason(c) {
     const me = myEmail();
-    if (me && sessions.some(s => s.campaign === c && s.owner === me)) return 'you own this';
+    if (me && campaignOwner(c) === me) return 'you own this';
     if (codeGrantsCampaign(c)) return 'via code';
-    if (PUBLIC_CAMPAIGNS.includes(c) && isGroupMember()) return 'group member';
-    if (userCampaigns.includes(c)) return 'invited';
+    if (me && (campaignShareMembers(c).includes(me) || userCampaigns.includes(c))) return 'invited';
+    if (isBridgeCampaign(c) && isBridge()) return 'group access';
     return 'shared with you';
 }
 function visibleCampaignList() {
     const set = new Set();
     sessions.forEach(s => { if (sessionVisible(s)) set.add(s.campaign); });
     Object.keys(campaignNames).forEach(c => { if (campaignVisible(c)) set.add(c); });
+    Object.keys(allCampaigns).forEach(c => { if (!isDeleted(c) && campaignVisible(c)) set.add(c); });
     return [...set];
 }
 function hasAnyCampaign() { return visibleCampaignList().length > 0; }
@@ -2012,7 +2094,7 @@ function updateEmptyState() {
     const home = document.getElementById('home-view');
     const banner = document.getElementById('no-campaigns-banner');
     if (!home || !banner) return;
-    const inApp = !!currentUser || codeGrants().length > 0 || isGroupMember();
+    const inApp = !!currentUser || codeGrants().length > 0 || isBridge();
     const empty = inApp && !hasAnyCampaign();
     banner.style.display = empty ? '' : 'none';
     home.classList.toggle('campaigns-empty', empty);
