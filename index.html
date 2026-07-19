@@ -1060,8 +1060,8 @@
     <h1>Six in the TPK</h1>
     <div class="subtitle">Campaign Schedule</div>
     <div class="pass-form">
-        <input type="password" id="pass-input" placeholder="Passphrase or invite code" autocomplete="off">
-        <button onclick="checkPassword()">Enter</button>
+        <input type="text" id="pass-input" placeholder="Enter your join code" autocomplete="off" style="text-transform:uppercase">
+        <button onclick="checkPassword()">Join</button>
     </div>
     <div class="pass-error" id="pass-error"></div>
     <div class="gate-divider"><span>or sign in with email</span></div>
@@ -1072,7 +1072,7 @@
     </div>
     <div class="pass-error" id="email-error"></div>
     <button class="gate-mode-link" id="gate-mode-link" onclick="toggleGateMode()">Invited? Create an account</button>
-    <div class="pass-hint">Password Available in Discord</div>
+    <div class="pass-hint">Ask your GM for a join code</div>
 </div>
 
 <!-- Nav Overlay + Slide Menu -->
@@ -1123,7 +1123,7 @@
         <div class="form-row">
             <div class="form-group"><label>Date</label><input type="date" id="new-session-date"></div>
             <div class="form-group"><label>Campaign</label>
-                <select id="new-session-campaign">
+                <select id="new-session-campaign" onchange="onAddCampaignChange()">
                     <option value="frostmaiden">Rime of the Frostmaiden</option>
                     <option value="strahd">Curse of Strahd</option>
                     <option value="drawsteel">Draw Steel: Mini Campaign</option>
@@ -1296,19 +1296,6 @@
     </div>
 </div>
 
-<!-- Bridge (passphrase) welcome — optional account nudge -->
-<div class="add-form-overlay" id="bridge-welcome-overlay" onclick="dismissBridgeWelcome()">
-    <div class="add-session-modal" onclick="event.stopPropagation()">
-        <h3>Welcome!</h3>
-        <div style="font-size:0.85rem;color:var(--text);line-height:1.5;margin-bottom:8px">You're viewing the group schedule as a guest.</div>
-        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:16px">Create a free account (optional) to RSVP, get invited to campaigns, and keep your access on any device.</div>
-        <div class="form-buttons">
-            <button class="submit-btn" onclick="bridgeCreateAccount()">Create an account</button>
-            <button class="cancel-form-btn" onclick="dismissBridgeWelcome()">Maybe later</button>
-        </div>
-    </div>
-</div>
-
 <!-- Main App -->
 <div id="app">
     <div class="top-bar-wrap" id="top-bar-wrap">
@@ -1473,21 +1460,11 @@ const campaignIcons = { frostmaiden: "\u2744\uFE0F", strahd: "\uD83E\uDDDB", spe
 // Hardcoded fallback colors for the original campaigns (match the :root CSS vars).
 const campaignColorsDefault = { frostmaiden: '#4fc3f7', strahd: '#ef5350', special: '#ce93d8', drawsteel: '#f5c518', leyfarers: '#4caf50', beerovia: '#ff9800' };
 // ===== CAMPAIGNS AS DATA (Phase 3) =====
-// Live campaign docs: id -> { id, name, icon, color, owner, bridge, archived?, deleted?, ... }
+// Live campaign docs: id -> { id, name, icon, color, owner, archived?, deleted?, ... }
 let allCampaigns = {};
-// One-time migration: existing campaigns become owned by the DM. The 4 formerly-public
-// campaigns keep bridge:true (passphrase grants read-only access); leyfarers/beerovia don't.
+// One-time migration: existing campaigns become owned by the DM. Access is code/invite/owner only.
 const MIGRATION_OWNER = 'sthomas131@gmail.com';
-// The 4 originals that grant passphrase (bridge) access — also the pre-migration fallback.
-const ORIGINAL_BRIDGE = ['frostmaiden', 'strahd', 'drawsteel', 'special'];
-const CAMPAIGN_MIGRATION = [
-    { id: 'frostmaiden', bridge: true },
-    { id: 'strahd', bridge: true },
-    { id: 'drawsteel', bridge: true },
-    { id: 'special', bridge: true },
-    { id: 'leyfarers', bridge: false },
-    { id: 'beerovia', bridge: false },
-];
+const CAMPAIGN_MIGRATION = ['frostmaiden', 'strahd', 'drawsteel', 'special', 'leyfarers', 'beerovia'];
 // Accessors: prefer live campaign data; fall back to the hardcoded originals so the app
 // still behaves correctly if campaign docs haven't loaded (or the migration hasn't run yet).
 function campaignName(c) { return (allCampaigns[c] && allCampaigns[c].name) || campaignNames[c] || c; }
@@ -1497,10 +1474,6 @@ function campaignOwner(c) {
     if (allCampaigns[c]) return allCampaigns[c].owner || null;
     if (campaignNames[c]) return MIGRATION_OWNER;   // original campaign, pre-migration
     return null;
-}
-function isBridgeCampaign(c) {
-    if (allCampaigns[c]) return !!allCampaigns[c].bridge;
-    return ORIGINAL_BRIDGE.includes(c);             // pre-migration fallback
 }
 function isArchived(c) { return !!(allCampaigns[c] && allCampaigns[c].archived); }
 function isDeleted(c) { return !!(allCampaigns[c] && allCampaigns[c].deleted); }
@@ -1595,20 +1568,17 @@ let codesLoaded = false;
 function codeGrants() { return redeemedCodes.map(c => allCodes[c]).filter(Boolean); }
 function codeGrantsCampaign(c) { return codeGrants().some(g => g.campaign === c); }
 function myEmail() { return currentUser && currentUser.email ? currentUser.email.toLowerCase() : null; }
-// Passphrase = temporary read-only "bridge" to campaigns flagged bridge:true.
-function isBridge() { return sessionStorage.getItem('tpk_auth') === 'true'; }
 function shareKey(owner, campaign) { return `${owner}__${campaign}`; }
 function shareMembers(owner, campaign) { return allShares[shareKey(owner, campaign)] || []; }
 // Members shared into a campaign — shares are keyed by the campaign's owner.
 function campaignShareMembers(c) { const o = campaignOwner(c); return o ? shareMembers(o, c) : []; }
-// Can the viewer access campaign c at all? (owner / code / share / profile-invite / bridge)
+// Can the viewer access campaign c at all? (owner / code / share / profile-invite)
 function campaignAccessible(c) {
     const me = myEmail();
     if (me && campaignOwner(c) === me) return true;
     if (codeGrantsCampaign(c)) return true;
     if (me && campaignShareMembers(c).includes(me)) return true;
     if (me && userCampaigns.includes(c)) return true;
-    if (isBridgeCampaign(c) && isBridge()) return true;    // passphrase bridge: read-only
     return false;
 }
 function sessionVisible(s) {
@@ -1716,21 +1686,14 @@ function promptJoinParty(campaign, label, welcome) {
 window.checkPassword = async function() {
     const raw = document.getElementById('pass-input').value.trim();
     const errEl = document.getElementById('pass-error');
-    if (raw.toLowerCase() === PASSPHRASE) {
-        sessionStorage.setItem('tpk_auth', 'true');
-        showApp();
-        // Bridge access is read-only — nudge them to create an account (optional).
-        setTimeout(() => { const o = document.getElementById('bridge-welcome-overlay'); if (o) o.classList.add('open'); }, 400);
-        return;
-    }
-    // Not the passphrase — try it as a join code
+    // Join-code entry (the passphrase has been retired — access is code / invite / account only).
     const result = await redeemCode(raw);
     if (result.ok) {
         showApp(); renderAll();
         promptJoinParty(result.campaign, result.label, true);
         return;
     }
-    errEl.textContent = "Wrong passphrase or code. Try again.";
+    errEl.textContent = result.reason === 'empty' ? "Enter your join code." : "That code doesn't match a campaign. Check it and try again.";
 };
 let gateCreateMode = false;
 window.toggleGateMode = function() {
@@ -1790,15 +1753,15 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         userCampaigns = [];
         updateAccessUI();
-        if (appStarted && sessionStorage.getItem('tpk_auth') === 'true') {
+        if (appStarted && redeemedCodes.length) {
             if (!campaignVisible(activeFilter)) activeFilter = 'all';
             if (currentPage !== 'home' && !campaignVisible(currentPage)) window.navigateTo('home');
             renderAll();
         }
     }
 });
-// Passphrase entry (this tab) or previously redeemed join codes (this device) skip the gate
-if (sessionStorage.getItem('tpk_auth') === 'true' || redeemedCodes.length) showApp();
+// Previously redeemed join codes (this device) skip the gate
+if (redeemedCodes.length) showApp();
 
 // ===== NAV =====
 window.openNav = function() { document.getElementById('nav-overlay').classList.add('open'); document.getElementById('nav-menu').classList.add('open'); };
@@ -1821,9 +1784,17 @@ window.openAddSession = function() {
     closeNav();
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('new-session-date').value = tomorrow.toISOString().split('T')[0];
-    if (currentUser) window.setSessionVisibility('private');
+    applyDefaultVisibility();
     document.getElementById('add-form-overlay').classList.add('open');
 };
+// Scheduling in a campaign you own defaults to Everyone (it's a group session);
+// adding to a campaign you don't own defaults to Just Me (personal).
+function applyDefaultVisibility() {
+    if (!currentUser) return;
+    const c = document.getElementById('new-session-campaign').value;
+    window.setSessionVisibility(canManageCampaign(c) ? 'everyone' : 'private');
+}
+window.onAddCampaignChange = function() { applyDefaultVisibility(); };
 window.closeAddSession = function() {
     document.getElementById('add-form-overlay').classList.remove('open');
     // Reset to the form view for next time
@@ -2072,14 +2043,11 @@ window.acceptInviteFromProfile = async function(id) {
 };
 
 // ===== PROFILE / ACCOUNT =====
-window.dismissBridgeWelcome = function() { const o = document.getElementById('bridge-welcome-overlay'); if (o) o.classList.remove('open'); };
-window.bridgeCreateAccount = function() { dismissBridgeWelcome(); if (window.openProfile) window.openProfile(); };
 function accessReason(c) {
     const me = myEmail();
     if (me && campaignOwner(c) === me) return 'you own this';
     if (codeGrantsCampaign(c)) return 'via code';
     if (me && (campaignShareMembers(c).includes(me) || userCampaigns.includes(c))) return 'invited';
-    if (isBridgeCampaign(c) && isBridge()) return 'group access';
     return 'shared with you';
 }
 function visibleCampaignList() {
@@ -2094,7 +2062,7 @@ function updateEmptyState() {
     const home = document.getElementById('home-view');
     const banner = document.getElementById('no-campaigns-banner');
     if (!home || !banner) return;
-    const inApp = !!currentUser || codeGrants().length > 0 || isBridge();
+    const inApp = !!currentUser || codeGrants().length > 0;
     const empty = inApp && !hasAnyCampaign();
     banner.style.display = empty ? '' : 'none';
     home.classList.toggle('campaigns-empty', empty);
@@ -2317,13 +2285,12 @@ async function seedCampaigns() {
     // One-time migration: only seed if the campaigns collection is empty.
     const snap = await getDocs(collection(db, "campaigns"));
     if (!snap.empty) return;
-    for (const c of CAMPAIGN_MIGRATION) {
-        await setDoc(doc(db, "campaigns", c.id), {
-            name: campaignNames[c.id] || c.id,
-            icon: campaignIcons[c.id] || '',
-            color: campaignColorsDefault[c.id] || '#888888',
+    for (const id of CAMPAIGN_MIGRATION) {
+        await setDoc(doc(db, "campaigns", id), {
+            name: campaignNames[id] || id,
+            icon: campaignIcons[id] || '',
+            color: campaignColorsDefault[id] || '#888888',
             owner: MIGRATION_OWNER,
-            bridge: !!c.bridge,
             createdAt: Date.now(),
         });
     }
@@ -2362,7 +2329,7 @@ async function initApp() {
             redeemedCodes = valid;
             localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes));
             // If codes were their only way in, send them back to the gate
-            if (!redeemedCodes.length && !currentUser && sessionStorage.getItem('tpk_auth') !== 'true') {
+            if (!redeemedCodes.length && !currentUser) {
                 document.getElementById('app').style.display = 'none';
                 document.getElementById('password-gate').style.display = 'flex';
             }
