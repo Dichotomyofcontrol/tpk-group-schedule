@@ -1051,6 +1051,15 @@
         .profile-register-hint { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 10px; }
         .profile-register input { width: 100%; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.85rem; padding: 8px 10px; margin-bottom: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); outline: none; }
         .profile-reg-error { color: #e06c6c; font-size: 0.75rem; min-height: 1em; margin-top: 4px; }
+        /* ===== Schedule modal (3e) ===== */
+        .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-sizing: border-box; }
+        .swatch.active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+        .sched-preview { font-size: 0.78rem; color: var(--text-dim); margin-top: 8px; line-height: 1.6; }
+        .sched-preview strong { color: var(--text); }
+        .multi-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin: 0 6px 6px 0; font-size: 0.78rem; color: var(--text); }
+        .multi-chip .chip-x { cursor: pointer; color: var(--text-dim); font-size: 1rem; line-height: 1; }
+        .multi-chip .chip-x:hover { color: var(--strahd-primary); }
     </style>
 </head>
 <body>
@@ -1081,57 +1090,34 @@
     <button class="nav-close" onclick="closeNav()">&times;</button>
     <h2>Six in the TPK</h2>
     <div class="nav-subtitle"><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; Portland</div>
-    <div class="nav-item active" onclick="navigateTo('home')">
+    <div class="nav-item active" id="nav-home" onclick="navigateTo('home')">
         <div class="nav-item-info"><span class="nav-label">Home</span><span class="nav-sub">Schedule overview</span></div>
     </div>
     <div class="nav-divider"></div>
-    <div class="nav-item" id="nav-frostmaiden" onclick="navigateTo('frostmaiden')">
-        <div class="nav-campaign-dot frostmaiden"></div>
-        <div class="nav-item-info"><span class="nav-label">Rime of the Frostmaiden</span><span class="nav-sub">All sessions &amp; recaps</span></div>
-    </div>
-    <div class="nav-item" id="nav-strahd" onclick="navigateTo('strahd')">
-        <div class="nav-campaign-dot strahd"></div>
-        <div class="nav-item-info"><span class="nav-label">Curse of Strahd</span><span class="nav-sub">All sessions &amp; recaps</span></div>
-    </div>
-    <div class="nav-item" id="nav-drawsteel" onclick="navigateTo('drawsteel')">
-        <div class="nav-campaign-dot drawsteel"></div>
-        <div class="nav-item-info"><span class="nav-label">Draw Steel: Mini Campaign</span><span class="nav-sub">All sessions &amp; recaps</span></div>
-    </div>
-    <div class="nav-item" id="nav-leyfarers" style="display:none" onclick="navigateTo('leyfarers')">
-        <div class="nav-campaign-dot leyfarers"></div>
-        <div class="nav-item-info"><span class="nav-label">Leyfarers</span><span class="nav-sub">All sessions &amp; recaps</span></div>
-    </div>
-    <div class="nav-item" id="nav-beerovia" style="display:none" onclick="navigateTo('beerovia')">
-        <div class="nav-campaign-dot beerovia"></div>
-        <div class="nav-item-info"><span class="nav-label">Beerovia</span><span class="nav-sub">All sessions &amp; recaps</span></div>
-    </div>
-    <div class="nav-item" id="nav-special" onclick="navigateTo('special')">
-        <div class="nav-campaign-dot special"></div>
-        <div class="nav-item-info"><span class="nav-label">Special Sessions</span><span class="nav-sub">One-shots &amp; events</span></div>
-    </div>
+    <div id="nav-campaigns"></div>
     <div class="nav-divider"></div>
     <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()">&#128100; Your Account</button>
-    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">+ Add Session</button>
+    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">+ Add to Schedule</button>
+    <button class="nav-add-btn" id="nav-newcampaign-btn" onclick="openNewCampaign()" style="margin-top:8px">&#43; New Campaign</button>
     <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
 </div>
 
 <!-- Add Session Modal -->
 <div class="add-form-overlay" id="add-form-overlay" onclick="closeAddSession()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
-        <h3>Add New Session</h3>
+        <h3>Add to Schedule</h3>
         <div id="add-form-fields">
         <div class="form-row">
-            <div class="form-group"><label>Date</label><input type="date" id="new-session-date"></div>
             <div class="form-group"><label>Campaign</label>
-                <select id="new-session-campaign" onchange="onAddCampaignChange()">
-                    <option value="frostmaiden">Rime of the Frostmaiden</option>
-                    <option value="strahd">Curse of Strahd</option>
-                    <option value="drawsteel">Draw Steel: Mini Campaign</option>
-                    <option value="leyfarers" class="opt-leyfarers" hidden>Leyfarers</option>
-                    <option value="beerovia" class="opt-beerovia" hidden>Beerovia</option>
-                    <option value="special">Special</option>
-                </select>
+                <select id="new-session-campaign" onchange="onAddCampaignChange()"></select>
             </div>
+        </div>
+        <div id="new-campaign-fields" style="display:none">
+            <div class="form-row">
+                <div class="form-group" style="flex:2"><label>Campaign name</label><input type="text" id="nc-name" placeholder="e.g. Wild Beyond the Witchlight" maxlength="40"></div>
+                <div class="form-group" style="flex:0 0 64px"><label>Icon</label><input type="text" id="nc-icon" placeholder="🎲" maxlength="2"></div>
+            </div>
+            <div class="form-group"><label>Color</label><div id="nc-swatches" class="swatch-row"></div></div>
         </div>
         <div class="form-row" id="session-visibility-row" style="display:none">
             <div class="form-group"><label>Visibility</label>
@@ -1140,6 +1126,45 @@
                     <button type="button" class="seg-btn seg-right" id="vis-everyone" onclick="setSessionVisibility('everyone')">Everyone</button>
                 </div>
             </div>
+        </div>
+        <div class="form-group"><label>Sessions</label>
+            <div class="seg-pair seg-triple">
+                <button type="button" class="seg-btn seg-left active" id="mode-one" onclick="setAddMode('one')">One</button>
+                <button type="button" class="seg-btn" id="mode-recurring" onclick="setAddMode('recurring')">Recurring</button>
+                <button type="button" class="seg-btn seg-right" id="mode-multi" onclick="setAddMode('multi')">Multiple dates</button>
+            </div>
+        </div>
+        <div id="mode-one-fields">
+            <div class="form-group"><label>Date</label><input type="date" id="new-session-date"></div>
+        </div>
+        <div id="mode-recurring-fields" style="display:none">
+            <div class="form-row">
+                <div class="form-group"><label>Starts</label><input type="date" id="rec-start" onchange="renderRecurrencePreview()"></div>
+                <div class="form-group" style="flex:0 0 70px"><label>Every</label><input type="number" id="rec-interval" min="1" value="1" oninput="renderRecurrencePreview()"></div>
+                <div class="form-group"><label>&nbsp;</label>
+                    <select id="rec-freq" onchange="onRecFreqChange()"><option value="weeks">weeks</option><option value="months">months</option></select>
+                </div>
+            </div>
+            <div class="form-row" id="rec-monthly-row" style="display:none">
+                <div class="form-group"><label>Repeat</label>
+                    <select id="rec-monthly-mode" onchange="renderRecurrencePreview()"><option value="date">on day</option><option value="weekday">on the weekday</option></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Ends</label>
+                    <select id="rec-end-type" onchange="onRecEndChange()"><option value="count">after N sessions</option><option value="until">on a date</option></select>
+                </div>
+                <div class="form-group" id="rec-count-group" style="flex:0 0 90px"><label>Sessions</label><input type="number" id="rec-count" min="1" value="8" oninput="renderRecurrencePreview()"></div>
+                <div class="form-group" id="rec-until-group" style="display:none"><label>Until</label><input type="date" id="rec-until" onchange="renderRecurrencePreview()"></div>
+            </div>
+            <div id="rec-preview" class="sched-preview"></div>
+        </div>
+        <div id="mode-multi-fields" style="display:none">
+            <div class="form-row">
+                <div class="form-group"><label>Add a date</label><input type="date" id="multi-date-input"></div>
+                <div class="form-group" style="flex:0 0 70px"><label>&nbsp;</label><button type="button" class="seg-btn" style="border-radius:6px;width:100%" onclick="addMultiDate()">Add</button></div>
+            </div>
+            <div id="multi-date-list" class="sched-preview"></div>
         </div>
         <button class="customize-toggle" onclick="toggleCustomizeFields()"><span id="customize-arrow">&#9654;</span>&nbsp;Customize details</button>
         <div class="customize-fields" id="customize-fields">
@@ -1150,13 +1175,13 @@
             </div>
         </div>
         <div class="form-buttons">
-            <button class="submit-btn" onclick="submitAddSession()">Add Session</button>
+            <button class="submit-btn" onclick="submitAddSession()">Add to Schedule</button>
             <button class="cancel-form-btn" onclick="closeAddSession()">Cancel</button>
         </div>
         </div>
         <div id="add-success" style="display:none;text-align:center;padding:8px 0">
             <div style="font-size:2rem;line-height:1;margin-bottom:8px;color:var(--leyfarers-primary)">&#10003;</div>
-            <div style="font-weight:600;color:var(--text);margin-bottom:4px">Session added</div>
+            <div id="add-success-title" style="font-weight:600;color:var(--text);margin-bottom:4px">Session added</div>
             <div id="add-success-detail" style="font-size:0.8rem;color:var(--text-dim);margin-bottom:16px"></div>
             <div class="form-buttons" style="justify-content:center">
                 <button class="submit-btn" onclick="viewAddedSession()">View session</button>
@@ -1319,8 +1344,9 @@
             <div id="no-campaigns-banner" class="empty-state" style="display:none">
                 <div class="icon">&#127914;</div>
                 <div style="font-weight:600;font-size:1rem;color:var(--text);margin-bottom:6px">You're not in any campaigns yet</div>
-                <div style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px">Join one with a code from your organizer.</div>
-                <button class="submit-btn" style="max-width:240px;margin:0 auto" onclick="openJoinCode()">+ Join a campaign</button>
+                <div style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px">Create your own campaign, or join one with a code from your organizer.</div>
+                <button class="submit-btn" id="empty-create-btn" style="max-width:240px;margin:0 auto 8px;display:none" onclick="openNewCampaign()">+ Create a campaign</button>
+                <button class="cancel-form-btn" style="max-width:240px;margin:0 auto" onclick="openJoinCode()">Join with a code</button>
             </div>
             <!-- Hero: Next session countdown + last recap -->
             <div class="section-heading">Up Next</div>
@@ -1477,6 +1503,61 @@ function campaignOwner(c) {
 }
 function isArchived(c) { return !!(allCampaigns[c] && allCampaigns[c].archived); }
 function isDeleted(c) { return !!(allCampaigns[c] && allCampaigns[c].deleted); }
+// ----- Dynamic theming (3c): generate CSS for campaigns that aren't hardcoded originals -----
+const HARDCODED_CAMPAIGNS = ['frostmaiden', 'strahd', 'drawsteel', 'special', 'leyfarers', 'beerovia', 'rokugan'];
+function hexToRgb(hex) {
+    let h = String(hex || '').replace('#', '').trim();
+    if (h.length === 3) h = h.split('').map(x => x + x).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) h = '888888';
+    const n = parseInt(h, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+function renderCampaignTheme() {
+    let css = '';
+    Object.values(allCampaigns).forEach(camp => {
+        const id = camp && camp.id;
+        if (!id || HARDCODED_CAMPAIGNS.includes(id) || !/^[a-z0-9_-]+$/i.test(id)) return;
+        const { r, g, b } = hexToRgb(camp.color);
+        const col = `rgb(${r}, ${g}, ${b})`;
+        const bg = `rgb(${Math.round(14 + (r-14)*0.15)}, ${Math.round(14 + (g-14)*0.15)}, ${Math.round(18 + (b-18)*0.15)})`;
+        const soft = `rgba(${r}, ${g}, ${b}, 0.1)`;
+        css += `:root{--${id}-primary:${col};--${id}-bg:${bg};}`
+            + `.nav-campaign-dot.${id}{background:${col};}`
+            + `.stat-filter.${id} .sf-count{color:${col};}`
+            + `.stat-filter.active.${id}{background:${bg};border-color:${col};}`
+            + `.month-pill.${id}{color:${col};border-color:${col};background:${soft};}`
+            + `.session-card.${id}::before{background:${col};}`;
+    });
+    let el = document.getElementById('campaign-theme');
+    if (!el) { el = document.createElement('style'); el.id = 'campaign-theme'; document.head.appendChild(el); }
+    el.textContent = css;
+}
+// ----- Dynamic nav (3d): render campaign items from data -----
+const ORIGINAL_ORDER = ['frostmaiden', 'strahd', 'drawsteel', 'special', 'leyfarers', 'beerovia'];
+function navCampaignList() {
+    const set = new Set();
+    Object.keys(allCampaigns).forEach(c => set.add(c));
+    Object.keys(campaignNames).forEach(c => set.add(c));
+    sessions.forEach(s => { if (s.campaign) set.add(s.campaign); });
+    return [...set].filter(c => {
+        if (isDeleted(c)) return false;
+        if (canManageCampaign(c)) return true;                              // owners always see their campaign
+        return sessions.some(s => s.campaign === c && sessionVisible(s));   // else only if a session is visible
+    }).sort((a, b) => {
+        const ia = ORIGINAL_ORDER.indexOf(a), ib = ORIGINAL_ORDER.indexOf(b);
+        if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+        return campaignName(a).localeCompare(campaignName(b));
+    });
+}
+function renderNav() {
+    const cont = document.getElementById('nav-campaigns');
+    if (!cont) return;
+    cont.innerHTML = navCampaignList().map(c =>
+        `<div class="nav-item${currentPage === c ? ' active' : ''}" id="nav-${c}" onclick="navigateTo('${c}')">`
+        + `<div class="nav-campaign-dot" style="background:${campaignColor(c)}"></div>`
+        + `<div class="nav-item-info"><span class="nav-label">${escapeHtml(campaignName(c))}</span><span class="nav-sub">All sessions &amp; recaps</span></div>`
+        + `</div>`).join('');
+}
 const campaignRosters = {
     frostmaiden: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     strahd: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
@@ -1607,20 +1688,15 @@ function campaignVisible(c) {
     return campaignAccessible(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
 function updateAccessUI() {
-    // Public campaign nav items — hidden from non-group guests
-    ['frostmaiden', 'strahd', 'drawsteel', 'special'].forEach(c => {
-        const nav = document.getElementById('nav-' + c);
-        if (nav) nav.style.display = campaignVisible(c) ? '' : 'none';
-    });
+    renderNav();   // campaign nav items are rendered from data (3d)
+    // leyfarers/beerovia add-session dropdown options — show if signed-in or visible
     ['leyfarers', 'beerovia'].forEach(c => {
-        const nav = document.getElementById('nav-' + c);
-        if (nav) nav.style.display = campaignVisible(c) ? '' : 'none';
-        // Signed-in users may add their own sessions to any campaign
         document.querySelectorAll('.opt-' + c).forEach(o => { o.hidden = !(currentUser || campaignVisible(c)); });
     });
-    // Add Session / Manage Schedule are for signed-in owners, not read-only bridge/guests
+    // Add Session / Manage Schedule are for signed-in owners, not read-only guests
     const canEdit = !!currentUser;
     const addBtn = document.getElementById('nav-add-btn'); if (addBtn) addBtn.style.display = canEdit ? '' : 'none';
+    const newCampBtn = document.getElementById('nav-newcampaign-btn'); if (newCampBtn) newCampBtn.style.display = canEdit ? '' : 'none';
     const mgmtBtn = document.getElementById('nav-manage-btn'); if (mgmtBtn) mgmtBtn.style.display = canEdit ? '' : 'none';
     const chip = document.getElementById('user-chip');
     if (chip) {
@@ -1769,51 +1845,190 @@ window.closeNav = function() { document.getElementById('nav-overlay').classList.
 window.navigateTo = function(page) {
     closeNav(); currentPage = page;
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    const items = document.querySelectorAll('.nav-item');
-    if (page === 'home') items[0].classList.add('active');
-    else if (page === 'frostmaiden') items[1].classList.add('active');
-    else if (page === 'strahd') items[2].classList.add('active');
-    else if (page === 'drawsteel') items[3].classList.add('active');
-    else if (page === 'leyfarers') items[4].classList.add('active');
-    else if (page === 'beerovia') items[5].classList.add('active');
-    else if (page === 'special') items[6].classList.add('active');
+    const activeItem = document.getElementById('nav-' + page);
+    if (activeItem) activeItem.classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
     else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
 };
+// ===== RECURRENCE ENGINE (3e) — verified in recurrence_test.mjs =====
+function fmtDateLocal(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function parseDateLocal(s) { const [y,m,d] = String(s).split('-').map(Number); return new Date(y, m-1, d); }
+function ordinalOfWeekdayInMonth(date) { return Math.floor((date.getDate() - 1) / 7) + 1; }
+function nthWeekdayOfMonth(year, month, weekday, nth) {
+    if (nth === -1) { const last = new Date(year, month + 1, 0); const off = (last.getDay() - weekday + 7) % 7; return new Date(year, month, last.getDate() - off); }
+    const first = new Date(year, month, 1); const off = (weekday - first.getDay() + 7) % 7; const day = 1 + off + (nth - 1) * 7;
+    const d = new Date(year, month, day); return d.getMonth() === month ? d : null;
+}
+function generateSessionDates(opts) {
+    const CAP = 200; const start = parseDateLocal(opts.start); if (isNaN(start)) return [];
+    const interval = Math.max(1, Math.floor(opts.interval || 1));
+    const until = opts.end && opts.end.type === 'until' && opts.end.date ? parseDateLocal(opts.end.date) : null;
+    const maxCount = opts.end && opts.end.type === 'count' ? Math.max(1, Math.floor(opts.end.n || 1)) : Infinity;
+    const limit = Math.min(maxCount, CAP); const out = [];
+    if (opts.freq === 'weeks') {
+        let cur = new Date(start);
+        while (out.length < limit) { if (until && cur > until) break; out.push(fmtDateLocal(cur)); cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + interval*7); }
+    } else {
+        const weekday = start.getDay(); let ord = ordinalOfWeekdayInMonth(start); if (ord > 4) ord = -1;
+        const dayOfMonth = start.getDate(); let y = start.getFullYear(), m = start.getMonth(), steps = 0;
+        while (out.length < limit && steps < CAP) {
+            let d;
+            if (opts.monthlyMode === 'weekday') d = nthWeekdayOfMonth(y, m, weekday, ord);
+            else { const lastDay = new Date(y, m+1, 0).getDate(); d = new Date(y, m, Math.min(dayOfMonth, lastDay)); }
+            if (d) { if (until && d > until) break; out.push(fmtDateLocal(d)); }
+            m += interval; while (m > 11) { m -= 12; y++; } steps++;
+        }
+    }
+    return out;
+}
+// ===== CREATE CAMPAIGN (3e) =====
+const CAMPAIGN_SWATCHES = ['#4fc3f7','#ef5350','#f5c518','#ce93d8','#4caf50','#ff9800','#26c6da','#ab47bc','#ec407a','#8d6e63'];
+function slugify(name) { const s = String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24); return s || 'campaign'; }
+function uniqueCampaignSlug(name) { let base = slugify(name), slug = base, i = 2; while (allCampaigns[slug] || campaignNames[slug]) slug = `${base}-${i++}`; return slug; }
+async function createCampaignDoc(name, icon, color) {
+    const me = myEmail(); if (!me) throw new Error('Sign in to create a campaign.');
+    const slug = uniqueCampaignSlug(name);
+    const data = { name: name.trim(), icon: (icon || '🎲').trim() || '🎲', color: color || '#4fc3f7', owner: me, createdAt: Date.now() };
+    await setDoc(doc(db, "campaigns", slug), data);
+    allCampaigns[slug] = { id: slug, ...data };
+    renderCampaignTheme();
+    return slug;
+}
+// Populate a campaign <select> from data (optionally with a "New campaign" option).
+function populateCampaignDropdown(selId, opt) {
+    const sel = document.getElementById(selId); if (!sel) return;
+    const cur = sel.value;
+    const list = (opt && opt.manageOnly) ? navCampaignList().filter(canManageCampaign) : navCampaignList();
+    let html = list.map(c => `<option value="${c}">${escapeHtml(campaignName(c))}</option>`).join('');
+    if (opt && opt.includeNew) html += `<option value="__new__">＋ New campaign…</option>`;
+    sel.innerHTML = html;
+    if (cur && [...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+// ===== SCHEDULE MODAL (3e) =====
+let addMode = 'one';
+let multiDates = [];
+let ncColor = CAMPAIGN_SWATCHES[0];
+let newSessionVisibility = 'private';
+let lastAddedSession = null;
 window.openAddSession = function() {
     closeNav();
-    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    document.getElementById('new-session-date').value = tomorrow.toISOString().split('T')[0];
+    populateCampaignDropdown('new-session-campaign', { includeNew: true });
+    const t = new Date(); t.setDate(t.getDate() + 1); const tstr = t.toISOString().split('T')[0];
+    document.getElementById('new-session-date').value = tstr;
+    document.getElementById('rec-start').value = tstr;
+    ['new-session-time','new-session-gm','new-session-duration','nc-name','nc-icon'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+    multiDates = []; ncColor = CAMPAIGN_SWATCHES[0];
+    setAddMode('one');
+    onNewCampaignToggle();
     applyDefaultVisibility();
+    const succ = document.getElementById('add-success'); if (succ) succ.style.display = 'none';
+    document.getElementById('add-form-fields').style.display = '';
     document.getElementById('add-form-overlay').classList.add('open');
 };
-// Scheduling in a campaign you own defaults to Everyone (it's a group session);
-// adding to a campaign you don't own defaults to Just Me (personal).
-function applyDefaultVisibility() {
-    if (!currentUser) return;
-    const c = document.getElementById('new-session-campaign').value;
-    window.setSessionVisibility(canManageCampaign(c) ? 'everyone' : 'private');
-}
-window.onAddCampaignChange = function() { applyDefaultVisibility(); };
+window.openNewCampaign = function() {
+    openAddSession();
+    document.getElementById('new-session-campaign').value = '__new__';
+    onNewCampaignToggle(); applyDefaultVisibility();
+};
 window.closeAddSession = function() {
     document.getElementById('add-form-overlay').classList.remove('open');
-    // Reset to the form view for next time
     const succ = document.getElementById('add-success'); if (succ) succ.style.display = 'none';
     const fields = document.getElementById('add-form-fields'); if (fields) fields.style.display = '';
 };
-let lastAddedSession = null;
-function showAddSuccess(campaign, dateVal) {
+window.onAddCampaignChange = function() { onNewCampaignToggle(); applyDefaultVisibility(); };
+function onNewCampaignToggle() {
+    const isNew = document.getElementById('new-session-campaign').value === '__new__';
+    document.getElementById('new-campaign-fields').style.display = isNew ? '' : 'none';
+    if (isNew) renderSwatches();
+}
+function renderSwatches() {
+    const el = document.getElementById('nc-swatches'); if (!el) return;
+    el.innerHTML = CAMPAIGN_SWATCHES.map(c => `<span class="swatch${c === ncColor ? ' active' : ''}" style="background:${c}" onclick="pickSwatch('${c}')"></span>`).join('');
+}
+window.pickSwatch = function(c) { ncColor = c; renderSwatches(); };
+// Owned/new campaigns default to Everyone (group session); others to Just Me (personal).
+function applyDefaultVisibility() {
+    if (!currentUser) return;
+    const c = document.getElementById('new-session-campaign').value;
+    window.setSessionVisibility((c === '__new__' || canManageCampaign(c)) ? 'everyone' : 'private');
+}
+window.setSessionVisibility = function(v) {
+    newSessionVisibility = v;
+    document.getElementById('vis-private').classList.toggle('active', v === 'private');
+    document.getElementById('vis-everyone').classList.toggle('active', v === 'everyone');
+};
+window.setAddMode = function(mode) {
+    addMode = mode;
+    ['one','recurring','multi'].forEach(m => {
+        const b = document.getElementById('mode-' + m); if (b) b.classList.toggle('active', m === mode);
+        const f = document.getElementById('mode-' + m + '-fields'); if (f) f.style.display = m === mode ? '' : 'none';
+    });
+    if (mode === 'recurring') renderRecurrencePreview();
+    if (mode === 'multi') renderMultiList();
+};
+function recOpts() {
+    return {
+        start: document.getElementById('rec-start').value,
+        freq: document.getElementById('rec-freq').value,
+        interval: parseInt(document.getElementById('rec-interval').value, 10) || 1,
+        monthlyMode: document.getElementById('rec-monthly-mode').value,
+        end: document.getElementById('rec-end-type').value === 'until'
+            ? { type: 'until', date: document.getElementById('rec-until').value }
+            : { type: 'count', n: parseInt(document.getElementById('rec-count').value, 10) || 1 },
+    };
+}
+window.onRecFreqChange = function() {
+    document.getElementById('rec-monthly-row').style.display = document.getElementById('rec-freq').value === 'months' ? '' : 'none';
+    renderRecurrencePreview();
+};
+window.onRecEndChange = function() {
+    const until = document.getElementById('rec-end-type').value === 'until';
+    document.getElementById('rec-until-group').style.display = until ? '' : 'none';
+    document.getElementById('rec-count-group').style.display = until ? 'none' : '';
+    renderRecurrencePreview();
+};
+function updateMonthlyLabels() {
+    const startVal = document.getElementById('rec-start').value;
+    const sel = document.getElementById('rec-monthly-mode');
+    if (!startVal || !sel) return;
+    const d = parseDateLocal(startVal);
+    const ord = ordinalOfWeekdayInMonth(d);
+    const ordLabel = ord > 4 ? 'last' : ['', '1st', '2nd', '3rd', '4th'][ord];
+    const wd = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+    sel.options[0].textContent = `on day ${d.getDate()}`;
+    sel.options[1].textContent = `on the ${ordLabel} ${wd}`;
+}
+window.renderRecurrencePreview = function() {
+    updateMonthlyLabels();
+    const el = document.getElementById('rec-preview'); if (!el) return;
+    const opts = recOpts();
+    if (!opts.start) { el.textContent = 'Pick a start date.'; return; }
+    const dates = generateSessionDates(opts);
+    if (!dates.length) { el.textContent = 'No dates — check the end date.'; return; }
+    const shown = dates.slice(0, 6).map(d => formatDateShort(d)).join(' · ');
+    el.innerHTML = `<strong>${dates.length}</strong> session${dates.length>1?'s':''}: ${shown}${dates.length > 6 ? ` · +${dates.length-6} more` : ''}`;
+};
+window.addMultiDate = function() {
+    const inp = document.getElementById('multi-date-input'); const v = inp.value;
+    if (v && !multiDates.includes(v)) { multiDates.push(v); multiDates.sort(); }
+    inp.value = ''; renderMultiList();
+};
+window.removeMultiDate = function(d) { multiDates = multiDates.filter(x => x !== d); renderMultiList(); };
+function renderMultiList() {
+    const el = document.getElementById('multi-date-list'); if (!el) return;
+    if (!multiDates.length) { el.innerHTML = '<span style="color:var(--text-dim)">No dates added yet.</span>'; return; }
+    el.innerHTML = multiDates.map(d => `<span class="multi-chip">${formatDateShort(d)}<span class="chip-x" onclick="removeMultiDate('${d}')">&times;</span></span>`).join('');
+}
+function showAddSuccess(campaign, dates) {
     document.getElementById('add-form-fields').style.display = 'none';
-    document.getElementById('add-success-detail').textContent = `${campaignName(campaign)} · ${formatDateShort(dateVal)}`;
+    const n = dates.length;
+    const title = document.getElementById('add-success-title'); if (title) title.textContent = n === 1 ? 'Session added' : `${n} sessions added`;
+    document.getElementById('add-success-detail').textContent = n === 1
+        ? `${campaignName(campaign)} · ${formatDateShort(dates[0])}`
+        : `${campaignName(campaign)} · ${formatDateShort(dates[0])} – ${formatDateShort(dates[n-1])}`;
     document.getElementById('add-success').style.display = '';
 }
-window.addAnotherSession = function() {
-    document.getElementById('add-success').style.display = 'none';
-    document.getElementById('add-form-fields').style.display = '';
-    const t = new Date(); t.setDate(t.getDate() + 1);
-    document.getElementById('new-session-date').value = t.toISOString().split('T')[0];
-    ['new-session-time','new-session-gm','new-session-duration'].forEach(id => { document.getElementById(id).value = ''; });
-};
+window.addAnotherSession = function() { openAddSession(); };
 window.viewAddedSession = function() {
     const c = lastAddedSession && lastAddedSession.campaign;
     closeAddSession();
@@ -1823,38 +2038,50 @@ window.toggleCustomizeFields = function() {
     const f = document.getElementById('customize-fields'); const a = document.getElementById('customize-arrow');
     f.classList.toggle('open'); a.innerHTML = f.classList.contains('open') ? '&#9660;' : '&#9654;';
 };
-let newSessionVisibility = 'private';
-window.setSessionVisibility = function(v) {
-    newSessionVisibility = v;
-    document.getElementById('vis-private').classList.toggle('active', v === 'private');
-    document.getElementById('vis-everyone').classList.toggle('active', v === 'everyone');
-};
 window.submitAddSession = async function() {
-    const dateVal = document.getElementById('new-session-date').value;
-    const campaign = document.getElementById('new-session-campaign').value;
-    if (!dateVal) { alert('Please select a date.'); return; }
-    const isPrivate = !!(currentUser && newSessionVisibility === 'private');
-    // Multiple sessions per date are allowed — use a unique doc id when the date is taken.
-    // Private sessions always get a unique id so they never clobber a group session doc.
-    const docId = (isPrivate || sessions.find(s => s.id === dateVal || s.date === dateVal)) ? `${dateVal}-${Date.now().toString(36)}` : dateVal;
-    const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
-    const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
-    const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
-    const roster = campaignRosters[campaign] || []; const attendance = {};
-    roster.forEach(p => { attendance[p] = "in"; });
-    const data = { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" };
-    if (isPrivate) { data.owner = myEmail(); data.invited = []; }
+    let campaign = document.getElementById('new-session-campaign').value;
+    const isNew = campaign === '__new__';
+    // Collect dates by mode
+    let dates = [];
+    if (addMode === 'one') {
+        const d = document.getElementById('new-session-date').value;
+        if (!d) { alert('Please select a date.'); return; }
+        dates = [d];
+    } else if (addMode === 'recurring') {
+        dates = generateSessionDates(recOpts());
+        if (!dates.length) { alert('No dates generated — check the recurrence settings.'); return; }
+    } else {
+        if (!multiDates.length) { alert('Add at least one date.'); return; }
+        dates = [...multiDates];
+    }
     const btn = document.querySelector('#add-form-fields .submit-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Adding…'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
     try {
-        await setDoc(doc(db, "sessions", docId), data);
-        lastAddedSession = { id: docId, campaign, date: dateVal };
-        showAddSuccess(campaign, dateVal);
+        if (isNew) {
+            const name = document.getElementById('nc-name').value.trim();
+            if (!name) { alert('Enter a campaign name.'); if (btn) { btn.disabled = false; btn.textContent = 'Add to Schedule'; } return; }
+            campaign = await createCampaignDoc(name, document.getElementById('nc-icon').value, ncColor);
+        }
+        const isPrivate = !!(currentUser && newSessionVisibility === 'private');
+        const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
+        const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
+        const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
+        const roster = campaignRosters[campaign] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; });
+        let firstId = null;
+        for (const dateVal of dates) {
+            const docId = `${dateVal}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+            const data = { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" };
+            if (isPrivate) { data.owner = myEmail(); data.invited = []; }
+            await setDoc(doc(db, "sessions", docId), data);
+            if (!firstId) firstId = docId;
+        }
+        lastAddedSession = { id: firstId, campaign, date: dates[0] };
+        showAddSuccess(campaign, dates);
     } catch (err) {
-        console.error("Error adding session:", err);
-        alert('Error adding session — please try again.');
+        console.error("Error scheduling:", err);
+        alert('Error saving — please try again.');
     } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Add Session'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Add to Schedule'; }
     }
 };
 
@@ -1886,8 +2113,8 @@ function updateInviteUI() {
     document.getElementById('invite-scope-session').classList.toggle('active', inviteScope === 'session');
     document.getElementById('invite-scope-campaign').classList.toggle('active', inviteScope === 'campaign');
     document.getElementById('invite-context').textContent = s
-        ? `${campaignNames[campaign]} — ${formatDateShort(s.date)}, ${s.time}`
-        : `${campaignNames[campaign] || campaign} — whole campaign`;
+        ? `${campaignName(campaign)} — ${formatDateShort(s.date)}, ${s.time}`
+        : `${campaignName(campaign)} — whole campaign`;
     document.getElementById('invite-scope-hint').textContent = inviteScope === 'session'
         ? 'They will see just this one session.'
         : `They will be invited to the campaign — your sessions, recaps, and future additions.`;
@@ -1990,9 +2217,9 @@ window.submitInvite = async function() {
     updateInviteUI();
     // Open a pre-filled email so they know how to get in
     const what = inviteScope === 'session'
-        ? `the ${campaignNames[campaign]} session on ${formatDateShort(s.date)}`
-        : `the ${campaignNames[campaign] || campaign} campaign`;
-    const subject = `You're invited: ${campaignNames[campaign] || campaign} on Six in the TPK`;
+        ? `the ${campaignName(campaign)} session on ${formatDateShort(s.date)}`
+        : `the ${campaignName(campaign)} campaign`;
+    const subject = `You're invited: ${campaignName(campaign)} on Six in the TPK`;
     const body = `Hey!\n\nI've invited you to ${what} on Six in the TPK.\n\nTo join:\n1. Go to https://sixinthetpk.com\n2. Under "or sign in with email", click "Invited? Create an account"\n3. Sign up using this exact email address (${email})\n4. Accept the invite when it pops up — you can add your character to the party right there.\n\nDates, times, and recaps are all managed on my end — you'll always see the latest.\n\nSee you at the table!`;
     window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 };
@@ -2066,6 +2293,7 @@ function updateEmptyState() {
     const empty = inApp && !hasAnyCampaign();
     banner.style.display = empty ? '' : 'none';
     home.classList.toggle('campaigns-empty', empty);
+    const createBtn = document.getElementById('empty-create-btn'); if (createBtn) createBtn.style.display = (empty && currentUser) ? '' : 'none';
 }
 window.openProfile = function() {
     if (typeof closeNav === 'function') closeNav();
@@ -2091,7 +2319,7 @@ function renderProfilePanel() {
     if (camps.length) {
         html += `<div class="profile-list">`;
         camps.forEach(c => {
-            html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot ${c}"></span><span>${escapeHtml(campaignNames[c] || c)}</span></div><span class="profile-tag">${accessReason(c)}</span></div>`;
+            html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot" style="background:${campaignColor(c)}"></span><span>${escapeHtml(campaignName(c))}</span></div><span class="profile-tag">${accessReason(c)}</span></div>`;
         });
         html += `</div>`;
     } else {
@@ -2102,7 +2330,7 @@ function renderProfilePanel() {
         if (pending.length) {
             html += `<div class="profile-section-label">Pending Invites</div><div class="profile-list">`;
             pending.forEach(inv => {
-                html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot ${inv.campaign}"></span><span>${escapeHtml(campaignNames[inv.campaign] || inv.campaign)}</span></div><button class="profile-accept-btn" onclick="acceptInviteFromProfile('${inv.id}')">Accept</button></div>`;
+                html += `<div class="profile-row"><div class="profile-row-main"><span class="nav-campaign-dot" style="background:${campaignColor(inv.campaign)}"></span><span>${escapeHtml(campaignName(inv.campaign))}</span></div><button class="profile-accept-btn" onclick="acceptInviteFromProfile('${inv.id}')">Accept</button></div>`;
             });
             html += `</div>`;
         }
@@ -2224,6 +2452,7 @@ window.updateBulkPreview = function() {
 };
 window.openBulkUpdate = function(scopeCampaign) {
     closeNav();
+    populateCampaignDropdown('bulk-campaign', { manageOnly: true });
     const sel = document.getElementById('bulk-campaign');
     const row = sel.closest('.form-row');
     const title = document.getElementById('bulk-title');
@@ -2261,7 +2490,7 @@ window.applyBulkUpdate = async function() {
     const campaign = document.getElementById('bulk-campaign').value;
     const end = document.getElementById('bulk-end').value;
     const changes = [time && `time → ${time}`, gm && `GM → ${gm}`, dur && `duration → ${dur}`].filter(Boolean).join(', ');
-    if (!confirm(`Update ${targets.length} ${campaignNames[campaign]} session${targets.length > 1 ? 's' : ''} ${end ? `between ${start} and ${end}` : `from ${start} onward`}?\n\n${changes}`)) return;
+    if (!confirm(`Update ${targets.length} ${campaignName(campaign)} session${targets.length > 1 ? 's' : ''} ${end ? `between ${start} and ${end}` : `from ${start} onward`}?\n\n${changes}`)) return;
     const updates = {};
     if (time) updates.time = time;
     if (gm) updates.gm = gm;
@@ -2304,6 +2533,7 @@ async function initApp() {
     onSnapshot(collection(db, "campaigns"), (snap) => {
         allCampaigns = {};
         snap.forEach(d => { allCampaigns[d.id] = { id: d.id, ...d.data() }; });
+        renderCampaignTheme();
         updateAccessUI();
         renderAll();
         if (currentPage !== 'home') renderCampaignPage(currentPage);
@@ -2399,7 +2629,8 @@ window.openEditSession = function(sd) {
     if (!s || !canManage(s)) return;
     const card = findSessionCard(sd);
     if (!card) return;
-    const campaignOptions = Object.keys(campaignNames).map(c => `<option value="${c}"${c === s.campaign ? ' selected' : ''}>${campaignNames[c]}</option>`).join('');
+    const editCamps = [...new Set([...navCampaignList().filter(canManageCampaign), s.campaign])];
+    const campaignOptions = editCamps.map(c => `<option value="${c}"${c === s.campaign ? ' selected' : ''}>${escapeHtml(campaignName(c))}</option>`).join('');
     const editHtml = `<div class="session-edit-form" onclick="event.stopPropagation()">
         <div class="edit-row">
             <div class="edit-field"><label>Date</label><input type="date" id="edit-date-${sd}" value="${s.date}"></div>
@@ -2733,7 +2964,7 @@ window.showAllSessionsConfirm = function() {
     document.getElementById('scope-overlay').classList.remove('open');
     const action = pendingPartyAction;
     if (!action) return;
-    let desc = 'This will modify all sessions for ' + campaignNames[action.campaign] + ', including past sessions. This cannot be undone.';
+    let desc = 'This will modify all sessions for ' + campaignName(action.campaign) + ', including past sessions. This cannot be undone.';
     document.getElementById('confirm-desc').textContent = desc;
     document.getElementById('confirm-overlay').classList.add('open');
 };
@@ -2838,7 +3069,7 @@ function renderHero() {
         recapBlock += `</div>`;
     }
     const heroTitle = next.title ? ` &mdash; ${escapeHtml(next.title)}` : '';
-    document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcons[next.campaign]} ${campaignNames[next.campaign]}${heroTitle}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
+    document.getElementById('hero-section').innerHTML = `<div class="hero-card ${next.campaign}"><div class="hero-top"><div class="hero-campaign">${campaignIcon(next.campaign)} ${escapeHtml(campaignName(next.campaign))}${heroTitle}</div><div class="hero-countdown">Next session <strong>${when}</strong></div></div><div class="hero-date">${formatDate(next.date)} &middot; ${next.time} &middot; GM: ${next.gm}</div>${recapBlock}</div>`;
 }
 
 // ===== LAST SESSIONS: Collapsible section =====
@@ -2848,7 +3079,7 @@ window.openReaderModal = function(ds) {
     const modal = document.getElementById('reader-modal');
     const overlay = document.getElementById('reader-overlay');
     modal.className = `reader-modal ${s.campaign}`;
-    document.getElementById('reader-title').textContent = campaignNames[s.campaign];
+    document.getElementById('reader-title').textContent = campaignName(s.campaign);
     document.getElementById('reader-date').textContent = formatDate(s.date);
     document.getElementById('reader-body').innerHTML = s.recapHtml || `<p>${escapeHtml(s.recap || 'No recap available.')}</p>`;
     let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">Copy</button>`;
@@ -3017,7 +3248,7 @@ function renderSessionCard(s, gi, ci) {
     }
     const inviteBtnHtml = isOwner ? `<button class="share-btn" onclick="event.stopPropagation(); openInvite('${sid}')">&#43; Invite</button>` : '';
     const shareSessionHtml = `<div class="session-detail-section" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap"><button class="share-btn" onclick="event.stopPropagation(); shareLink('${s.campaign}','${s.date}',false,event)">Share Session</button>${inviteBtnHtml}</div>`;
-    const titleHtml = s.title ? `${campaignNames[s.campaign]} &mdash; ${escapeHtml(s.title)}` : campaignNames[s.campaign];
+    const titleHtml = s.title ? `${escapeHtml(campaignName(s.campaign))} &mdash; ${escapeHtml(s.title)}` : escapeHtml(campaignName(s.campaign));
     const levelHtml = s.level ? ` \u00b7 ${escapeHtml(s.level)}` : '';
     let ownerTag = '';
     if (s.owner) {
@@ -3067,7 +3298,7 @@ window.togglePastSessions = function() { pastSessionsVisible = !pastSessionsVisi
 
 function renderCampaignPage(campaign) {
     const today = getToday();
-    document.getElementById('campaign-page-title').innerHTML = `${campaignIcons[campaign]} ${campaignNames[campaign]}`;
+    document.getElementById('campaign-page-title').innerHTML = `${campaignIcon(campaign)} ${escapeHtml(campaignName(campaign))}`;
     document.getElementById('campaign-page-title').style.color = `var(--${campaign}-primary)`;
     const manageBtn = document.getElementById('campaign-manage-btn');
     if (manageBtn) manageBtn.style.display = canManageCampaign(campaign) ? '' : 'none';
@@ -3138,7 +3369,7 @@ function renderCampaignPage(campaign) {
         html += `<div class="sessions-wrapper">`;
         html += `<div class="section-heading">Sessions</div>`;
         html += `<div class="controls-panel">`;
-        html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${campaignNames[campaign]}</span></button></div>`;
+        html += `<div class="stats-bar"><button class="stat-filter ${campaign} active"><span class="sf-count">${nonCancelled}</span><span class="sf-label">${escapeHtml(campaignName(campaign))}</span></button></div>`;
         html += `<div class="controls-row">`;
         html += `<div class="controls-left">`;
         html += `<button class="view-btn active" data-view="list">List</button>`;
@@ -3222,7 +3453,7 @@ window.showTooltip = function(ev, ds) {
         const inL = r.filter(p => (a[p]||"in") === "in"); const outL = r.filter(p => a[p] === "out");
         let att = ''; if (inL.length) att += `<br>✅ ${inL.join(', ')}`; if (outL.length) att += `<br>❌ ${outL.join(', ')}`;
         const t = s.title ? ` — ${escapeHtml(s.title)}` : '';
-        inner += `<div class="tooltip-campaign" style="color:var(--${s.campaign}-primary)${i ? ';margin-top:8px' : ''}">${campaignIcons[s.campaign]} ${campaignNames[s.campaign]}${t}</div><div class="tooltip-detail">${i === 0 ? formatDate(s.date) + '<br>' : ''}GM: ${s.gm} · ${s.time} · ${s.duration}${att}</div>`;
+        inner += `<div class="tooltip-campaign" style="color:${campaignColor(s.campaign)}${i ? ';margin-top:8px' : ''}">${campaignIcon(s.campaign)} ${escapeHtml(campaignName(s.campaign))}${t}</div><div class="tooltip-detail">${i === 0 ? formatDate(s.date) + '<br>' : ''}GM: ${s.gm} · ${s.time} · ${s.duration}${att}</div>`;
     });
     tip.innerHTML = inner;
     tip.classList.add('show'); const rect = ev.target.getBoundingClientRect();
