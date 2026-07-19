@@ -288,6 +288,39 @@
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         @media (max-width: 600px) { .user-chip { display: none !important; } }
+        /* Segmented pill pairs (Just Me/Everyone, This Session/Whole Campaign) */
+        .seg-pair { display: flex; gap: 6px; }
+        .seg-btn {
+            font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 500;
+            padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
+            color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+        }
+        .seg-btn.seg-left { border-radius: 6px 0 0 6px; }
+        .seg-btn.seg-right { border-radius: 0 6px 6px 0; }
+        .seg-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .seg-btn.active { color: var(--text); border-color: var(--frostmaiden-primary); background: var(--surface); }
+        /* Owner/shared tag on session cards */
+        .owner-tag {
+            font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 2px 8px; border-radius: 100px; margin-left: 8px; vertical-align: 2px;
+            background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+            display: inline-block; white-space: nowrap;
+        }
+        /* Invite modal chips */
+        .invite-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.72rem; padding: 4px 10px; border-radius: 100px; margin: 0 6px 6px 0;
+            background: var(--surface); border: 1px solid var(--border); color: var(--text);
+        }
+        .invite-chip .chip-scope { color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .invite-chip .chip-x { cursor: pointer; color: var(--text-dim); font-weight: 600; padding: 0 2px; }
+        .invite-chip .chip-x:hover { color: var(--strahd-primary); }
+        .invite-current-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 4px 0 8px; }
+        .gate-mode-link {
+            background: none; border: none; color: var(--text-dim); font-family: 'Inter', sans-serif;
+            font-size: 0.75rem; cursor: pointer; margin-top: 10px; text-decoration: underline; text-underline-offset: 3px;
+        }
+        .gate-mode-link:hover { color: var(--text); }
         .month-pills { display: flex; gap: 4px; flex-wrap: wrap; }
         .month-pill {
             font-family: 'Inter', sans-serif; font-size: 0.62rem; font-weight: 600;
@@ -1005,9 +1038,10 @@
     <div class="email-form">
         <input type="email" id="email-input" placeholder="Email" autocomplete="email">
         <input type="password" id="email-pass-input" placeholder="Password" autocomplete="current-password">
-        <button onclick="emailSignIn()">Sign In</button>
+        <button id="email-submit-btn" onclick="emailSignIn()">Sign In</button>
     </div>
     <div class="pass-error" id="email-error"></div>
+    <button class="gate-mode-link" id="gate-mode-link" onclick="toggleGateMode()">Invited? Create an account</button>
     <div class="pass-hint">Password Available in Discord</div>
 </div>
 
@@ -1067,6 +1101,14 @@
                 </select>
             </div>
         </div>
+        <div class="form-row" id="session-visibility-row" style="display:none">
+            <div class="form-group"><label>Visibility</label>
+                <div class="seg-pair">
+                    <button type="button" class="seg-btn seg-left active" id="vis-private" onclick="setSessionVisibility('private')">Just Me</button>
+                    <button type="button" class="seg-btn seg-right" id="vis-everyone" onclick="setSessionVisibility('everyone')">Everyone</button>
+                </div>
+            </div>
+        </div>
         <button class="customize-toggle" onclick="toggleCustomizeFields()"><span id="customize-arrow">&#9654;</span>&nbsp;Customize details</button>
         <div class="customize-fields" id="customize-fields">
             <div class="form-row">
@@ -1112,6 +1154,31 @@
         <div class="form-buttons">
             <button class="submit-btn" onclick="applyBulkUpdate()">Apply Changes</button>
             <button class="cancel-form-btn" onclick="closeBulkUpdate()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Invite Modal -->
+<div class="add-form-overlay" id="invite-overlay" onclick="closeInvite()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Invite Someone</h3>
+        <div id="invite-context" style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px"></div>
+        <div class="form-row">
+            <div class="form-group" style="flex:1"><label>Their Email</label><input type="email" id="invite-email" placeholder="friend@email.com" autocomplete="off"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Invite To</label>
+                <div class="seg-pair">
+                    <button type="button" class="seg-btn seg-left active" id="invite-scope-session" onclick="setInviteScope('session')">This Session</button>
+                    <button type="button" class="seg-btn seg-right" id="invite-scope-campaign" onclick="setInviteScope('campaign')">Whole Campaign</button>
+                </div>
+            </div>
+        </div>
+        <div id="invite-scope-hint" style="font-size:0.72rem;color:var(--text-dim);margin:2px 0 10px"></div>
+        <div id="invite-current"></div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="submitInvite()">Add &amp; Email Invite</button>
+            <button class="cancel-form-btn" onclick="closeInvite()">Close</button>
         </div>
     </div>
 </div>
@@ -1250,9 +1317,9 @@
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -1340,31 +1407,48 @@ const seedSessions = [
 
 let sessions = [];
 let activeFilter = "all";
-// ===== CAMPAIGN VISIBILITY =====
-// Public campaigns are visible to everyone (passphrase entry).
-// Personal campaigns (leyfarers, beerovia) only appear for a signed-in email user
-// whose profile grants them — via Firestore doc profiles/{email} { campaigns: [...] },
-// with a built-in fallback map so no console setup is needed for known users.
+// ===== VISIBILITY & OWNERSHIP =====
+// Group sessions (no `owner` field) in public campaigns are visible to everyone.
+// Legacy personal campaigns (leyfarers, beerovia) stay visible via profiles/{email}
+// grants or the fallback map. Sessions created by a signed-in user carry
+// `owner: email` and are visible only to the owner, per-session invitees
+// (`invited: [emails]`), and campaign-level invitees (shares/{owner}__{campaign}
+// doc with `members: [emails]` — also covers future sessions the owner adds).
 const PUBLIC_CAMPAIGNS = ['frostmaiden', 'strahd', 'drawsteel', 'special'];
 const FALLBACK_USER_CAMPAIGNS = { 'sthomas131@gmail.com': ['leyfarers', 'beerovia'] };
 let currentUser = null;
 let userCampaigns = [];
-function visibleCampaigns() { return PUBLIC_CAMPAIGNS.concat(userCampaigns); }
-function campaignVisible(c) { return visibleCampaigns().includes(c); }
-function profileSessions() {
-    return sessions.filter(s => campaignVisible(s.campaign));
+let allShares = {};   // `${owner}__${campaign}` -> [member emails]
+function myEmail() { return currentUser && currentUser.email ? currentUser.email.toLowerCase() : null; }
+function shareKey(owner, campaign) { return `${owner}__${campaign}`; }
+function shareMembers(owner, campaign) { return allShares[shareKey(owner, campaign)] || []; }
+function sessionVisible(s) {
+    if (s.owner) {
+        const me = myEmail(); if (!me) return false;
+        return s.owner === me || (s.invited || []).includes(me) || shareMembers(s.owner, s.campaign).includes(me);
+    }
+    return PUBLIC_CAMPAIGNS.includes(s.campaign) || userCampaigns.includes(s.campaign);
+}
+function profileSessions() { return sessions.filter(sessionVisible); }
+// Can the current viewer manage (edit/cancel/recap/invite) this session?
+function canManage(s) { return !s.owner || s.owner === myEmail(); }
+function campaignVisible(c) {
+    return PUBLIC_CAMPAIGNS.includes(c) || userCampaigns.includes(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
 function updateAccessUI() {
     ['leyfarers', 'beerovia'].forEach(c => {
         const nav = document.getElementById('nav-' + c);
         if (nav) nav.style.display = campaignVisible(c) ? '' : 'none';
-        document.querySelectorAll('.opt-' + c).forEach(o => { o.hidden = !campaignVisible(c); });
+        // Signed-in users may add their own sessions to any campaign
+        document.querySelectorAll('.opt-' + c).forEach(o => { o.hidden = !(currentUser || campaignVisible(c)); });
     });
     const chip = document.getElementById('user-chip');
     if (chip) {
         chip.textContent = currentUser ? (currentUser.email || '') : '';
         chip.style.display = currentUser ? '' : 'none';
     }
+    const visRow = document.getElementById('session-visibility-row');
+    if (visRow) visRow.style.display = currentUser ? '' : 'none';
 }
 let activeView = "list";
 let activeTimeFilter = "upcoming";
@@ -1384,6 +1468,13 @@ window.checkPassword = function() {
     if (input === PASSPHRASE) { sessionStorage.setItem('tpk_auth', 'true'); showApp(); }
     else { document.getElementById('pass-error').textContent = "Wrong passphrase. Try again."; }
 };
+let gateCreateMode = false;
+window.toggleGateMode = function() {
+    gateCreateMode = !gateCreateMode;
+    document.getElementById('email-submit-btn').textContent = gateCreateMode ? 'Create Account' : 'Sign In';
+    document.getElementById('gate-mode-link').textContent = gateCreateMode ? 'Have an account? Sign in' : 'Invited? Create an account';
+    document.getElementById('email-error').textContent = '';
+};
 window.emailSignIn = async function() {
     const email = document.getElementById('email-input').value.trim();
     const pass = document.getElementById('email-pass-input').value;
@@ -1391,10 +1482,13 @@ window.emailSignIn = async function() {
     err.textContent = '';
     if (!email || !pass) { err.textContent = "Enter your email and password."; return; }
     try {
-        await signInWithEmailAndPassword(auth, email, pass);
+        if (gateCreateMode) await createUserWithEmailAndPassword(auth, email, pass);
+        else await signInWithEmailAndPassword(auth, email, pass);
         // onAuthStateChanged handles the rest
     } catch (e) {
-        err.textContent = "Sign-in failed. Check your email and password.";
+        if (gateCreateMode && e.code === 'auth/email-already-in-use') err.textContent = "That email already has an account — sign in instead.";
+        else if (gateCreateMode && e.code === 'auth/weak-password') err.textContent = "Password too weak — use at least 6 characters.";
+        else err.textContent = gateCreateMode ? "Couldn't create the account. Check the email and try again." : "Sign-in failed. Check your email and password.";
     }
 };
 window.logout = function() {
@@ -1460,6 +1554,7 @@ window.openAddSession = function() {
     closeNav();
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
     document.getElementById('new-session-date').value = tomorrow.toISOString().split('T')[0];
+    if (currentUser) window.setSessionVisibility('private');
     document.getElementById('add-form-overlay').classList.add('open');
 };
 window.closeAddSession = function() { document.getElementById('add-form-overlay').classList.remove('open'); };
@@ -1467,19 +1562,98 @@ window.toggleCustomizeFields = function() {
     const f = document.getElementById('customize-fields'); const a = document.getElementById('customize-arrow');
     f.classList.toggle('open'); a.innerHTML = f.classList.contains('open') ? '&#9660;' : '&#9654;';
 };
+let newSessionVisibility = 'private';
+window.setSessionVisibility = function(v) {
+    newSessionVisibility = v;
+    document.getElementById('vis-private').classList.toggle('active', v === 'private');
+    document.getElementById('vis-everyone').classList.toggle('active', v === 'everyone');
+};
 window.submitAddSession = async function() {
     const dateVal = document.getElementById('new-session-date').value;
     const campaign = document.getElementById('new-session-campaign').value;
     if (!dateVal) { alert('Please select a date.'); return; }
-    // Multiple sessions per date are allowed — use a unique doc id when the date is taken
-    const docId = sessions.find(s => s.id === dateVal || s.date === dateVal) ? `${dateVal}-${Date.now().toString(36)}` : dateVal;
+    const isPrivate = !!(currentUser && newSessionVisibility === 'private');
+    // Multiple sessions per date are allowed — use a unique doc id when the date is taken.
+    // Private sessions always get a unique id so they never clobber a group session doc.
+    const docId = (isPrivate || sessions.find(s => s.id === dateVal || s.date === dateVal)) ? `${dateVal}-${Date.now().toString(36)}` : dateVal;
     const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
     const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
     const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
     const roster = campaignRosters[campaign] || []; const attendance = {};
     roster.forEach(p => { attendance[p] = "in"; });
-    try { await setDoc(doc(db, "sessions", docId), { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" }); closeAddSession(); }
+    const data = { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" };
+    if (isPrivate) { data.owner = myEmail(); data.invited = []; }
+    try { await setDoc(doc(db, "sessions", docId), data); closeAddSession(); }
     catch (err) { console.error("Error adding session:", err); alert('Error adding session.'); }
+};
+
+// ===== INVITES =====
+let inviteSid = null; let inviteScope = 'session';
+window.openInvite = function(sid) {
+    const s = sessionById(sid);
+    if (!s || !s.owner || s.owner !== myEmail()) return;
+    inviteSid = sid; inviteScope = 'session';
+    document.getElementById('invite-email').value = '';
+    updateInviteUI();
+    document.getElementById('invite-overlay').classList.add('open');
+};
+window.closeInvite = function() { document.getElementById('invite-overlay').classList.remove('open'); inviteSid = null; };
+window.setInviteScope = function(scope) { inviteScope = scope; updateInviteUI(); };
+function updateInviteUI() {
+    const s = sessionById(inviteSid); if (!s) return;
+    document.getElementById('invite-scope-session').classList.toggle('active', inviteScope === 'session');
+    document.getElementById('invite-scope-campaign').classList.toggle('active', inviteScope === 'campaign');
+    document.getElementById('invite-context').textContent = `${campaignNames[s.campaign]} — ${formatDateShort(s.date)}, ${s.time}`;
+    document.getElementById('invite-scope-hint').textContent = inviteScope === 'session'
+        ? 'They will see just this one session.'
+        : `They will see all ${campaignNames[s.campaign]} sessions you own — including ones you add later.`;
+    let html = '';
+    const sessInv = s.invited || [];
+    const campInv = shareMembers(s.owner, s.campaign);
+    if (sessInv.length || campInv.length) {
+        html += `<div class="invite-current-label">Currently invited</div>`;
+        sessInv.forEach(e => { html += `<span class="invite-chip">${escapeHtml(e)} <span class="chip-scope">session</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(e)}','session')">&times;</span></span>`; });
+        campInv.forEach(e => { html += `<span class="invite-chip">${escapeHtml(e)} <span class="chip-scope">campaign</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(e)}','campaign')">&times;</span></span>`; });
+    }
+    document.getElementById('invite-current').innerHTML = html;
+}
+window.removeInviteEmail = async function(email, scope) {
+    const s = sessionById(inviteSid); if (!s || s.owner !== myEmail()) return;
+    try {
+        if (scope === 'session') {
+            await updateDoc(doc(db, "sessions", s.id), { invited: arrayRemove(email) });
+            s.invited = (s.invited || []).filter(e => e !== email);
+        } else {
+            await updateDoc(doc(db, "shares", shareKey(s.owner, s.campaign)), { members: arrayRemove(email) });
+            allShares[shareKey(s.owner, s.campaign)] = shareMembers(s.owner, s.campaign).filter(e => e !== email);
+        }
+        updateInviteUI();
+    } catch(e) { console.error("Remove invite error:", e); }
+};
+window.submitInvite = async function() {
+    const s = sessionById(inviteSid); if (!s || s.owner !== myEmail()) return;
+    const email = document.getElementById('invite-email').value.trim().toLowerCase();
+    if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
+    if (email === myEmail()) { alert("That's you — no invite needed."); return; }
+    try {
+        if (inviteScope === 'session') {
+            await updateDoc(doc(db, "sessions", s.id), { invited: arrayUnion(email) });
+            s.invited = [...new Set([...(s.invited || []), email])];
+        } else {
+            const key = shareKey(s.owner, s.campaign);
+            await setDoc(doc(db, "shares", key), { owner: s.owner, campaign: s.campaign, members: arrayUnion(email) }, { merge: true });
+            allShares[key] = [...new Set([...shareMembers(s.owner, s.campaign), email])];
+        }
+    } catch(e) { console.error("Invite error:", e); alert('Error saving the invite.'); return; }
+    document.getElementById('invite-email').value = '';
+    updateInviteUI();
+    // Open a pre-filled email so they know how to get in
+    const what = inviteScope === 'session'
+        ? `the ${campaignNames[s.campaign]} session on ${formatDateShort(s.date)}`
+        : `all my ${campaignNames[s.campaign]} sessions`;
+    const subject = `You're invited: ${campaignNames[s.campaign]} on Six in the TPK`;
+    const body = `Hey!\n\nI've shared ${what} with you on Six in the TPK.\n\nTo see it:\n1. Go to https://sixinthetpk.com\n2. Under "or sign in with email", click "Invited? Create an account"\n3. Sign up using this exact email address (${email})\n\nDates, times, and recaps are all managed on my end — you'll always see the latest.\n\nSee you at the table!`;
+    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 };
 
 // ===== BULK SCHEDULE UPDATE =====
@@ -1488,7 +1662,7 @@ function bulkTargets() {
     const start = document.getElementById('bulk-start').value;
     const end = document.getElementById('bulk-end').value;
     if (!start) return [];
-    return sessions.filter(s => s.campaign === campaign && s.date >= start && (!end || s.date <= end));
+    return sessions.filter(s => s.campaign === campaign && s.date >= start && (!end || s.date <= end) && sessionVisible(s) && canManage(s));
 }
 window.updateBulkPreview = function() {
     const p = document.getElementById('bulk-preview'); if (!p) return;
@@ -1544,6 +1718,12 @@ async function seedFirestore() {
 async function initApp() {
     await loadSavedRosters();
     await seedFirestore();
+    onSnapshot(collection(db, "shares"), (snap) => {
+        allShares = {};
+        snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
+        renderAll();
+        if (currentPage !== 'home') renderCampaignPage(currentPage);
+    });
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true; let prevCount = 0;
     onSnapshot(q, (snapshot) => {
@@ -1575,6 +1755,7 @@ function updateCancelStates() {
     document.querySelectorAll('.session-card').forEach(card => {
         const d = card.getAttribute('data-session-id') || card.getAttribute('data-session-date'); if (!d) return;
         const s = sessionById(d); if (!s) return;
+        if (!canManage(s)) return;
         const c = s.status === "cancelled"; card.classList.toggle('cancelled', c);
         const today = getToday(); const isPast = parseDate(s.date) < today;
         const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${d}')">&#9998;</button>`;
@@ -1601,7 +1782,7 @@ window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db,
 window.cancelDeleteSession = function(sd) { const c = findSessionCard(sd); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
 window.openEditSession = function(sd) {
     const s = sessionById(sd);
-    if (!s) return;
+    if (!s || !canManage(s)) return;
     const card = findSessionCard(sd);
     if (!card) return;
     const campaignOptions = Object.keys(campaignNames).map(c => `<option value="${c}"${c === s.campaign ? ' selected' : ''}>${campaignNames[c]}</option>`).join('');
@@ -1661,7 +1842,7 @@ window.saveEditSession = async function(sd) {
         await updateDoc(doc(db, "sessions", s.id), updates);
     } catch(e) { console.error("Edit error:", e); alert('Error saving changes.'); }
 };
-window.toggleAttendance = async function(sd, p) { const s = sessionById(sd); if (!s) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", s.id), u); };
+window.toggleAttendance = async function(sd, p) { const s = sessionById(sd); if (!s || !canManage(s)) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", s.id), u); };
 
 // ===== RECAP & PDF =====
 window.toggleSessionExpand = function(sd, ev) {
@@ -1678,13 +1859,14 @@ window.toggleSessionExpand = function(sd, ev) {
     }
 };
 window.saveRecap = async function(sd) {
+    const s0 = sessionById(sd); if (s0 && !canManage(s0)) return;
     const q = activeQuills[sd]; if (!q) return;
     const html = q.root.innerHTML; const text = q.getText().trim();
     const data = text ? { recapHtml: html, recap: text } : { recapHtml: '', recap: '' };
     try { await updateDoc(doc(db, "sessions", sd), data); const m = document.getElementById(`recap-msg-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } if (!text) { setTimeout(() => renderAll(), 500); } } catch(e) { console.error(e); }
 };
 window.editRecap = function(sd) {
-    const s = sessionById(sd); if (!s) return;
+    const s = sessionById(sd); if (!s || !canManage(s)) return;
     const card = findSessionCard(sd); if (!card) return; const d = card.querySelector('.recap-display'); if (!d) return;
     d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">Save</button><span class="recap-saved-msg" id="recap-msg-${sd}">Saved!</span></div>`;
     delete activeQuills[sd]; const el = document.getElementById(`recap-editor-${sd}`);
@@ -1730,7 +1912,7 @@ window.saveOverviewRecap = async function(sd) {
 };
 
 // ===== RENDER =====
-function renderAll() { renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
+function renderAll() { updateAccessUI(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
 function timeVal(t) { if (!t) return 0; const m = String(t).match(/(\d+):(\d+)\s*(AM|PM)?/i); if (!m) return 0; let h = (+m[1]) % 12; if ((m[3]||'').toUpperCase() === 'PM') h += 12; return h * 60 + (+m[2]); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
@@ -1978,7 +2160,7 @@ window.executePartyAction = async function(scope) {
     await Promise.all([saveRostersToFirestore(), saveCharactersToFirestore()]);
 
     // 3. Update individual session docs based on scope
-    const campaignSessions = sessions.filter(s => s.campaign === campaign);
+    const campaignSessions = sessions.filter(s => s.campaign === campaign && canManage(s));
     const targetSessions = scope === 'all' ? campaignSessions : campaignSessions.filter(s => parseDate(s.date) >= today);
 
     const updates = [];
@@ -2024,7 +2206,7 @@ function renderHero() {
     const d = parseDate(next.date); const diff = Math.ceil((d - today) / 86400000);
     const when = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : `in ${diff} days`;
     // Find the last PAST session for the SAME campaign
-    const pastForCampaign = sessions.filter(s => s.campaign === next.campaign && parseDate(s.date) < today && s.status !== "cancelled");
+    const pastForCampaign = visible.filter(s => s.campaign === next.campaign && parseDate(s.date) < today && s.status !== "cancelled");
     const lastSession = pastForCampaign.length > 0 ? pastForCampaign[pastForCampaign.length - 1] : null;
     let recapBlock = '';
     if (lastSession) {
@@ -2180,17 +2362,21 @@ function renderSessionCard(s, gi, ci) {
     const d = parseDate(s.date); const dn = d.getDate(); const dw = dayNames[d.getDay()];
     const roster = s.roster || campaignRosters[s.campaign] || [];
     const att = s.attendance || {}; const isCancelled = s.status === "cancelled";
-    let attHtml = ''; roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.id || s.date}','${p}')" title="Toggle">${p}</button>`; });
+    const mine = canManage(s);
+    const isOwner = !!(s.owner && s.owner === myEmail());
+    let attHtml = '';
+    if (mine) roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.id || s.date}','${p}')" title="Toggle">${p}</button>`; });
+    else roster.forEach(p => { attHtml += `<span class="att-chip ${att[p]||"in"}" style="cursor:default">${p}</span>`; });
     const today = getToday();
     const isPast = d < today;
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const isRecentPast = isPast && d >= twoWeeksAgo;
     const sid = s.id || s.date;
     const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${sid}')">&#9998;</button>`;
-    const actionHtml = isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sid}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${sid}')">&#10005;</button>`;
+    const actionHtml = !mine ? '' : isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sid}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${sid}')">&#10005;</button>`;
     // CTA for recent past sessions missing recap or PDF
     let ctaHtml = '';
-    if (isRecentPast && !isCancelled) {
+    if (isRecentPast && !isCancelled && mine) {
         const needsRecap = !(s.recapHtml || s.recap);
         const needsPdf = !s.pdfUrl;
         if (needsRecap && needsPdf) ctaHtml = `<span class="recap-cta">+ Add Recap</span>`;
@@ -2200,18 +2386,33 @@ function renderSessionCard(s, gi, ci) {
     let recapHtml = '';
     if (!isCancelled) {
         const hasRecap = !!(s.recapHtml || s.recap);
-        recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
-        if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button><button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button></div>`; }
-        else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${sid}">Saved!</span></div>`; }
-        recapHtml += `</div><div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
-        if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${sid}')" style="margin-left:4px">&#10005; Delete</button>`; }
-        else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label>`; }
-        recapHtml += `<span class="pdf-upload-status" id="pdf-status-${sid}"></span></div></div>`;
+        if (mine || hasRecap) {
+            recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
+            if (hasRecap) { recapHtml += `<div class="recap-display">${s.recapHtml || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button>${mine ? `<button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button>` : ''}</div>`; }
+            else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${sid}">Saved!</span></div>`; }
+            recapHtml += `</div>`;
+        }
+        if (mine) {
+            recapHtml += `<div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
+            if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${sid}')" style="margin-left:4px">&#10005; Delete</button>`; }
+            else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label>`; }
+            recapHtml += `<span class="pdf-upload-status" id="pdf-status-${sid}"></span></div></div>`;
+        } else if (s.pdfUrl) {
+            recapHtml += `<div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area"><a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a></div></div>`;
+        }
     }
-    const shareSessionHtml = `<div class="session-detail-section" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px"><button class="share-btn" onclick="event.stopPropagation(); shareLink('${s.campaign}','${s.date}',false,event)">Share Session</button></div>`;
+    const inviteBtnHtml = isOwner ? `<button class="share-btn" onclick="event.stopPropagation(); openInvite('${sid}')">&#43; Invite</button>` : '';
+    const shareSessionHtml = `<div class="session-detail-section" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap"><button class="share-btn" onclick="event.stopPropagation(); shareLink('${s.campaign}','${s.date}',false,event)">Share Session</button>${inviteBtnHtml}</div>`;
     const titleHtml = s.title ? `${campaignNames[s.campaign]} &mdash; ${escapeHtml(s.title)}` : campaignNames[s.campaign];
     const levelHtml = s.level ? ` \u00b7 ${escapeHtml(s.level)}` : '';
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}${shareSessionHtml}</div></div>`;
+    let ownerTag = '';
+    if (s.owner) {
+        if (isOwner) {
+            const nInv = (s.invited || []).length + shareMembers(s.owner, s.campaign).length;
+            ownerTag = `<span class="owner-tag">${nInv ? `Shared \u00b7 ${nInv}` : 'Private'}</span>`;
+        } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
+    }
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}${shareSessionHtml}</div></div>`;
 }
 
 function renderList() {
@@ -2254,7 +2455,7 @@ function renderCampaignPage(campaign) {
     const today = getToday();
     document.getElementById('campaign-page-title').innerHTML = `${campaignIcons[campaign]} ${campaignNames[campaign]}`;
     document.getElementById('campaign-page-title').style.color = `var(--${campaign}-primary)`;
-    const cs = sessions.filter(s => s.campaign === campaign);
+    const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
     const upcoming = cs.filter(s => parseDate(s.date) >= today);
     const past = cs.filter(s => parseDate(s.date) < today);
     const nonCancelled = cs.filter(s => s.status !== 'cancelled').length;
@@ -2396,7 +2597,7 @@ function renderCalendar() {
     document.getElementById('calendar-view').innerHTML = html;
 }
 window.showTooltip = function(ev, ds) {
-    const dayList = sessions.filter(x => x.date === ds); if (!dayList.length) return;
+    const dayList = profileSessions().filter(x => x.date === ds); if (!dayList.length) return;
     const tip = document.getElementById('tooltip');
     let inner = '';
     dayList.forEach((s, i) => {
