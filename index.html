@@ -1166,7 +1166,7 @@
         <div class="form-row">
             <div class="form-group" style="flex:1"><label>Their Email</label><input type="email" id="invite-email" placeholder="friend@email.com" autocomplete="off"></div>
         </div>
-        <div class="form-row">
+        <div class="form-row" id="invite-scope-row">
             <div class="form-group"><label>Invite To</label>
                 <div class="seg-pair">
                     <button type="button" class="seg-btn seg-left active" id="invite-scope-session" onclick="setInviteScope('session')">This Session</button>
@@ -1179,6 +1179,39 @@
         <div class="form-buttons">
             <button class="submit-btn" onclick="submitInvite()">Add &amp; Email Invite</button>
             <button class="cancel-form-btn" onclick="closeInvite()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Accept Invite Modal -->
+<div class="add-form-overlay" id="accept-invite-overlay">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>&#127922; You're Invited!</h3>
+        <div id="accept-invite-text" style="font-size:0.88rem;color:var(--text);line-height:1.5;margin-bottom:6px"></div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:14px">Accept to join the campaign — schedule, recaps, and updates are all managed by the organizer.</div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="acceptInvite()">Accept &amp; Join</button>
+            <button class="cancel-form-btn" onclick="laterInvite()">Later</button>
+        </div>
+    </div>
+</div>
+
+<!-- Join Party (add character) Modal -->
+<div class="add-form-overlay" id="join-party-overlay">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3 id="join-party-title">Add your character?</h3>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:12px">Your character will appear in the party roster for everyone in this campaign. You can skip and add it later.</div>
+        <div class="form-row">
+            <div class="form-group"><label>Character Name</label><input type="text" id="jp-name" placeholder="e.g. Aralyth" maxlength="20"></div>
+            <div class="form-group"><label>Level</label><input type="text" id="jp-level" placeholder="e.g. 5" maxlength="3"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Class</label><input type="text" id="jp-class" placeholder="e.g. Rogue" maxlength="30"></div>
+            <div class="form-group"><label>Subclass</label><input type="text" id="jp-subclass" placeholder="e.g. Arcane Trickster" maxlength="30"></div>
+        </div>
+        <div class="form-buttons">
+            <button class="submit-btn" onclick="submitJoinParty()">Add Character</button>
+            <button class="cancel-form-btn" onclick="skipJoinParty()">Skip</button>
         </div>
     </div>
 </div>
@@ -1244,7 +1277,7 @@
             <div class="campaign-page-header">
                 <button class="campaign-back-btn" onclick="navigateTo('home')">&larr; Back</button>
                 <div class="campaign-page-title" id="campaign-page-title"></div>
-                <button class="share-btn" id="campaign-share-btn" onclick="shareLink(currentPage)">Share</button>
+                <button class="share-btn" id="campaign-share-btn" onclick="shareCurrentCampaign()">Share</button>
             </div>
             <div id="campaign-page-content"></div>
         </div>
@@ -1517,10 +1550,11 @@ onAuthStateChanged(auth, async (user) => {
         userCampaigns = FALLBACK_USER_CAMPAIGNS[email] || [];
         try {
             const p = await getDoc(doc(db, 'profiles', email));
-            if (p.exists() && Array.isArray(p.data().campaigns)) userCampaigns = p.data().campaigns;
+            if (p.exists() && Array.isArray(p.data().campaigns)) userCampaigns = [...new Set([...userCampaigns, ...p.data().campaigns])];
         } catch (e) { /* keep fallback */ }
         showApp();
         if (appStarted) { renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); }
+        checkPendingInvites();
     } else {
         userCampaigns = [];
         updateAccessUI();
@@ -1588,72 +1622,180 @@ window.submitAddSession = async function() {
 };
 
 // ===== INVITES =====
-let inviteSid = null; let inviteScope = 'session';
+let inviteSid = null; let inviteCampaign = null; let inviteScope = 'session';
 window.openInvite = function(sid) {
     const s = sessionById(sid);
     if (!s || !s.owner || s.owner !== myEmail()) return;
-    inviteSid = sid; inviteScope = 'session';
+    inviteSid = sid; inviteCampaign = s.campaign; inviteScope = 'session';
     document.getElementById('invite-email').value = '';
+    document.getElementById('invite-scope-row').style.display = '';
     updateInviteUI();
     document.getElementById('invite-overlay').classList.add('open');
 };
-window.closeInvite = function() { document.getElementById('invite-overlay').classList.remove('open'); inviteSid = null; };
+// Campaign-level invite from the Party section — no specific session needed
+window.openCampaignInvite = function(campaign) {
+    if (!currentUser) return;
+    inviteSid = null; inviteCampaign = campaign; inviteScope = 'campaign';
+    document.getElementById('invite-email').value = '';
+    document.getElementById('invite-scope-row').style.display = 'none';
+    updateInviteUI();
+    document.getElementById('invite-overlay').classList.add('open');
+};
+window.closeInvite = function() { document.getElementById('invite-overlay').classList.remove('open'); inviteSid = null; inviteCampaign = null; };
 window.setInviteScope = function(scope) { inviteScope = scope; updateInviteUI(); };
 function updateInviteUI() {
-    const s = sessionById(inviteSid); if (!s) return;
+    const s = inviteSid ? sessionById(inviteSid) : null;
+    const campaign = inviteCampaign;
     document.getElementById('invite-scope-session').classList.toggle('active', inviteScope === 'session');
     document.getElementById('invite-scope-campaign').classList.toggle('active', inviteScope === 'campaign');
-    document.getElementById('invite-context').textContent = `${campaignNames[s.campaign]} — ${formatDateShort(s.date)}, ${s.time}`;
+    document.getElementById('invite-context').textContent = s
+        ? `${campaignNames[campaign]} — ${formatDateShort(s.date)}, ${s.time}`
+        : `${campaignNames[campaign] || campaign} — whole campaign`;
     document.getElementById('invite-scope-hint').textContent = inviteScope === 'session'
         ? 'They will see just this one session.'
-        : `They will see all ${campaignNames[s.campaign]} sessions you own — including ones you add later.`;
+        : `They will be invited to the campaign — your sessions, recaps, and future additions.`;
     let html = '';
-    const sessInv = s.invited || [];
-    const campInv = shareMembers(s.owner, s.campaign);
-    if (sessInv.length || campInv.length) {
+    const sessInv = s ? (s.invited || []) : [];
+    const campInv = shareMembers(myEmail(), campaign);
+    const pendInv = allInvites.filter(i => i.campaign === campaign && i.invitedBy === myEmail() && i.status === 'pending' && !campInv.includes(i.email));
+    if (sessInv.length || campInv.length || pendInv.length) {
         html += `<div class="invite-current-label">Currently invited</div>`;
         sessInv.forEach(e => { html += `<span class="invite-chip">${escapeHtml(e)} <span class="chip-scope">session</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(e)}','session')">&times;</span></span>`; });
-        campInv.forEach(e => { html += `<span class="invite-chip">${escapeHtml(e)} <span class="chip-scope">campaign</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(e)}','campaign')">&times;</span></span>`; });
+        campInv.forEach(e => { const acc = allInvites.some(i => i.email === e && i.campaign === campaign && i.status === 'accepted'); html += `<span class="invite-chip">${escapeHtml(e)} <span class="chip-scope">${acc ? 'joined' : 'campaign'}</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(e)}','campaign')">&times;</span></span>`; });
+        pendInv.forEach(i => { html += `<span class="invite-chip">${escapeHtml(i.email)} <span class="chip-scope">pending</span><span class="chip-x" onclick="removeInviteEmail('${escapeHtml(i.email)}','campaign')">&times;</span></span>`; });
     }
     document.getElementById('invite-current').innerHTML = html;
 }
 window.removeInviteEmail = async function(email, scope) {
-    const s = sessionById(inviteSid); if (!s || s.owner !== myEmail()) return;
+    const me = myEmail(); if (!me) return;
     try {
         if (scope === 'session') {
+            const s = sessionById(inviteSid); if (!s || s.owner !== me) return;
             await updateDoc(doc(db, "sessions", s.id), { invited: arrayRemove(email) });
             s.invited = (s.invited || []).filter(e => e !== email);
         } else {
-            await updateDoc(doc(db, "shares", shareKey(s.owner, s.campaign)), { members: arrayRemove(email) });
-            allShares[shareKey(s.owner, s.campaign)] = shareMembers(s.owner, s.campaign).filter(e => e !== email);
+            const key = shareKey(me, inviteCampaign);
+            try { await updateDoc(doc(db, "shares", key), { members: arrayRemove(email) }); } catch(e) {}
+            allShares[key] = shareMembers(me, inviteCampaign).filter(e => e !== email);
+            try { await deleteDoc(doc(db, "invites", `${email}__${inviteCampaign}`)); } catch(e) {}
+            allInvites = allInvites.filter(i => !(i.email === email && i.campaign === inviteCampaign));
         }
         updateInviteUI();
     } catch(e) { console.error("Remove invite error:", e); }
 };
 window.submitInvite = async function() {
-    const s = sessionById(inviteSid); if (!s || s.owner !== myEmail()) return;
+    const me = myEmail(); if (!me || !inviteCampaign) return;
+    const s = inviteSid ? sessionById(inviteSid) : null;
+    if (inviteScope === 'session' && (!s || s.owner !== me)) return;
     const email = document.getElementById('invite-email').value.trim().toLowerCase();
     if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
-    if (email === myEmail()) { alert("That's you — no invite needed."); return; }
+    if (email === me) { alert("That's you — no invite needed."); return; }
+    const campaign = inviteCampaign;
     try {
         if (inviteScope === 'session') {
             await updateDoc(doc(db, "sessions", s.id), { invited: arrayUnion(email) });
             s.invited = [...new Set([...(s.invited || []), email])];
         } else {
-            const key = shareKey(s.owner, s.campaign);
-            await setDoc(doc(db, "shares", key), { owner: s.owner, campaign: s.campaign, members: arrayUnion(email) }, { merge: true });
-            allShares[key] = [...new Set([...shareMembers(s.owner, s.campaign), email])];
+            // Grant access now + create a pending invite that drives the welcome/join flow
+            const key = shareKey(me, campaign);
+            await setDoc(doc(db, "shares", key), { owner: me, campaign: campaign, members: arrayUnion(email) }, { merge: true });
+            allShares[key] = [...new Set([...shareMembers(me, campaign), email])];
+            const invId = `${email}__${campaign}`;
+            await setDoc(doc(db, "invites", invId), { email, campaign, invitedBy: me, owner: me, status: 'pending' }, { merge: true });
+            if (!allInvites.some(i => i.id === invId)) allInvites.push({ id: invId, email, campaign, invitedBy: me, owner: me, status: 'pending' });
         }
     } catch(e) { console.error("Invite error:", e); alert('Error saving the invite.'); return; }
     document.getElementById('invite-email').value = '';
     updateInviteUI();
     // Open a pre-filled email so they know how to get in
     const what = inviteScope === 'session'
-        ? `the ${campaignNames[s.campaign]} session on ${formatDateShort(s.date)}`
-        : `all my ${campaignNames[s.campaign]} sessions`;
-    const subject = `You're invited: ${campaignNames[s.campaign]} on Six in the TPK`;
-    const body = `Hey!\n\nI've shared ${what} with you on Six in the TPK.\n\nTo see it:\n1. Go to https://sixinthetpk.com\n2. Under "or sign in with email", click "Invited? Create an account"\n3. Sign up using this exact email address (${email})\n\nDates, times, and recaps are all managed on my end — you'll always see the latest.\n\nSee you at the table!`;
+        ? `the ${campaignNames[campaign]} session on ${formatDateShort(s.date)}`
+        : `the ${campaignNames[campaign] || campaign} campaign`;
+    const subject = `You're invited: ${campaignNames[campaign] || campaign} on Six in the TPK`;
+    const body = `Hey!\n\nI've invited you to ${what} on Six in the TPK.\n\nTo join:\n1. Go to https://sixinthetpk.com\n2. Under "or sign in with email", click "Invited? Create an account"\n3. Sign up using this exact email address (${email})\n4. Accept the invite when it pops up — you can add your character to the party right there.\n\nDates, times, and recaps are all managed on my end — you'll always see the latest.\n\nSee you at the table!`;
     window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
+// ===== INVITE ACCEPT & JOIN PARTY =====
+let allInvites = [];
+let inviteQueue = [];
+let invitePromptActive = false;
+function checkPendingInvites() {
+    const me = myEmail(); if (!me || !appStarted) return;
+    if (invitePromptActive) return;
+    inviteQueue = allInvites.filter(i => i.email === me && i.status === 'pending');
+    showNextInvitePrompt();
+}
+function showNextInvitePrompt() {
+    if (!inviteQueue.length) { invitePromptActive = false; return; }
+    invitePromptActive = true;
+    const inv = inviteQueue[0];
+    document.getElementById('accept-invite-text').innerHTML = `<strong>${escapeHtml(inv.invitedBy ? inv.invitedBy.split('@')[0] : 'Someone')}</strong> invited you to join <strong style="color:var(--${inv.campaign}-primary)">${campaignNames[inv.campaign] || inv.campaign}</strong>.`;
+    document.getElementById('accept-invite-overlay').classList.add('open');
+}
+window.acceptInvite = async function() {
+    const inv = inviteQueue.shift(); if (!inv) return;
+    document.getElementById('accept-invite-overlay').classList.remove('open');
+    const me = myEmail();
+    try {
+        await updateDoc(doc(db, "invites", inv.id), { status: 'accepted' });
+        if (inv.owner) {
+            const key = shareKey(inv.owner, inv.campaign);
+            await setDoc(doc(db, "shares", key), { owner: inv.owner, campaign: inv.campaign, members: arrayUnion(me) }, { merge: true });
+            allShares[key] = [...new Set([...shareMembers(inv.owner, inv.campaign), me])];
+        }
+        await setDoc(doc(db, "profiles", me), { campaigns: arrayUnion(inv.campaign) }, { merge: true });
+        if (!userCampaigns.includes(inv.campaign)) userCampaigns.push(inv.campaign);
+        const local = allInvites.find(i => i.id === inv.id); if (local) local.status = 'accepted';
+        renderAll();
+    } catch(e) { console.error("Accept invite error:", e); }
+    // Offer to add their character to the party
+    joinPartyCampaign = inv.campaign;
+    document.getElementById('join-party-title').textContent = `Add your character to ${campaignNames[inv.campaign] || inv.campaign}?`;
+    ['jp-name','jp-class','jp-subclass','jp-level'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('join-party-overlay').classList.add('open');
+};
+window.laterInvite = function() {
+    // Leave it pending — they'll be asked again next visit
+    inviteQueue.shift();
+    document.getElementById('accept-invite-overlay').classList.remove('open');
+    showNextInvitePrompt();
+};
+let joinPartyCampaign = null;
+window.skipJoinParty = function() {
+    document.getElementById('join-party-overlay').classList.remove('open');
+    joinPartyCampaign = null;
+    showNextInvitePrompt();
+};
+window.submitJoinParty = async function() {
+    const campaign = joinPartyCampaign; if (!campaign) return;
+    const name = document.getElementById('jp-name').value.trim();
+    if (!name) { alert('Enter a character name.'); return; }
+    const charClass = document.getElementById('jp-class').value.trim();
+    const subclass = document.getElementById('jp-subclass').value.trim();
+    const level = document.getElementById('jp-level').value.trim();
+    if (!campaignRosters[campaign]) campaignRosters[campaign] = [];
+    if (campaignRosters[campaign].includes(name)) { alert('That name is already in the party.'); return; }
+    campaignRosters[campaign].push(name);
+    if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+    campaignCharacters[campaign][name] = { charClass, subclass, level };
+    try {
+        await Promise.all([saveRostersToFirestore(), saveCharactersToFirestore()]);
+        // Add them to the roster/attendance of upcoming sessions they can see
+        const today = getToday();
+        const targets = sessions.filter(s => s.campaign === campaign && sessionVisible(s) && parseDate(s.date) >= today);
+        for (const s of targets) {
+            const roster = s.roster || campaignRosters[campaign];
+            if (roster.includes(name)) continue;
+            const newRoster = [...roster, name];
+            const newAtt = { ...(s.attendance || {}) }; newAtt[name] = 'in';
+            await updateDoc(doc(db, "sessions", s.id), { roster: newRoster, attendance: newAtt });
+        }
+    } catch(e) { console.error("Join party error:", e); alert('Error saving your character.'); return; }
+    document.getElementById('join-party-overlay').classList.remove('open');
+    joinPartyCampaign = null;
+    if (currentPage === campaign) renderCampaignPage(campaign);
+    showNextInvitePrompt();
 };
 
 // ===== BULK SCHEDULE UPDATE =====
@@ -1723,6 +1865,11 @@ async function initApp() {
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
         renderAll();
         if (currentPage !== 'home') renderCampaignPage(currentPage);
+    });
+    onSnapshot(collection(db, "invites"), (snap) => {
+        allInvites = [];
+        snap.forEach(d => { allInvites.push({ id: d.id, ...d.data() }); });
+        checkPendingInvites();
     });
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true; let prevCount = 0;
@@ -2467,7 +2614,8 @@ function renderCampaignPage(campaign) {
     const chars = campaignCharacters[campaign] || {};
     html += `<div class="section-heading">Party</div>`;
     html += `<div class="campaign-overview">`;
-    html += `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
+    const inviteBtn = currentUser ? `<button class="edit-party-btn" onclick="openCampaignInvite('${campaign}')">+ Invite Player</button>` : '';
+    html += `<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px">${inviteBtn}<button class="edit-party-btn${partyEditMode === campaign ? ' active' : ''}" onclick="togglePartyEdit('${campaign}')">${partyEditMode === campaign ? 'Done' : 'Edit Party'}</button></div>`;
     html += `<div class="campaign-roster" id="roster-${campaign}">`;
     if (partyEditMode === campaign) {
         roster.forEach((p, idx) => {
@@ -2732,15 +2880,17 @@ function showShareToast(msg) {
     toast._timer = setTimeout(() => toast.classList.remove('visible'), 2000);
 }
 
+window.shareCurrentCampaign = function() { window.shareLink(currentPage); };
 window.shareLink = function(campaign, date, full, evt) {
     if (evt) evt.stopPropagation();
     const hash = buildHash(campaign, date, full);
     const url = window.location.origin + window.location.pathname + hash;
-    if (navigator.share) {
-        navigator.share({ title: 'Six in the TPK', url: url }).catch(() => {});
-    } else {
-        navigator.clipboard.writeText(url).then(() => showShareToast()).catch(() => showShareToast('Could not copy link'));
-    }
+    // Clipboard first (deterministic + shows the toast); native share sheet only as fallback
+    const clip = navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject();
+    clip.then(() => showShareToast()).catch(() => {
+        if (navigator.share) navigator.share({ title: 'Six in the TPK', url: url }).then(() => {}).catch(() => showShareToast('Could not share link'));
+        else window.prompt('Copy this link:', url);
+    });
 };
 </script>
 </body>
