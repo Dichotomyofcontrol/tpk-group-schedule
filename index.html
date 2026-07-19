@@ -1158,7 +1158,7 @@
 <!-- Bulk Schedule Update Modal -->
 <div class="add-form-overlay" id="bulk-form-overlay" onclick="closeBulkUpdate()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
-        <h3>Manage Campaign Schedule</h3>
+        <h3 id="bulk-title">Manage Campaign Schedule</h3>
         <div class="form-row">
             <div class="form-group"><label>Campaign</label>
                 <select id="bulk-campaign" onchange="updateBulkPreview()">
@@ -1351,6 +1351,7 @@
             <div class="campaign-page-header">
                 <button class="campaign-back-btn" onclick="navigateTo('home')">&larr; Back</button>
                 <div class="campaign-page-title" id="campaign-page-title"></div>
+                <button class="share-btn" id="campaign-manage-btn" style="margin-left:auto;display:none" onclick="openCampaignSchedule()">&#9881; Schedule</button>
                 <button class="share-btn" id="campaign-share-btn" onclick="shareCurrentCampaign()">Share</button>
             </div>
             <div id="campaign-page-content"></div>
@@ -1560,6 +1561,12 @@ function canManage(s) {
     if (s.owner) return s.owner === myEmail();
     if (PUBLIC_CAMPAIGNS.includes(s.campaign)) return isGroupMember();  // public sessions: group members only
     return userCampaigns.includes(s.campaign);               // leyfarers/beerovia manageable by their profile holder
+}
+// Can the viewer manage a whole campaign (schedule/settings)? Public → group members;
+// otherwise only if they can manage its sessions (owner, or legacy profile holder).
+function canManageCampaign(c) {
+    if (PUBLIC_CAMPAIGNS.includes(c)) return isGroupMember();
+    return sessions.some(s => s.campaign === c && sessionVisible(s) && canManage(s));
 }
 function campaignVisible(c) {
     if (codeGrantsCampaign(c)) return true;
@@ -2143,8 +2150,20 @@ window.updateBulkPreview = function() {
     const t = bulkTargets();
     p.textContent = t.length ? `${t.length} session${t.length > 1 ? 's' : ''} will be updated (${formatDateShort(t[0].date)} – ${formatDateShort(t[t.length-1].date)}).` : 'No sessions match that range.';
 };
-window.openBulkUpdate = function() {
+window.openBulkUpdate = function(scopeCampaign) {
     closeNav();
+    const sel = document.getElementById('bulk-campaign');
+    const row = sel.closest('.form-row');
+    const title = document.getElementById('bulk-title');
+    if (scopeCampaign) {
+        // Scoped from a campaign page — lock to that campaign, hide the picker.
+        sel.value = scopeCampaign;
+        if (row) row.style.display = 'none';
+        if (title) title.textContent = `Manage Schedule — ${campaignNames[scopeCampaign] || scopeCampaign}`;
+    } else {
+        if (row) row.style.display = '';
+        if (title) title.textContent = 'Manage Campaign Schedule';
+    }
     const today = new Date();
     document.getElementById('bulk-start').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
     document.getElementById('bulk-end').value = '';
@@ -2153,6 +2172,9 @@ window.openBulkUpdate = function() {
     document.getElementById('bulk-duration').value = '';
     updateBulkPreview();
     document.getElementById('bulk-form-overlay').classList.add('open');
+};
+window.openCampaignSchedule = function() {
+    if (currentPage && currentPage !== 'home') openBulkUpdate(currentPage);
 };
 window.closeBulkUpdate = function() { document.getElementById('bulk-form-overlay').classList.remove('open'); };
 window.applyBulkUpdate = async function() {
@@ -2951,6 +2973,8 @@ function renderCampaignPage(campaign) {
     const today = getToday();
     document.getElementById('campaign-page-title').innerHTML = `${campaignIcons[campaign]} ${campaignNames[campaign]}`;
     document.getElementById('campaign-page-title').style.color = `var(--${campaign}-primary)`;
+    const manageBtn = document.getElementById('campaign-manage-btn');
+    if (manageBtn) manageBtn.style.display = canManageCampaign(campaign) ? '' : 'none';
     const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
     const upcoming = cs.filter(s => parseDate(s.date) >= today);
     const past = cs.filter(s => parseDate(s.date) < today);
