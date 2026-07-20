@@ -1366,6 +1366,23 @@
         .mychar-bar { height: 6px; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
         .mychar-bar span { display: block; height: 100%; background: var(--brand); transition: width var(--dur) var(--ease); }
         .mychar-actions { margin-top: 10px; }
+        .mychar-open { margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: var(--brand); }
+        /* LeyFarer leveling hero (atop the character's campaign page) */
+        .ley-hero { display: flex; gap: 18px; align-items: flex-start; background: linear-gradient(135deg, color-mix(in srgb, var(--cp) 16%, var(--surface)), var(--surface)); border: 1px solid var(--border); border-left: 4px solid var(--cp); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 16px; }
+        .ley-hero-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 84px; padding: 12px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-md); }
+        .ley-hero-lvl { font-family: var(--font-display); font-weight: 700; font-size: 2.6rem; line-height: 1; color: var(--cp); }
+        .ley-hero-lvl-cap { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; color: var(--text-dim); margin-top: 4px; }
+        .ley-hero-body { flex: 1; min-width: 0; }
+        .ley-hero-name { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--text); margin-bottom: 4px; }
+        .ley-hero-meta { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+        .ley-hero-meta strong { color: var(--text); }
+        .ley-hero-bar { height: 8px; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; margin-bottom: 12px; }
+        .ley-hero-bar span { display: block; height: 100%; background: var(--cp); transition: width var(--dur) var(--ease); }
+        .ley-guide-toggle { font-size: 0.78rem; }
+        .ley-hero-guide { margin-top: 12px; }
+        .ley-type-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand); border: 1px solid var(--brand-line, var(--brand)); border-radius: var(--r-pill); padding: 2px 9px; }
+        .ley-done-note { font-size: 0.78rem; color: var(--text-dim); }
+        @media (max-width: 600px) { .ley-hero { gap: 12px; padding: 14px; } .ley-hero-badge { min-width: 66px; } .ley-hero-lvl { font-size: 2rem; } }
         .mychar-qlog { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
         .mychar-quest { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.82rem; color: var(--text); cursor: pointer; }
         .mychar-quest input { accent-color: var(--brand); flex-shrink: 0; }
@@ -1374,6 +1391,23 @@
         .mychar-addq { display: flex; gap: 8px; margin-top: 10px; }
         .mychar-addq input { flex: 1; min-width: 0; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-size: 0.82rem; font-family: 'Inter', sans-serif; }
         .mychar-addq input:focus { outline: none; border-color: var(--brand); }
+        .mq-sched { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--warn); border: 1px solid var(--warn); border-radius: var(--r-pill); padding: 0 6px; margin-left: 6px; }
+        .char-pick-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .char-pick { font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); cursor: pointer; }
+        .char-pick:focus { outline: none; border-color: var(--brand); }
+        .char-pick-note { font-size: 0.75rem; color: var(--text-dim); }
+        .char-pick-note strong { color: var(--brand); font-weight: 600; }
+        .char-done { font-size: 0.78rem; color: var(--text); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+        .char-done input { accent-color: var(--success); flex-shrink: 0; }
+        .char-done strong { color: var(--brand); font-weight: 600; }
+        .guide-note { font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 10px; }
+        .guide-note strong { color: var(--text); }
+        .guide-tbl { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .guide-tbl th { text-align: left; font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); padding: 5px 8px; border-bottom: 1px solid var(--border); }
+        .guide-tbl td { padding: 5px 8px; border-bottom: 1px solid var(--border); color: var(--text); font-variant-numeric: tabular-nums; }
+        .guide-tbl td:first-child { color: var(--brand); font-weight: 600; font-family: var(--font-display); }
+        .guide-caps { font-size: 0.76rem; color: var(--text-dim); margin-top: 10px; line-height: 1.5; }
+        .guide-caps strong { color: var(--text); } .guide-caps em { color: var(--brand); font-style: normal; }
         @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-opt-main { flex-basis: 100%; } .avail-bar { max-width: none; } .poll-votes { width: 100%; } .poll-vote { flex: 1; justify-content: center; padding: 9px 0; } .poll-confirm { width: 100%; justify-content: center; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Mobile craft pass (phone widths) ===== */
         @media (max-width: 600px) {
@@ -1490,6 +1524,17 @@
                 <div class="seg-pair">
                     <button type="button" class="seg-btn seg-left active" id="vis-private" onclick="setSessionVisibility('private')">Just Me</button>
                     <button type="button" class="seg-btn seg-right" id="vis-everyone" onclick="setSessionVisibility('everyone')">Everyone</button>
+                </div>
+            </div>
+        </div>
+        <div class="form-row" id="ley-session-opts" style="display:none">
+            <div class="form-group"><label>Type</label>
+                <select id="ley-session-type"><option value="Campaign">Campaign session</option><option value="Side Quest">Side quest</option></select>
+            </div>
+            <div class="form-group"><label>Status</label>
+                <div class="seg-pair">
+                    <button type="button" class="seg-btn seg-left active" id="ley-status-sched" onclick="setLeyStatus('scheduled')">Scheduled</button>
+                    <button type="button" class="seg-btn seg-right" id="ley-status-done" onclick="setLeyStatus('completed')">Completed</button>
                 </div>
             </div>
         </div>
@@ -2247,9 +2292,17 @@ const LEYFARER_CHAPTER_MAX = { 12: 16, 13: 17, 14: 18, 15: 19, 16: 20 };
 const LEYFARER_CURRENT_CHAPTER = 12;
 function leyfarerLevelForSessions(n) { const s = Math.max(0, n | 0); return s >= 37 ? 20 : LEYFARER_LEVEL_BY_SESSION[s]; }
 function leyfarerChapterMax(chapter) { return LEYFARER_CHAPTER_MAX[chapter || LEYFARER_CURRENT_CHAPTER] || 20; }
+// A quest counts only when explicitly marked complete by the user (never auto by date — a rescheduled
+// session shouldn't silently count). A linked session stays pending until confirmed.
+function questIsComplete(q) {
+    if (!q) return false;
+    if (q.done === true) return true;
+    if (q.done === false) return false;
+    return !q.sessionId;   // no flag: seed/manual entries count; linked sessions wait for confirmation
+}
 // A LeyFarer character's level = level-for-sessions, capped by the chapter. Returns {sessions, uncapped, capped, chapter, chapterMax}.
 function leyfarerLevelInfo(ch) {
-    const sessions = ((ch && ch.questLog) || []).filter(q => q && q.done !== false).length;
+    const sessions = ((ch && ch.questLog) || []).filter(questIsComplete).length;
     const chapter = (ch && ch.chapter) || LEYFARER_CURRENT_CHAPTER;
     const uncapped = leyfarerLevelForSessions(sessions);
     const chapterMax = leyfarerChapterMax(chapter);
@@ -2261,6 +2314,31 @@ function leyfarerNextLevelAt(sessions) {
     for (let s = sessions + 1; s <= 37; s++) { if (leyfarerLevelForSessions(s) > cur) return s; }
     return null;
 }
+// ===== LeyFarer journeys (dated sessions) =====
+// Each character's whole journey — campaign sessions AND side quests — lives in their own campaign
+// as dated sessions. A LeyFarer character's level = # completed sessions in that campaign.
+// [date, title, type]. Both journeys start 5/31/2024 (Krenn's sheet dates shifted back 2 years).
+const LEYFARER_MALOREN_SESSIONS = [
+  ['2024-05-31','Intro - 9 Lives','Intro'],['2024-07-03','Troads Less Traveled','Side Quest'],['2024-07-06','Bridge of Dreams','Side Quest'],['2024-07-10','Spa Day','Side Quest'],['2024-07-14','Stalking Jaw','Side Quest'],['2024-07-19','Dinner Party','Side Quest'],['2024-07-20','4.1 Session','Campaign'],['2024-08-03','4.2 Session','Campaign'],['2024-08-10','Beach Day','Side Quest'],['2024-08-11','Lost & Damned','Side Quest'],['2024-08-17','Treasures of the Abyss','Side Quest'],['2024-08-17','4.3 Session','Campaign'],['2024-08-24','4.4 Session','Campaign'],['2024-09-01','Player Submit #1','Side Quest'],['2024-09-13','Player Submit #2','Side Quest'],['2024-09-14','4.5 Session','Campaign'],['2024-09-28','4.6 Finale','Campaign'],['2024-10-19','Harvest of Reckoning','Side Quest'],['2024-10-19','5.1 Session','Campaign'],['2024-10-21','Magus','Side Quest'],['2024-11-02','A Feast for Tree Ants','Side Quest'],['2024-11-02','5.2 Session','Campaign'],['2024-11-16','Players Choice','Side Quest'],['2024-11-16','5.3 Session','Campaign'],['2024-12-07','The Lost Tome','Side Quest'],['2024-12-07','5.4 Session','Campaign'],['2024-12-20','Land on Your Feet','Side Quest'],['2024-12-21','5.5 Session','Campaign'],['2024-12-27','5.6 Finale','Campaign'],['2025-01-24','Beast Within','Side Quest'],['2025-01-25','6.1 Session','Campaign'],['2025-02-08','6.2 Session','Campaign'],['2025-02-22','6.3 Session','Campaign'],['2025-03-08','6.4 Session','Campaign'],['2025-03-22','6.5 Session','Campaign'],['2025-04-08','6.6 Finale','Campaign'],['2025-04-22','Fight the Moon','Side Quest'],['2025-05-06','Longshadow Dusk','Side Quest'],['2025-05-20','Beneath the Briars','Side Quest']
+];
+const LEYFARER_KRENN_SESSIONS = [
+  ['2024-05-31','Intro - 9 Lives','Intro'],['2024-07-24','Spa Day','Side Quest'],['2024-07-28','Bridge of Dreams','Side Quest'],['2024-08-02','Beach Day','Side Quest'],['2024-08-14','Treasures of the Abyss','Side Quest'],['2024-08-25','Dinner Party','Side Quest'],['2024-09-21','Player Submit #2','Side Quest'],['2024-10-05','Player Submit #1','Side Quest'],['2024-10-11','Stalking Jaw','Side Quest'],['2024-10-13','Lost and Damned','Side Quest'],['2024-10-26','Harvest Of Reckoning','Side Quest'],['2024-12-01','A Feat for Tree Ants','Side Quest'],['2024-12-21','Land on Your Feet','Side Quest'],['2024-12-28','Lost Tome','Side Quest'],['2024-01-19','6.1 Session','Campaign'],['2024-02-01','The Once and Future Ring','Side Quest'],['2024-02-02','6.2 Session','Campaign'],['2024-02-15','Beast Within','Side Quest'],['2024-02-16','6.3 Session','Campaign'],['2024-02-23','Standardized Questing','Side Quest'],['2024-03-02','6.4 Session','Campaign'],['2024-03-22','6.5 Session','Campaign'],['2024-04-05','6.6 Finale','Campaign'],['2024-04-19','7.1 Session','Campaign'],['2024-04-25','Harvest of Reckoning','Side Quest'],['2024-04-27','Secrets of the Library','Side Quest'],['2024-05-03','7.2 Session','Campaign'],['2024-05-17','7.3 Session','Campaign'],['2024-05-17','Beneath the Briars','Side Quest'],['2024-05-31','7.4 Session','Campaign'],['2024-06-14','7.5 Session','Campaign'],['2024-06-14','What The Stars Silenced','Side Quest'],['2024-06-28','7.6 Finale','Campaign'],['2024-07-19','Field Testing','Side Quest'],['2024-07-19','8.1 Session','Campaign'],['2024-08-02','8.2 Session','Campaign'],['2024-08-16','8.3 Session','Campaign'],['2024-08-31','8.4 Session','Campaign'],['2024-09-13','8.5 Session','Campaign'],['2024-09-27','8.6 Finale','Campaign']
+];
+// Which campaigns use LeyFarer leveling (flagged on the campaign doc by the migration).
+function isLeyfarerCampaign(c) { return !!(allCampaigns[c] && allCampaigns[c].leyfarer); }
+window.isLeyfarerCampaign = isLeyfarerCampaign;
+// # of completed (explicitly confirmed) sessions in a campaign — this drives the character's level.
+function campaignCompletedCount(c) { return sessions.filter(s => s.campaign === c && s.completed === true && s.status !== 'cancelled').length; }
+// A LeyFarer campaign's level = level-for-completed-sessions, capped by the campaign's chapter.
+function leyfarerCampaignInfo(c) {
+    const done = campaignCompletedCount(c);
+    const chapter = (allCampaigns[c] && allCampaigns[c].chapter) || LEYFARER_CURRENT_CHAPTER;
+    const uncapped = leyfarerLevelForSessions(done);
+    const chapterMax = leyfarerChapterMax(chapter);
+    return { sessions: done, uncapped, capped: Math.min(uncapped, chapterMax), chapter, chapterMax };
+}
+window.leyfarerCampaignInfo = leyfarerCampaignInfo;
+
 // The two characters' completed quest logs (from the LeyFarer spreadsheet; every entry counts as one session).
 const LEYFARER_SEED_CHARACTERS = {
     Maloren: { charClass: 'Magus', chapter: 12, quests: [
@@ -3014,22 +3092,113 @@ function myCharactersList() {
 }
 window.openMyCharacters = function() { if (typeof closeNav === 'function') closeNav(); renderMyCharacters(); document.getElementById('mychars-overlay').classList.add('open'); };
 window.closeMyCharacters = function() { document.getElementById('mychars-overlay').classList.remove('open'); };
+// My characters that use LeyFarer leveling (in the leyfarers campaign or carrying a quest log).
+function myLeyfarerCharacters() { return myCharactersList().filter(x => x.campaign === 'leyfarers' || (x.ch.questLog && x.ch.questLog.length)); }
+// Which of my characters is linked to this session (via a questLog entry with this sessionId)?
+function sessionCharacter(sid) {
+    for (const { name, ch } of myLeyfarerCharacters()) { if ((ch.questLog || []).some(q => q.sessionId === sid)) return name; }
+    return '';
+}
+// Link a session to one of my LeyFarer characters — it joins that character's quest log and counts once its date passes.
+window.setSessionCharacter = async function(sid, charName) {
+    const me = myOwnerId(); if (!me) { showToast('Sign in to track this on a character.'); return; }
+    const s = sessionById(sid); if (!s) return;
+    myLeyfarerCharacters().forEach(({ ch }) => { if (ch.questLog) ch.questLog = ch.questLog.filter(q => q.sessionId !== sid); });   // clear any prior link
+    if (charName) {
+        const target = campaignCharacters['leyfarers'] && campaignCharacters['leyfarers'][charName];
+        if (target) {
+            if (!target.questLog) target.questLog = [];
+            const label = s.title ? s.title : (isOneShots(s.campaign) ? `One-shot · ${formatDateShort(s.date)}` : `${campaignName(s.campaign)} · ${formatDateShort(s.date)}`);
+            target.questLog.push({ name: label, type: isOneShots(s.campaign) ? 'One-Shot' : 'Campaign', sessionId: sid, date: s.date, done: false });   // pending until confirmed
+        }
+    }
+    try { await saveCharactersToFirestore(); showToast(charName ? `Playing as ${charName}` : 'Character cleared', 'success'); }
+    catch (e) { console.error('link session:', e); showToast('Could not save — try again.'); }
+    scheduleRender();
+};
+function sessionQuestDone(sid) {
+    for (const { ch } of myLeyfarerCharacters()) { const q = (ch.questLog || []).find(x => x.sessionId === sid); if (q) return q.done === true; }
+    return false;
+}
+// Explicit completion confirmation — this is what makes a linked session count (never auto by date).
+window.setSessionQuestDone = async function(sid, done) {
+    let changed = false;
+    myLeyfarerCharacters().forEach(({ ch }) => { (ch.questLog || []).forEach(q => { if (q.sessionId === sid) { q.done = !!done; changed = true; } }); });
+    if (!changed) return;
+    try { await saveCharactersToFirestore(); showToast(done ? 'Counted toward your character' : 'Marked not completed', 'success'); } catch (e) { console.error(e); showToast('Could not save.'); }
+    scheduleRender();
+};
 window.importLeyfarerCharacters = async function() {
     const me = myOwnerId(); if (!me) { showToast('Sign in first to add characters.'); return; }
     if (!campaignCharacters['leyfarers']) campaignCharacters['leyfarers'] = {};
     if (!campaignRosters['leyfarers']) campaignRosters['leyfarers'] = [];
     Object.entries(LEYFARER_SEED_CHARACTERS).forEach(([name, seed]) => {
-        if (campaignCharacters['leyfarers'][name]) return;   // don't clobber an existing one
-        campaignCharacters['leyfarers'][name] = { charClass: seed.charClass || '', chapter: seed.chapter, owner: me, questLog: seed.quests.map(([qn, qt]) => ({ name: qn, type: qt, done: true })) };
+        const existing = campaignCharacters['leyfarers'][name];
+        if (existing && existing.questLog && existing.questLog.length) return;   // already has a log — don't clobber
+        const base = existing || {};   // merge the seed log into a character that already exists (e.g. a party member)
+        campaignCharacters['leyfarers'][name] = { ...base, charClass: base.charClass || seed.charClass || '', chapter: base.chapter || seed.chapter, owner: base.owner || me, questLog: seed.quests.map(([qn, qt]) => ({ name: qn, type: qt, done: true })) };
         if (!campaignRosters['leyfarers'].includes(name)) campaignRosters['leyfarers'].push(name);
     });
     try { await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]); showToast('Added Maloren & Krenn', 'success'); }
     catch (e) { console.error('import characters:', e); showToast('Could not save — try again.'); }
     renderMyCharacters();
 };
+// One-time setup: rename Maloren's campaign, create Krenn's, seed both journeys as dated completed
+// sessions, and create the two characters. Idempotent — deterministic session ids + merges, so re-running is safe.
+window.migrateLeyfarers = async function() {
+    const me = myEmail();
+    if (!me) { showToast('Sign in first to set up your LeyFarer journey.'); return; }
+    const btn = document.getElementById('ley-migrate-btn'); if (btn) { btn.disabled = true; btn.textContent = 'Setting up your journeys…'; }
+    try {
+        const malColor = (allCampaigns['leyfarers'] && allCampaigns['leyfarers'].color) || '#7e57c2';
+        const malIcon = (allCampaigns['leyfarers'] && allCampaigns['leyfarers'].icon) || '🗺️';
+        const malOwner = (allCampaigns['leyfarers'] && allCampaigns['leyfarers'].owner) || me;
+        // 1. Rename Maloren's campaign + flag it for leveling
+        await setDoc(doc(db, "campaigns", "leyfarers"), { name: 'Leyfarers: Maloren', leyfarer: true, chapter: LEYFARER_CURRENT_CHAPTER, owner: malOwner, icon: malIcon, color: malColor }, { merge: true });
+        allCampaigns['leyfarers'] = { ...(allCampaigns['leyfarers'] || {}), id: 'leyfarers', name: 'Leyfarers: Maloren', leyfarer: true, chapter: LEYFARER_CURRENT_CHAPTER, owner: malOwner, icon: malIcon, color: malColor };
+        // 2. Create Krenn's campaign
+        await setDoc(doc(db, "campaigns", "leyfarers-krenn"), { name: 'Leyfarers: Krenn', leyfarer: true, chapter: LEYFARER_CURRENT_CHAPTER, owner: me, icon: '🧭', color: '#26a69a', createdAt: Date.now() }, { merge: true });
+        allCampaigns['leyfarers-krenn'] = { id: 'leyfarers-krenn', name: 'Leyfarers: Krenn', leyfarer: true, chapter: LEYFARER_CURRENT_CHAPTER, owner: me, icon: '🧭', color: '#26a69a' };
+        // 3. Seed each journey as dated, completed sessions (deterministic ids → re-run just overwrites)
+        const seed = async (arr, camp, prefix) => {
+            for (let i = 0; i < arr.length; i++) {
+                const [date, title, type] = arr[i];
+                await setDoc(doc(db, "sessions", `${prefix}-${i}`), { date, title, type, completed: true, campaign: camp, time: '', gm: '', duration: '', status: 'active', attendance: {}, roster: [] }, { merge: true });
+            }
+        };
+        await seed(LEYFARER_MALOREN_SESSIONS, 'leyfarers', 'ley-mal');
+        await seed(LEYFARER_KRENN_SESSIONS, 'leyfarers-krenn', 'ley-kren');
+        // 4. The two characters, each owned by me and living in their own campaign
+        ['leyfarers', 'leyfarers-krenn'].forEach(c => { if (!campaignCharacters[c]) campaignCharacters[c] = {}; if (!campaignRosters[c]) campaignRosters[c] = []; });
+        const mal = campaignCharacters['leyfarers']['Maloren'] || {};
+        campaignCharacters['leyfarers']['Maloren'] = { ...mal, charClass: mal.charClass || 'Magus', owner: mal.owner || me, leyfarer: true, questLog: undefined };
+        delete campaignCharacters['leyfarers']['Maloren'].questLog;   // journey now lives in the campaign's sessions
+        const kre = campaignCharacters['leyfarers-krenn']['Krenn'] || {};
+        campaignCharacters['leyfarers-krenn']['Krenn'] = { ...kre, charClass: kre.charClass || '', owner: kre.owner || me, leyfarer: true };
+        if (!campaignRosters['leyfarers'].includes('Maloren')) campaignRosters['leyfarers'].push('Maloren');
+        if (!campaignRosters['leyfarers-krenn'].includes('Krenn')) campaignRosters['leyfarers-krenn'].push('Krenn');
+        await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]);
+        if (typeof renderCampaignTheme === 'function') renderCampaignTheme();
+        renderNav();
+        showToast('Set up Maloren & Krenn with their full journeys', 'success');
+    } catch (e) { console.error('migrate leyfarers:', e); showToast('Could not finish setup — try again.'); }
+    if (btn) btn.disabled = false;
+    renderMyCharacters(); scheduleRender();
+};
+// True once both LeyFarer campaigns exist and are flagged — hides the setup button.
+function leyfarerMigrated() { return isLeyfarerCampaign('leyfarers') && isLeyfarerCampaign('leyfarers-krenn'); }
+// Mark a session completed / not completed — this is the explicit confirmation that makes it count toward level.
+window.setSessionCompleted = async function(sid, done) {
+    const s = sessionById(sid); if (!s) return;
+    if (!canManage(s)) { showToast('Only the campaign owner can mark sessions completed.'); return; }
+    s.completed = !!done;
+    try { await updateDoc(doc(db, "sessions", sid), { completed: !!done }); showToast(done ? 'Marked completed — counts toward your level' : 'Marked not completed', 'success'); }
+    catch (e) { console.error('set completed:', e); showToast('Could not save — try again.'); s.completed = !done; }
+    scheduleRender();
+};
 window.toggleCharQuest = async function(campaign, name, idx) {
     const ch = campaignCharacters[campaign] && campaignCharacters[campaign][name]; if (!ch || !ch.questLog || !ch.questLog[idx]) return;
-    ch.questLog[idx].done = (ch.questLog[idx].done === false);   // flip
+    ch.questLog[idx].done = !questIsComplete(ch.questLog[idx]);   // flip completed state (date-aware)
     try { await saveCharactersToFirestore(); } catch (e) { console.error(e); showToast('Could not save.'); }
     renderMyCharacters();
 };
@@ -3047,44 +3216,100 @@ window.toggleCharQuestLog = function(campaign, name) {
     const el = document.getElementById(`qlog-${campaign}-${name}`); const btn = document.getElementById(`qlogbtn-${campaign}-${name}`);
     if (!el) return; const open = el.style.display !== 'none'; el.style.display = open ? 'none' : 'block'; if (btn) btn.textContent = open ? 'Show quest log' : 'Hide quest log';
 };
+// Open a character's own page: LeyFarer characters → their campaign page (the detailed leveling/journey view);
+// everyone else → the character detail. This is the "clicking a character takes me to a page" behavior.
+window.openCharacterPage = function(campaign, name) {
+    closeMyCharacters();
+    if (isLeyfarerCampaign(campaign)) window.navigateTo(campaign);
+    else if (typeof openPlayerDetail === 'function') openPlayerDetail(campaign, name);
+};
 function renderMyCharacters() {
     const body = document.getElementById('mychars-body'); if (!body) return;
     const me = myOwnerId();
     if (!me) { body.innerHTML = `<div class="profile-empty">Sign in (or join with a code) to track your characters.</div>`; return; }
     const chars = myCharactersList();
     let h = '';
-    const hasSeed = campaignCharacters['leyfarers'] && LEYFARER_SEED_CHARACTERS && Object.keys(LEYFARER_SEED_CHARACTERS).every(n => campaignCharacters['leyfarers'][n]);
-    if (!chars.length) h += `<div class="profile-empty" style="margin-bottom:12px">No characters yet. Characters you own (created or assigned to you) show here with their leveling.</div>`;
+    if (!chars.length) h += `<div class="profile-empty" style="margin-bottom:12px">No characters yet. Characters you own (created or assigned to you) show here with their leveling. Add one below, or set up your LeyFarer journey.</div>`;
     chars.sort((a, b) => a.name.localeCompare(b.name)).forEach(({ campaign, name, ch }) => {
-        const isLey = campaign === 'leyfarers' || (ch.questLog && ch.questLog.length);
-        h += `<div class="mychar-card" style="border-left:3px solid ${campaignColor(campaign)}">`;
+        const isLey = isLeyfarerCampaign(campaign);
+        h += `<div class="mychar-card" style="border-left:3px solid ${campaignColor(campaign)};cursor:pointer" onclick="openCharacterPage('${campaign}','${escapeHtml(name)}')">`;
         h += `<div class="mychar-top"><span class="mychar-nm">${escapeHtml(name)}</span><span class="mychar-camp">${escapeHtml(campaignName(campaign))}${ch.charClass ? ' · ' + escapeHtml(ch.charClass) : ''}</span></div>`;
         if (isLey) {
-            const info = leyfarerLevelInfo(ch);
+            const info = leyfarerCampaignInfo(campaign);
             const nextAt = leyfarerNextLevelAt(info.sessions);
             const capped = info.capped < info.uncapped;
             h += `<div class="mychar-level"><span class="mychar-lvl-num">Lvl ${info.capped}</span><div class="mychar-lvl-meta"><div><strong>${info.sessions}</strong> sessions complete</div><div>${capped ? `Capped by Chapter ${info.chapter} (max ${info.chapterMax}) — would be ${info.uncapped}` : (nextAt ? `Next level at ${nextAt} sessions` : 'Max level for this chapter')}</div></div></div>`;
-            // progress bar toward next level (or toward the cap)
-            const target = nextAt || info.sessions;
             const prevAt = (() => { for (let s = info.sessions; s >= 0; s--) { if (s === 0 || leyfarerLevelForSessions(s) < leyfarerLevelForSessions(info.sessions)) return s; } return 0; })();
             const pct = nextAt ? Math.round(((info.sessions - prevAt) / (nextAt - prevAt)) * 100) : 100;
             h += `<div class="mychar-bar"><span style="width:${Math.max(4, Math.min(100, pct))}%"></span></div>`;
-            const done = (ch.questLog || []).filter(q => q.done !== false);
-            h += `<div class="mychar-actions"><button class="edit-party-btn" id="qlogbtn-${campaign}-${name}" onclick="toggleCharQuestLog('${campaign}','${escapeHtml(name)}')">Show quest log</button></div>`;
-            h += `<div class="mychar-qlog" id="qlog-${campaign}-${name}" style="display:none">`;
-            (ch.questLog || []).forEach((q, i) => {
-                h += `<label class="mychar-quest"><input type="checkbox" ${q.done !== false ? 'checked' : ''} onchange="toggleCharQuest('${campaign}','${escapeHtml(name)}',${i})"><span class="mq-nm">${escapeHtml(q.name)}</span><span class="mq-type">${escapeHtml(q.type || '')}</span></label>`;
-            });
-            h += `<div class="mychar-addq"><input type="text" id="addq-${campaign}-${name}" placeholder="Add a completed quest…" onkeydown="if(event.key==='Enter'){addCharQuest('${campaign}','${escapeHtml(name)}')}"><button class="edit-party-btn" onclick="addCharQuest('${campaign}','${escapeHtml(name)}')">Add</button></div>`;
-            h += `</div>`;
+            h += `<div class="mychar-open">Open journey →</div>`;
         } else {
-            h += `<div class="mychar-level"><span class="mychar-lvl-num">${ch.level ? 'Lvl ' + escapeHtml(ch.level) : '—'}</span><div class="mychar-lvl-meta"><div>${ch.charClass ? escapeHtml(ch.charClass) : 'Character'}</div></div></div>`;
+            h += `<div class="mychar-level"><span class="mychar-lvl-num">${ch.level ? 'Lvl ' + escapeHtml(ch.level) : '—'}</span><div class="mychar-lvl-meta"><div>${ch.charClass ? escapeHtml(ch.charClass) + (ch.subclass ? ' · ' + escapeHtml(ch.subclass) : '') : 'Character'}</div></div></div><div class="mychar-open">Open character →</div>`;
         }
         h += `</div>`;
     });
-    if (!hasSeed) h += `<button class="submit-btn" style="width:100%;margin-top:8px" onclick="importLeyfarerCharacters()">Import my LeyFarer characters (Maloren & Krenn)</button>`;
+    // Add a character
+    h += `<div id="addchar-wrap"><button class="edit-party-btn" style="width:100%;margin-top:8px" onclick="toggleAddChar()">+ Add a character</button>
+      <div id="addchar-form" style="display:none;margin-top:8px">
+        <input type="text" id="addchar-name" class="player-edit-input" placeholder="Character name" maxlength="24" style="width:100%;margin-bottom:6px">
+        <input type="text" id="addchar-class" class="player-edit-input" placeholder="Class (optional)" maxlength="30" style="width:100%;margin-bottom:6px">
+        <select id="addchar-campaign" class="player-edit-input" style="width:100%;margin-bottom:6px"></select>
+        <button class="submit-btn" style="width:100%" onclick="addMyCharacter()">Add character</button>
+      </div></div>`;
+    h += `<div class="mychar-actions" style="margin-top:8px"><button class="edit-party-btn" id="guide-toggle" onclick="toggleLevelGuide()">Show LeyFarer leveling guide</button></div><div id="level-guide" style="display:none;margin-top:8px">${leyfarerGuideHtml()}</div>`;
+    if (!leyfarerMigrated()) h += `<button class="submit-btn" id="ley-migrate-btn" style="width:100%;margin-top:10px" onclick="migrateLeyfarers()">Set up my LeyFarer journey (Maloren & Krenn)</button>`;
     body.innerHTML = h;
 }
+window.toggleAddChar = function() {
+    const f = document.getElementById('addchar-form'); if (!f) return;
+    const open = f.style.display !== 'none'; f.style.display = open ? 'none' : 'block';
+    if (!open) {   // populate the campaign picker with campaigns I can manage
+        const sel = document.getElementById('addchar-campaign'); if (sel) {
+            const mine = Object.keys(allCampaigns).filter(c => canManageCampaign(c) && !isDeleted(c));
+            sel.innerHTML = mine.map(c => `<option value="${c}">${escapeHtml(campaignName(c))}</option>`).join('') || `<option value="">No campaigns you manage yet</option>`;
+        }
+        const nm = document.getElementById('addchar-name'); if (nm) nm.focus();
+    }
+};
+window.addMyCharacter = async function() {
+    const me = myOwnerId(); if (!me) { showToast('Sign in first to add characters.'); return; }
+    const name = (document.getElementById('addchar-name').value || '').trim();
+    const cls = (document.getElementById('addchar-class').value || '').trim();
+    const campaign = document.getElementById('addchar-campaign').value;
+    if (!name) { showToast('Enter a character name.'); return; }
+    if (!campaign) { showToast('Pick a campaign for this character.'); return; }
+    if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+    if (!campaignRosters[campaign]) campaignRosters[campaign] = [];
+    if (campaignCharacters[campaign][name]) { showToast('That character already exists in this campaign.'); return; }
+    campaignCharacters[campaign][name] = { charClass: cls, owner: me };   // self-claim: creating IS claiming
+    if (!campaignRosters[campaign].includes(name)) campaignRosters[campaign].push(name);
+    try { await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]); showToast(`Added ${name}`, 'success'); }
+    catch (e) { console.error('add character:', e); showToast('Could not save — try again.'); }
+    renderMyCharacters();
+};
+// The visible leveling guide: sessions → level (Table 3) and the chapter caps (Table 2).
+function leyfarerGuideRows() {
+    const rows = [];
+    for (let s = 0; s <= 37; s++) {
+        const lv = leyfarerLevelForSessions(s); const last = rows[rows.length - 1];
+        if (last && last.level === lv) last.max = s; else rows.push({ level: lv, min: s, max: s });
+    }
+    if (rows.length) rows[rows.length - 1].max = null;   // 37+ (level 20) is open-ended
+    return rows;
+}
+function leyfarerGuideHtml() {
+    const rows = leyfarerGuideRows();
+    let t = `<div class="guide-note">Your level comes from <strong>sessions completed → level</strong> (below), then <strong>capped by the campaign's current chapter</strong>. Every quest — campaign, side quest, or one-shot — counts as one session.</div>`;
+    t += `<table class="guide-tbl"><thead><tr><th>Level</th><th>Sessions completed</th></tr></thead><tbody>`;
+    rows.forEach(r => { t += `<tr><td>Lvl ${r.level}</td><td>${r.min === r.max ? r.min : (r.max === null ? `${r.min}+` : `${r.min}–${r.max}`)}</td></tr>`; });
+    t += `</tbody></table>`;
+    t += `<div class="guide-caps"><strong>Chapter caps</strong> — ${Object.entries(LEYFARER_CHAPTER_MAX).map(([c, m]) => `Ch ${c} → max ${m}`).join(' · ')} <em>(currently Chapter ${LEYFARER_CURRENT_CHAPTER})</em></div>`;
+    return t;
+}
+window.toggleLevelGuide = function() {
+    const el = document.getElementById('level-guide'); const btn = document.getElementById('guide-toggle'); if (!el) return;
+    const open = el.style.display !== 'none'; el.style.display = open ? 'none' : 'block'; if (btn) btn.textContent = open ? 'Show LeyFarer leveling guide' : 'Hide leveling guide';
+};
 function pollStatusLabel(p) {
     if (p.status === 'open') return pollNeedsMyResponse(p) ? '<span class="poll-need">Needs your vote</span>' : 'Open';
     if (p.confirmedDate) return 'Confirmed · ' + formatDateShort(p.confirmedDate) + (p.confirmedTime ? ' · ' + escapeHtml(p.confirmedTime) : '');
@@ -3129,6 +3354,7 @@ window.openAddSession = function(preCampaign) {
     document.getElementById('rec-start').value = tstr;
     ['new-session-time','new-session-gm','new-session-duration','nc-name','nc-icon'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     multiDates = []; ncColor = CAMPAIGN_SWATCHES[0]; ncIcon = '🎲';
+    setLeyStatus('scheduled');
     setAddMode('one');
     // Preselect the campaign when opened from a campaign page's "Add session" button.
     if (typeof preCampaign === 'string') { const sel = document.getElementById('new-session-campaign'); if (sel && [...sel.options].some(o => o.value === preCampaign)) sel.value = preCampaign; }
@@ -3163,8 +3389,17 @@ function onNewCampaignToggle() {
     // so the per-session Just Me / Everyone toggle only applies to existing campaigns.
     const visRow = document.getElementById('session-visibility-row');
     if (visRow) visRow.style.display = (currentUser && !isNew) ? '' : 'none';
+    // LeyFarer campaigns: show the Type + Scheduled/Completed row (the journey is dated sessions).
+    const leyRow = document.getElementById('ley-session-opts');
+    if (leyRow) leyRow.style.display = (!isNew && isLeyfarerCampaign(document.getElementById('new-session-campaign').value)) ? '' : 'none';
     if (isNew) { renderSwatches(); renderNcIcons(); }
 }
+let leySessionStatus = 'scheduled';
+window.setLeyStatus = function(v) {
+    leySessionStatus = v;
+    document.getElementById('ley-status-sched').classList.toggle('active', v === 'scheduled');
+    document.getElementById('ley-status-done').classList.toggle('active', v === 'completed');
+};
 function renderSwatches() {
     const el = document.getElementById('nc-swatches'); if (!el) return;
     el.innerHTML = CAMPAIGN_SWATCHES.map(c => `<span class="swatch${c === ncColor ? ' active' : ''}" style="background:${c}" onclick="pickSwatch('${c}')"></span>`).join('');
@@ -3296,6 +3531,8 @@ window.submitAddSession = async function() {
             const docId = `${dateVal}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
             const data = { date: dateVal, time, gm, duration, campaign, attendance, roster, status: "active" };
             if (isPrivate) { data.owner = myEmail(); data.invited = []; }
+            // LeyFarer campaigns: carry the journey type + explicit completed flag (completed → counts toward level).
+            if (isLeyfarerCampaign(campaign)) { data.type = document.getElementById('ley-session-type').value || 'Campaign'; data.completed = (leySessionStatus === 'completed'); }
             await setDoc(doc(db, "sessions", docId), data);
             if (!firstId) firstId = docId;
         }
@@ -4718,6 +4955,17 @@ function renderSessionCard(s, gi, ci) {
         }
     } else if (mine) roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.id || s.date}','${p}')" title="Toggle">${p}</button>`; });
     else roster.forEach(p => { attHtml += `<span class="att-chip ${att[p]||"in"}" style="cursor:default">${p}</span>`; });
+    // LeyFarer sessions: type tag + an explicit "Completed" toggle (never auto by date) that feeds the campaign's level.
+    let charPickHtml = '';
+    if (isLeyfarerCampaign(s.campaign) && !isCancelled) {
+        const _sid = s.id || s.date;
+        const typeTag = s.type ? `<span class="ley-type-tag">${escapeHtml(s.type)}</span>` : '';
+        const done = s.completed === true;
+        const toggle = mine
+            ? `<label class="char-done"><input type="checkbox" ${done ? 'checked' : ''} onclick="event.stopPropagation()" onchange="event.stopPropagation(); setSessionCompleted('${_sid}', this.checked)"> Completed — counts toward level</label>`
+            : `<span class="ley-done-note">${done ? '✓ Completed' : 'Not yet completed'}</span>`;
+        charPickHtml = `<div class="session-detail-section"><div class="detail-label">LeyFarer journey</div><div class="char-pick-row">${typeTag}${toggle}</div></div>`;
+    }
     const today = getToday();
     const isPast = d < today;
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
@@ -4765,7 +5013,7 @@ function renderSessionCard(s, gi, ci) {
             else ownerTag = `<button class="owner-tag owner-tag-btn" onclick="event.stopPropagation(); toggleSessionVisibility('${sid}')" title="${nInv ? 'Only you + invited can see this' : 'Only you can see this'} \u2014 click to share with the whole party">${label}</button>`;
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${recapHtml}${shareSessionHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}</div></div>`;
 }
 
 function renderList() {
@@ -4852,6 +5100,36 @@ function campaignNextHero(campaign, nextUp, lastPast) {
       </div>
     </div>`;
 }
+// The LeyFarer character behind a leveling campaign (the roster member flagged leyfarer, else the name after the colon).
+function leyfarerCharName(campaign) {
+    const chars = campaignCharacters[campaign] || {};
+    const leyName = Object.keys(chars).find(n => chars[n] && chars[n].leyfarer);
+    return leyName || (campaignName(campaign).split(':')[1] || '').trim() || null;
+}
+// Leveling hero atop a LeyFarer campaign page — this is the character's "detailed leveling view".
+function leyfarerHero(campaign) {
+    const info = leyfarerCampaignInfo(campaign);
+    const nextAt = leyfarerNextLevelAt(info.sessions);
+    const capped = info.capped < info.uncapped;
+    const prevAt = (() => { for (let s = info.sessions; s >= 0; s--) { if (s === 0 || leyfarerLevelForSessions(s) < leyfarerLevelForSessions(info.sessions)) return s; } return 0; })();
+    const pct = nextAt ? Math.round(((info.sessions - prevAt) / (nextAt - prevAt)) * 100) : 100;
+    const nm = leyfarerCharName(campaign);
+    const col = campaignColor(campaign);
+    return `<div class="ley-hero" style="--cp:${col}">
+      <div class="ley-hero-badge"><span class="ley-hero-lvl">${info.capped}</span><span class="ley-hero-lvl-cap">LEVEL</span></div>
+      <div class="ley-hero-body">
+        <div class="ley-hero-name">${nm ? escapeHtml(nm) + ' · ' : ''}Chapter ${info.chapter}</div>
+        <div class="ley-hero-meta"><strong>${info.sessions}</strong> session${info.sessions === 1 ? '' : 's'} completed${capped ? ` · capped at ${info.chapterMax} this chapter (would be ${info.uncapped})` : (nextAt ? ` · next level at ${nextAt}` : ' · max level for this chapter')}</div>
+        <div class="ley-hero-bar"><span style="width:${Math.max(4, Math.min(100, pct))}%"></span></div>
+        <button class="cp-btn ley-guide-toggle" onclick="toggleLevelGuideInline(this)">Show leveling guide</button>
+        <div class="ley-hero-guide" style="display:none">${leyfarerGuideHtml()}</div>
+      </div>
+    </div>`;
+}
+window.toggleLevelGuideInline = function(btn) {
+    const g = btn.parentElement.querySelector('.ley-hero-guide'); if (!g) return;
+    const open = g.style.display !== 'none'; g.style.display = open ? 'none' : 'block'; btn.textContent = open ? 'Show leveling guide' : 'Hide leveling guide';
+};
 function renderCampaignPage(campaign) {
     const today = getToday();
     const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
@@ -4922,7 +5200,7 @@ function renderCampaignPage(campaign) {
     // ----- Main column: Next-session hero → Availability poll → Sessions -----
     // (The old "Last Session" block was removed — the hero's "Read last recap" covers it; recaps are edited in the session cards.)
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
-    let mainHtml = campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
+    let mainHtml = (isLeyfarerCampaign(campaign) ? leyfarerHero(campaign) : '') + campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
     const addSessionBtn = canManageCampaign(campaign) ? `<button class="cp-btn" onclick="openAddSession('${campaign}')">+ Add session</button>` : '';
     if (cs.length > 0) {
         mainHtml += `<div class="sessions-wrapper">`;
