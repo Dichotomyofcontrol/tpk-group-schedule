@@ -148,12 +148,13 @@
         .section-heading:first-child { margin-top: 0; }
 
         /* ===== SESSIONS WRAPPER — background region for the entire sessions section ===== */
+        /* Surface discipline: the session list is grouped by a heading + hairline, not a heavy card. */
         .sessions-wrapper {
-            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
-            border-radius: 16px; padding: 20px; margin-top: 24px; margin-bottom: 20px;
+            background: transparent; border: none; border-top: 1px solid var(--border);
+            border-radius: 0; padding: 24px 0 0; margin-top: 32px; margin-bottom: 20px;
         }
         .sessions-wrapper .section-heading { margin-top: 0; }
-        body.light .sessions-wrapper { background: rgba(0,0,0,0.02); }
+        body.light .sessions-wrapper { background: transparent; }
 
         /* ===== CONTROLS PANEL — wraps stats + controls in a distinct section ===== */
         .controls-panel {
@@ -403,7 +404,7 @@
             transition: all 0.25s ease; cursor: pointer; position: relative; overflow: hidden;
         }
         .session-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
-        .session-card:hover { background: var(--surface-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+        .session-card:hover { background: var(--surface-hover); transform: translateY(-1px); box-shadow: var(--shadow-2); }
         .session-card.frostmaiden::before { background: var(--frostmaiden-primary); }
         .session-card.strahd::before { background: var(--strahd-primary); }
         .session-card.rokugan::before { background: var(--rokugan-primary); }
@@ -545,7 +546,7 @@
         .cp-btn { font-family: 'Inter', sans-serif; font-size: 0.8rem; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s; }
         .cp-btn:hover { border-color: var(--text-dim); background: var(--surface-hover); }
         .cp-menu { position: relative; }
-        .cp-menu-list { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 6px; min-width: 210px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 50; display: none; }
+        .cp-menu-list { position: absolute; right: 0; top: calc(100% + 6px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 6px; min-width: 210px; box-shadow: var(--shadow-2); z-index: 50; display: none; }
         .cp-menu-list.open { display: block; }
         .cp-menu-list button { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.82rem; padding: 9px 10px; border-radius: 6px; cursor: pointer; }
         .cp-menu-list button:hover { background: var(--surface-hover); }
@@ -982,6 +983,23 @@
         .confirm-btn.yes:hover { opacity: 0.85; }
         .confirm-btn.no { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
         .confirm-btn.no:hover { border-color: var(--text-dim); color: var(--text); }
+        /* ===== Session confirmation — milestone moment ===== */
+        .scm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 220; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        .scm-overlay.open { display: flex; }
+        .scm-modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-3); width: 100%; max-width: 380px; padding: 28px 26px; text-align: center; animation: fadeIn var(--dur-slow) var(--ease-out) forwards; }
+        .scm-eyebrow { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--brand); font-weight: 700; margin-bottom: 10px; }
+        .scm-date { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1.15; color: var(--text); letter-spacing: -0.01em; }
+        .scm-time { font-size: 0.95rem; color: var(--text); margin-top: 4px; font-variant-numeric: tabular-nums; }
+        .scm-note { font-size: 0.84rem; color: var(--text-dim); line-height: 1.55; margin: 14px 0 20px; }
+        .scm-actions { display: flex; gap: 10px; justify-content: center; }
+        .scm-actions .cp-btn { flex: 1; justify-content: center; display: inline-flex; align-items: center; gap: 6px; }
+        .scm-done-title { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; color: var(--text); margin: 4px 0 8px; }
+        .scm-check { width: 64px; height: 64px; margin: 0 auto 14px; }
+        .scm-check svg { width: 100%; height: 100%; }
+        .scm-check-c { fill: none; stroke: var(--success); stroke-width: 3; opacity: 0.35; }
+        .scm-check-p { fill: none; stroke: var(--success); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: scmDraw 0.5s var(--ease-out) 0.1s forwards; }
+        @keyframes scmDraw { to { stroke-dashoffset: 0; } }
+        @media (prefers-reduced-motion: reduce) { .scm-check-p { animation: none; stroke-dashoffset: 0; } }
 
         /* ===== THEME TOGGLE ===== */
         .theme-toggle {
@@ -1212,16 +1230,19 @@
         .readonly-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--text-dim); margin-bottom: 16px; }
         /* ===== Home campaign grid (redesign) ===== */
         .campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 28px; }
-        .campaign-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--cc); border-radius: 12px; padding: 16px; cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
-        .campaign-card:hover { transform: translateY(-2px); border-color: var(--cc); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-        .cc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .campaign-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--cc); border-radius: var(--r-lg); padding: 16px 18px; cursor: pointer; transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease); }
+        .campaign-card:hover { transform: translateY(-2px); border-color: var(--cc); box-shadow: var(--shadow-2); }
+        .campaign-card.cc-alert { border-color: var(--brand-line); }
+        .cc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
         .cc-icon { font-size: 1.3rem; line-height: 1; }
         .cc-name { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .cc-next { font-size: 1rem; font-weight: 600; color: var(--text); }
-        .cc-next-label { display: block; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cc); font-weight: 700; margin-bottom: 3px; }
-        .cc-rel { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-dim); margin-top: 2px; }
-        .cc-next.cc-none { color: var(--text-dim); font-weight: 400; font-size: 0.9rem; }
-        .cc-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 12px; }
+        .cc-next { color: var(--text); }
+        .cc-next-label { display: block; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cc); font-weight: 700; margin-bottom: 4px; }
+        .cc-rel-strong { display: block; font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; line-height: 1.1; color: var(--text); letter-spacing: -0.01em; }
+        .cc-when { display: block; font-size: 0.76rem; color: var(--text-dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
+        .cc-plan { display: block; font-size: 0.9rem; color: var(--text-dim); }
+        .cc-count { font-size: 0.72rem; color: var(--text-dim); margin-top: 14px; }
+        .cc-flag { margin-left: auto; flex-shrink: 0; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand); background: var(--brand-tint); border: 1px solid var(--brand-line); border-radius: var(--r-pill); padding: 2px 8px; }
         /* ===== Nav grouping + Add-campaign chooser ===== */
         .nav-section-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); font-weight: 600; margin: 4px 4px 10px; }
         .ac-choices { display: flex; flex-direction: column; gap: 12px; margin: 4px 0 8px; }
@@ -1733,6 +1754,9 @@
     </div>
 
     <!-- Reader Modal -->
+    <div class="scm-overlay" id="scm-overlay" onclick="closeConfirmSession()">
+        <div class="scm-modal" id="scm-modal" onclick="event.stopPropagation()"></div>
+    </div>
     <div class="reader-overlay" id="reader-overlay" onclick="closeReaderModal()">
         <div class="reader-modal" id="reader-modal" onclick="event.stopPropagation()">
             <div class="reader-header">
@@ -2530,10 +2554,29 @@ window.votePoll = async function(pollId, optId, vote) {
     try { await updateDoc(doc(db, "polls", pollId), { [`responses.${key}`]: poll.responses[key] }); }
     catch (e) { console.error("vote error:", e); }
 };
-window.confirmPoll = async function(pollId, optId) {
+// Confirming a session is a group milestone — open a considered confirmation, not a native dialog.
+let pendingConfirm = null;
+window.confirmPoll = function(pollId, optId) {
     const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
     const opt = pollOptions(poll).find(o => o.id === optId); if (!opt) return;
-    if (!confirm(`Confirm the session for ${optionLabel(opt)}? This schedules it and closes the poll.`)) return;
+    pendingConfirm = { pollId, optId };
+    const roster = campaignRosters[poll.campaign] || [];
+    const d = parseDate(opt.date);
+    const dateLine = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const timeLine = (opt.time || '6:00 PM') + ' PST';
+    document.getElementById('scm-modal').innerHTML =
+        `<div class="scm-eyebrow">Confirm session</div>`
+        + `<div class="scm-date">${dateLine}</div><div class="scm-time">${escapeHtml(timeLine)}</div>`
+        + `<p class="scm-note">This adds the session to the schedule${roster.length ? ` for all ${roster.length} player${roster.length === 1 ? '' : 's'}` : ''} and closes the poll. You can edit or cancel it later.</p>`
+        + `<div class="scm-actions"><button class="cp-btn" onclick="closeConfirmSession()">Not yet</button><button class="cp-btn cp-btn-primary" onclick="confirmPollGo()">${icon('check')} Confirm session</button></div>`;
+    document.getElementById('scm-overlay').classList.add('open');
+};
+window.closeConfirmSession = function() { document.getElementById('scm-overlay').classList.remove('open'); pendingConfirm = null; };
+window.confirmPollGo = async function() {
+    if (!pendingConfirm) return;
+    const { pollId, optId } = pendingConfirm;
+    const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
+    const opt = pollOptions(poll).find(o => o.id === optId); if (!opt) return;
     const c = poll.campaign;
     const roster = campaignRosters[c] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; });
     const docId = `${opt.date}-${Date.now().toString(36)}-poll`;
@@ -2541,9 +2584,23 @@ window.confirmPoll = async function(pollId, optId) {
         await setDoc(doc(db, "sessions", docId), { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active" });
         await updateDoc(doc(db, "polls", pollId), { status: 'confirmed', confirmedDate: opt.date, confirmedTime: opt.time || '', confirmedSessionId: docId });
         if (allPolls[pollId]) allPolls[pollId].status = 'confirmed';
+        showSessionConfirmed(opt, roster.length);
         renderCampaignPage(c); renderAll();
     } catch (e) { console.error("confirm poll error:", e); alert('Could not confirm — try again.'); }
+    pendingConfirm = null;
 };
+function showSessionConfirmed(opt, count) {
+    const d = parseDate(opt.date);
+    const dateLine = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    const timeLine = (opt.time || '6:00 PM') + ' PST';
+    document.getElementById('scm-modal').innerHTML =
+        `<div class="scm-check"><svg viewBox="0 0 52 52" aria-hidden="true"><circle class="scm-check-c" cx="26" cy="26" r="24"/><path class="scm-check-p" d="M15 27l7 7 15-16"/></svg></div>`
+        + `<div class="scm-done-title">Session confirmed</div>`
+        + `<div class="scm-date">${dateLine}</div><div class="scm-time">${escapeHtml(timeLine)}</div>`
+        + `<p class="scm-note">It's on the schedule${count ? ` — ${count} player${count === 1 ? '' : 's'} expected` : ''}. Write a recap after you play to keep the story going.</p>`
+        + `<div class="scm-actions"><button class="cp-btn cp-btn-primary" onclick="closeConfirmSession()">Done</button></div>`;
+    document.getElementById('scm-overlay').classList.add('open');
+}
 window.deletePoll = async function(pollId) {
     const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
     if (!confirm('Delete this availability poll? Responses will be lost.')) return;
@@ -4131,17 +4188,20 @@ function renderCampaignGrid() {
         return campaignName(a.c).localeCompare(campaignName(b.c));
     });
     el.innerHTML = rows.map(({ c, cs, next }) => {
+        const poll = campaignOpenPoll(c);
+        const needsVote = poll && pollNeedsMyResponse(poll);
         let nextLine;
         if (next) {
             const days = Math.round((parseDate(next.date) - today) / 86400000);
-            const rel = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `in ${days} days`;
-            nextLine = `<div class="cc-next"><span class="cc-next-label">Next session</span>${formatDateShort(next.date)}${next.time ? ' · ' + escapeHtml(next.time) : ''}<span class="cc-rel">${rel}</span></div>`;
+            const rel = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`;
+            nextLine = `<div class="cc-next"><span class="cc-next-label">Next session</span><span class="cc-rel-strong">${rel}</span><span class="cc-when">${formatDateShort(next.date)}${next.time ? ' · ' + escapeHtml(next.time) : ''}</span></div>`;
         } else {
-            nextLine = `<div class="cc-next cc-none"><span class="cc-next-label">Next session</span>None scheduled</div>`;
+            nextLine = `<div class="cc-next cc-none"><span class="cc-next-label">Next session</span><span class="cc-plan">${poll ? 'Pick a date — poll open' : 'None scheduled'}</span></div>`;
         }
         const tag = isArchived(c) ? ' · archived' : '';
-        return `<div class="campaign-card" style="--cc:${campaignColor(c)}" onclick="navigateTo('${c}')">`
-            + `<div class="cc-top"><span class="cc-icon">${campaignIcon(c)}</span><span class="cc-name">${escapeHtml(campaignName(c))}</span></div>`
+        const flag = needsVote ? `<span class="cc-flag">Needs your vote</span>` : '';
+        return `<div class="campaign-card${needsVote ? ' cc-alert' : ''}" style="--cc:${campaignColor(c)}" onclick="navigateTo('${c}')">`
+            + `<div class="cc-top"><span class="cc-icon">${campaignIcon(c)}</span><span class="cc-name">${escapeHtml(campaignName(c))}</span>${flag}</div>`
             + nextLine
             + `<div class="cc-count">${cs.length} session${cs.length === 1 ? '' : 's'}${tag}</div>`
             + `</div>`;
