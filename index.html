@@ -286,11 +286,11 @@
         .nav-add-btn:hover { border-color: var(--brand); color: var(--text); }
 
         /* ===== ADD SESSION FORM (in nav or modal) ===== */
-        .add-form-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: center; }
+        .add-form-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; justify-content: center; align-items: center; padding: 20px; overflow-y: auto; }
         .add-form-overlay.open { display: flex; }
         .add-session-modal {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-            padding: 24px; width: 90%; max-width: 480px; animation: fadeIn 0.2s ease forwards;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+            padding: 24px; width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; box-shadow: var(--shadow-3); animation: fadeIn var(--dur-slow) var(--ease-out) forwards;
         }
         .add-session-modal h3 { font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 16px; }
         .form-row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
@@ -1256,6 +1256,15 @@
         .multi-chip .chip-x { cursor: pointer; color: var(--text-dim); font-size: 1rem; line-height: 1; }
         .multi-chip .chip-x:hover { color: var(--error); }
         .cs-divider { height: 1px; background: var(--border); margin: 16px 0; }
+        .cs-members { display: flex; flex-direction: column; gap: 6px; }
+        .cs-member-row { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 8px 10px; }
+        .cs-member-nm { flex: 1; min-width: 0; font-size: 0.82rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cs-role-sel { font-family: 'Inter', sans-serif; font-size: 0.74rem; padding: 5px 6px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); cursor: pointer; }
+        .cs-role-sel:focus { outline: none; border-color: var(--brand); }
+        .cs-role-fixed { font-size: 0.66rem; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.05em; padding: 0 6px; }
+        .cs-member-empty { font-size: 0.8rem; color: var(--text-dim); padding: 4px 0; }
+        .cs-members-hint { font-size: 0.72rem; color: var(--text-dim); margin-top: 8px; line-height: 1.45; }
+        .cs-members-hint strong { color: var(--text); font-weight: 600; }
         .cs-actions { display: flex; flex-direction: column; gap: 12px; }
         .readonly-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--text-dim); margin-bottom: 16px; }
         /* ===== Home campaign grid (redesign) ===== */
@@ -1275,6 +1284,7 @@
         .cc-flag { margin-left: auto; flex-shrink: 0; font-size: 0.58rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand); background: var(--brand-tint); border: 1px solid var(--brand-line); border-radius: var(--r-pill); padding: 2px 8px; }
         /* ===== Nav grouping + Add-campaign chooser ===== */
         .nav-section-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); font-weight: 600; margin: 4px 4px 10px; }
+        .nav-identity { font-size: 0.82rem; color: var(--text); padding: 2px 14px 12px; word-break: break-word; }
         .ac-choices { display: flex; flex-direction: column; gap: 12px; margin: 4px 0 8px; }
         .ac-choice { text-align: left; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
         .ac-choice:hover { border-color: var(--brand); background: var(--surface-hover); }
@@ -1389,11 +1399,14 @@
     <div id="nav-campaigns"></div>
     <div class="nav-divider"></div>
     <div class="nav-section-label" id="nav-actions-label">Actions</div>
-    <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Your Account</button>
+    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()">&#43; Schedule a session</button>
+    <button class="nav-add-btn" id="nav-addcampaign-btn" onclick="openAddCampaign()" style="margin-top:8px">&#43; Add a campaign</button>
     <button class="nav-add-btn" id="nav-polls-btn" onclick="openPollsList()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg> Polls</button>
-    <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">&#43; Add to Schedule</button>
-    <button class="nav-add-btn" id="nav-addcampaign-btn" onclick="openAddCampaign()" style="margin-top:8px">&#43; Add Campaign</button>
-    <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Manage Schedule</button>
+    <div class="nav-divider"></div>
+    <div class="nav-section-label">Account</div>
+    <div id="nav-identity" class="nav-identity"></div>
+    <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Your Account</button>
+    <button class="nav-add-btn" id="nav-signout-btn" onclick="logout()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Sign out</button>
 </div>
 
 <!-- Add Session Modal -->
@@ -1673,6 +1686,11 @@
         <div class="form-group"><label>Color</label><div id="cs-swatches" class="swatch-row"></div></div>
         <div class="form-buttons"><button class="submit-btn" onclick="saveCampaignMeta()">Save changes</button></div>
         <div class="cs-divider"></div>
+        <div class="form-group"><label>Members &amp; roles</label>
+            <div id="cs-members" class="cs-members"></div>
+            <div class="cs-members-hint"><strong>Access</strong> controls what a member can change · <strong>In-game</strong> is just a label.</div>
+        </div>
+        <div class="cs-divider"></div>
         <div class="cs-actions">
             <button class="profile-action" id="cs-archive-btn" onclick="toggleArchiveCampaign()">Archive campaign</button>
             <div class="form-group"><label>Transfer ownership</label>
@@ -1717,9 +1735,7 @@
                     <div class="top-bar-logo">Six in the TPK</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                    <span class="user-chip" id="user-chip" style="display:none"></span>
                     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle light/dark mode"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z"/></svg></button>
-                    <button class="sign-out-btn" onclick="logout()">Sign Out</button>
                 </div>
             </div>
         </div>
@@ -1792,7 +1808,7 @@
                             <button class="cp-btn cp-btn-primary" onclick="toggleCampaignMenu(event)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Manage <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:0.85em;height:0.85em"><path d="M6 9l6 6 6-6"/></svg></button>
                             <div class="cp-menu-list" id="cp-menu-list">
                                 <button id="cp-menu-schedule" onclick="closeCampaignMenu(); openCampaignSchedule()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg> Bulk-edit schedule</button>
-                                <button onclick="closeCampaignMenu(); openCampaignSettings()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Campaign settings</button>
+                                <button id="cp-menu-settings" onclick="closeCampaignMenu(); openCampaignSettings()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Campaign settings</button>
                             </div>
                         </div>
                     </div>
@@ -2138,8 +2154,19 @@ function canManage(s) {
     return !!me && campaignOwner(s.campaign) === me;   // "Everyone" sessions: campaign owner only
 }
 function isCampaignOwner(c) { const me = myEmail(); return !!me && campaignOwner(c) === me; }
-// Can the viewer manage a whole campaign's schedule/sessions? (not while archived/deleted)
-function canManageCampaign(c) { return isCampaignOwner(c) && !isArchived(c) && !isDeleted(c); }
+// Per-campaign access role: 'owner' (full) | 'editor' (manage, no delete/transfer/roles) | 'viewer' (read + own char).
+function campaignAccessRole(c, email) {
+    const me = email || myEmail();
+    if (!me) return 'viewer';
+    if (campaignOwner(c) === me) return 'owner';
+    const role = ((allCampaigns[c] && allCampaigns[c].access) || {})[me];
+    return role === 'editor' ? 'editor' : 'viewer';
+}
+// Owner-only actions (delete / transfer / archive / manage roles) still gate on isCampaignOwner.
+// Can the viewer manage a campaign's schedule/sessions/recaps? Owner OR editor (not archived/deleted).
+function canManageCampaign(c) { const r = campaignAccessRole(c); return (r === 'owner' || r === 'editor') && !isArchived(c) && !isDeleted(c); }
+// In-game role (label only — no permissions): 'gm' | 'player'.
+function campaignGameRole(c, email) { const me = email || myEmail(); if (!me) return 'player'; return (((allCampaigns[c] && allCampaigns[c].gameRoles) || {})[me] === 'gm') ? 'gm' : 'player'; }
 function campaignVisible(c) {
     return campaignAccessible(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
@@ -2154,22 +2181,14 @@ function updateAccessUI() {
     const addBtn = document.getElementById('nav-add-btn'); if (addBtn) addBtn.style.display = canEdit ? '' : 'none';
     const mgmtBtn = document.getElementById('nav-manage-btn'); if (mgmtBtn) mgmtBtn.style.display = canEdit ? '' : 'none';
     // Add Campaign is available to everyone (guests can Join with a code); Create is gated inside.
-    const chip = document.getElementById('user-chip');
-    if (chip) {
-        if (currentUser) {
-            chip.textContent = currentUser.email || '';
-            chip.style.display = '';
-        } else if (codeGrants().length) {
-            const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))];
-            chip.textContent = `${labels[0] || 'Guest'} · guest`;
-            chip.style.display = '';
-        } else {
-            chip.style.display = 'none';
-        }
-        chip.style.cursor = 'pointer';
-        chip.title = 'Your account';
-        chip.onclick = () => { if (window.openProfile) window.openProfile(); };
+    const ident = document.getElementById('nav-identity');
+    if (ident) {
+        if (currentUser) ident.textContent = currentUser.email || 'Signed in';
+        else if (codeGrants().length) { const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))]; ident.textContent = `${labels[0] || 'Guest'} · guest`; }
+        else ident.textContent = 'Guest';
     }
+    const signoutBtn = document.getElementById('nav-signout-btn');
+    if (signoutBtn) signoutBtn.style.display = (currentUser || codeGrants().length) ? '' : 'none';
     // Account entry always available inside the app (works on mobile where the chip is hidden)
     const acctBtn = document.getElementById('nav-account-btn');
     if (acctBtn) acctBtn.style.display = '';
@@ -2388,9 +2407,40 @@ window.openCampaignSettings = function() {
     document.getElementById('cs-successor').innerHTML = `<option value="">No successor</option>` + opts;
     document.getElementById('cs-delete-confirm').value = '';
     document.getElementById('cs-delete-section').style.display = 'none';
+    renderCsMembers(c);
     document.getElementById('campaign-settings-overlay').classList.add('open');
 };
 window.closeCampaignSettings = function() { document.getElementById('campaign-settings-overlay').classList.remove('open'); };
+// Members & roles table (owner only). Access = permissions; in-game = label.
+function renderCsMembers(c) {
+    const el = document.getElementById('cs-members'); if (!el) return;
+    const owner = campaignOwner(c);
+    const members = campaignMemberEmails(c);
+    const gameSel = (email, role) => `<select class="cs-role-sel" aria-label="In-game role for ${escapeHtml(email)}" onchange="setMemberGameRole('${escapeHtml(c)}','${escapeHtml(email)}',this.value)"><option value="player"${role === 'player' ? ' selected' : ''}>Player</option><option value="gm"${role === 'gm' ? ' selected' : ''}>GM</option></select>`;
+    let h = '';
+    if (owner) h += `<div class="cs-member-row"><span class="cs-member-nm">${escapeHtml(owner)}</span><span class="cs-role-fixed">Owner</span>${gameSel(owner, campaignGameRole(c, owner))}</div>`;
+    members.forEach(m => {
+        const acc = campaignAccessRole(c, m);
+        const accSel = `<select class="cs-role-sel" aria-label="Access for ${escapeHtml(m)}" onchange="setMemberAccess('${escapeHtml(c)}','${escapeHtml(m)}',this.value)"><option value="viewer"${acc === 'viewer' ? ' selected' : ''}>Viewer</option><option value="editor"${acc === 'editor' ? ' selected' : ''}>Editor</option></select>`;
+        h += `<div class="cs-member-row"><span class="cs-member-nm">${escapeHtml(m)}</span>${accSel}${gameSel(m, campaignGameRole(c, m))}</div>`;
+    });
+    if (!members.length) h += `<div class="cs-member-empty">No members yet — invite players from the campaign's Share menu, then set their roles here.</div>`;
+    el.innerHTML = h;
+}
+window.setMemberAccess = async function(c, email, role) {
+    if (!isCampaignOwner(c) || !allCampaigns[c]) return;
+    allCampaigns[c].access = { ...(allCampaigns[c].access || {}), [email]: role };
+    try { await updateDoc(doc(db, "campaigns", c), { [`access.${email}`]: role }); }
+    catch (e) { console.error("set access error:", e); showToast('Could not update access — try again.'); }
+    updateAccessUI();
+};
+window.setMemberGameRole = async function(c, email, role) {
+    if (!isCampaignOwner(c) || !allCampaigns[c]) return;
+    allCampaigns[c].gameRoles = { ...(allCampaigns[c].gameRoles || {}), [email]: role };
+    try { await updateDoc(doc(db, "campaigns", c), { [`gameRoles.${email}`]: role }); }
+    catch (e) { console.error("set game role error:", e); showToast('Could not update role — try again.'); }
+    if (currentPage === c) renderCampaignPage(c);
+};
 window.toggleCampaignMenu = function(e) { if (e) e.stopPropagation(); document.getElementById('cp-menu-list').classList.toggle('open'); };
 window.closeCampaignMenu = function() { const m = document.getElementById('cp-menu-list'); if (m) m.classList.remove('open'); };
 document.addEventListener('click', (e) => { const menu = document.getElementById('campaign-manage-menu'); if (menu && !menu.contains(e.target)) closeCampaignMenu(); });
@@ -4465,9 +4515,11 @@ function renderCampaignPage(campaign) {
     const subEl = document.getElementById('cp-sub');
     if (subEl) subEl.textContent = `${nonCancelled} session${nonCancelled === 1 ? '' : 's'}${nextUp ? ` · Next ${formatDateShort(nextUp.date)}` : ''}`;
     const manageMenu = document.getElementById('campaign-manage-menu');
-    if (manageMenu) manageMenu.style.display = isCampaignOwner(campaign) ? '' : 'none';
+    if (manageMenu) manageMenu.style.display = canManageCampaign(campaign) ? '' : 'none';   // owner OR editor
     const schedItem = document.getElementById('cp-menu-schedule');
     if (schedItem) schedItem.style.display = canManageCampaign(campaign) ? '' : 'none';
+    const setItem = document.getElementById('cp-menu-settings');
+    if (setItem) setItem.style.display = isCampaignOwner(campaign) ? '' : 'none';   // roles/delete/transfer: owner only
     activeQuills = {};
     let banner = '';
     if (isArchived(campaign)) banner = `<div class="readonly-banner">${icon('folder')} This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
