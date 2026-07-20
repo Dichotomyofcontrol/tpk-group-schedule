@@ -354,6 +354,8 @@
         .seg-btn:hover { color: var(--text); border-color: var(--text-dim); }
         .seg-btn.active { color: var(--brand); border-color: var(--brand); background: var(--brand-tint); }
         /* Owner/shared tag on session cards */
+        .owner-tag-btn { cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+        .owner-tag-btn:hover { color: var(--brand); border-color: var(--brand-line); }
         .owner-tag {
             font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
             padding: 2px 8px; border-radius: 100px; margin-left: 8px; vertical-align: 2px;
@@ -1352,6 +1354,26 @@
         .poll-slot-x:hover { color: var(--error); }
         .poll-slot-empty { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
         .poll-need { color: var(--brand); font-weight: 600; }
+        /* ===== My Characters ===== */
+        .mychar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 12px; }
+        .mychar-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .mychar-nm { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: var(--text); }
+        .mychar-camp { font-size: 0.75rem; color: var(--text-dim); }
+        .mychar-level { display: flex; align-items: center; gap: 14px; margin: 10px 0 8px; }
+        .mychar-lvl-num { font-family: var(--font-display); font-weight: 700; font-size: 1.7rem; line-height: 1; color: var(--brand); flex-shrink: 0; }
+        .mychar-lvl-meta { font-size: 0.78rem; color: var(--text-dim); line-height: 1.5; }
+        .mychar-lvl-meta strong { color: var(--text); }
+        .mychar-bar { height: 6px; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
+        .mychar-bar span { display: block; height: 100%; background: var(--brand); transition: width var(--dur) var(--ease); }
+        .mychar-actions { margin-top: 10px; }
+        .mychar-qlog { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
+        .mychar-quest { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.82rem; color: var(--text); cursor: pointer; }
+        .mychar-quest input { accent-color: var(--brand); flex-shrink: 0; }
+        .mychar-quest .mq-nm { flex: 1; min-width: 0; }
+        .mychar-quest .mq-type { font-size: 0.66rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+        .mychar-addq { display: flex; gap: 8px; margin-top: 10px; }
+        .mychar-addq input { flex: 1; min-width: 0; padding: 7px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-size: 0.82rem; font-family: 'Inter', sans-serif; }
+        .mychar-addq input:focus { outline: none; border-color: var(--brand); }
         @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-opt-main { flex-basis: 100%; } .avail-bar { max-width: none; } .poll-votes { width: 100%; } .poll-vote { flex: 1; justify-content: center; padding: 9px 0; } .poll-confirm { width: 100%; justify-content: center; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Mobile craft pass (phone widths) ===== */
         @media (max-width: 600px) {
@@ -1439,6 +1461,7 @@
     <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()">&#43; Schedule a session</button>
     <button class="nav-add-btn" id="nav-addcampaign-btn" onclick="openAddCampaign()" style="margin-top:8px">&#43; Add a campaign</button>
     <button class="nav-add-btn" id="nav-polls-btn" onclick="openPollsList()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg> Polls</button>
+    <button class="nav-add-btn" id="nav-chars-btn" onclick="openMyCharacters()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.2-2.9 7.1-7 8.5-4.1-1.4-7-4.3-7-8.5V6z"/><circle cx="12" cy="10" r="2"/><path d="M8.5 16a3.5 3.5 0 0 1 7 0"/></svg> My Characters</button>
     <div class="nav-divider"></div>
     <div class="nav-section-label">Account</div>
     <div id="nav-identity" class="nav-identity"></div>
@@ -1683,6 +1706,14 @@
 </div>
 
 <!-- Polls list (all campaigns) -->
+<div class="add-form-overlay" id="mychars-overlay" onclick="closeMyCharacters()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>My Characters</h3>
+        <div id="mychars-body"></div>
+        <div class="form-buttons"><button class="cancel-form-btn" onclick="closeMyCharacters()">Close</button></div>
+    </div>
+</div>
+
 <div class="add-form-overlay" id="polls-list-overlay" onclick="closePollsList()">
     <div class="add-session-modal" onclick="event.stopPropagation()">
         <h3>Polls</h3>
@@ -2207,6 +2238,36 @@ function canManageCampaign(c) { const r = campaignAccessRole(c); return (r === '
 function campaignGameRole(c, email) { const me = email || myEmail(); if (!me) return 'player'; return (((allCampaigns[c] && allCampaigns[c].gameRoles) || {})[me] === 'gm') ? 'gm' : 'player'; }
 // Identity a character belongs to: signed-in email, else the guest's code label. Used for character ownership.
 function myOwnerId() { const me = myEmail(); if (me) return me; const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))]; return labels[0] || null; }
+
+// ===== LeyFarer leveling (from the "TLC Chapter 12 Update" rules) =====
+// Table 3: character level by number of sessions/quests completed (index = session #, 1..37).
+const LEYFARER_LEVEL_BY_SESSION = [8, 8,8,9,9,10,10,11,11,11,12,12,12,13,13,13,14,14,14,15,15,15,16,16,16,17,17,17,17,18,18,18,18,19,19,19,19,20];
+// Table 2: max level allowed by the current campaign chapter (caps the above).
+const LEYFARER_CHAPTER_MAX = { 12: 16, 13: 17, 14: 18, 15: 19, 16: 20 };
+const LEYFARER_CURRENT_CHAPTER = 12;
+function leyfarerLevelForSessions(n) { const s = Math.max(0, n | 0); return s >= 37 ? 20 : LEYFARER_LEVEL_BY_SESSION[s]; }
+function leyfarerChapterMax(chapter) { return LEYFARER_CHAPTER_MAX[chapter || LEYFARER_CURRENT_CHAPTER] || 20; }
+// A LeyFarer character's level = level-for-sessions, capped by the chapter. Returns {sessions, uncapped, capped, chapter, chapterMax}.
+function leyfarerLevelInfo(ch) {
+    const sessions = ((ch && ch.questLog) || []).filter(q => q && q.done !== false).length;
+    const chapter = (ch && ch.chapter) || LEYFARER_CURRENT_CHAPTER;
+    const uncapped = leyfarerLevelForSessions(sessions);
+    const chapterMax = leyfarerChapterMax(chapter);
+    return { sessions, uncapped, capped: Math.min(uncapped, chapterMax), chapter, chapterMax };
+}
+// Sessions needed to reach the next level (or null if maxed for the chapter).
+function leyfarerNextLevelAt(sessions) {
+    const cur = leyfarerLevelForSessions(sessions);
+    for (let s = sessions + 1; s <= 37; s++) { if (leyfarerLevelForSessions(s) > cur) return s; }
+    return null;
+}
+// The two characters' completed quest logs (from the LeyFarer spreadsheet; every entry counts as one session).
+const LEYFARER_SEED_CHARACTERS = {
+    Maloren: { charClass: 'Magus', chapter: 12, quests: [
+        ['Intro - 9 Lives','Intro'],['Troads Less Traveled','Side Quest'],['Bridge of Dreams','Side Quest'],['Spa Day','Side Quest'],['Stalking Jaw','Side Quest'],['Dinner Party','Side Quest'],['4.1 Session','Campaign'],['4.2 Session','Campaign'],['Beach Day','Side Quest'],['Lost & Damned','Side Quest'],['Treasures of the Abyss','Side Quest'],['4.3 Session','Campaign'],['4.4 Session','Campaign'],['Player Submit #1','Side Quest'],['Player Submit #2','Side Quest'],['4.5 Session','Campaign'],['4.6 Finale','Campaign'],['Harvest of Reckoning','Side Quest'],['5.1 Session','Campaign'],['Magus','Side Quest'],['A Feast for Tree Ants','Side Quest'],['5.2 Session','Campaign'],['Players Choice','Side Quest'],['5.3 Session','Campaign'],['The Lost Tome','Side Quest'],['5.4 Session','Campaign'],['Land on Your Feet','Side Quest'],['5.5 Session','Campaign'],['5.6 Finale','Campaign'],['Beast Within','Side Quest'],['6.1 Session','Campaign'],['6.2 Session','Campaign'],['6.3 Session','Campaign'],['6.4 Session','Campaign'],['6.5 Session','Campaign'],['6.6 Finale','Campaign'],['Fight the Moon','Side Quest'],['Longshadow Dusk','Side Quest'],['Beneath the Briars','Side Quest'] ] },
+    Krenn: { charClass: '', chapter: 12, quests: [
+        ['Intro - 9 Lives','Intro'],['Spa Day','Side Quest'],['Bridge of Dreams','Side Quest'],['Beach Day','Side Quest'],['Treasures of the Abyss','Side Quest'],['Dinner Party','Side Quest'],['Player Submit #2','Side Quest'],['Player Submit #1','Side Quest'],['Stalking Jaw','Side Quest'],['Lost and Damned','Side Quest'],['Harvest Of Reckoning','Side Quest'],['A Feat for Tree Ants','Side Quest'],['Land on Your Feet','Side Quest'],['Lost Tome','Side Quest'],['6.1 Session','Campaign'],['The Once and Future Ring','Side Quest'],['6.2 Session','Campaign'],['Beast Within','Side Quest'],['6.3 Session','Campaign'],['Standardized Questing','Side Quest'],['6.4 Session','Campaign'],['6.5 Session','Campaign'],['6.6 Finale','Campaign'],['7.1 Session','Campaign'],['Harvest of Reckoning','Side Quest'],['Secrets of the Library','Side Quest'],['7.2 Session','Campaign'],['7.3 Session','Campaign'],['Beneath the Briars','Side Quest'],['7.4 Session','Campaign'],['7.5 Session','Campaign'],['What The Stars Silenced','Side Quest'],['7.6 Finale','Campaign'],['Field Testing','Side Quest'],['8.1 Session','Campaign'],['8.2 Session','Campaign'],['8.3 Session','Campaign'],['8.4 Session','Campaign'],['8.5 Session','Campaign'],['8.6 Finale','Campaign'] ] }
+};
 function campaignVisible(c) {
     return campaignAccessible(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
@@ -2942,6 +3003,88 @@ function renderOnePoll(poll, campaign, owner) {
 // ----- Consolidated polls list (nav → Polls) -----
 window.openPollsList = function() { if (typeof closeNav === 'function') closeNav(); renderPollsList(); document.getElementById('polls-list-overlay').classList.add('open'); };
 window.closePollsList = function() { document.getElementById('polls-list-overlay').classList.remove('open'); };
+// ===== MY CHARACTERS =====
+function myCharactersList() {
+    const me = myOwnerId(); if (!me) return [];
+    const out = [];
+    Object.keys(campaignCharacters).forEach(c => {
+        Object.entries(campaignCharacters[c] || {}).forEach(([name, ch]) => { if (ch && ch.owner === me) out.push({ campaign: c, name, ch }); });
+    });
+    return out;
+}
+window.openMyCharacters = function() { if (typeof closeNav === 'function') closeNav(); renderMyCharacters(); document.getElementById('mychars-overlay').classList.add('open'); };
+window.closeMyCharacters = function() { document.getElementById('mychars-overlay').classList.remove('open'); };
+window.importLeyfarerCharacters = async function() {
+    const me = myOwnerId(); if (!me) { showToast('Sign in first to add characters.'); return; }
+    if (!campaignCharacters['leyfarers']) campaignCharacters['leyfarers'] = {};
+    if (!campaignRosters['leyfarers']) campaignRosters['leyfarers'] = [];
+    Object.entries(LEYFARER_SEED_CHARACTERS).forEach(([name, seed]) => {
+        if (campaignCharacters['leyfarers'][name]) return;   // don't clobber an existing one
+        campaignCharacters['leyfarers'][name] = { charClass: seed.charClass || '', chapter: seed.chapter, owner: me, questLog: seed.quests.map(([qn, qt]) => ({ name: qn, type: qt, done: true })) };
+        if (!campaignRosters['leyfarers'].includes(name)) campaignRosters['leyfarers'].push(name);
+    });
+    try { await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]); showToast('Added Maloren & Krenn', 'success'); }
+    catch (e) { console.error('import characters:', e); showToast('Could not save — try again.'); }
+    renderMyCharacters();
+};
+window.toggleCharQuest = async function(campaign, name, idx) {
+    const ch = campaignCharacters[campaign] && campaignCharacters[campaign][name]; if (!ch || !ch.questLog || !ch.questLog[idx]) return;
+    ch.questLog[idx].done = (ch.questLog[idx].done === false);   // flip
+    try { await saveCharactersToFirestore(); } catch (e) { console.error(e); showToast('Could not save.'); }
+    renderMyCharacters();
+};
+window.addCharQuest = async function(campaign, name) {
+    const inp = document.getElementById(`addq-${campaign}-${name}`); if (!inp) return;
+    const q = inp.value.trim(); if (!q) return;
+    const ch = campaignCharacters[campaign] && campaignCharacters[campaign][name]; if (!ch) return;
+    if (!ch.questLog) ch.questLog = [];
+    ch.questLog.push({ name: q, type: 'Side Quest', done: true });
+    inp.value = '';
+    try { await saveCharactersToFirestore(); showToast('Quest added', 'success'); } catch (e) { console.error(e); showToast('Could not save.'); }
+    renderMyCharacters();
+};
+window.toggleCharQuestLog = function(campaign, name) {
+    const el = document.getElementById(`qlog-${campaign}-${name}`); const btn = document.getElementById(`qlogbtn-${campaign}-${name}`);
+    if (!el) return; const open = el.style.display !== 'none'; el.style.display = open ? 'none' : 'block'; if (btn) btn.textContent = open ? 'Show quest log' : 'Hide quest log';
+};
+function renderMyCharacters() {
+    const body = document.getElementById('mychars-body'); if (!body) return;
+    const me = myOwnerId();
+    if (!me) { body.innerHTML = `<div class="profile-empty">Sign in (or join with a code) to track your characters.</div>`; return; }
+    const chars = myCharactersList();
+    let h = '';
+    const hasSeed = campaignCharacters['leyfarers'] && LEYFARER_SEED_CHARACTERS && Object.keys(LEYFARER_SEED_CHARACTERS).every(n => campaignCharacters['leyfarers'][n]);
+    if (!chars.length) h += `<div class="profile-empty" style="margin-bottom:12px">No characters yet. Characters you own (created or assigned to you) show here with their leveling.</div>`;
+    chars.sort((a, b) => a.name.localeCompare(b.name)).forEach(({ campaign, name, ch }) => {
+        const isLey = campaign === 'leyfarers' || (ch.questLog && ch.questLog.length);
+        h += `<div class="mychar-card" style="border-left:3px solid ${campaignColor(campaign)}">`;
+        h += `<div class="mychar-top"><span class="mychar-nm">${escapeHtml(name)}</span><span class="mychar-camp">${escapeHtml(campaignName(campaign))}${ch.charClass ? ' · ' + escapeHtml(ch.charClass) : ''}</span></div>`;
+        if (isLey) {
+            const info = leyfarerLevelInfo(ch);
+            const nextAt = leyfarerNextLevelAt(info.sessions);
+            const capped = info.capped < info.uncapped;
+            h += `<div class="mychar-level"><span class="mychar-lvl-num">Lvl ${info.capped}</span><div class="mychar-lvl-meta"><div><strong>${info.sessions}</strong> sessions complete</div><div>${capped ? `Capped by Chapter ${info.chapter} (max ${info.chapterMax}) — would be ${info.uncapped}` : (nextAt ? `Next level at ${nextAt} sessions` : 'Max level for this chapter')}</div></div></div>`;
+            // progress bar toward next level (or toward the cap)
+            const target = nextAt || info.sessions;
+            const prevAt = (() => { for (let s = info.sessions; s >= 0; s--) { if (s === 0 || leyfarerLevelForSessions(s) < leyfarerLevelForSessions(info.sessions)) return s; } return 0; })();
+            const pct = nextAt ? Math.round(((info.sessions - prevAt) / (nextAt - prevAt)) * 100) : 100;
+            h += `<div class="mychar-bar"><span style="width:${Math.max(4, Math.min(100, pct))}%"></span></div>`;
+            const done = (ch.questLog || []).filter(q => q.done !== false);
+            h += `<div class="mychar-actions"><button class="edit-party-btn" id="qlogbtn-${campaign}-${name}" onclick="toggleCharQuestLog('${campaign}','${escapeHtml(name)}')">Show quest log</button></div>`;
+            h += `<div class="mychar-qlog" id="qlog-${campaign}-${name}" style="display:none">`;
+            (ch.questLog || []).forEach((q, i) => {
+                h += `<label class="mychar-quest"><input type="checkbox" ${q.done !== false ? 'checked' : ''} onchange="toggleCharQuest('${campaign}','${escapeHtml(name)}',${i})"><span class="mq-nm">${escapeHtml(q.name)}</span><span class="mq-type">${escapeHtml(q.type || '')}</span></label>`;
+            });
+            h += `<div class="mychar-addq"><input type="text" id="addq-${campaign}-${name}" placeholder="Add a completed quest…" onkeydown="if(event.key==='Enter'){addCharQuest('${campaign}','${escapeHtml(name)}')}"><button class="edit-party-btn" onclick="addCharQuest('${campaign}','${escapeHtml(name)}')">Add</button></div>`;
+            h += `</div>`;
+        } else {
+            h += `<div class="mychar-level"><span class="mychar-lvl-num">${ch.level ? 'Lvl ' + escapeHtml(ch.level) : '—'}</span><div class="mychar-lvl-meta"><div>${ch.charClass ? escapeHtml(ch.charClass) : 'Character'}</div></div></div>`;
+        }
+        h += `</div>`;
+    });
+    if (!hasSeed) h += `<button class="submit-btn" style="width:100%;margin-top:8px" onclick="importLeyfarerCharacters()">Import my LeyFarer characters (Maloren & Krenn)</button>`;
+    body.innerHTML = h;
+}
 function pollStatusLabel(p) {
     if (p.status === 'open') return pollNeedsMyResponse(p) ? '<span class="poll-need">Needs your vote</span>' : 'Open';
     if (p.confirmedDate) return 'Confirmed · ' + formatDateShort(p.confirmedDate) + (p.confirmedTime ? ' · ' + escapeHtml(p.confirmedTime) : '');
@@ -3893,6 +4036,15 @@ window.saveEditSession = async function(sd) {
         await updateDoc(doc(db, "sessions", s.id), updates);
     } catch(e) { console.error("Edit error:", e); showToast('Error saving changes.'); }
 };
+// Flip a session between "Just Me" (owned/private) and "Everyone" (shared with the whole party).
+window.toggleSessionVisibility = async function(sid) {
+    const s = sessionById(sid); if (!s || !canManage(s) || isOneShots(s.campaign)) return;
+    const makeEveryone = !!s.owner;
+    try {
+        await updateDoc(doc(db, "sessions", sid), makeEveryone ? { owner: '', invited: [] } : { owner: myEmail(), invited: [] });
+        showToast(makeEveryone ? 'Now shared with the whole party' : 'Now private (only you + people you invite)', 'success');
+    } catch (e) { console.error('visibility toggle:', e); showToast('Could not change visibility — try again.'); }
+};
 // One-shot self sign-up: any accessible player adds/removes themselves from a specific one-shot's player list.
 window.toggleSignup = async function(sd) {
     const s = sessionById(sd); if (!s) return;
@@ -4608,7 +4760,9 @@ function renderSessionCard(s, gi, ci) {
     if (s.owner) {
         if (isOwner) {
             const nInv = (s.invited || []).length + shareMembers(s.owner, s.campaign).length;
-            ownerTag = `<span class="owner-tag">${nInv ? `Shared \u00b7 ${nInv}` : 'Private'}</span>`;
+            const label = nInv ? `Shared \u00b7 ${nInv}` : 'Private';
+            if (isOneShots(s.campaign)) ownerTag = `<span class="owner-tag">${label}</span>`;
+            else ownerTag = `<button class="owner-tag owner-tag-btn" onclick="event.stopPropagation(); toggleSessionVisibility('${sid}')" title="${nInv ? 'Only you + invited can see this' : 'Only you can see this'} \u2014 click to share with the whole party">${label}</button>`;
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
     return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${recapHtml}${shareSessionHtml}</div></div>`;
