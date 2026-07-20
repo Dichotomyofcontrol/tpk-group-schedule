@@ -477,7 +477,10 @@
         .att-chip.out { background: var(--error-tint); color: var(--error); border-color: var(--error); text-decoration: line-through; opacity: 0.7; }
 
         /* ===== QUILL EDITOR ===== */
-        .recap-editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
+        .recap-editor-wrap { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--paper); }
+        .recap-status { font-size: 0.72rem; color: var(--text-dim); display: inline-flex; align-items: center; gap: 4px; min-height: 1em; transition: color var(--dur) var(--ease); }
+        .recap-status.saved { color: var(--success); } .recap-status.unsaved { color: var(--warn); }
+        .recap-status .ico { width: 0.95em; height: 0.95em; }
         .recap-editor-wrap .ql-toolbar { background: var(--surface); border: none; border-bottom: 1px solid var(--border); }
         .recap-editor-wrap .ql-toolbar button { color: var(--text-dim); }
         .recap-editor-wrap .ql-toolbar button:hover { color: var(--text); }
@@ -488,9 +491,12 @@
         .recap-editor-wrap .ql-toolbar .ql-fill { fill: var(--text-dim); }
         .recap-editor-wrap .ql-toolbar button:hover .ql-fill { fill: var(--text); }
         .recap-editor-wrap .ql-toolbar button.ql-active .ql-fill { fill: var(--brand); }
-        .recap-editor-wrap .ql-container { border: none; font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--text); min-height: 80px; }
-        .recap-editor-wrap .ql-editor { min-height: 80px; line-height: 1.6; }
-        .recap-editor-wrap .ql-editor.ql-blank::before { color: var(--text-dim); font-style: italic; }
+        .recap-editor-wrap .ql-container { border: none; font-family: var(--font-display); font-size: 1rem; color: var(--text); min-height: 120px; }
+        .recap-editor-wrap .ql-editor { min-height: 120px; line-height: 1.7; padding: 16px 18px; }
+        .recap-editor-wrap .ql-editor h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.28rem; margin: 0.6em 0 0.3em; }
+        .recap-editor-wrap .ql-editor h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; margin: 0.6em 0 0.3em; }
+        .recap-editor-wrap .ql-editor blockquote { border-left: 3px solid var(--brand-line); padding-left: 12px; color: var(--text-dim); font-style: italic; margin: 0.6em 0; }
+        .recap-editor-wrap .ql-editor.ql-blank::before { color: var(--text-dim); font-style: italic; font-family: var(--font-display); }
         .recap-display { padding: 12px 14px; background: var(--paper); border: 1px solid var(--border); border-radius: var(--r-md); font-family: var(--font-display); font-size: 0.92rem; line-height: 1.66; color: var(--text); }
         .recap-display p { margin-bottom: 6px; }
         .recap-display p:last-child { margin-bottom: 0; }
@@ -1143,8 +1149,8 @@
             .session-detail { padding-top: 10px; margin-top: 10px; }
             .detail-label { font-size: 0.65rem; }
             .att-chip { font-size: 0.68rem; padding: 3px 8px; }
-            .recap-editor-wrap .ql-container { font-size: 0.78rem; min-height: 60px; }
-            .recap-editor-wrap .ql-editor { min-height: 60px; }
+            .recap-editor-wrap .ql-container { font-size: 1rem; min-height: 100px; }
+            .recap-editor-wrap .ql-editor { min-height: 100px; }
             .recap-display { font-size: 0.78rem; padding: 8px 10px; }
             .cal-day { min-height: 34px; font-size: 0.7rem; padding: 3px; }
             .cal-header span { font-size: 0.55rem; }
@@ -1341,6 +1347,9 @@
         @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-opt-main { flex-basis: 100%; } .avail-bar { max-width: none; } .poll-votes { width: 100%; } .poll-vote { flex: 1; justify-content: center; padding: 9px 0; } .poll-confirm { width: 100%; justify-content: center; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Mobile craft pass (phone widths) ===== */
         @media (max-width: 600px) {
+            /* iOS auto-zooms when a focused field is < 16px — keep typing controls at 16px on phones
+               (this is what caused the "zoomed in on login" until you pinched out). */
+            input, select, textarea { font-size: 16px !important; }
             /* Comfortable thumb targets on the primary controls */
             .view-btn, .seg-btn, .cp-btn, .ctrl-link, .collapse-all-btn, .sort-toggle { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
             /* Campaign header: stack identity over full-width, reachable actions */
@@ -2229,6 +2238,48 @@ let campaignSortNewest = false;
 let campaignTimeFilter = 'upcoming';
 let campaignView = 'list';   // per-campaign-page list/calendar toggle
 let activeQuills = {};
+// ===== Recap writing: editorial editor + autosave (writer always knows work is safe) =====
+let _recapEditing = false, _renderPendingWhileEditing = false;
+const RECAP_TOOLBAR = [[{ 'header': [2, 3, false] }], ['bold', 'italic', 'underline'], ['blockquote'], [{ 'list': 'ordered' }, { 'list': 'bullet' }], ['clean']];
+function setRecapStatus(id, state) {
+    const m = document.getElementById(id); if (!m) return;
+    m.className = 'recap-status' + (state ? ' ' + state : '');
+    if (state === 'saving') m.textContent = 'Saving…';
+    else if (state === 'saved') m.innerHTML = `${icon('check')} Saved`;
+    else if (state === 'unsaved') m.textContent = 'Unsaved…';
+    else m.textContent = '';
+}
+function endRecapEditing() { _recapEditing = false; if (_renderPendingWhileEditing) { _renderPendingWhileEditing = false; scheduleRender(); } }
+async function saveRecapContent(sessionId, q, statusId) {
+    const s0 = sessionById(sessionId); if (s0 && !canManage(s0)) return;
+    const html = q.root.innerHTML, text = q.getText().trim();
+    setRecapStatus(statusId, 'saving');
+    try {
+        await updateDoc(doc(db, "sessions", sessionId), text ? { recapHtml: html, recap: text } : { recapHtml: '', recap: '' });
+        q.__dirty = false; setRecapStatus(statusId, 'saved');
+    } catch (e) { console.error('recap save:', e); showToast('Could not save the recap — try again.'); setRecapStatus(statusId, 'unsaved'); }
+}
+function initRecapEditor(el, quillKey, sessionId, statusId) {
+    const q = new Quill(el, { theme: 'snow', placeholder: 'Write what happened this session…', modules: { toolbar: RECAP_TOOLBAR } });
+    const s = sessionById(sessionId);
+    if (s && s.recapHtml) q.root.innerHTML = sanitizeRecapHtml(s.recapHtml);
+    q.__dirty = false;
+    let timer = null;
+    q.on('selection-change', (range) => {
+        if (range) _recapEditing = true;                                           // focused
+        else if (q.__dirty) saveRecapContent(sessionId, q, statusId).then(endRecapEditing);   // blurred with changes → save
+        else endRecapEditing();
+    });
+    q.on('text-change', (d, o, source) => {
+        if (source !== 'user') return;
+        q.__dirty = true; _recapEditing = true; setRecapStatus(statusId, 'unsaved');
+        clearTimeout(timer);
+        timer = setTimeout(() => saveRecapContent(sessionId, q, statusId), 1400);   // debounced autosave
+    });
+    activeQuills[quillKey] = q;
+    return q;
+}
+window.addEventListener('beforeunload', (e) => { if (Object.values(activeQuills).some(q => q && q.__dirty)) { e.preventDefault(); e.returnValue = ''; } });
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -3794,27 +3845,16 @@ window.toggleSessionExpand = function(sd, ev) {
     const was = card.classList.contains('expanded'); card.classList.toggle('expanded');
     if (!was) {
         const el = card.querySelector('.recap-editor');
-        if (el && !activeQuills[sd]) {
-            activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
-            const s = sessionById(sd);
-            if (s && s.recapHtml) activeQuills[sd].root.innerHTML = sanitizeRecapHtml(s.recapHtml);
-        }
+        if (el && !activeQuills[sd]) initRecapEditor(el, sd, sd, `recap-msg-${sd}`);
     }
 };
-window.saveRecap = async function(sd) {
-    const s0 = sessionById(sd); if (s0 && !canManage(s0)) return;
-    const q = activeQuills[sd]; if (!q) return;
-    const html = q.root.innerHTML; const text = q.getText().trim();
-    const data = text ? { recapHtml: html, recap: text } : { recapHtml: '', recap: '' };
-    try { await updateDoc(doc(db, "sessions", sd), data); const m = document.getElementById(`recap-msg-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } if (!text) { setTimeout(() => renderAll(), 500); } } catch(e) { console.error(e); }
-};
+window.saveRecap = function(sd) { const q = activeQuills[sd]; if (!q) return; saveRecapContent(sd, q, `recap-msg-${sd}`).then(endRecapEditing); };
 window.editRecap = function(sd) {
     const s = sessionById(sd); if (!s || !canManage(s)) return;
     const card = findSessionCard(sd); if (!card) return; const d = card.querySelector('.recap-display'); if (!d) return;
-    d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">Save</button><span class="recap-saved-msg" id="recap-msg-${sd}">Saved!</span></div>`;
-    delete activeQuills[sd]; const el = document.getElementById(`recap-editor-${sd}`);
-    activeQuills[sd] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
-    if (s.recapHtml) activeQuills[sd].root.innerHTML = s.recapHtml;
+    d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">${icon('check')} Save</button><span class="recap-status" id="recap-msg-${sd}"></span></div>`;
+    delete activeQuills[sd];
+    initRecapEditor(document.getElementById(`recap-editor-${sd}`), sd, sd, `recap-msg-${sd}`);
 };
 window.uploadPdf = function(sd, inputEl) {
     const file = inputEl.files[0]; if (!file || file.type !== 'application/pdf') { showToast('Please select a PDF.'); return; }
@@ -3847,13 +3887,7 @@ window.deletePdf = function(sd) {
 };
 
 // Save recap from campaign overview editor
-window.saveOverviewRecap = async function(sd) {
-    const key = `overview-${sd}`;
-    const q = activeQuills[key]; if (!q) return;
-    const html = q.root.innerHTML; const text = q.getText().trim();
-    const data = text ? { recapHtml: html, recap: text } : { recapHtml: '', recap: '' };
-    try { await updateDoc(doc(db, "sessions", sd), data); const m = document.getElementById(`recap-msg-overview-${sd}`); if (m) { m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 2000); } if (!text) { setTimeout(() => renderCampaignPage(currentPage), 500); } } catch(e) { console.error(e); }
-};
+window.saveOverviewRecap = function(sd) { const q = activeQuills[`overview-${sd}`]; if (!q) return; saveRecapContent(sd, q, `recap-msg-overview-${sd}`).then(endRecapEditing); };
 
 // ===== RENDER =====
 function renderPollBanners() {
@@ -3865,6 +3899,7 @@ function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid
 // Coalesce rapid Firestore snapshots into a single render per frame (prevents flicker on batch writes).
 let _renderScheduled = false;
 function scheduleRender() {
+    if (_recapEditing) { _renderPendingWhileEditing = true; return; }   // don't destroy an open recap editor mid-write
     if (_renderScheduled) return;
     _renderScheduled = true;
     const run = () => { _renderScheduled = false; renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); };
@@ -4287,13 +4322,27 @@ window.toggleTheme = function() {
     localStorage.setItem('tpk-theme', isLight ? 'light' : 'dark');
     document.getElementById('theme-toggle').innerHTML = isLight ? icon('sun') : icon('moon');
 };
-// Apply saved theme on load
+// Apply theme on load: saved preference wins; first visit follows the OS setting.
 (function() {
     const saved = localStorage.getItem('tpk-theme');
-    if (saved === 'light') {
+    let light;
+    if (saved === 'light') light = true;
+    else if (saved === 'dark') light = false;
+    else light = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+    if (light) {
         document.body.classList.add('light');
         const btn = document.getElementById('theme-toggle');
         if (btn) btn.innerHTML = icon('sun');
+    }
+    // While the user hasn't chosen manually, keep tracking the OS theme.
+    if (window.matchMedia) {
+        try {
+            window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+                if (localStorage.getItem('tpk-theme')) return;   // manual choice takes over
+                document.body.classList.toggle('light', e.matches);
+                const btn = document.getElementById('theme-toggle'); if (btn) btn.innerHTML = e.matches ? icon('sun') : icon('moon');
+            });
+        } catch (_) {}
     }
 })();
 
@@ -4438,7 +4487,7 @@ function renderSessionCard(s, gi, ci) {
         if (mine || hasRecap) {
             recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
             if (hasRecap) { recapHtml += `<div class="recap-display">${sanitizeRecapHtml(s.recapHtml) || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button>${mine ? `<button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button>` : ''}</div>`; }
-            else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">Save Recap</button><span class="recap-saved-msg" id="recap-msg-${sid}">Saved!</span></div>`; }
+            else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">${icon('check')} Save Recap</button><span class="recap-status" id="recap-msg-${sid}"></span></div>`; }
             recapHtml += `</div>`;
         }
         if (mine) {
@@ -4674,10 +4723,7 @@ function renderCampaignPage(campaign) {
     // Initialize Quill for overview recap editor if present
     if (lastPast && !(lastPast.recapHtml || lastPast.recap)) {
         const el = document.getElementById(`recap-editor-overview-${lastPast.id}`);
-        if (el) {
-            const key = `overview-${lastPast.id}`;
-            activeQuills[key] = new Quill(el, { theme: 'snow', placeholder: 'Paste or type session recap...', modules: { toolbar: [['bold','italic','underline'],[{'align':[]}],[{'list':'ordered'},{'list':'bullet'}],['clean']] } });
-        }
+        if (el) initRecapEditor(el, `overview-${lastPast.id}`, lastPast.id, `recap-msg-overview-${lastPast.id}`);
     }
 }
 window.setCampaignView = function(v, campaign) { campaignView = v; renderCampaignPage(campaign); };
