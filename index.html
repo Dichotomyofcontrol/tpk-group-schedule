@@ -3173,11 +3173,15 @@ window.migrateLeyfarers = async function() {
         const mal = campaignCharacters['leyfarers']['Maloren'] || {};
         campaignCharacters['leyfarers']['Maloren'] = { ...mal, charClass: mal.charClass || 'Magus', owner: mal.owner || me, leyfarer: true, questLog: undefined };
         delete campaignCharacters['leyfarers']['Maloren'].questLog;   // journey now lives in the campaign's sessions
-        // Krenn used to be seeded into Maloren's campaign (old model) — carry his class over, then remove that stale copy.
+        // Krenn used to be seeded into Maloren's campaign (old model) — carry his class over, then scrub that stale copy.
         const staleKrenn = campaignCharacters['leyfarers']['Krenn'];
         const kre = campaignCharacters['leyfarers-krenn']['Krenn'] || {};
         campaignCharacters['leyfarers-krenn']['Krenn'] = { ...kre, charClass: kre.charClass || (staleKrenn && staleKrenn.charClass) || '', owner: kre.owner || (staleKrenn && staleKrenn.owner) || me, leyfarer: true };
-        if (staleKrenn) { delete campaignCharacters['leyfarers']['Krenn']; campaignRosters['leyfarers'] = (campaignRosters['leyfarers'] || []).filter(n => n !== 'Krenn'); }
+        // Each LeyFarer campaign is a single character's solo journey: Maloren belongs only to `leyfarers`, Krenn only to his own.
+        delete campaignCharacters['leyfarers']['Krenn'];
+        delete campaignCharacters['leyfarers-krenn']['Maloren'];
+        campaignRosters['leyfarers'] = (campaignRosters['leyfarers'] || []).filter(n => n !== 'Krenn');
+        campaignRosters['leyfarers-krenn'] = (campaignRosters['leyfarers-krenn'] || []).filter(n => n !== 'Maloren');
         if (!campaignRosters['leyfarers'].includes('Maloren')) campaignRosters['leyfarers'].push('Maloren');
         if (!campaignRosters['leyfarers-krenn'].includes('Krenn')) campaignRosters['leyfarers-krenn'].push('Krenn');
         await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]);
