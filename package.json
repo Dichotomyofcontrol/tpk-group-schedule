@@ -1,0 +1,13 @@
+{
+  "name": "six-in-the-tpk",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Six in the TPK — D&D group scheduler + recaps (single-file app in index.html).",
+  "scripts": {
+    "test": "node tests/run-all.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}
