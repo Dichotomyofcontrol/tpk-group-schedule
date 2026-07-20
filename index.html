@@ -568,7 +568,30 @@
         .party-mt { font-size: 0.72rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .party-empty { font-size: 0.82rem; color: var(--text-dim); padding: 6px; }
         .cp-side .editing-roster { grid-template-columns: 1fr; }
-        @media (max-width: 900px) { .cp-layout { grid-template-columns: 1fr; gap: 20px; } .cp-side { order: -1; } }
+        @media (max-width: 900px) { .cp-layout { grid-template-columns: 1fr; gap: 20px; } }
+        /* ===== Campaign "Next session" focal hero ===== */
+        .cp-next { display: flex; gap: 22px; align-items: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 22px; margin-bottom: 22px; position: relative; overflow: hidden; box-shadow: var(--shadow-1); }
+        .cp-next::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--cp, var(--brand)); }
+        .cp-next-when { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding-right: 22px; border-right: 1px solid var(--border); min-width: 96px; }
+        .cp-next-count { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 700; color: var(--cp, var(--brand)); margin-bottom: 4px; }
+        .cp-next-day { font-family: var(--font-display); font-weight: 700; font-size: 2.7rem; line-height: 0.95; color: var(--text); }
+        .cp-next-mon { font-size: 0.74rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.07em; }
+        .cp-next-time { font-size: 0.82rem; color: var(--text); margin-top: 8px; font-variant-numeric: tabular-nums; }
+        .cp-next-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+        .cp-next-label { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); font-weight: 600; }
+        .cp-next-meta { font-size: 0.84rem; color: var(--text-dim); }
+        .cp-next-plan { font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; }
+        .cp-next-plan strong { color: var(--text); font-weight: 600; }
+        .cp-next-att { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .cp-next-att .att-count { font-size: 0.8rem; color: var(--text-dim); }
+        .cp-next-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+        @media (max-width: 600px) {
+            .cp-next { flex-direction: column; gap: 14px; padding: 18px; }
+            .cp-next-when { flex-direction: row; align-items: baseline; gap: 12px; border-right: none; border-bottom: 1px solid var(--border); padding-right: 0; padding-bottom: 14px; width: 100%; }
+            .cp-next-count { margin-bottom: 0; align-self: center; }
+            .cp-next-day { font-size: 2.1rem; }
+            .cp-next-time { margin-top: 0; margin-left: auto; }
+        }
 
         /* ===== CALENDAR ===== */
         .cal-month { margin-bottom: 32px; }
@@ -4231,6 +4254,54 @@ function renderList() {
 }
 window.togglePastSessions = function() { pastSessionsVisible = !pastSessionsVisible; const t = document.querySelector('.past-sessions-toggle'); const c = document.querySelector('.past-sessions-container'); if (t) t.classList.toggle('open', pastSessionsVisible); if (c) c.classList.toggle('open', pastSessionsVisible); };
 
+// Expand/scroll to a session card on the current campaign page (stays in context; falls back to home).
+window.focusSession = function(id) {
+    const onCampaign = document.querySelector('.campaign-page.active');
+    const root = onCampaign ? document.getElementById('campaign-page-content') : document;
+    const card = root.querySelector(`[data-session-id="${id}"]`) || root.querySelector(`[data-session-date="${id}"]`);
+    if (card) { card.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { if (!card.classList.contains('expanded')) toggleSessionExpand(id); }, 300); }
+    else if (window.goToSession) window.goToSession(id);
+};
+// Focal "Next session" hero for the campaign page — the dominant answer to "what's next?"
+function campaignNextHero(campaign, nextUp, lastPast) {
+    const col = campaignColor(campaign);
+    const owner = canManageCampaign(campaign);
+    const openPoll = campaignOpenPoll(campaign);
+    if (!nextUp) {
+        let inner = `<div class="cp-next-label">Next session</div>`;
+        if (openPoll) inner += `<div class="cp-next-plan">Not locked in yet — <strong>pick a date in the poll below.</strong></div>`;
+        else if (owner) inner += `<div class="cp-next-plan">Nothing scheduled yet. Ask the group when to play, or add a date from Manage.</div><div class="cp-next-actions"><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('poll')} Ask when to play</button></div>`;
+        else inner += `<div class="cp-next-plan">No session scheduled yet.</div>`;
+        return `<div class="cp-next cp-next-empty" style="--cp:${col}"><div class="cp-next-body">${inner}</div></div>`;
+    }
+    const d = parseDate(nextUp.date);
+    const days = Math.round((d - getToday()) / 86400000);
+    const count = days <= 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`;
+    const dow = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const mon = d.toLocaleDateString('en-US', { month: 'short' });
+    const roster = campaignRosters[campaign] || [];
+    const att = nextUp.attendance || {};
+    const inNames = roster.filter(n => att[n] === 'in');
+    const avatars = inNames.slice(0, 6).map(n => `<span class="resp-av" title="${escapeHtml(n)}">${escapeHtml(initialsOf(n))}</span>`).join('');
+    const meta = [nextUp.gm ? 'GM: ' + escapeHtml(nextUp.gm) : '', nextUp.duration ? escapeHtml(nextUp.duration) : ''].filter(Boolean).join(' · ');
+    let actions = `<button class="cp-btn" onclick="focusSession('${nextUp.id}')">Details</button>`;
+    if (lastPast && (lastPast.recapHtml || lastPast.recap)) actions += `<button class="cp-btn" onclick="openReaderModal('${lastPast.id}')">Read last recap</button>`;
+    const attText = inNames.length ? `${inNames.length} of ${roster.length || inNames.length} going` : 'No RSVPs yet';
+    return `<div class="cp-next" style="--cp:${col}">
+      <div class="cp-next-when">
+        <div class="cp-next-count">${count}</div>
+        <div class="cp-next-day">${d.getDate()}</div>
+        <div class="cp-next-mon">${dow} · ${mon}</div>
+        <div class="cp-next-time">${escapeHtml(nextUp.time || 'Time TBD')}${nextUp.time ? ' PST' : ''}</div>
+      </div>
+      <div class="cp-next-body">
+        <div class="cp-next-label">Next session</div>
+        ${meta ? `<div class="cp-next-meta">${meta}</div>` : ''}
+        <div class="cp-next-att">${avatars ? `<span class="resp-avatars">${avatars}</span>` : ''}<span class="att-count">${attText}</span></div>
+        <div class="cp-next-actions">${actions}</div>
+      </div>
+    </div>`;
+}
 function renderCampaignPage(campaign) {
     const today = getToday();
     const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
@@ -4292,9 +4363,9 @@ function renderCampaignPage(campaign) {
         partyHtml += `</div></div>`;
     }
 
-    // ----- Main column: Availability poll + Last Session + Sessions -----
-    let mainHtml = renderPollSection(campaign);
+    // ----- Main column: Next-session hero → Availability poll → Last Session → Sessions -----
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
+    let mainHtml = campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
     if (lastPast) {
         mainHtml += `<div class="section-heading">Last Session — ${formatDateShort(lastPast.date)}</div>`;
         mainHtml += `<div class="campaign-overview lsc-card" style="border-left:3px solid ${campaignColor(campaign)}">`;
