@@ -481,6 +481,13 @@
         .recap-status { font-size: 0.72rem; color: var(--text-dim); display: inline-flex; align-items: center; gap: 4px; min-height: 1em; transition: color var(--dur) var(--ease); }
         .recap-status.saved { color: var(--success); } .recap-status.unsaved { color: var(--warn); }
         .recap-status .ico { width: 0.95em; height: 0.95em; }
+        .recap-preview { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r-md); padding: 16px 18px; font-family: var(--font-display); font-size: 1rem; line-height: 1.7; color: var(--text); }
+        .recap-preview p { margin-bottom: 0.7em; } .recap-preview p:last-child { margin-bottom: 0; }
+        .recap-preview h2 { font-weight: 600; font-size: 1.28rem; margin: 0.6em 0 0.3em; }
+        .recap-preview h3 { font-weight: 600; font-size: 1.1rem; margin: 0.6em 0 0.3em; }
+        .recap-preview blockquote { border-left: 3px solid var(--brand-line); padding-left: 12px; color: var(--text-dim); font-style: italic; margin: 0.6em 0; }
+        .recap-preview ul, .recap-preview ol { margin: 0.5em 0 0.7em; padding-left: 1.4em; }
+        .recap-preview em { font-style: italic; } .recap-preview strong { font-weight: 600; }
         .recap-editor-wrap .ql-toolbar { background: var(--surface); border: none; border-bottom: 1px solid var(--border); }
         .recap-editor-wrap .ql-toolbar button { color: var(--text-dim); }
         .recap-editor-wrap .ql-toolbar button:hover { color: var(--text); }
@@ -590,6 +597,7 @@
         .party-empty { font-size: 0.82rem; color: var(--text-dim); padding: 6px; }
         .cp-side .editing-roster { grid-template-columns: 1fr; }
         @media (max-width: 900px) { .cp-layout { grid-template-columns: 1fr; gap: 20px; } }
+        .cp-layout.cp-solo { grid-template-columns: 1fr; }   /* one-shots: no persistent party sidebar */
         /* ===== Campaign "Next session" focal hero ===== */
         .cp-next { display: flex; gap: 22px; align-items: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 22px; margin-bottom: 22px; position: relative; overflow: hidden; box-shadow: var(--shadow-1); }
         .cp-next::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--cp, var(--brand)); }
@@ -2280,6 +2288,22 @@ function initRecapEditor(el, quillKey, sessionId, statusId) {
     return q;
 }
 window.addEventListener('beforeunload', (e) => { if (Object.values(activeQuills).some(q => q && q.__dirty)) { e.preventDefault(); e.returnValue = ''; } });
+// Expanded session cards persist across re-renders (so toggling attendance doesn't collapse the card).
+const expandedSessions = new Set();
+function isEditingParty() { const ae = document.activeElement; return !!(ae && ae.closest && ae.closest('.player-card.editing')); }
+function initExpandedRecapEditors() {
+    document.querySelectorAll('.session-card.expanded').forEach(card => {
+        const sid = card.getAttribute('data-session-id');
+        const el = card.querySelector('.recap-editor');
+        if (el && !el.querySelector('.ql-editor')) initRecapEditor(el, sid, sid, `recap-msg-${sid}`);
+    });
+}
+// If a background render was deferred while editing the party, flush it once focus leaves the edit card.
+document.addEventListener('focusout', (e) => {
+    if (e.target && e.target.closest && e.target.closest('.player-card.editing')) {
+        setTimeout(() => { if (_renderPendingWhileEditing && !isEditingParty() && !_recapEditing) { _renderPendingWhileEditing = false; scheduleRender(); } }, 120);
+    }
+});
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -2672,6 +2696,9 @@ function pollOptions(poll) {
 }
 function optionLabel(o) { return formatDateShort(o.date) + (o.time ? ' · ' + o.time : ''); }
 function campaignOpenPoll(c) { return Object.values(allPolls).find(p => p.campaign === c && p.status === 'open') || null; }
+function campaignOpenPolls(c) { return Object.values(allPolls).filter(p => p.campaign === c && p.status === 'open'); }
+// The single "One-Shots" collection behaves differently: standalone events, per-event polls + sign-ups, no persistent party.
+function isOneShots(c) { return c === 'special'; }
 function pollTally(poll, optId) {
     let yes = 0, maybe = 0, no = 0;
     Object.values(poll.responses || {}).forEach(e => {
@@ -2771,7 +2798,11 @@ window.confirmPollGo = async function() {
     const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
     const opt = pollOptions(poll).find(o => o.id === optId); if (!opt) return;
     const c = poll.campaign;
-    const roster = campaignRosters[c] || []; const attendance = {}; roster.forEach(p => { attendance[p] = "in"; });
+    // One-shots seed sign-ups from whoever voted Yes for the confirmed date; ongoing campaigns use the standing party.
+    let roster; const attendance = {};
+    if (isOneShots(c)) roster = Object.values(poll.responses || {}).filter(e => e && e.votes && e.votes[optId] === 'yes').map(e => e.name).filter(Boolean);
+    else roster = campaignRosters[c] || [];
+    roster.forEach(p => { attendance[p] = "in"; });
     const docId = `${opt.date}-${Date.now().toString(36)}-poll`;
     try {
         await setDoc(doc(db, "sessions", docId), { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active" });
@@ -2844,11 +2875,18 @@ window.submitCreatePoll = async function() {
 // ----- Poll rendering (campaign page section) -----
 const VOTE_META = { yes: { label: 'Yes', mark: '✓' }, maybe: { label: 'Maybe', mark: '~' }, no: { label: 'No', mark: '✗' } };
 function renderPollSection(campaign) {
-    const poll = campaignOpenPoll(campaign);
     const owner = canManageCampaign(campaign);
-    if (!poll) {
-        return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Ask when to play</button></div>` : '';
+    if (isOneShots(campaign)) {
+        // One-shots: each open poll is a proposed standalone event; many can run at once.
+        let h = owner ? `<div class="poll-empty"><span>Propose a one-shot and let players vote on a date.</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="cp-btn" onclick="openCampaignInvite('${campaign}')">+ Invite players</button><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Propose a one-shot</button></div></div>` : '';
+        campaignOpenPolls(campaign).forEach(p => { h += renderOnePoll(p, campaign, owner); });
+        return h;
     }
+    const poll = campaignOpenPoll(campaign);
+    if (!poll) return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Ask when to play</button></div>` : '';
+    return renderOnePoll(poll, campaign, owner);
+}
+function renderOnePoll(poll, campaign, owner) {
     const options = pollOptions(poll);
     const best = pollBestJustified(poll);
     const sum = pollResponseSummary(poll, campaign);
@@ -3836,6 +3874,18 @@ window.saveEditSession = async function(sd) {
         await updateDoc(doc(db, "sessions", s.id), updates);
     } catch(e) { console.error("Edit error:", e); showToast('Error saving changes.'); }
 };
+// One-shot self sign-up: any accessible player adds/removes themselves from a specific one-shot's player list.
+window.toggleSignup = async function(sd) {
+    const s = sessionById(sd); if (!s) return;
+    const me = myOwnerId(); if (!me) { showToast('Sign in or join with a code to sign up.'); return; }
+    const roster = (s.roster || []).slice();
+    const att = { ...(s.attendance || {}) };
+    const inNow = roster.includes(me) && (att[me] || 'in') === 'in';
+    if (inNow) { const i = roster.indexOf(me); if (i >= 0) roster.splice(i, 1); delete att[me]; }
+    else { if (!roster.includes(me)) roster.push(me); att[me] = 'in'; }
+    try { await updateDoc(doc(db, "sessions", sd), { roster, attendance: att }); }
+    catch (e) { console.error('signup error:', e); showToast('Could not update your sign-up — try again.'); }
+};
 window.toggleAttendance = async function(sd, p) { const s = sessionById(sd); if (!s || !canManage(s)) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", s.id), u); };
 
 // ===== RECAP & PDF =====
@@ -3844,17 +3894,37 @@ window.toggleSessionExpand = function(sd, ev) {
     const card = findSessionCard(sd); if (!card) return;
     const was = card.classList.contains('expanded'); card.classList.toggle('expanded');
     if (!was) {
+        expandedSessions.add(sd);
         const el = card.querySelector('.recap-editor');
-        if (el && !activeQuills[sd]) initRecapEditor(el, sd, sd, `recap-msg-${sd}`);
+        if (el && !el.querySelector('.ql-editor')) initRecapEditor(el, sd, sd, `recap-msg-${sd}`);
+    } else {
+        expandedSessions.delete(sd);
     }
 };
 window.saveRecap = function(sd) { const q = activeQuills[sd]; if (!q) return; saveRecapContent(sd, q, `recap-msg-${sd}`).then(endRecapEditing); };
 window.editRecap = function(sd) {
     const s = sessionById(sd); if (!s || !canManage(s)) return;
     const card = findSessionCard(sd); if (!card) return; const d = card.querySelector('.recap-display'); if (!d) return;
-    d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">${icon('check')} Save</button><span class="recap-status" id="recap-msg-${sd}"></span></div>`;
+    d.parentElement.innerHTML = `<div class="detail-label">Session Recap</div><div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sd}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sd}')">${icon('check')} Save</button><button class="recap-edit-btn recap-preview-btn" onclick="event.stopPropagation(); toggleRecapPreview('${sd}','recap-editor-${sd}')">Preview</button><span class="recap-status" id="recap-msg-${sd}"></span></div>`;
     delete activeQuills[sd];
     initRecapEditor(document.getElementById(`recap-editor-${sd}`), sd, sd, `recap-msg-${sd}`);
+};
+// Preview a recap as readers will see it (editorial styling), toggling back to editing.
+window.toggleRecapPreview = function(quillKey, editorElId) {
+    const q = activeQuills[quillKey]; if (!q) return;
+    const ed = document.getElementById(editorElId); const wrap = ed && ed.closest('.recap-editor-wrap'); if (!wrap) return;
+    const container = wrap.parentElement;
+    const btn = container.querySelector('.recap-preview-btn');
+    const existing = container.querySelector('.recap-preview');
+    if (existing) { existing.remove(); wrap.style.display = ''; if (btn) btn.textContent = 'Preview'; q.focus(); }
+    else {
+        const prev = document.createElement('div');
+        prev.className = 'recap-preview';
+        prev.innerHTML = sanitizeRecapHtml(q.root.innerHTML) || '<p style="color:var(--text-dim);font-style:italic">Nothing written yet.</p>';
+        wrap.style.display = 'none';
+        wrap.insertAdjacentElement('afterend', prev);
+        if (btn) btn.textContent = 'Edit';
+    }
 };
 window.uploadPdf = function(sd, inputEl) {
     const file = inputEl.files[0]; if (!file || file.type !== 'application/pdf') { showToast('Please select a PDF.'); return; }
@@ -3899,10 +3969,10 @@ function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid
 // Coalesce rapid Firestore snapshots into a single render per frame (prevents flicker on batch writes).
 let _renderScheduled = false;
 function scheduleRender() {
-    if (_recapEditing) { _renderPendingWhileEditing = true; return; }   // don't destroy an open recap editor mid-write
+    if (_recapEditing || isEditingParty()) { _renderPendingWhileEditing = true; return; }   // don't wipe an open editor / unsaved party edits mid-write
     if (_renderScheduled) return;
     _renderScheduled = true;
-    const run = () => { _renderScheduled = false; renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); };
+    const run = () => { _renderScheduled = false; renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); initExpandedRecapEditors(); };
     (typeof requestAnimationFrame === 'function') ? requestAnimationFrame(run) : setTimeout(run, 16);
 }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
@@ -4070,8 +4140,8 @@ window.setCharacterOwner = async function(campaign, name, ownerId) {
     const ch = { ...(campaignCharacters[campaign][name] || {}) };
     if (ownerId) ch.owner = ownerId; else delete ch.owner;
     campaignCharacters[campaign][name] = ch;
-    try { await saveCharactersToFirestore(); } catch (e) { console.error('set character owner:', e); showToast('Could not save assignment — try again.'); }
-    if (currentPage === campaign) renderCampaignPage(campaign);
+    // No re-render here — it would wipe any unsaved name/class edits in the open party card.
+    try { await saveCharactersToFirestore(); showToast('Assignment saved', 'success'); } catch (e) { console.error('set character owner:', e); showToast('Could not save assignment — try again.'); }
 };
 window.saveCharacterEdits = async function(campaign, index) {
     const name = document.getElementById(`edit-name-${index}`).value.trim();
@@ -4103,8 +4173,11 @@ window.saveCharacterEdits = async function(campaign, index) {
         ...(campaignCharacters[campaign][name] || {}),
         charClass, subclass, level
     };
-    await saveCharactersToFirestore();
-    renderCampaignPage(campaign);
+    try {
+        await saveCharactersToFirestore();
+        showToast('Character saved', 'success');
+        renderCampaignPage(campaign);
+    } catch (e) { console.error('save character:', e); showToast('Could not save — try again.'); }
 };
 
 // Avatar upload
@@ -4462,8 +4535,17 @@ function renderSessionCard(s, gi, ci) {
     const att = s.attendance || {}; const isCancelled = s.status === "cancelled";
     const mine = canManage(s);
     const isOwner = !!(s.owner && s.owner === myEmail());
-    let attHtml = '';
-    if (mine) roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.id || s.date}','${p}')" title="Toggle">${p}</button>`; });
+    let attHtml = '', signupBtn = '';
+    const oneShot = isOneShots(s.campaign);
+    if (oneShot) {
+        const ins = roster.filter(p => (att[p] || 'in') === 'in');
+        attHtml = ins.length ? ins.map(p => `<span class="att-chip in" style="cursor:default">${escapeHtml(p)}</span>`).join('') : '<span class="poll-slot-empty">No one signed up yet.</span>';
+        const me = myOwnerId();
+        if (me && !isCancelled) {
+            const iAmIn = roster.includes(me) && (att[me] || 'in') === 'in';
+            signupBtn = `<button class="cp-btn ${iAmIn ? '' : 'cp-btn-primary'} signup-btn" onclick="event.stopPropagation(); toggleSignup('${s.id || s.date}')">${iAmIn ? 'Leave this one-shot' : "I'm in"}</button>`;
+        }
+    } else if (mine) roster.forEach(p => { attHtml += `<button class="att-chip ${att[p]||"in"}" onclick="event.stopPropagation(); toggleAttendance('${s.id || s.date}','${p}')" title="Toggle">${p}</button>`; });
     else roster.forEach(p => { attHtml += `<span class="att-chip ${att[p]||"in"}" style="cursor:default">${p}</span>`; });
     const today = getToday();
     const isPast = d < today;
@@ -4487,7 +4569,7 @@ function renderSessionCard(s, gi, ci) {
         if (mine || hasRecap) {
             recapHtml += `<div class="session-detail-section"><div class="detail-label">Session Recap</div>`;
             if (hasRecap) { recapHtml += `<div class="recap-display">${sanitizeRecapHtml(s.recapHtml) || escapeHtml(s.recap)}</div><div class="recap-actions"><button class="copy-recap-btn" onclick="event.stopPropagation(); copyRecapText('${sid}', this)">Copy</button>${mine ? `<button class="recap-edit-btn" onclick="event.stopPropagation(); editRecap('${sid}')">Edit</button>` : ''}</div>`; }
-            else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">${icon('check')} Save Recap</button><span class="recap-status" id="recap-msg-${sid}"></span></div>`; }
+            else { recapHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-${sid}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="event.stopPropagation(); saveRecap('${sid}')">${icon('check')} Save Recap</button><button class="recap-edit-btn recap-preview-btn" onclick="event.stopPropagation(); toggleRecapPreview('${sid}','recap-editor-${sid}')">Preview</button><span class="recap-status" id="recap-msg-${sid}"></span></div>`; }
             recapHtml += `</div>`;
         }
         if (mine) {
@@ -4510,7 +4592,7 @@ function renderSessionCard(s, gi, ci) {
             ownerTag = `<span class="owner-tag">${nInv ? `Shared \u00b7 ${nInv}` : 'Private'}</span>`;
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">Attendance</div><div class="session-attendance">${attHtml}</div></div>${recapHtml}${shareSessionHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${recapHtml}${shareSessionHtml}</div></div>`;
 }
 
 function renderList() {
@@ -4574,7 +4656,7 @@ function campaignNextHero(campaign, nextUp, lastPast) {
     const count = days <= 0 ? 'Today' : days === 1 ? 'Tomorrow' : `In ${days} days`;
     const dow = d.toLocaleDateString('en-US', { weekday: 'short' });
     const mon = d.toLocaleDateString('en-US', { month: 'short' });
-    const roster = campaignRosters[campaign] || [];
+    const roster = (nextUp.roster && nextUp.roster.length) ? nextUp.roster : (campaignRosters[campaign] || []);   // one-shots use the session's own sign-ups
     const att = nextUp.attendance || {};
     const inNames = roster.filter(n => att[n] === 'in');
     const avatars = inNames.slice(0, 6).map(n => `<span class="resp-av" title="${escapeHtml(n)}">${escapeHtml(initialsOf(n))}</span>`).join('');
@@ -4676,8 +4758,10 @@ function renderCampaignPage(campaign) {
             mainHtml += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
             if (lastPast.pdfUrl) { mainHtml += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">${icon('file')} PDF</a>`; }
             mainHtml += `</div>`;
+        } else if (canManageCampaign(campaign)) {
+            mainHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.id}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.id}')">${icon('check')} Save Recap</button><button class="recap-edit-btn recap-preview-btn" onclick="toggleRecapPreview('overview-${lastPast.id}','recap-editor-overview-${lastPast.id}')">Preview</button><span class="recap-status" id="recap-msg-overview-${lastPast.id}"></span></div>`;
         } else {
-            mainHtml += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.id}')">No recap yet — tap to add one</div>`;
+            mainHtml += `<div class="lsc-no-recap">No recap yet.</div>`;
         }
         mainHtml += `</div>`;
     }
@@ -4719,7 +4803,7 @@ function renderCampaignPage(campaign) {
     }
 
     document.getElementById('campaign-page-content').innerHTML =
-        `${banner}<div class="cp-layout"><main class="cp-main">${mainHtml}</main><aside class="cp-side">${partyHtml}</aside></div>`;
+        `${banner}<div class="cp-layout${isOneShots(campaign) ? ' cp-solo' : ''}"><main class="cp-main">${mainHtml}</main>${isOneShots(campaign) ? '' : `<aside class="cp-side">${partyHtml}</aside>`}</div>`;
     // Initialize Quill for overview recap editor if present
     if (lastPast && !(lastPast.recapHtml || lastPast.recap)) {
         const el = document.getElementById(`recap-editor-overview-${lastPast.id}`);
