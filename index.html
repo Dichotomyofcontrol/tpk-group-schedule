@@ -2043,6 +2043,7 @@ function navCampaignList() {
     sessions.forEach(s => { if (s.campaign) set.add(s.campaign); });
     return [...set].filter(c => {
         if (isDeleted(c)) return myNotifStatus(c) === 'archived';           // members keep a read-only entry if they archived it
+        if (isOneShots(c)) return true;                                     // One-Shots is a built-in section for everyone
         if (isCampaignOwner(c)) return true;                                // owners see their campaign (incl. archived, to restore)
         return sessions.some(s => s.campaign === c && sessionVisible(s));   // else only if a session is visible
     }).sort((a, b) => {
@@ -2699,6 +2700,19 @@ function campaignOpenPoll(c) { return Object.values(allPolls).find(p => p.campai
 function campaignOpenPolls(c) { return Object.values(allPolls).filter(p => p.campaign === c && p.status === 'open'); }
 // The single "One-Shots" collection behaves differently: standalone events, per-event polls + sign-ups, no persistent party.
 function isOneShots(c) { return c === 'special'; }
+// Who can confirm/delete a poll: its creator (their own one-shot) or a campaign manager.
+function canManagePoll(poll) { return !!poll && (poll.owner === myEmail() || canManageCampaign(poll.campaign)); }
+// A one-shot's poll is private to its owner + invitees (email→shares, code); ongoing-campaign polls follow campaign access.
+function pollVisibleToMe(poll) {
+    if (!poll) return false;
+    const c = poll.campaign;
+    if (!isOneShots(c)) return campaignAccessible(c);
+    const me = myEmail();
+    if (me && poll.owner === me) return true;
+    if (me && shareMembers(poll.owner, c).includes(me)) return true;
+    if (codeGrants().some(g => g.owner === poll.owner && g.campaign === c)) return true;
+    return false;
+}
 function pollTally(poll, optId) {
     let yes = 0, maybe = 0, no = 0;
     Object.values(poll.responses || {}).forEach(e => {
@@ -2762,7 +2776,7 @@ window.votePoll = async function(pollId, optId, vote) {
 // Confirming a session is a group milestone — open a considered confirmation, not a native dialog.
 let pendingConfirm = null;
 window.confirmPoll = function(pollId, optId) {
-    const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
+    const poll = allPolls[pollId]; if (!canManagePoll(poll)) return;
     const opt = pollOptions(poll).find(o => o.id === optId); if (!opt) return;
     pendingConfirm = { pollId, optId };
     const roster = campaignRosters[poll.campaign] || [];
@@ -2795,7 +2809,7 @@ window.runGenericConfirm = function() { const cb = _gcCallback; closeGenericConf
 window.confirmPollGo = async function() {
     if (!pendingConfirm) return;
     const { pollId, optId } = pendingConfirm;
-    const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
+    const poll = allPolls[pollId]; if (!canManagePoll(poll)) return;
     const opt = pollOptions(poll).find(o => o.id === optId); if (!opt) return;
     const c = poll.campaign;
     // One-shots seed sign-ups from whoever voted Yes for the confirmed date; ongoing campaigns use the standing party.
@@ -2805,7 +2819,7 @@ window.confirmPollGo = async function() {
     roster.forEach(p => { attendance[p] = "in"; });
     const docId = `${opt.date}-${Date.now().toString(36)}-poll`;
     try {
-        await setDoc(doc(db, "sessions", docId), { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active" });
+        await setDoc(doc(db, "sessions", docId), { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active", ...(isOneShots(c) ? { owner: poll.owner || myEmail() } : {}) });
         await updateDoc(doc(db, "polls", pollId), { status: 'confirmed', confirmedDate: opt.date, confirmedTime: opt.time || '', confirmedSessionId: docId });
         if (allPolls[pollId]) allPolls[pollId].status = 'confirmed';
         showSessionConfirmed(opt, roster.length);
@@ -2826,7 +2840,7 @@ function showSessionConfirmed(opt, count) {
     document.getElementById('scm-overlay').classList.add('open');
 }
 window.deletePoll = function(pollId) {
-    const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
+    const poll = allPolls[pollId]; if (!canManagePoll(poll)) return;
     openConfirm({ title: 'Delete this poll?', message: 'All responses will be lost. This cannot be undone.', confirmLabel: 'Delete poll', onConfirm: async () => {
         try { await deleteDoc(doc(db, "polls", pollId)); delete allPolls[pollId]; renderCampaignPage(poll.campaign); renderAll(); }
         catch (e) { console.error("delete poll error:", e); }
@@ -2835,7 +2849,10 @@ window.deletePoll = function(pollId) {
 // ----- Create-poll modal: date + time options -----
 let pollCampaign = null, pollSlots = [];
 window.openCreatePoll = function() {
-    const c = currentPage; if (!c || !canManageCampaign(c)) return;
+    const c = currentPage; if (!c) return;
+    // One-shots are communal: any signed-in member can propose one. Campaigns: managers only.
+    if (isOneShots(c)) { if (!currentUser) { showToast('Sign in to propose a one-shot.'); return; } }
+    else if (!canManageCampaign(c)) return;
     pollCampaign = c; pollSlots = [];
     document.getElementById('poll-title').value = '';
     const t = new Date(); t.setDate(t.getDate() + 7);
@@ -2877,9 +2894,9 @@ const VOTE_META = { yes: { label: 'Yes', mark: '✓' }, maybe: { label: 'Maybe',
 function renderPollSection(campaign) {
     const owner = canManageCampaign(campaign);
     if (isOneShots(campaign)) {
-        // One-shots: each open poll is a proposed standalone event; many can run at once.
-        let h = owner ? `<div class="poll-empty"><span>Propose a one-shot and let players vote on a date.</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="cp-btn" onclick="openCampaignInvite('${campaign}')">+ Invite players</button><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Propose a one-shot</button></div></div>` : '';
-        campaignOpenPolls(campaign).forEach(p => { h += renderOnePoll(p, campaign, owner); });
+        // One-shots: communal — any signed-in member can propose; many polls can run at once, each managed by its creator.
+        let h = currentUser ? `<div class="poll-empty"><span>Run your own one-shot, or join one you're invited to.</span><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="cp-btn" onclick="openCampaignInvite('${campaign}')">+ Invite players</button><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Propose a one-shot</button></div></div>` : `<div class="poll-empty"><span>Sign in to run a one-shot, or use an email/code invite to join one.</span></div>`;
+        campaignOpenPolls(campaign).filter(pollVisibleToMe).forEach(p => { h += renderOnePoll(p, campaign, canManagePoll(p)); });
         return h;
     }
     const poll = campaignOpenPoll(campaign);
@@ -2935,7 +2952,7 @@ function pollListRow(p) {
 }
 function renderPollsList() {
     const el = document.getElementById('polls-list-body'); if (!el) return;
-    const mine = Object.values(allPolls).filter(p => campaignAccessible(p.campaign)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const mine = Object.values(allPolls).filter(pollVisibleToMe).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     const open = mine.filter(p => p.status === 'open');
     const closed = mine.filter(p => p.status !== 'open');
     let h = '';
@@ -2961,7 +2978,7 @@ function renderNcIcons() {
 window.pickNcIcon = function(e) { ncIcon = e; renderNcIcons(); };
 let newSessionVisibility = 'private';
 let lastAddedSession = null;
-window.openAddSession = function() {
+window.openAddSession = function(preCampaign) {
     closeNav();
     populateCampaignDropdown('new-session-campaign', { includeNew: true });
     const t = new Date(); t.setDate(t.getDate() + 1); const tstr = t.toISOString().split('T')[0];
@@ -2970,6 +2987,8 @@ window.openAddSession = function() {
     ['new-session-time','new-session-gm','new-session-duration','nc-name','nc-icon'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     multiDates = []; ncColor = CAMPAIGN_SWATCHES[0]; ncIcon = '🎲';
     setAddMode('one');
+    // Preselect the campaign when opened from a campaign page's "Add session" button.
+    if (typeof preCampaign === 'string') { const sel = document.getElementById('new-session-campaign'); if (sel && [...sel.options].some(o => o.value === preCampaign)) sel.value = preCampaign; }
     onNewCampaignToggle();
     applyDefaultVisibility();
     const succ = document.getElementById('add-success'); if (succ) succ.style.display = 'none';
@@ -3378,7 +3397,7 @@ function visibleCampaignList() {
     Object.keys(allCampaigns).forEach(c => { if (!isDeleted(c) && campaignVisible(c)) set.add(c); });
     return [...set];
 }
-function hasAnyCampaign() { return visibleCampaignList().length > 0; }
+function hasAnyCampaign() { return visibleCampaignList().some(c => !isOneShots(c)); }   // One-Shots is always present, so it doesn't count as "having a campaign"
 function updateEmptyState() {
     const home = document.getElementById('home-view');
     const banner = document.getElementById('no-campaigns-banner');
@@ -3386,7 +3405,7 @@ function updateEmptyState() {
     const inApp = !!currentUser || codeGrants().length > 0;
     const empty = inApp && !hasAnyCampaign();
     banner.style.display = empty ? '' : 'none';
-    home.classList.toggle('campaigns-empty', empty);
+    home.classList.remove('campaigns-empty');   // no full takeover — One-Shots is always shown; the banner is just a top hint
     const createBtn = document.getElementById('empty-create-btn'); if (createBtn) createBtn.style.display = (empty && currentUser) ? '' : 'none';
 }
 window.openProfile = function() {
@@ -3962,7 +3981,7 @@ window.saveOverviewRecap = function(sd) { const q = activeQuills[`overview-${sd}
 // ===== RENDER =====
 function renderPollBanners() {
     const el = document.getElementById('poll-banners'); if (!el) return;
-    const open = Object.values(allPolls).filter(p => p.status === 'open' && campaignAccessible(p.campaign) && pollNeedsMyResponse(p));
+    const open = Object.values(allPolls).filter(p => p.status === 'open' && pollVisibleToMe(p) && pollNeedsMyResponse(p));
     el.innerHTML = open.map(p => `<div class="poll-banner" onclick="navigateTo('${p.campaign}')"><span>${icon('calendar')}</span><span><strong>${escapeHtml(campaignName(p.campaign))}</strong> — vote on when to play next</span><span class="pb-go">Respond &rsaquo;</span></div>`).join('');
 }
 function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
@@ -4746,28 +4765,14 @@ function renderCampaignPage(campaign) {
         partyHtml += `</div></div>`;
     }
 
-    // ----- Main column: Next-session hero → Availability poll → Last Session → Sessions -----
+    // ----- Main column: Next-session hero → Availability poll → Sessions -----
+    // (The old "Last Session" block was removed — the hero's "Read last recap" covers it; recaps are edited in the session cards.)
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     let mainHtml = campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
-    if (lastPast) {
-        mainHtml += `<div class="section-heading">Last Session — ${formatDateShort(lastPast.date)}</div>`;
-        mainHtml += `<div class="campaign-overview lsc-card" style="border-left:3px solid ${campaignColor(campaign)}">`;
-        if (lastPast.recapHtml || lastPast.recap) {
-            mainHtml += `<div class="hero-recap">${sanitizeRecapHtml(lastPast.recapHtml) || escapeHtml(lastPast.recap)}</div>`;
-            mainHtml += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.id}')">Edit</button>`;
-            mainHtml += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
-            if (lastPast.pdfUrl) { mainHtml += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">${icon('file')} PDF</a>`; }
-            mainHtml += `</div>`;
-        } else if (canManageCampaign(campaign)) {
-            mainHtml += `<div class="recap-editor-wrap"><div class="recap-editor" id="recap-editor-overview-${lastPast.id}"></div></div><div class="recap-actions"><button class="recap-save-btn" onclick="saveOverviewRecap('${lastPast.id}')">${icon('check')} Save Recap</button><button class="recap-edit-btn recap-preview-btn" onclick="toggleRecapPreview('overview-${lastPast.id}','recap-editor-overview-${lastPast.id}')">Preview</button><span class="recap-status" id="recap-msg-overview-${lastPast.id}"></span></div>`;
-        } else {
-            mainHtml += `<div class="lsc-no-recap">No recap yet.</div>`;
-        }
-        mainHtml += `</div>`;
-    }
+    const addSessionBtn = canManageCampaign(campaign) ? `<button class="cp-btn" onclick="openAddSession('${campaign}')">+ Add session</button>` : '';
     if (cs.length > 0) {
         mainHtml += `<div class="sessions-wrapper">`;
-        mainHtml += `<div class="section-heading">Sessions</div>`;
+        mainHtml += `<div class="cp-section-head"><span class="section-heading">Sessions</span>${addSessionBtn}</div>`;
         mainHtml += `<div class="controls-bar">`;
         mainHtml += `<div class="seg-group">`;
         mainHtml += `<button class="view-btn view-icon${campaignView==='list'?' active':''}" title="List view" aria-label="List view" onclick="setCampaignView('list','${campaign}')">${icon('list')}</button>`;
@@ -4799,16 +4804,12 @@ function renderCampaignPage(campaign) {
         }
         mainHtml += `</div>`;
     } else {
-        mainHtml += `${emptyState('sparkle', 'No sessions yet', 'Schedule the first session to get this campaign rolling.')}`;
+        const addAction = canManageCampaign(campaign) ? `<button class="cp-btn cp-btn-primary" onclick="openAddSession('${campaign}')">+ Add session</button>` : '';
+        mainHtml += `${emptyState(isOneShots(campaign) ? 'calendar' : 'sparkle', 'No sessions yet', isOneShots(campaign) ? 'Propose a one-shot above, or add a session directly.' : 'Schedule the first session — you can add past sessions you have recaps for, too.', addAction)}`;
     }
 
     document.getElementById('campaign-page-content').innerHTML =
         `${banner}<div class="cp-layout${isOneShots(campaign) ? ' cp-solo' : ''}"><main class="cp-main">${mainHtml}</main>${isOneShots(campaign) ? '' : `<aside class="cp-side">${partyHtml}</aside>`}</div>`;
-    // Initialize Quill for overview recap editor if present
-    if (lastPast && !(lastPast.recapHtml || lastPast.recap)) {
-        const el = document.getElementById(`recap-editor-overview-${lastPast.id}`);
-        if (el) initRecapEditor(el, `overview-${lastPast.id}`, lastPast.id, `recap-msg-overview-${lastPast.id}`);
-    }
 }
 window.setCampaignView = function(v, campaign) { campaignView = v; renderCampaignPage(campaign); };
 window.toggleCampaignSort = function(campaign) { campaignSortNewest = !campaignSortNewest; renderCampaignPage(campaign); };
