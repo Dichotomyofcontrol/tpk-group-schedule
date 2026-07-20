@@ -2693,7 +2693,9 @@ function renderPollSection(campaign) {
     const sum = pollResponseSummary(poll, campaign);
     const progress = sum.total ? `${sum.count} of ${sum.total} responded` : (sum.count ? `${sum.count} responded` : 'No responses yet');
     let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">${icon('poll')} ${escapeHtml(poll.title)}</span>`;
-    if (owner) h += `<div class="cp-section-actions"><button class="edit-party-btn" onclick="deletePoll('${poll.id}')">Delete</button></div>`;
+    h += `<div class="cp-section-actions"><button class="edit-party-btn" onclick="shareLink('${campaign}', null, false, event)">${icon('share')} Share</button>`;
+    if (owner) h += `<button class="edit-party-btn" onclick="deletePoll('${poll.id}')">Delete</button>`;
+    h += `</div>`;
     h += `</div><div class="poll-sub">${progress} · tap your availability for each option.</div>`;
     options.forEach(o => {
         const t = pollTally(poll, o.id);
