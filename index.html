@@ -1038,8 +1038,18 @@
         .loading { text-align: center; padding: 60px 0; color: var(--text-dim); font-size: 0.85rem; }
         .loading-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .empty-state { text-align: center; padding: 40px 0; color: var(--text-dim); }
-        .empty-state .icon { font-size: 2rem; margin-bottom: 8px; }
+        /* ===== Icon system ===== */
+        .ico { width: 1.05em; height: 1.05em; flex-shrink: 0; vertical-align: -0.16em; display: inline-block; }
+        .ico + span, .ico + * { vertical-align: middle; }
+        /* ===== Empty states (designed) ===== */
+        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-dim); display: flex; flex-direction: column; align-items: center; }
+        .empty-state .es-badge { width: 56px; height: 56px; border-radius: var(--r-pill); background: var(--brand-tint); color: var(--brand); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+        .empty-state .es-badge .ico { width: 26px; height: 26px; }
+        .empty-state .es-title { font-family: var(--font-display); font-weight: 600; font-size: 1.12rem; color: var(--text); margin-bottom: 6px; letter-spacing: -0.01em; }
+        .empty-state .es-desc { font-size: 0.86rem; color: var(--text-dim); max-width: 42ch; line-height: 1.55; }
+        .empty-state .es-desc + .es-action, .empty-state .es-actions { margin-top: 18px; }
+        .empty-state .es-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .empty-state .icon { font-size: 2rem; margin-bottom: 8px; } /* legacy fallback */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
 
@@ -1169,6 +1179,8 @@
         .swatch.active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
         .sched-preview { font-size: 0.78rem; color: var(--text-dim); margin-top: 8px; line-height: 1.6; }
         .sched-preview strong { color: var(--text); }
+        .nc-hint { font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; margin-top: 2px; }
+        .nc-hint strong { color: var(--brand); font-weight: 600; }
         .multi-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin: 0 6px 6px 0; font-size: 0.78rem; color: var(--text); }
         .multi-chip .chip-x { cursor: pointer; color: var(--text-dim); font-size: 1rem; line-height: 1; }
         .multi-chip .chip-x:hover { color: var(--strahd-primary); }
@@ -1267,11 +1279,11 @@
     <div id="nav-campaigns"></div>
     <div class="nav-divider"></div>
     <div class="nav-section-label" id="nav-actions-label">Actions</div>
-    <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()">&#128100; Your Account</button>
-    <button class="nav-add-btn" id="nav-polls-btn" onclick="openPollsList()" style="margin-top:8px">&#128499; Polls</button>
+    <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Your Account</button>
+    <button class="nav-add-btn" id="nav-polls-btn" onclick="openPollsList()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg> Polls</button>
     <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">&#43; Add to Schedule</button>
     <button class="nav-add-btn" id="nav-addcampaign-btn" onclick="openAddCampaign()" style="margin-top:8px">&#43; Add Campaign</button>
-    <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
+    <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Manage Schedule</button>
 </div>
 
 <!-- Add Session Modal -->
@@ -1290,6 +1302,7 @@
                 <div class="form-group" style="flex:0 0 64px"><label>Icon</label><input type="text" id="nc-icon" placeholder="🎲" maxlength="2"></div>
             </div>
             <div class="form-group"><label>Color</label><div id="nc-swatches" class="swatch-row"></div></div>
+            <div class="nc-hint">You'll be the owner. Once it's created, invite players by email or a join code from the campaign's <strong>Share</strong> menu.</div>
         </div>
         <div class="form-row" id="session-visibility-row" style="display:none">
             <div class="form-group"><label>Visibility</label>
@@ -1352,7 +1365,7 @@
         </div>
         </div>
         <div id="add-success" style="display:none;text-align:center;padding:8px 0">
-            <div style="font-size:2rem;line-height:1;margin-bottom:8px;color:var(--leyfarers-primary)">&#10003;</div>
+            <div style="margin-bottom:10px;color:var(--success);display:flex;justify-content:center"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:2.4rem;height:2.4rem"><circle cx="12" cy="12" r="9" stroke-width="1.6"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
             <div id="add-success-title" style="font-weight:600;color:var(--text);margin-bottom:4px">Session added</div>
             <div id="add-success-detail" style="font-size:0.8rem;color:var(--text-dim);margin-bottom:16px"></div>
             <div class="form-buttons" style="justify-content:center">
@@ -1438,7 +1451,7 @@
 <!-- Accept Invite Modal -->
 <div class="add-form-overlay" id="accept-invite-overlay">
     <div class="add-session-modal" onclick="event.stopPropagation()">
-        <h3>&#127922; You're Invited!</h3>
+        <h3><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 0 3 3H8a2 2 0 0 1-2-2z"/><path d="M6 4a2 2 0 0 0-2 2v2h4"/><path d="M9 9h7M9 13h7"/></svg> You're Invited!</h3>
         <div id="accept-invite-text" style="font-size:0.88rem;color:var(--text);line-height:1.5;margin-bottom:6px"></div>
         <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:14px">Accept to join the campaign — schedule, recaps, and updates are all managed by the organizer.</div>
         <div class="form-buttons">
@@ -1503,7 +1516,7 @@
                 <div class="ac-choice-sub">Start your own — name it, pick a color, and add sessions.</div>
             </button>
             <button class="ac-choice" onclick="closeAddCampaign(); openJoinCode()">
-                <div class="ac-choice-title">&#128273; Join with a code</div>
+                <div class="ac-choice-title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3.6"/><path d="M10.6 10.6L20 20M17 17l2.2-2.2M14.8 14.8l2.2-2.2"/></svg> Join with a code</div>
                 <div class="ac-choice-sub">Enter a join code your organizer sent you.</div>
             </button>
         </div>
@@ -1592,12 +1605,12 @@
         <div class="container">
             <div class="top-bar">
                 <div class="top-bar-left">
-                    <button class="hamburger" onclick="openNav()">&#9776;</button>
+                    <button class="hamburger" onclick="openNav()" aria-label="Menu"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
                     <div class="top-bar-logo">Six in the TPK</div>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
                     <span class="user-chip" id="user-chip" style="display:none"></span>
-                    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">&#9790;</button>
+                    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle light/dark mode"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z"/></svg></button>
                     <button class="sign-out-btn" onclick="logout()">Sign Out</button>
                 </div>
             </div>
@@ -1607,11 +1620,13 @@
         <!-- HOME VIEW -->
         <div id="home-view">
             <div id="no-campaigns-banner" class="empty-state" style="display:none">
-                <div class="icon">&#127914;</div>
-                <div style="font-weight:600;font-size:1rem;color:var(--text);margin-bottom:6px">You're not in any campaigns yet</div>
-                <div style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px">Create your own campaign, or join one with a code from your organizer.</div>
-                <button class="submit-btn" id="empty-create-btn" style="max-width:240px;margin:0 auto 8px;display:none" onclick="openNewCampaign()">+ Create a campaign</button>
-                <button class="cancel-form-btn" style="max-width:240px;margin:0 auto" onclick="openJoinCode()">Join with a code</button>
+                <div class="es-badge"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2 5.2-5.2 2 2-5.2z"/></svg></div>
+                <div class="es-title">You're not in any campaigns yet</div>
+                <div class="es-desc">Create your own campaign, or join one with a code from your organizer.</div>
+                <div class="es-actions">
+                    <button class="submit-btn" id="empty-create-btn" style="display:none" onclick="openNewCampaign()">Create a campaign</button>
+                    <button class="cancel-form-btn" onclick="openJoinCode()">Join with a code</button>
+                </div>
             </div>
             <!-- Open availability polls needing this user's response -->
             <div id="poll-banners"></div>
@@ -1631,8 +1646,8 @@
                 <!-- Slim controls toolbar -->
                 <div class="controls-bar">
                     <div class="seg-group">
-                        <button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view">&#9776;</button>
-                        <button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view">&#128197;</button>
+                        <button class="view-btn view-icon active" data-view="list" title="List view" aria-label="List view"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.6 6h.01M3.6 12h.01M3.6 18h.01"/></svg></button>
+                        <button class="view-btn view-icon" data-view="calendar" title="Calendar view" aria-label="Calendar view"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg></button>
                     </div>
                     <div class="seg-group">
                         <button class="view-btn" data-time="all" onclick="setTimeFilter('all')">All</button>
@@ -1640,7 +1655,7 @@
                         <button class="view-btn" data-time="past" onclick="setTimeFilter('past')">Past</button>
                     </div>
                     <div class="controls-right">
-                        <button class="ctrl-link" id="home-sort-btn" onclick="toggleHomeSort()">&#8593; Soonest First</button>
+                        <button class="ctrl-link" id="home-sort-btn" onclick="toggleHomeSort()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg> Soonest First</button>
                         <button class="ctrl-link" id="home-collapse-btn" onclick="toggleAllMonths()">Collapse All</button>
                     </div>
                 </div>
@@ -1664,12 +1679,12 @@
                         </div>
                     </div>
                     <div class="cp-actions">
-                        <button class="cp-btn" onclick="shareCurrentCampaign()">&#128279; Share</button>
+                        <button class="cp-btn" onclick="shareCurrentCampaign()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/></svg> Share</button>
                         <div class="cp-menu" id="campaign-manage-menu" style="display:none">
-                            <button class="cp-btn cp-btn-primary" onclick="toggleCampaignMenu(event)">&#9881; Manage &#9662;</button>
+                            <button class="cp-btn cp-btn-primary" onclick="toggleCampaignMenu(event)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Manage <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:0.85em;height:0.85em"><path d="M6 9l6 6 6-6"/></svg></button>
                             <div class="cp-menu-list" id="cp-menu-list">
-                                <button id="cp-menu-schedule" onclick="closeCampaignMenu(); openCampaignSchedule()">&#128197; Bulk-edit schedule</button>
-                                <button onclick="closeCampaignMenu(); openCampaignSettings()">&#9881; Campaign settings</button>
+                                <button id="cp-menu-schedule" onclick="closeCampaignMenu(); openCampaignSchedule()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg> Bulk-edit schedule</button>
+                                <button onclick="closeCampaignMenu(); openCampaignSettings()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg> Campaign settings</button>
                             </div>
                         </div>
                     </div>
@@ -1749,6 +1764,38 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebas
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+/* ===== Iconography — one coherent monochrome stroke set (24px grid, currentColor) ===== */
+const ICO = {
+    menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    calendar: '<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/>',
+    list: '<path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.6 6h.01M3.6 12h.01M3.6 18h.01"/>',
+    settings: '<path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+    share: '<path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/>',
+    user: '<circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+    poll: '<path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/>',
+    key: '<circle cx="8" cy="8" r="3.6"/><path d="M10.6 10.6L20 20M17 17l2.2-2.2M14.8 14.8l2.2-2.2"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon: '<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8z"/>',
+    chevronRight: '<path d="M9 6l6 6-6 6"/>',
+    chevronDown: '<path d="M6 9l6 6 6-6"/>',
+    arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+    arrowDown: '<path d="M12 5v14M18 13l-6 6-6-6"/>',
+    arrowLeft: '<path d="M19 12H5M11 18l-6-6 6-6"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    check: '<path d="M20 6L9 17l-5-5"/>',
+    file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+    trash: '<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/>',
+    refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 4v4h-4"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2 5.2-5.2 2 2-5.2z"/>',
+    sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    scroll: '<path d="M6 4h11a2 2 0 0 1 2 2v11a3 3 0 0 0 3 3H8a2 2 0 0 1-2-2z"/><path d="M6 4a2 2 0 0 0-2 2v2h4"/><path d="M9 9h7M9 13h7"/>'
+};
+function icon(name, cls) { return `<svg class="ico${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICO[name] || ''}</svg>`; }
+function emptyState(name, title, desc, action) { return `<div class="empty-state"><div class="es-badge">${icon(name)}</div><div class="es-title">${title}</div>${desc ? `<div class="es-desc">${desc}</div>` : ''}${action ? `<div class="es-actions">${action}</div>` : ''}</div>`; }
 
 const firebaseConfig = {
     apiKey: "__FIREBASE_API_KEY__",
@@ -2013,7 +2060,8 @@ function updateAccessUI() {
     const acctBtn = document.getElementById('nav-account-btn');
     if (acctBtn) acctBtn.style.display = '';
     const visRow = document.getElementById('session-visibility-row');
-    if (visRow) visRow.style.display = currentUser ? '' : 'none';
+    const creatingNew = document.getElementById('new-session-campaign')?.value === '__new__';
+    if (visRow) visRow.style.display = (currentUser && !creatingNew) ? '' : 'none';
     updateEmptyState();
 }
 let activeView = "list";
@@ -2487,12 +2535,12 @@ function renderPollSection(campaign) {
     const poll = campaignOpenPoll(campaign);
     const owner = canManageCampaign(campaign);
     if (!poll) {
-        return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">&#128197; Ask when to play</button></div>` : '';
+        return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Ask when to play</button></div>` : '';
     }
     const options = pollOptions(poll);
     const best = pollBestOption(poll);
     const anyVotes = Object.values(poll.responses || {}).some(e => e.votes && Object.keys(e.votes).length);
-    let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">&#128197; ${escapeHtml(poll.title)}</span>`;
+    let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">${icon('calendar')} ${escapeHtml(poll.title)}</span>`;
     if (owner) h += `<div class="cp-section-actions"><button class="edit-party-btn" onclick="deletePoll('${poll.id}')">Delete</button></div>`;
     h += `</div><div class="poll-sub">Tap a response for each option.</div>`;
     options.forEach(o => {
@@ -2578,6 +2626,10 @@ window.onAddCampaignChange = function() { onNewCampaignToggle(); applyDefaultVis
 function onNewCampaignToggle() {
     const isNew = document.getElementById('new-session-campaign').value === '__new__';
     document.getElementById('new-campaign-fields').style.display = isNew ? '' : 'none';
+    // A brand-new campaign is yours — its sessions default to shared with the group,
+    // so the per-session Just Me / Everyone toggle only applies to existing campaigns.
+    const visRow = document.getElementById('session-visibility-row');
+    if (visRow) visRow.style.display = (currentUser && !isNew) ? '' : 'none';
     if (isNew) renderSwatches();
 }
 function renderSwatches() {
@@ -3352,9 +3404,9 @@ function updateCancelStates() {
         if (!canManage(s)) return;
         const c = s.status === "cancelled"; card.classList.toggle('cancelled', c);
         const today = getToday(); const isPast = parseDate(s.date) < today;
-        const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${d}')">&#9998;</button>`;
+        const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${d}')">${icon('edit')}</button>`;
         const a = card.querySelector('.session-action'); if (!a) return;
-        a.innerHTML = c ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">&#10005;</button>`;
+        a.innerHTML = c ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">${icon('close')}</button>`;
     });
 }
 // Helper: look up a session by doc id (falls back to date for old share links)
@@ -3369,7 +3421,7 @@ function findSessionCard(sd) {
 }
 window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = findSessionCard(sd).querySelector('.session-action'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
 window.confirmCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "cancelled" }); cancelPendingSession = null; } catch(e) { console.error(e); } };
-window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = findSessionCard(cancelPendingSession).querySelector('.session-action'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">&#10005;</button>`; cancelPendingSession = null; };
+window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = findSessionCard(cancelPendingSession).querySelector('.session-action'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">${icon('close')}</button>`; cancelPendingSession = null; };
 window.undoCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "active" }); } catch(e) { console.error(e); } };
 window.initiateDeleteSession = function(sd) { const a = findSessionCard(sd).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
 window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
@@ -3510,7 +3562,7 @@ window.saveOverviewRecap = async function(sd) {
 function renderPollBanners() {
     const el = document.getElementById('poll-banners'); if (!el) return;
     const open = Object.values(allPolls).filter(p => p.status === 'open' && campaignAccessible(p.campaign) && pollNeedsMyResponse(p));
-    el.innerHTML = open.map(p => `<div class="poll-banner" onclick="navigateTo('${p.campaign}')"><span>&#128197;</span><span><strong>${escapeHtml(campaignName(p.campaign))}</strong> — vote on when to play next</span><span class="pb-go">Respond &rsaquo;</span></div>`).join('');
+    el.innerHTML = open.map(p => `<div class="poll-banner" onclick="navigateTo('${p.campaign}')"><span>${icon('calendar')}</span><span><strong>${escapeHtml(campaignName(p.campaign))}</strong> — vote on when to play next</span><span class="pb-go">Respond &rsaquo;</span></div>`).join('');
 }
 function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 // Coalesce rapid Firestore snapshots into a single render per frame (prevents flicker on batch writes).
@@ -3566,11 +3618,18 @@ function sanitizeRecapHtml(dirty) {
 let collapsedMonths = new Set();
 let allMonthsCollapsed = false;
 const pillLabels = { frostmaiden: 'Frost', strahd: 'Strahd', special: 'Special', drawsteel: 'Steel', leyfarers: 'Ley', beerovia: 'Beer' };
+// Short pill label: use the curated abbreviation, else the campaign name's first word, capitalized.
+function pillLabel(c) {
+    if (pillLabels[c]) return pillLabels[c];
+    const nm = (typeof campaignName === 'function' ? campaignName(c) : '') || c;
+    const w = String(nm).trim().split(/\s+/)[0] || String(c);
+    return (w.charAt(0).toUpperCase() + w.slice(1)).slice(0, 10);
+}
 
 function monthPills(sessionList) {
     const counts = {};
     sessionList.forEach(s => { counts[s.campaign] = (counts[s.campaign] || 0) + 1; });
-    return Object.keys(counts).map(c => `<span class="month-pill ${c}">${counts[c]} ${pillLabels[c] || c}</span>`).join('');
+    return Object.keys(counts).map(c => `<span class="month-pill ${c}">${counts[c]} ${pillLabel(c)}</span>`).join('');
 }
 
 function monthGroupOpen(k, sessionList) {
@@ -3855,7 +3914,7 @@ function renderHero() {
             recapBlock += `<div class="hero-recap">${sanitizeRecapHtml(lastSession.recapHtml) || escapeHtml(lastSession.recap)}</div>`;
             recapBlock += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastSession.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastSession.id}')">Edit</button>`;
             recapBlock += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${lastSession.campaign}','${lastSession.date}',true,event)">Share</button>`;
-            if (lastSession.pdfUrl) { recapBlock += `<a class="lsc-pdf" href="${escapeHtml(lastSession.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
+            if (lastSession.pdfUrl) { recapBlock += `<a class="lsc-pdf" href="${escapeHtml(lastSession.pdfUrl)}" target="_blank">${icon('file')} PDF</a>`; }
             recapBlock += `</div>`;
         } else {
             recapBlock += `<div class="lsc-no-recap" onclick="goToSession('${lastSession.id}')">No recap yet — tap to add one</div>`;
@@ -3879,7 +3938,7 @@ window.openReaderModal = function(ds) {
     let footer = `<button class="copy-recap-btn" onclick="copyRecapText('${ds}', this)">Copy</button>`;
     footer += `<button class="lsc-edit-btn" onclick="closeReaderModal(); goToSession('${ds}')">Edit Recap</button>`;
     footer += `<button class="share-btn" onclick="shareLink('${s.campaign}','${ds}',true,event)">Share</button>`;
-    if (s.pdfUrl) { footer += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">&#128196; PDF Recap</a>`; }
+    if (s.pdfUrl) { footer += `<a class="lsc-pdf" href="${escapeHtml(s.pdfUrl)}" target="_blank">${icon('file')} PDF Recap</a>`; }
     document.getElementById('reader-footer').innerHTML = footer;
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -3896,14 +3955,14 @@ window.copyRecapText = function(sd, btn) {
     const text = s.recapHtml ? stripHtml(s.recapHtml) : (s.recap || '');
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
-        btn.innerHTML = '&#10003; Copied';
+        btn.innerHTML = `${icon('check')} Copied`;
         btn.classList.add('copied');
         setTimeout(() => { btn.innerHTML = 'Copy'; btn.classList.remove('copied'); }, 2000);
     }).catch(() => {
         // Fallback for older browsers
         const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
         document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        btn.innerHTML = '&#10003; Copied'; btn.classList.add('copied');
+        btn.innerHTML = `${icon('check')} Copied`; btn.classList.add('copied');
         setTimeout(() => { btn.innerHTML = 'Copy'; btn.classList.remove('copied'); }, 2000);
     });
 };
@@ -3912,7 +3971,7 @@ window.copyRecapText = function(sd, btn) {
 window.toggleTheme = function() {
     const isLight = document.body.classList.toggle('light');
     localStorage.setItem('tpk-theme', isLight ? 'light' : 'dark');
-    document.getElementById('theme-toggle').innerHTML = isLight ? '&#9728;' : '&#9790;';
+    document.getElementById('theme-toggle').innerHTML = isLight ? icon('sun') : icon('moon');
 };
 // Apply saved theme on load
 (function() {
@@ -3920,7 +3979,7 @@ window.toggleTheme = function() {
     if (saved === 'light') {
         document.body.classList.add('light');
         const btn = document.getElementById('theme-toggle');
-        if (btn) btn.innerHTML = '&#9728;';
+        if (btn) btn.innerHTML = icon('sun');
     }
 })();
 
@@ -4026,7 +4085,7 @@ window.setTimeFilter = function(t) {
 window.toggleHomeSort = function() {
     homeSortNewest = !homeSortNewest;
     const btn = document.getElementById('home-sort-btn');
-    if (btn) btn.innerHTML = homeSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First';
+    if (btn) btn.innerHTML = homeSortNewest ? `${icon('arrowDown')} Latest First` : `${icon('arrowUp')} Soonest First`;
     renderList();
 };
 
@@ -4045,8 +4104,8 @@ function renderSessionCard(s, gi, ci) {
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const isRecentPast = isPast && d >= twoWeeksAgo;
     const sid = s.id || s.date;
-    const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${sid}')">&#9998;</button>`;
-    const actionHtml = !mine ? '' : isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sid}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${sid}')">&#10005;</button>`;
+    const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${sid}')">${icon('edit')}</button>`;
+    const actionHtml = !mine ? '' : isCancelled ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sid}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sid}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${sid}')">${icon('close')}</button>`;
     // CTA for recent past sessions missing recap or PDF
     let ctaHtml = '';
     if (isRecentPast && !isCancelled && mine) {
@@ -4067,11 +4126,11 @@ function renderSessionCard(s, gi, ci) {
         }
         if (mine) {
             recapHtml += `<div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area">`;
-            if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">&#8635; Replace<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${sid}')" style="margin-left:4px">&#10005; Delete</button>`; }
-            else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">&#128196; Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label>`; }
+            if (s.pdfUrl) { recapHtml += `<a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">${icon('file')} ${escapeHtml(s.pdfName||'Download PDF')}</a><label class="pdf-upload-btn" onclick="event.stopPropagation()">${icon('refresh')} Replace<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label><button class="delete-btn" onclick="event.stopPropagation(); deletePdf('${sid}')" style="margin-left:4px">${icon('trash')} Delete</button>`; }
+            else { recapHtml += `<label class="pdf-upload-btn" onclick="event.stopPropagation()">${icon('file')} Upload PDF<input type="file" accept=".pdf" onchange="uploadPdf('${sid}',this)"></label>`; }
             recapHtml += `<span class="pdf-upload-status" id="pdf-status-${sid}"></span></div></div>`;
         } else if (s.pdfUrl) {
-            recapHtml += `<div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area"><a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">&#128196; ${escapeHtml(s.pdfName||'Download PDF')}</a></div></div>`;
+            recapHtml += `<div class="session-detail-section"><div class="detail-label">PDF Recap</div><div class="pdf-upload-area"><a class="pdf-link" href="${escapeHtml(s.pdfUrl)}" target="_blank" onclick="event.stopPropagation()">${icon('file')} ${escapeHtml(s.pdfName||'Download PDF')}</a></div></div>`;
         }
     }
     const inviteBtnHtml = isOwner ? `<button class="share-btn" onclick="event.stopPropagation(); openInvite('${sid}')">&#43; Invite</button>` : '';
@@ -4093,10 +4152,10 @@ function renderList() {
     const twoWeeksAgo = new Date(today); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
     const visible = profileSessions();
     const filtered = activeFilter === "all" ? visible : visible.filter(s => s.campaign === activeFilter);
-    if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions yet.</div></div>`; return; }
+    if (filtered.length === 0) { document.getElementById('list-view').innerHTML = `${emptyState('calendar', 'No sessions yet', 'Once a session is scheduled, it shows up here.')}`; return; }
     activeQuills = {};
     const sortBtn = document.getElementById('home-sort-btn');
-    if (sortBtn) sortBtn.innerHTML = homeSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First';
+    if (sortBtn) sortBtn.innerHTML = homeSortNewest ? `${icon('arrowDown')} Latest First` : `${icon('arrowUp')} Soonest First`;
     const colBtn = document.getElementById('home-collapse-btn');
     if (colBtn) colBtn.textContent = allMonthsCollapsed ? 'Expand All' : 'Collapse All';
     let html = '';
@@ -4118,7 +4177,7 @@ function renderList() {
     }
 
     if (displayList.length > 0) { groupAndRender(displayList); }
-    else { html += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${activeTimeFilter} sessions.</div></div>`; }
+    else { html += `${emptyState('calendar', `No ${activeTimeFilter} sessions`, 'Try a different filter, or add one from the menu.')}`; }
 
     document.getElementById('list-view').innerHTML = html;
 }
@@ -4144,8 +4203,8 @@ function renderCampaignPage(campaign) {
     if (schedItem) schedItem.style.display = canManageCampaign(campaign) ? '' : 'none';
     activeQuills = {};
     let banner = '';
-    if (isArchived(campaign)) banner = `<div class="readonly-banner">&#128193; This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
-    else if (isDeleted(campaign)) banner = `<div class="readonly-banner">&#128465; This campaign was removed — read-only.</div>`;
+    if (isArchived(campaign)) banner = `<div class="readonly-banner">${icon('folder')} This campaign is archived — read-only.${isCampaignOwner(campaign) ? ' Open Settings to restore it.' : ''}</div>`;
+    else if (isDeleted(campaign)) banner = `<div class="readonly-banner">${icon('trash')} This campaign was removed — read-only.</div>`;
 
     // ----- Party (sidebar) -----
     const roster = campaignRosters[campaign] || [];
@@ -4195,7 +4254,7 @@ function renderCampaignPage(campaign) {
             mainHtml += `<div class="hero-recap">${sanitizeRecapHtml(lastPast.recapHtml) || escapeHtml(lastPast.recap)}</div>`;
             mainHtml += `<div class="lsc-actions" style="margin-top:10px"><button class="lsc-read-btn" onclick="openReaderModal('${lastPast.id}')">Read Full</button><button class="lsc-edit-btn" onclick="goToSession('${lastPast.id}')">Edit</button>`;
             mainHtml += `<button class="share-btn" onclick="event.stopPropagation(); shareLink('${campaign}','${lastPast.date}',true,event)">Share</button>`;
-            if (lastPast.pdfUrl) { mainHtml += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">&#128196; PDF</a>`; }
+            if (lastPast.pdfUrl) { mainHtml += `<a class="lsc-pdf" href="${escapeHtml(lastPast.pdfUrl)}" target="_blank">${icon('file')} PDF</a>`; }
             mainHtml += `</div>`;
         } else {
             mainHtml += `<div class="lsc-no-recap" onclick="goToSession('${lastPast.id}')">No recap yet — tap to add one</div>`;
@@ -4207,8 +4266,8 @@ function renderCampaignPage(campaign) {
         mainHtml += `<div class="section-heading">Sessions</div>`;
         mainHtml += `<div class="controls-bar">`;
         mainHtml += `<div class="seg-group">`;
-        mainHtml += `<button class="view-btn view-icon${campaignView==='list'?' active':''}" title="List view" aria-label="List view" onclick="setCampaignView('list','${campaign}')">&#9776;</button>`;
-        mainHtml += `<button class="view-btn view-icon${campaignView==='calendar'?' active':''}" title="Calendar view" aria-label="Calendar view" onclick="setCampaignView('calendar','${campaign}')">&#128197;</button>`;
+        mainHtml += `<button class="view-btn view-icon${campaignView==='list'?' active':''}" title="List view" aria-label="List view" onclick="setCampaignView('list','${campaign}')">${icon('list')}</button>`;
+        mainHtml += `<button class="view-btn view-icon${campaignView==='calendar'?' active':''}" title="Calendar view" aria-label="Calendar view" onclick="setCampaignView('calendar','${campaign}')">${icon('calendar')}</button>`;
         mainHtml += `</div>`;
         mainHtml += `<div class="seg-group">`;
         mainHtml += `<button class="view-btn${campaignTimeFilter==='all'?' active':''}" onclick="setCampaignTimeFilter('all','${campaign}')">All</button>`;
@@ -4216,7 +4275,7 @@ function renderCampaignPage(campaign) {
         mainHtml += `<button class="view-btn${campaignTimeFilter==='past'?' active':''}" onclick="setCampaignTimeFilter('past','${campaign}')">Past</button>`;
         mainHtml += `</div>`;
         mainHtml += `<div class="controls-right">`;
-        mainHtml += `<button class="ctrl-link" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? '&#8595; Latest First' : '&#8593; Soonest First'}</button>`;
+        mainHtml += `<button class="ctrl-link" onclick="toggleCampaignSort('${campaign}')">${campaignSortNewest ? `${icon('arrowDown')} Latest First` : `${icon('arrowUp')} Soonest First`}</button>`;
         mainHtml += `<button class="ctrl-link" id="campaign-collapse-btn" onclick="toggleAllMonths()">${allMonthsCollapsed ? 'Expand All' : 'Collapse All'}</button>`;
         mainHtml += `</div>`;
         mainHtml += `</div>`;
@@ -4232,11 +4291,11 @@ function renderCampaignPage(campaign) {
             const sortedKeys = Object.keys(g).sort(); if (campaignSortNewest) sortedKeys.reverse();
             sortedKeys.forEach((k, gi) => { mainHtml += monthGroupOpen(k, g[k]); g[k].forEach((s,i) => { mainHtml += renderSessionCard(s, gi, i); }); mainHtml += monthGroupClose(); });
         } else {
-            mainHtml += `<div class="empty-state"><div class="icon">&#127922;</div><div>No ${campaignTimeFilter} sessions.</div></div>`;
+            mainHtml += `${emptyState('calendar', `No ${campaignTimeFilter} sessions`, 'Try a different filter, or schedule one from Manage.')}`;
         }
         mainHtml += `</div>`;
     } else {
-        mainHtml += `<div class="empty-state"><div class="icon">&#127922;</div><div>No sessions for this campaign yet.</div></div>`;
+        mainHtml += `${emptyState('sparkle', 'No sessions yet', 'Schedule the first session to get this campaign rolling.')}`;
     }
 
     document.getElementById('campaign-page-content').innerHTML =
@@ -4257,7 +4316,7 @@ window.setCampaignTimeFilter = function(t, campaign) { campaignTimeFilter = t; c
 function buildCalendarHtml(list) {
     const sm = {}; list.forEach(s => { (sm[s.date] = sm[s.date] || []).push(s); });
     const am = new Set(); list.forEach(s => am.add(getMonthKey(s.date))); const months = [...am].sort();
-    if (!months.length) return `<div class="empty-state"><div class="icon">&#128197;</div><div>No sessions to show.</div></div>`;
+    if (!months.length) return `${emptyState('calendar', 'Nothing on the calendar', 'No sessions to show in this range.')}`;
     const todayDate = new Date(); const ts = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
     let html = '';
     months.forEach(k => {
