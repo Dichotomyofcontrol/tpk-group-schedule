@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Six in the TPK — Campaign Schedule</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -74,7 +74,7 @@
                         radial-gradient(ellipse at 85% 90%, rgba(232,132,60,0.03) 0%, transparent 50%);
             z-index: 0; pointer-events: none;
         }
-        .container { max-width: 960px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+        .container { max-width: 960px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); position: relative; z-index: 1; }
 
         /* ===== PASSWORD GATE ===== */
         #password-gate {
@@ -110,6 +110,7 @@
         .top-bar-wrap {
             position: sticky; top: 0; z-index: 100;
             background: var(--bg);
+            padding-top: env(safe-area-inset-top);
             transition: transform 0.3s ease, opacity 0.4s ease;
         }
         .top-bar-wrap.hidden { transform: translateY(-100%); }
@@ -1095,7 +1096,7 @@
         .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
 
         @media (max-width: 600px) {
-            .container { padding: 0 12px; }
+            .container { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
             .top-bar { padding: 12px 0 10px; margin-bottom: 10px; }
             .top-bar-logo { font-size: 1rem; }
             .stats-bar { gap: 4px; padding: 8px 0; }
@@ -1295,6 +1296,27 @@
         .poll-slot-empty { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
         .poll-need { color: var(--drawsteel-primary); font-weight: 600; }
         @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-opt-main { flex-basis: 100%; } .avail-bar { max-width: none; } .poll-votes { width: 100%; } .poll-vote { flex: 1; justify-content: center; padding: 9px 0; } .poll-confirm { width: 100%; justify-content: center; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
+        /* ===== Mobile craft pass (phone widths) ===== */
+        @media (max-width: 600px) {
+            /* Comfortable thumb targets on the primary controls */
+            .view-btn, .seg-btn, .cp-btn, .ctrl-link, .collapse-all-btn, .sort-toggle { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; }
+            /* Campaign header: stack identity over full-width, reachable actions */
+            .cp-hero { flex-direction: column; align-items: stretch; }
+            .cp-actions { width: 100%; }
+            .cp-actions .cp-btn { flex: 1; }
+            .cp-menu { flex: 1; display: flex; }
+            .cp-menu > .cp-btn { width: 100%; }
+            .cp-menu-list { min-width: 100%; }
+            /* Full-width primary actions in modals & empty states */
+            .form-buttons { flex-direction: column; }
+            .form-buttons button { width: 100%; }
+            .empty-state .es-actions { flex-direction: column; align-self: stretch; }
+            .empty-state .es-actions > * { width: 100%; }
+            /* Roomier recap reading than the generic small-screen shrink */
+            .reader-body { font-size: 0.98rem; line-height: 1.75; padding: 22px 18px 26px; }
+            /* Single, comfortable column of campaign cards */
+            .campaign-grid { grid-template-columns: 1fr; }
+        }
         /* ===== Accessibility ===== */
         :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
