@@ -576,6 +576,10 @@
         .party-av img { width: 100%; height: 100%; object-fit: cover; }
         .party-body { min-width: 0; }
         .party-nm { font-size: 0.85rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .party-badge { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 1px 6px; border-radius: var(--r-pill); border: 1px solid; margin-left: 6px; vertical-align: 1px; }
+        .party-badge.you { color: var(--brand); border-color: var(--brand-line); background: var(--brand-tint); }
+        .party-badge.gm { color: var(--info); border-color: var(--info); background: rgba(95,169,212,0.14); }
+        .pb-sel { text-align: left; cursor: pointer; }
         .party-mt { font-size: 0.72rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .party-empty { font-size: 0.82rem; color: var(--text-dim); padding: 6px; }
         .cp-side .editing-roster { grid-template-columns: 1fr; }
@@ -1353,8 +1357,24 @@
             .empty-state .es-actions > * { width: 100%; }
             /* Roomier recap reading than the generic small-screen shrink */
             .reader-body { font-size: 0.98rem; line-height: 1.75; padding: 22px 18px 26px; }
-            /* Single, comfortable column of campaign cards */
-            .campaign-grid { grid-template-columns: 1fr; }
+            /* Campaigns become a compact one-row swipe strip so they don't dominate the top
+               (was a full-width 1-col stack — 7 campaigns pushed the schedule far down). */
+            .campaign-grid {
+                display: flex; grid-template-columns: none;
+                gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory;
+                margin: 0 calc(-1 * max(12px, env(safe-area-inset-left))) 6px;
+                padding: 2px max(12px, env(safe-area-inset-left)) 12px;
+                -webkit-overflow-scrolling: touch; scrollbar-width: thin;
+            }
+            .campaign-card { flex: 0 0 72%; max-width: 250px; scroll-snap-align: start; padding: 13px 15px; }
+            .campaign-card .cc-count { display: none; }
+            /* Tighten the home rhythm so the schedule surfaces sooner */
+            #home-view .section-heading { margin-top: 18px; }
+            #home-view .section-heading:first-of-type { margin-top: 2px; }
+            .sessions-wrapper { margin-top: 20px; padding-top: 16px; }
+            /* Surface the schedule sooner: recent recaps (memory) drops below the sessions list on phones */
+            #home-view { display: flex; flex-direction: column; }
+            #recent-recaps { order: 10; }
         }
         /* ===== Accessibility ===== */
         :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
@@ -2167,6 +2187,8 @@ function campaignAccessRole(c, email) {
 function canManageCampaign(c) { const r = campaignAccessRole(c); return (r === 'owner' || r === 'editor') && !isArchived(c) && !isDeleted(c); }
 // In-game role (label only — no permissions): 'gm' | 'player'.
 function campaignGameRole(c, email) { const me = email || myEmail(); if (!me) return 'player'; return (((allCampaigns[c] && allCampaigns[c].gameRoles) || {})[me] === 'gm') ? 'gm' : 'player'; }
+// Identity a character belongs to: signed-in email, else the guest's code label. Used for character ownership.
+function myOwnerId() { const me = myEmail(); if (me) return me; const labels = [...new Set(codeGrants().map(g => g.label).filter(Boolean))]; return labels[0] || null; }
 function campaignVisible(c) {
     return campaignAccessible(c) || sessions.some(s => s.campaign === c && sessionVisible(s));
 }
@@ -3321,18 +3343,26 @@ function renderProfilePanel() {
             html += `</div>`;
         }
     }
-    // Characters across your campaigns (tap a campaign to open it and edit the party)
-    const charCamps = camps.filter(c => (campaignRosters[c] || []).length);
-    if (charCamps.length) {
-        html += `<div class="profile-section-label">Characters</div>`;
-        charCamps.forEach(c => {
+    // Your characters — only the ones that belong to you (owner === your identity), grouped by campaign.
+    const myId = myOwnerId();
+    const mine = {};
+    if (myId) camps.forEach(c => {
+        (campaignRosters[c] || []).forEach(p => {
+            const ch = (campaignCharacters[c] || {})[p] || {};
+            if (ch.owner === myId) (mine[c] = mine[c] || []).push({ p, ch });
+        });
+    });
+    html += `<div class="profile-section-label">Your characters</div>`;
+    if (Object.keys(mine).length) {
+        Object.keys(mine).forEach(c => {
             html += `<div class="profile-charcamp" onclick="closeProfile(); navigateTo('${c}')"><span class="nav-campaign-dot" style="background:${campaignColor(c)}"></span><span class="profile-charcamp-nm">${escapeHtml(campaignName(c))}</span><span class="profile-charcamp-go">Open &rsaquo;</span></div>`;
-            (campaignRosters[c] || []).forEach(p => {
-                const ch = (campaignCharacters[c] || {})[p] || {};
+            mine[c].forEach(({ p, ch }) => {
                 const meta = [ch.charClass ? ch.charClass + (ch.subclass ? ' · ' + ch.subclass : '') : '', ch.level ? 'Lvl ' + ch.level : ''].filter(Boolean).join(' · ');
                 html += `<div class="profile-char"><span class="profile-char-nm">${escapeHtml(p)}</span>${meta ? `<span class="profile-char-mt">${escapeHtml(meta)}</span>` : ''}</div>`;
             });
         });
+    } else {
+        html += `<div class="profile-empty">No character assigned to you yet. Open a campaign and join its party to create one — or ask the owner to assign you a character.</div>`;
     }
     html += `<div class="profile-actions">`;
     html += `<button class="profile-action" onclick="openJoinCode()">+ Join a campaign</button>`;
@@ -3468,7 +3498,8 @@ window.submitJoinParty = async function() {
     if (campaignRosters[campaign].includes(name)) { showToast('That name is already in the party.'); return; }
     campaignRosters[campaign].push(name);
     if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
-    campaignCharacters[campaign][name] = { charClass, subclass, level };
+    // Self-join = self-claim: the character belongs to whoever created it here.
+    campaignCharacters[campaign][name] = { charClass, subclass, level, ...(myOwnerId() ? { owner: myOwnerId() } : {}) };
     try {
         await Promise.all([saveRostersToFirestore(), saveCharactersToFirestore()]);
         // Add them to the roster/attendance of upcoming sessions they can see
@@ -3990,6 +4021,23 @@ window.togglePartyEdit = function(campaign) {
 };
 
 // Save class/subclass/level edits for a character (no scope needed — campaign-level data)
+// "Played by" options for assigning a character to a registered member (owner + invited members).
+function playedByOptions(campaign, current) {
+    const members = [campaignOwner(campaign), ...campaignMemberEmails(campaign)].filter((v, i, a) => v && a.indexOf(v) === i);
+    let opts = `<option value=""${!current ? ' selected' : ''}>Played by…</option>`;
+    members.forEach(m => { opts += `<option value="${escapeHtml(m)}"${current === m ? ' selected' : ''}>${escapeHtml(m)}</option>`; });
+    if (current && !members.includes(current)) opts += `<option value="${escapeHtml(current)}" selected>${escapeHtml(current)}</option>`;   // e.g. a guest label
+    return opts;
+}
+window.setCharacterOwner = async function(campaign, name, ownerId) {
+    if (!canManageCampaign(campaign)) return;
+    if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+    const ch = { ...(campaignCharacters[campaign][name] || {}) };
+    if (ownerId) ch.owner = ownerId; else delete ch.owner;
+    campaignCharacters[campaign][name] = ch;
+    try { await saveCharactersToFirestore(); } catch (e) { console.error('set character owner:', e); showToast('Could not save assignment — try again.'); }
+    if (currentPage === campaign) renderCampaignPage(campaign);
+};
 window.saveCharacterEdits = async function(campaign, index) {
     const name = document.getElementById(`edit-name-${index}`).value.trim();
     const charClass = document.getElementById(`edit-class-${index}`).value.trim();
@@ -4545,6 +4593,7 @@ function renderCampaignPage(campaign) {
                 + `<input class="player-edit-input" id="edit-class-${idx}" value="${escapeHtml(c.charClass||'')}" placeholder="Class" maxlength="30">`
                 + `<input class="player-edit-input" id="edit-subclass-${idx}" value="${escapeHtml(c.subclass||'')}" placeholder="Subclass" maxlength="30">`
                 + `<input class="player-edit-input" id="edit-level-${idx}" value="${c.level||''}" placeholder="Lvl" maxlength="3" style="width:50px;margin:0 auto">`
+                + `<select class="player-edit-input pb-sel" title="Played by" aria-label="Played by" onchange="setCharacterOwner('${campaign}','${escapeHtml(p)}',this.value)">${playedByOptions(campaign, c.owner)}</select>`
                 + `</div>`
                 + `<div class="player-card-actions"><button class="player-card-btn save" onclick="saveCharacterEdits('${campaign}',${idx})">Save</button><button class="player-card-btn remove" onclick="startRemovePartyMember('${campaign}',${idx})">Remove</button></div>`
                 + `</div>`;
@@ -4554,11 +4603,14 @@ function renderCampaignPage(campaign) {
     } else {
         partyHtml += `<div class="party-panel"><div class="party-list" id="roster-${campaign}">`;
         if (!roster.length) partyHtml += `<div class="party-empty">No party members yet.</div>`;
+        const myId = myOwnerId();
         roster.forEach(p => {
             const c = chars[p] || {};
             const av = c.imageUrl ? `<img src="${escapeHtml(c.imageUrl)}" alt="${escapeHtml(p)}">` : p.charAt(0).toUpperCase();
             const meta = [c.charClass ? (c.charClass + (c.subclass ? ' · ' + c.subclass : '')) : '', c.level ? 'Lvl ' + c.level : ''].filter(Boolean).join(' · ');
-            partyHtml += `<div class="party-row" onclick="openPlayerDetail('${campaign}','${escapeHtml(p)}')"><div class="party-av">${av}</div><div class="party-body"><div class="party-nm">${escapeHtml(p)}</div>${meta ? `<div class="party-mt">${escapeHtml(meta)}</div>` : ''}</div></div>`;
+            const youBadge = (c.owner && c.owner === myId) ? '<span class="party-badge you">You</span>' : '';
+            const gmBadge = (c.owner && campaignGameRole(campaign, c.owner) === 'gm') ? '<span class="party-badge gm">GM</span>' : '';
+            partyHtml += `<div class="party-row" onclick="openPlayerDetail('${campaign}','${escapeHtml(p)}')"><div class="party-av">${av}</div><div class="party-body"><div class="party-nm">${escapeHtml(p)}${youBadge}${gmBadge}</div>${meta ? `<div class="party-mt">${escapeHtml(meta)}</div>` : ''}</div></div>`;
         });
         partyHtml += `</div></div>`;
     }
