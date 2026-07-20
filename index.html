@@ -93,7 +93,7 @@
         .pass-form input:focus { border-color: var(--brand); }
         .pass-form button { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 12px 24px; border-radius: var(--r-sm); border: 1px solid var(--brand-line); background: var(--brand); color: var(--brand-ink); font-weight: 600; cursor: pointer; }
         .pass-form button:hover { background: var(--brand-strong); border-color: var(--brand-strong); }
-        .pass-error { color: var(--strahd-primary); font-size: 0.8rem; min-height: 1.2em; }
+        .pass-error { color: var(--error); font-size: 0.8rem; min-height: 1.2em; }
         .pass-hint { color: var(--text-dim); font-size: 0.75rem; margin-top: 24px; opacity: 0.5; }
         .gate-divider { display: flex; align-items: center; gap: 12px; width: 320px; max-width: 80vw; margin: 18px 0 14px; color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
         .gate-divider::before, .gate-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
@@ -359,7 +359,7 @@
         }
         .invite-chip .chip-scope { color: var(--text-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .invite-chip .chip-x { cursor: pointer; color: var(--text-dim); font-weight: 600; padding: 0 2px; }
-        .invite-chip .chip-x:hover { color: var(--strahd-primary); }
+        .invite-chip .chip-x:hover { color: var(--error); }
         .invite-current-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 4px 0 8px; }
         .join-code {
             font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; letter-spacing: 0.15em;
@@ -401,8 +401,8 @@
         .sessions-list { display: flex; flex-direction: column; gap: 8px; }
         .session-card {
             display: flex; flex-direction: column; padding: 14px 18px;
-            background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
-            transition: all 0.25s ease; cursor: pointer; position: relative; overflow: hidden;
+            background: var(--surface); border-radius: var(--r-md); border: 1px solid var(--border);
+            transition: transform var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease); cursor: pointer; position: relative; overflow: hidden;
         }
         .session-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
         .session-card:hover { background: var(--surface-hover); transform: translateY(-1px); box-shadow: var(--shadow-2); }
@@ -436,10 +436,10 @@
         .session-card.expanded .session-expand-icon { transform: rotate(90deg); }
         .session-action { flex-shrink: 0; display: flex; gap: 6px; align-items: center; }
         .cancel-btn, .undo-btn { font-family: 'Inter', sans-serif; font-size: 0.68rem; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
-        .cancel-btn:hover { color: var(--strahd-primary); border-color: var(--strahd-primary); }
+        .cancel-btn:hover { color: var(--error); border-color: var(--error); }
         .undo-btn:hover { color: var(--brand); border-color: var(--brand); }
-        .delete-btn { font-family: 'Inter', sans-serif; font-size: 0.63rem; padding: 3px 7px; border-radius: 5px; border: 1px solid rgba(239,83,80,0.3); background: rgba(239,83,80,0.1); color: var(--strahd-primary); cursor: pointer; transition: all 0.2s; }
-        .delete-btn:hover { background: rgba(239,83,80,0.25); }
+        .delete-btn { font-family: 'Inter', sans-serif; font-size: 0.63rem; padding: 3px 7px; border-radius: var(--r-sm); border: 1px solid var(--error); background: var(--error-tint); color: var(--error); cursor: pointer; transition: all var(--dur) var(--ease); }
+        .delete-btn:hover { background: rgba(228,106,99,0.28); }
         .edit-session-btn { font-family: 'Inter', sans-serif; font-size: 0.63rem; padding: 3px 7px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
         .edit-session-btn:hover { color: var(--brand); border-color: var(--brand); }
         .session-edit-form { display: flex; flex-direction: column; gap: 10px; padding: 16px; background: var(--surface); border-radius: 10px; }
@@ -463,9 +463,9 @@
         .session-detail-section:last-child { margin-bottom: 0; }
         .detail-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
         .session-attendance { display: flex; flex-wrap: wrap; gap: 5px; }
-        .att-chip { font-size: 0.72rem; font-weight: 500; padding: 3px 10px; border-radius: 100px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(102,187,106,0.3); background: rgba(102,187,106,0.12); color: #66bb6a; font-family: 'Inter', sans-serif; user-select: none; }
+        .att-chip { font-size: 0.72rem; font-weight: 500; padding: 3px 10px; border-radius: 100px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(102,187,106,0.3); background: rgba(102,187,106,0.12); color: var(--success); font-family: 'Inter', sans-serif; user-select: none; }
         .att-chip:hover { filter: brightness(1.2); transform: scale(1.05); }
-        .att-chip.out { background: rgba(239,83,80,0.12); color: #ef5350; border-color: rgba(239,83,80,0.3); text-decoration: line-through; opacity: 0.7; }
+        .att-chip.out { background: var(--error-tint); color: var(--error); border-color: var(--error); text-decoration: line-through; opacity: 0.7; }
 
         /* ===== QUILL EDITOR ===== */
         .recap-editor-wrap { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
@@ -487,9 +487,9 @@
         .recap-display p:last-child { margin-bottom: 0; }
         .recap-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
         .recap-save-btn, .recap-edit-btn { font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 4px 12px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); cursor: pointer; transition: all 0.2s; }
-        .recap-save-btn:hover { color: #66bb6a; border-color: #66bb6a; }
+        .recap-save-btn:hover { color: var(--success); border-color: var(--success); }
         .recap-edit-btn:hover { color: var(--brand); border-color: var(--brand); }
-        .recap-saved-msg { font-size: 0.7rem; color: #66bb6a; opacity: 0; transition: opacity 0.3s; }
+        .recap-saved-msg { font-size: 0.7rem; color: var(--success); opacity: 0; transition: opacity 0.3s; }
         .recap-saved-msg.show { opacity: 1; }
 
         /* ===== PDF ===== */
@@ -869,7 +869,7 @@
             display: inline-flex; align-items: center; gap: 4px;
         }
         .copy-recap-btn:hover { color: var(--text); border-color: var(--text-dim); }
-        .copy-recap-btn.copied { color: #4caf50; border-color: #4caf50; }
+        .copy-recap-btn.copied { color: var(--success); border-color: var(--success); }
 
         /* ===== PARTY MANAGEMENT ===== */
         .edit-party-btn {
@@ -888,8 +888,8 @@
         .player-card-btn:hover { color: var(--text); border-color: var(--text-dim); }
         .player-card-btn.save { color: var(--brand); border-color: var(--brand); }
         .player-card-btn.save:hover { background: var(--brand-tint); }
-        .player-card-btn.remove { color: var(--strahd-primary); border-color: var(--strahd-primary); }
-        .player-card-btn.remove:hover { background: rgba(239,83,80,0.15); }
+        .player-card-btn.remove { color: var(--error); border-color: var(--error); }
+        .player-card-btn.remove:hover { background: var(--error-tint); }
         .roster-add-card {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             width: 110px; min-height: 120px; background: transparent; border: 1px dashed var(--border);
@@ -955,8 +955,8 @@
         .scope-btn:hover { background: var(--surface-hover); border-color: var(--text-dim); }
         .scope-btn .scope-btn-label { font-weight: 500; }
         .scope-btn .scope-btn-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
-        .scope-btn.danger { border-color: var(--strahd-primary); }
-        .scope-btn.danger:hover { background: rgba(239,83,80,0.1); }
+        .scope-btn.danger { border-color: var(--error); }
+        .scope-btn.danger:hover { background: var(--error-tint); }
         .scope-cancel {
             font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 8px;
             border: none; background: transparent; color: var(--text-dim);
@@ -969,18 +969,18 @@
         }
         .confirm-overlay.open { display: flex; }
         .confirm-modal {
-            background: var(--surface); border: 1px solid var(--strahd-primary); border-radius: 14px;
+            background: var(--surface); border: 1px solid var(--error); border-radius: var(--r-lg);
             padding: 24px; width: 100%; max-width: 340px; text-align: center;
-            animation: fadeIn 0.2s ease forwards;
+            box-shadow: var(--shadow-3); animation: fadeIn var(--dur-slow) var(--ease-out) forwards;
         }
-        .confirm-modal h3 { font-family: var(--font-display); font-size: 0.95rem; color: var(--strahd-primary); margin-bottom: 8px; }
+        .confirm-modal h3 { font-family: var(--font-display); font-size: 0.95rem; color: var(--error); margin-bottom: 8px; }
         .confirm-modal p { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5; }
         .confirm-btns { display: flex; gap: 8px; justify-content: center; }
         .confirm-btn {
             font-family: 'Inter', sans-serif; font-size: 0.8rem; padding: 8px 20px;
             border-radius: 8px; cursor: pointer; transition: all 0.2s;
         }
-        .confirm-btn.yes { background: var(--strahd-primary); border: none; color: #fff; }
+        .confirm-btn.yes { background: var(--error); border: none; color: #fff; }
         .confirm-btn.yes:hover { opacity: 0.85; }
         .confirm-btn.no { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
         .confirm-btn.no:hover { border-color: var(--text-dim); color: var(--text); }
@@ -1080,6 +1080,17 @@
         .loading { text-align: center; padding: 60px 0; color: var(--text-dim); font-size: 0.85rem; }
         .loading-spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--brand); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        /* ===== Loading skeletons (content-shaped, not a bare spinner) ===== */
+        .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface-hover) 37%, var(--surface) 63%); background-size: 400% 100%; animation: skel 1.4s ease infinite; border-radius: var(--r-sm); }
+        @keyframes skel { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+        .skel-list { display: flex; flex-direction: column; gap: 8px; }
+        .skel-card { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1px solid var(--border); border-radius: var(--r-md); }
+        .skel-date { width: 40px; height: 40px; border-radius: var(--r-sm); flex-shrink: 0; }
+        .skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .skel-line { height: 11px; }
+        .skel-line.w80 { width: 80%; } .skel-line.w60 { width: 60%; } .skel-line.w40 { width: 40%; }
+        @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+        ::selection { background: var(--brand-tint); }
         /* ===== Icon system ===== */
         .ico { width: 1.05em; height: 1.05em; flex-shrink: 0; vertical-align: -0.16em; display: inline-block; }
         .ico + span, .ico + * { vertical-align: middle; }
@@ -1201,7 +1212,7 @@
         .profile-register { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-top: 4px; }
         .profile-register-hint { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 10px; }
         .profile-register input { width: 100%; box-sizing: border-box; font-family: 'Inter', sans-serif; font-size: 0.85rem; padding: 8px 10px; margin-bottom: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); outline: none; }
-        .profile-reg-error { color: #e06c6c; font-size: 0.75rem; min-height: 1em; margin-top: 4px; }
+        .profile-reg-error { color: var(--error); font-size: 0.75rem; min-height: 1em; margin-top: 4px; }
         .profile-account-actions { display: flex; gap: 14px; margin-top: 6px; }
         .profile-mini { background: none; border: none; padding: 0; color: var(--brand); font-family: 'Inter', sans-serif; font-size: 0.75rem; cursor: pointer; }
         .profile-mini:hover { text-decoration: underline; }
@@ -1214,7 +1225,7 @@
         .profile-char-mt { color: var(--text-dim); font-size: 0.72rem; text-align: right; }
         .profile-row-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
         .profile-leave { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 0.7rem; padding: 3px 9px; cursor: pointer; }
-        .profile-leave:hover { color: var(--strahd-primary); border-color: var(--strahd-primary); }
+        .profile-leave:hover { color: var(--error); border-color: var(--error); }
         /* ===== Schedule modal (3e) ===== */
         .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-sizing: border-box; }
@@ -1225,7 +1236,7 @@
         .nc-hint strong { color: var(--brand); font-weight: 600; }
         .multi-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin: 0 6px 6px 0; font-size: 0.78rem; color: var(--text); }
         .multi-chip .chip-x { cursor: pointer; color: var(--text-dim); font-size: 1rem; line-height: 1; }
-        .multi-chip .chip-x:hover { color: var(--strahd-primary); }
+        .multi-chip .chip-x:hover { color: var(--error); }
         .cs-divider { height: 1px; background: var(--border); margin: 16px 0; }
         .cs-actions { display: flex; flex-direction: column; gap: 12px; }
         .readonly-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--text-dim); margin-bottom: 16px; }
@@ -1292,9 +1303,9 @@
         .poll-slot { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; }
         .poll-slot-dt { font-size: 0.85rem; color: var(--text); font-weight: 500; }
         .poll-slot-x { background: none; border: none; color: var(--text-dim); font-size: 1.15rem; line-height: 1; cursor: pointer; padding: 0 4px; }
-        .poll-slot-x:hover { color: var(--strahd-primary); }
+        .poll-slot-x:hover { color: var(--error); }
         .poll-slot-empty { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
-        .poll-need { color: var(--drawsteel-primary); font-weight: 600; }
+        .poll-need { color: var(--brand); font-weight: 600; }
         @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-opt-main { flex-basis: 100%; } .avail-bar { max-width: none; } .poll-votes { width: 100%; } .poll-vote { flex: 1; justify-content: center; padding: 9px 0; } .poll-confirm { width: 100%; justify-content: center; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Mobile craft pass (phone widths) ===== */
         @media (max-width: 600px) {
@@ -1653,11 +1664,11 @@
                 </div>
             </div>
             <button class="profile-action profile-signout" onclick="showDeleteSection()">Delete campaign…</button>
-            <div id="cs-delete-section" style="display:none;border:1px solid var(--strahd-primary);border-radius:8px;padding:12px">
+            <div id="cs-delete-section" style="display:none;border:1px solid var(--error);border-radius:8px;padding:12px">
                 <div style="font-size:0.76rem;color:var(--text-dim);margin-bottom:10px">This removes the campaign. Members are notified and can archive, dismiss, or (if named below) take it over. It's permanently purged once no one holds it.</div>
                 <div class="form-group"><label>Hand off to (optional)</label><select id="cs-successor"></select></div>
                 <div class="form-group"><label>Type DELETE to confirm</label><input type="text" id="cs-delete-confirm" placeholder="DELETE" style="text-transform:uppercase"></div>
-                <button class="submit-btn" style="background:var(--strahd-primary);color:#fff" onclick="deleteCampaign()">Delete campaign</button>
+                <button class="submit-btn" style="background:var(--error);color:#fff" onclick="deleteCampaign()">Delete campaign</button>
             </div>
         </div>
         <div class="form-buttons"><button class="cancel-form-btn" onclick="closeCampaignSettings()">Close</button></div>
@@ -1740,7 +1751,7 @@
                 </div>
 
                 <!-- Content -->
-                <div id="list-view"><div class="loading"><div class="loading-spinner"></div><br>Loading sessions...</div></div>
+                <div id="list-view"><div class="skel-list" aria-busy="true" aria-label="Loading sessions"><div class="skel-card"><div class="skeleton skel-date"></div><div class="skel-lines"><div class="skeleton skel-line w60"></div><div class="skeleton skel-line w40"></div></div></div><div class="skel-card"><div class="skeleton skel-date"></div><div class="skel-lines"><div class="skeleton skel-line w80"></div><div class="skeleton skel-line w40"></div></div></div><div class="skel-card"><div class="skeleton skel-date"></div><div class="skel-lines"><div class="skeleton skel-line w60"></div><div class="skeleton skel-line w40"></div></div></div></div></div>
                 <div id="calendar-view" style="display:none"></div>
             </div>
         </div>
