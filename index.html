@@ -1173,6 +1173,7 @@
         .poll-slot-x { background: none; border: none; color: var(--text-dim); font-size: 1.15rem; line-height: 1; cursor: pointer; padding: 0 4px; }
         .poll-slot-x:hover { color: var(--strahd-primary); }
         .poll-slot-empty { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
+        .poll-need { color: var(--drawsteel-primary); font-weight: 600; }
         @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-tally { margin-left: 0; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Accessibility ===== */
         :focus-visible { outline: 2px solid var(--frostmaiden-primary); outline-offset: 2px; border-radius: 4px; }
@@ -1216,6 +1217,7 @@
     <div class="nav-divider"></div>
     <div class="nav-section-label" id="nav-actions-label">Actions</div>
     <button class="nav-add-btn" id="nav-account-btn" onclick="openProfile()">&#128100; Your Account</button>
+    <button class="nav-add-btn" id="nav-polls-btn" onclick="openPollsList()" style="margin-top:8px">&#128499; Polls</button>
     <button class="nav-add-btn" id="nav-add-btn" onclick="openAddSession()" style="margin-top:8px">&#43; Add to Schedule</button>
     <button class="nav-add-btn" id="nav-addcampaign-btn" onclick="openAddCampaign()" style="margin-top:8px">&#43; Add Campaign</button>
     <button class="nav-add-btn" id="nav-manage-btn" onclick="openBulkUpdate()" style="margin-top:8px">&#9881; Manage Schedule</button>
@@ -1455,6 +1457,16 @@
             </button>
         </div>
         <div class="form-buttons"><button class="cancel-form-btn" onclick="closeAddCampaign()">Cancel</button></div>
+    </div>
+</div>
+
+<!-- Polls list (all campaigns) -->
+<div class="add-form-overlay" id="polls-list-overlay" onclick="closePollsList()">
+    <div class="add-session-modal" onclick="event.stopPropagation()">
+        <h3>Polls</h3>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px">Availability polls across your campaigns — open ones need a vote, confirmed ones show the chosen date.</div>
+        <div id="polls-list-body"></div>
+        <div class="form-buttons"><button class="cancel-form-btn" onclick="closePollsList()">Close</button></div>
     </div>
 </div>
 
@@ -2449,6 +2461,30 @@ function renderPollSection(campaign) {
     });
     return `${h}</div>`;
 }
+// ----- Consolidated polls list (nav → Polls) -----
+window.openPollsList = function() { if (typeof closeNav === 'function') closeNav(); renderPollsList(); document.getElementById('polls-list-overlay').classList.add('open'); };
+window.closePollsList = function() { document.getElementById('polls-list-overlay').classList.remove('open'); };
+function pollStatusLabel(p) {
+    if (p.status === 'open') return pollNeedsMyResponse(p) ? '<span class="poll-need">Needs your vote</span>' : 'Open';
+    if (p.confirmedDate) return 'Confirmed · ' + formatDateShort(p.confirmedDate) + (p.confirmedTime ? ' · ' + escapeHtml(p.confirmedTime) : '');
+    return 'Closed';
+}
+function pollListRow(p) {
+    return `<div class="profile-row" onclick="closePollsList(); navigateTo('${p.campaign}')"><div class="profile-row-main"><span class="nav-campaign-dot" style="background:${campaignColor(p.campaign)}"></span><span>${escapeHtml(campaignName(p.campaign))} — ${escapeHtml(p.title || 'When can we play?')}</span></div><span class="profile-tag">${pollStatusLabel(p)}</span></div>`;
+}
+function renderPollsList() {
+    const el = document.getElementById('polls-list-body'); if (!el) return;
+    const mine = Object.values(allPolls).filter(p => campaignAccessible(p.campaign)).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const open = mine.filter(p => p.status === 'open');
+    const closed = mine.filter(p => p.status !== 'open');
+    let h = '';
+    if (!mine.length) h = `<div class="profile-empty">No polls yet. A campaign owner can start one from a campaign page.</div>`;
+    else {
+        if (open.length) h += `<div class="profile-section-label">Open</div><div class="profile-list">${open.map(pollListRow).join('')}</div>`;
+        if (closed.length) h += `<div class="profile-section-label">Confirmed / closed</div><div class="profile-list">${closed.map(pollListRow).join('')}</div>`;
+    }
+    el.innerHTML = h;
+}
 // ===== SCHEDULE MODAL (3e) =====
 let addMode = 'one';
 let multiDates = [];
@@ -3192,27 +3228,23 @@ async function initApp() {
                 .catch((e) => console.error("Rename Special skipped:", e));
         }
         renderCampaignTheme();
-        updateAccessUI();
-        renderAll();
-        if (currentPage !== 'home') renderCampaignPage(currentPage);
+        scheduleRender();
     }, (e) => console.error("campaigns listener:", e));
     onSnapshot(collection(db, "notifications"), (snap) => {
         allNotifications = {};
         snap.forEach(d => { allNotifications[d.id] = { id: d.id, ...d.data() }; });
-        updateAccessUI(); renderAll();
+        scheduleRender();
         checkCampaignNotifications();
     }, (e) => console.error("notifications listener:", e));
     onSnapshot(collection(db, "polls"), (snap) => {
         allPolls = {};
         snap.forEach(d => { allPolls[d.id] = { id: d.id, ...d.data() }; });
-        renderAll();
-        if (currentPage !== 'home') renderCampaignPage(currentPage);
+        scheduleRender();
     }, (e) => console.error("polls listener:", e));
     onSnapshot(collection(db, "shares"), (snap) => {
         allShares = {};
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
-        renderAll();
-        if (currentPage !== 'home') renderCampaignPage(currentPage);
+        scheduleRender();
     });
     onSnapshot(collection(db, "invites"), (snap) => {
         allInvites = [];
@@ -3234,17 +3266,14 @@ async function initApp() {
                 document.getElementById('password-gate').style.display = 'flex';
             }
         }
-        updateAccessUI();
-        renderAll();
-        if (currentPage !== 'home') renderCampaignPage(currentPage);
+        scheduleRender();
     });
     const q = query(collection(db, "sessions"), orderBy("date"));
     let firstLoad = true; let prevCount = 0;
     onSnapshot(q, (snapshot) => {
         sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
         sessions.sort((a,b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
-        renderAll();
-        if (currentPage !== 'home') renderCampaignPage(currentPage);
+        scheduleRender();
     });
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -3433,6 +3462,14 @@ function renderPollBanners() {
     el.innerHTML = open.map(p => `<div class="poll-banner" onclick="navigateTo('${p.campaign}')"><span>&#128197;</span><span><strong>${escapeHtml(campaignName(p.campaign))}</strong> — vote on when to play next</span><span class="pb-go">Respond &rsaquo;</span></div>`).join('');
 }
 function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
+// Coalesce rapid Firestore snapshots into a single render per frame (prevents flicker on batch writes).
+let _renderScheduled = false;
+function scheduleRender() {
+    if (_renderScheduled) return;
+    _renderScheduled = true;
+    const run = () => { _renderScheduled = false; renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); };
+    (typeof requestAnimationFrame === 'function') ? requestAnimationFrame(run) : setTimeout(run, 16);
+}
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
 function timeVal(t) { if (!t) return 0; const m = String(t).match(/(\d+):(\d+)\s*(AM|PM)?/i); if (!m) return 0; let h = (+m[1]) % 12; if ((m[3]||'').toUpperCase() === 'PM') h += 12; return h * 60 + (+m[2]); }
 function formatDate(ds) { return parseDate(ds).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
