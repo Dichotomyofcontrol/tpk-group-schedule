@@ -31,22 +31,22 @@
             --beerovia-primary: #ff9800;
             --beerovia-bg: #2a1804;
             --beerovia-accent: #ffb74d;
-            /* ===== Ember Almanac — warm ink foundation ===== */
-            --bg: #14110d;              /* warm near-black */
-            --surface: #1e1913;         /* base surface */
-            --surface-2: #271f18;       /* raised surface */
-            --surface-hover: #2c241c;
-            --text: #f3ede3;            /* warm off-white */
-            --text-dim: #a89b89;        /* warm grey */
-            --border: #362d24;
+            /* ===== Ember Almanac — modern neutral-graphite foundation ===== */
+            --bg: #151414;              /* near-neutral charcoal, whisper of warmth */
+            --surface: #1e1d1c;         /* base surface */
+            --surface-2: #262523;       /* raised surface */
+            --surface-hover: #2b2a28;
+            --text: #f4f3f1;            /* neutral warm-white */
+            --text-dim: #9c9995;        /* neutral grey */
+            --border: #302e2b;
             /* Ownable brand — warm ember (the hearth) */
             --brand: #e8843c;
             --brand-strong: #f6a054;
             --brand-tint: rgba(232,132,60,0.14);
             --brand-line: rgba(232,132,60,0.35);
             --brand-ink: #1a1008;       /* text on ember fills */
-            /* Editorial "memory" surface */
-            --paper: #241d16;
+            /* Editorial "memory" surface — gently warm against the neutral chrome */
+            --paper: #221f1b;
             /* Semantic (warm-tuned) */
             --success: #6bbf85; --success-tint: rgba(107,191,133,0.14);
             --warn: #e2ab4b;    --warn-tint: rgba(226,171,75,0.14);
@@ -970,14 +970,14 @@
 
         /* ===== LIGHT THEME ===== */
         body.light {
-            --bg: #f3efe8;              /* warm off-white, not parchment */
-            --surface: #fbf8f3;
-            --surface-2: #f0ebe2;
-            --surface-hover: #ece5da;
-            --text: #221c15;
-            --text-dim: #6d6357;
-            --border: #e4dccf;
-            --paper: #fbf7ef;           /* warm reading surface */
+            --bg: #f4f3f1;              /* clean near-white, faint warmth */
+            --surface: #fbfbfa;
+            --surface-2: #f1f0ed;
+            --surface-hover: #eceae6;
+            --text: #1c1b18;
+            --text-dim: #6b6862;
+            --border: #e5e3de;
+            --paper: #fbfaf6;           /* warm reading surface */
             --brand: #c25f22;           /* darkened ember for AA text on cream */
             --brand-strong: #a94f19;
             --brand-tint: rgba(216,107,46,0.12);
@@ -1211,16 +1211,29 @@
         .poll-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .poll-title { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--text); }
         .poll-sub { font-size: 0.75rem; color: var(--text-dim); margin: 4px 0 12px; }
-        .poll-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
-        .poll-date { font-size: 0.85rem; font-weight: 600; color: var(--text); min-width: 96px; display: flex; align-items: center; gap: 6px; }
-        .poll-best-tag { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em; background: var(--leyfarers-primary); color: #06210a; border-radius: 4px; padding: 1px 5px; font-weight: 700; }
-        .poll-votes { display: flex; gap: 4px; }
-        .poll-vote { display: inline-flex; align-items: center; gap: 4px; font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; }
-        .poll-vote.poll-yes.active { background: rgba(76,175,80,0.18); border-color: var(--leyfarers-primary); color: var(--leyfarers-primary); }
-        .poll-vote.poll-maybe.active { background: rgba(245,197,24,0.18); border-color: var(--drawsteel-primary); color: var(--drawsteel-primary); }
-        .poll-vote.poll-no.active { background: rgba(239,83,80,0.18); border-color: var(--strahd-primary); color: var(--strahd-primary); }
-        .poll-tally { font-size: 0.72rem; color: var(--text-dim); margin-left: auto; white-space: nowrap; }
-        .poll-confirm { padding: 5px 12px; font-size: 0.72rem; }
+        .poll-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .poll-row.poll-best { background: var(--brand-tint); border-radius: var(--r-md); padding: 12px; }
+        .poll-opt-main { flex: 1 1 210px; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+        .poll-opt-bar-row { display: flex; align-items: center; gap: 10px; }
+        .avail-bar { display: flex; height: 6px; width: 100%; max-width: 190px; background: var(--surface-2); border-radius: var(--r-pill); overflow: hidden; }
+        .avail-seg { height: 100%; display: block; transition: width var(--dur) var(--ease); }
+        .av-yes { background: var(--success); } .av-maybe { background: var(--warn); } .av-no { background: var(--error); }
+        .poll-date { font-size: 0.9rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+        .poll-best-tag { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.05em; background: var(--success); color: #06210a; border-radius: 4px; padding: 2px 6px; font-weight: 700; }
+        .poll-votes { display: flex; gap: 4px; flex-shrink: 0; }
+        .poll-vote { display: inline-flex; align-items: center; gap: 4px; font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 6px 10px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--bg); color: var(--text-dim); cursor: pointer; transition: all var(--dur-fast) var(--ease); }
+        .poll-vote.poll-yes.active { background: var(--success-tint); border-color: var(--success); color: var(--success); }
+        .poll-vote.poll-maybe.active { background: var(--warn-tint); border-color: var(--warn); color: var(--warn); }
+        .poll-vote.poll-no.active { background: var(--error-tint); border-color: var(--error); color: var(--error); }
+        .poll-tally { font-size: 0.72rem; color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .poll-confirm { padding: 6px 12px; font-size: 0.72rem; flex-shrink: 0; }
+        .poll-confirm.is-best { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); font-weight: 600; }
+        .poll-responders { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 0.78rem; }
+        .resp-avatars { display: flex; }
+        .resp-av { width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); margin-left: -6px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; color: var(--text); }
+        .resp-av:first-child { margin-left: 0; }
+        .poll-waiting { color: var(--text-dim); }
+        .poll-waiting strong { color: var(--text); font-weight: 500; }
         .poll-empty { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px dashed var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 24px; font-size: 0.85rem; color: var(--text-dim); }
         .poll-banner { display: flex; align-items: center; gap: 10px; background: var(--brand-tint); border: 1px solid var(--brand-line); border-radius: var(--r-md); padding: 12px 14px; margin-bottom: 20px; cursor: pointer; font-size: 0.85rem; color: var(--text); }
         .poll-banner:hover { background: rgba(232,132,60,0.22); }
@@ -1237,7 +1250,7 @@
         .poll-slot-x:hover { color: var(--strahd-primary); }
         .poll-slot-empty { font-size: 0.8rem; color: var(--text-dim); padding: 6px 0; }
         .poll-need { color: var(--drawsteel-primary); font-weight: 600; }
-        @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-tally { margin-left: 0; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
+        @media (max-width: 600px) { .poll-vote-lbl { display: none; } .poll-opt-main { flex-basis: 100%; } .avail-bar { max-width: none; } .poll-votes { width: 100%; } .poll-vote { flex: 1; justify-content: center; padding: 9px 0; } .poll-confirm { width: 100%; justify-content: center; } .poll-add-row { flex-wrap: wrap; } .poll-add-row input[type=date], .poll-add-row input[type=text] { flex: 1 1 100%; } .poll-add-btn { width: 100%; } }
         /* ===== Accessibility ===== */
         :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
         @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; } }
@@ -2451,6 +2464,31 @@ function pollBestOption(poll) {
     });
     return best;
 }
+// Only surface a "Best" pick when votes actually justify it — never on inconclusive/tied data.
+function pollBestJustified(poll) {
+    const scored = pollOptions(poll).map(o => { const t = pollTally(poll, o.id); return { o, t, score: t.yes * 2 + t.maybe - t.no * 3 }; });
+    if (!scored.some(s => s.t.yes > 0)) return null;
+    scored.sort((a, b) => b.score - a.score);
+    if (scored[0].score <= 0) return null;
+    if (scored.length > 1 && scored[1].score === scored[0].score) return null;   // a tie is not a winner
+    return scored[0].o;
+}
+function initialsOf(name) { const p = String(name || '').trim().split(/[\s@._-]+/).filter(Boolean); return p.length ? (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase() : '?'; }
+// Who has responded (by name) vs. roster members still outstanding.
+function pollResponseSummary(poll, campaign) {
+    const roster = (campaignRosters[campaign] || []).slice();
+    const respNames = Object.values(poll.responses || {}).filter(e => e && e.votes && Object.keys(e.votes).length).map(e => e.name).filter(Boolean);
+    const norm = s => String(s || '').trim().toLowerCase();
+    const respSet = new Set(respNames.map(norm));
+    const missing = roster.filter(n => !respSet.has(norm(n)));
+    return { respNames, missing, total: Math.max(roster.length, respNames.length), count: respNames.length };
+}
+// Proportional availability bar: yes / maybe / no over the group size (empty tail = no response yet).
+function availBar(t, denom) {
+    const d = Math.max(denom, t.yes + t.maybe + t.no, 1);
+    const w = n => (n / d * 100) + '%';
+    return `<div class="avail-bar" role="img" aria-label="${t.yes} yes, ${t.maybe} maybe, ${t.no} no of ${d}"><span class="avail-seg av-yes" style="width:${w(t.yes)}"></span><span class="avail-seg av-maybe" style="width:${w(t.maybe)}"></span><span class="avail-seg av-no" style="width:${w(t.no)}"></span></div>`;
+}
 function myPollVote(poll, optId) { const e = (poll.responses || {})[pollParticipant().key]; return e && e.votes ? e.votes[optId] || null : null; }
 function pollNeedsMyResponse(poll) {
     const e = (poll.responses || {})[pollParticipant().key];
@@ -2538,26 +2576,36 @@ function renderPollSection(campaign) {
         return owner ? `<div class="poll-empty"><span>No availability poll open.</span><button class="cp-btn cp-btn-primary" onclick="openCreatePoll()">${icon('calendar')} Ask when to play</button></div>` : '';
     }
     const options = pollOptions(poll);
-    const best = pollBestOption(poll);
-    const anyVotes = Object.values(poll.responses || {}).some(e => e.votes && Object.keys(e.votes).length);
-    let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">${icon('calendar')} ${escapeHtml(poll.title)}</span>`;
+    const best = pollBestJustified(poll);
+    const sum = pollResponseSummary(poll, campaign);
+    const progress = sum.total ? `${sum.count} of ${sum.total} responded` : (sum.count ? `${sum.count} responded` : 'No responses yet');
+    let h = `<div class="poll-card"><div class="poll-head"><span class="poll-title">${icon('poll')} ${escapeHtml(poll.title)}</span>`;
     if (owner) h += `<div class="cp-section-actions"><button class="edit-party-btn" onclick="deletePoll('${poll.id}')">Delete</button></div>`;
-    h += `</div><div class="poll-sub">Tap a response for each option.</div>`;
+    h += `</div><div class="poll-sub">${progress} · tap your availability for each option.</div>`;
     options.forEach(o => {
         const t = pollTally(poll, o.id);
         const mine = myPollVote(poll, o.id);
-        const isBest = anyVotes && best && o.id === best.id;
+        const isBest = best && o.id === best.id;
         h += `<div class="poll-row${isBest ? ' poll-best' : ''}">`;
+        h += `<div class="poll-opt-main">`;
         h += `<div class="poll-date">${optionLabel(o)}${isBest ? '<span class="poll-best-tag">Best</span>' : ''}</div>`;
+        h += `<div class="poll-opt-bar-row">${availBar(t, sum.total)}<span class="poll-tally" title="${t.yes} yes · ${t.maybe} maybe · ${t.no} no">${t.yes}✓ ${t.maybe}~ ${t.no}✗</span></div>`;
+        h += `</div>`;
         h += `<div class="poll-votes">`;
         ['yes', 'maybe', 'no'].forEach(v => {
             h += `<button class="poll-vote poll-${v}${mine === v ? ' active' : ''}" aria-pressed="${mine === v}" aria-label="${VOTE_META[v].label} for ${optionLabel(o)}" onclick="votePoll('${poll.id}','${o.id}','${v}')">${VOTE_META[v].mark}<span class="poll-vote-lbl">${VOTE_META[v].label}</span></button>`;
         });
         h += `</div>`;
-        h += `<div class="poll-tally" title="${t.yes} yes · ${t.maybe} maybe · ${t.no} no">${t.yes}✓ ${t.maybe}~ ${t.no}✗</div>`;
-        if (owner) h += `<button class="cp-btn poll-confirm" onclick="confirmPoll('${poll.id}','${o.id}')">Confirm</button>`;
+        if (owner) h += `<button class="cp-btn poll-confirm${isBest ? ' is-best' : ''}" onclick="confirmPoll('${poll.id}','${o.id}')">${icon('check')} Confirm</button>`;
         h += `</div>`;
     });
+    if (sum.count || sum.missing.length) {
+        h += `<div class="poll-responders">`;
+        if (sum.count) h += `<span class="resp-avatars">${sum.respNames.slice(0, 8).map(n => `<span class="resp-av" title="${escapeHtml(n)}">${escapeHtml(initialsOf(n))}</span>`).join('')}</span>`;
+        if (sum.missing.length) h += `<span class="poll-waiting">Waiting on <strong>${sum.missing.slice(0, 6).map(escapeHtml).join(', ')}</strong>${sum.missing.length > 6 ? ` +${sum.missing.length - 6}` : ''}</span>`;
+        else if (sum.count) h += `<span class="poll-waiting">Everyone's responded</span>`;
+        h += `</div>`;
+    }
     return `${h}</div>`;
 }
 // ----- Consolidated polls list (nav → Polls) -----
