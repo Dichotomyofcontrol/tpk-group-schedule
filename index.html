@@ -87,7 +87,7 @@
             background: linear-gradient(120deg, var(--brand-strong), var(--brand) 55%, #d76b2e);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px;
         }
-        #password-gate .subtitle { color: var(--text-dim); font-size: 0.95rem; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 40px; }
+        #password-gate .subtitle { color: var(--text-dim); font-size: 0.92rem; font-weight: 400; line-height: 1.5; max-width: 32ch; margin: 2px auto 26px; }
         .pass-form { display: flex; gap: 8px; margin-bottom: 16px; }
         .pass-form input { font-family: 'Inter', sans-serif; font-size: 0.9rem; padding: 12px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); outline: none; width: 240px; }
         .pass-form input:focus { border-color: var(--brand); }
@@ -102,6 +102,15 @@
         .email-form input:focus { border-color: var(--brand); }
         .email-form button { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 12px 24px; border-radius: var(--r-sm); border: 1px solid var(--brand-line); background: var(--brand); color: var(--brand-ink); font-weight: 600; cursor: pointer; width: 280px; max-width: 80vw; }
         .email-form button:hover { background: var(--brand-strong); border-color: var(--brand-strong); }
+        /* Auth panel — makes sign-in/create feel part of the product, not a bare form */
+        .gate-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); box-shadow: var(--shadow-2); padding: 38px 30px 28px; width: 100%; max-width: 384px; display: flex; flex-direction: column; align-items: center; }
+        .gate-card .pass-form { width: 100%; }
+        .gate-card .pass-form input { flex: 1; width: auto; background: var(--bg); }
+        .gate-card .email-form { width: 100%; }
+        .gate-card .email-form input { width: 100%; max-width: none; background: var(--bg); }
+        .gate-card .email-form button { width: 100%; max-width: none; }
+        .gate-card .gate-divider { width: 100%; max-width: none; }
+        .gate-card .pass-hint { margin-top: 20px; }
 
         /* ===== MAIN APP ===== */
         #app { display: none; }
@@ -1193,6 +1202,9 @@
             pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
         .share-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .share-toast.toast-error { border-left: 3px solid var(--error); }
+        .share-toast.toast-success { border-left: 3px solid var(--success); }
+        .share-toast.toast-info { border-left: 3px solid var(--brand); }
         /* ===== Profile / Account panel ===== */
         #home-view.campaigns-empty > *:not(#no-campaigns-banner) { display: none; }
         .profile-identity { font-size: 0.95rem; font-weight: 600; color: var(--text); margin-bottom: 4px; word-break: break-word; }
@@ -1230,6 +1242,12 @@
         .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
         .swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; box-sizing: border-box; }
         .swatch.active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+        .icon-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .icon-pick { width: 36px; height: 36px; border-radius: var(--r-sm); border: 1px solid var(--border); background: var(--bg); font-size: 1.15rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease); }
+        .icon-pick:hover { border-color: var(--text-dim); }
+        .icon-pick.active { border-color: var(--brand); background: var(--brand-tint); }
+        .details-label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); font-weight: 600; margin: 14px 0 10px; }
+        .details-label span { opacity: 0.6; font-weight: 400; text-transform: none; letter-spacing: 0; }
         .sched-preview { font-size: 0.78rem; color: var(--text-dim); margin-top: 8px; line-height: 1.6; }
         .sched-preview strong { color: var(--text); }
         .nc-hint { font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; margin-top: 2px; }
@@ -1337,8 +1355,9 @@
 
 <!-- Password Gate -->
 <div id="password-gate">
+    <div class="gate-card">
     <h1>Six in the TPK</h1>
-    <div class="subtitle">Campaign Schedule</div>
+    <div class="subtitle">Plan the next session — and keep the story of the last one alive.</div>
     <div class="pass-form">
         <input type="text" id="pass-input" placeholder="Enter your join code" autocomplete="off" style="text-transform:uppercase">
         <button onclick="checkPassword()">Join</button>
@@ -1353,6 +1372,7 @@
     <div class="pass-error" id="email-error"></div>
     <button class="gate-mode-link" id="gate-mode-link" onclick="toggleGateMode()">Invited? Create an account</button>
     <div class="pass-hint">Ask your GM for a join code</div>
+    </div>
 </div>
 
 <!-- Nav Overlay + Slide Menu -->
@@ -1360,7 +1380,7 @@
 <div class="nav-menu" id="nav-menu">
     <button class="nav-close" onclick="closeNav()">&times;</button>
     <h2>Six in the TPK</h2>
-    <div class="nav-subtitle"><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; Portland</div>
+    <div class="nav-subtitle">Plan the next session, remember the last.</div>
     <div class="nav-item active" id="nav-home" onclick="navigateTo('home')">
         <div class="nav-item-info"><span class="nav-label">Home</span><span class="nav-sub">Schedule overview</span></div>
     </div>
@@ -1387,10 +1407,8 @@
             </div>
         </div>
         <div id="new-campaign-fields" style="display:none">
-            <div class="form-row">
-                <div class="form-group" style="flex:2"><label>Campaign name</label><input type="text" id="nc-name" placeholder="e.g. Wild Beyond the Witchlight" maxlength="40"></div>
-                <div class="form-group" style="flex:0 0 64px"><label>Icon</label><input type="text" id="nc-icon" placeholder="🎲" maxlength="2"></div>
-            </div>
+            <div class="form-group"><label>Campaign name</label><input type="text" id="nc-name" placeholder="e.g. Wild Beyond the Witchlight" maxlength="40"></div>
+            <div class="form-group"><label>Icon</label><div id="nc-icons" class="icon-row"></div><input type="hidden" id="nc-icon"></div>
             <div class="form-group"><label>Color</label><div id="nc-swatches" class="swatch-row"></div></div>
             <div class="nc-hint">You'll be the owner. Once it's created, invite players by email or a join code from the campaign's <strong>Share</strong> menu.</div>
         </div>
@@ -1441,8 +1459,8 @@
             </div>
             <div id="multi-date-list" class="sched-preview"></div>
         </div>
-        <button class="customize-toggle" onclick="toggleCustomizeFields()"><span id="customize-arrow">&#9654;</span>&nbsp;Customize details</button>
-        <div class="customize-fields" id="customize-fields">
+        <div class="details-label">Details <span>optional</span></div>
+        <div id="customize-fields">
             <div class="form-row">
                 <div class="form-group"><label>Time</label><input type="text" id="new-session-time" placeholder="6:00 PM"></div>
                 <div class="form-group"><label>GM</label><input type="text" id="new-session-gm" placeholder="Max Hobbs"></div>
@@ -1790,6 +1808,9 @@
     <div class="scm-overlay" id="scm-overlay" onclick="closeConfirmSession()">
         <div class="scm-modal" id="scm-modal" onclick="event.stopPropagation()"></div>
     </div>
+    <div class="scm-overlay" id="gc-overlay" onclick="closeGenericConfirm()">
+        <div class="scm-modal" id="gc-modal" onclick="event.stopPropagation()"></div>
+    </div>
     <div class="reader-overlay" id="reader-overlay" onclick="closeReaderModal()">
         <div class="reader-modal" id="reader-modal" onclick="event.stopPropagation()">
             <div class="reader-header">
@@ -1848,7 +1869,7 @@
         </div>
     </div>
 
-    <footer><a href="https://www.tpkbrewing.com" target="_blank">TPK Brewing Co.</a> &mdash; An Ale for Every Tale</footer>
+    <footer>Six in the TPK</footer>
 </div>
 
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
@@ -2413,14 +2434,14 @@ function renderCsSwatches() {
 window.pickCsSwatch = function(c) { csColor = c; renderCsSwatches(); };
 window.saveCampaignMeta = async function() {
     const c = csCampaign; if (!c) return;
-    const name = document.getElementById('cs-name').value.trim(); if (!name) { alert('Name cannot be empty.'); return; }
+    const name = document.getElementById('cs-name').value.trim(); if (!name) { showToast('Name cannot be empty.'); return; }
     const icon = document.getElementById('cs-icon').value.trim() || '🎲';
     try {
         await updateDoc(doc(db, "campaigns", c), { name, icon, color: csColor });
         if (allCampaigns[c]) { allCampaigns[c].name = name; allCampaigns[c].icon = icon; allCampaigns[c].color = csColor; }
         renderCampaignTheme(); updateAccessUI(); renderCampaignPage(c);
         closeCampaignSettings();
-    } catch (e) { console.error("Save campaign error:", e); alert('Could not save — try again.'); }
+    } catch (e) { console.error("Save campaign error:", e); showToast('Could not save — try again.'); }
 };
 window.toggleArchiveCampaign = async function() {
     const c = csCampaign; if (!c) return;
@@ -2430,23 +2451,24 @@ window.toggleArchiveCampaign = async function() {
         if (allCampaigns[c]) allCampaigns[c].archived = next;
         closeCampaignSettings(); updateAccessUI();
         if (next) window.navigateTo('home'); else renderCampaignPage(c);
-    } catch (e) { console.error("Archive error:", e); alert('Could not archive — try again.'); }
+    } catch (e) { console.error("Archive error:", e); showToast('Could not archive — try again.'); }
 };
-window.transferCampaign = async function() {
+window.transferCampaign = function() {
     const c = csCampaign; if (!c) return;
     const to = document.getElementById('cs-transfer').value;
-    if (!to) { alert('Choose a member to transfer to.'); return; }
-    if (!confirm(`Transfer ownership of ${campaignName(c)} to ${to}? You'll become a regular member.`)) return;
-    try {
-        await updateDoc(doc(db, "campaigns", c), { owner: to });
-        if (allCampaigns[c]) allCampaigns[c].owner = to;
-        closeCampaignSettings(); updateAccessUI(); window.navigateTo('home');
-    } catch (e) { console.error("Transfer error:", e); alert('Could not transfer — try again.'); }
+    if (!to) { showToast('Choose a member to transfer to.'); return; }
+    openConfirm({ title: 'Transfer ownership?', message: `<strong>${escapeHtml(campaignName(c))}</strong> will be handed to ${escapeHtml(to)}. You'll become a regular member.`, confirmLabel: 'Transfer', danger: false, onConfirm: async () => {
+        try {
+            await updateDoc(doc(db, "campaigns", c), { owner: to });
+            if (allCampaigns[c]) allCampaigns[c].owner = to;
+            closeCampaignSettings(); updateAccessUI(); window.navigateTo('home');
+        } catch (e) { console.error("Transfer error:", e); showToast('Could not transfer — try again.'); }
+    }});
 };
 window.showDeleteSection = function() { document.getElementById('cs-delete-section').style.display = ''; };
 window.deleteCampaign = async function() {
     const c = csCampaign; if (!c) return;
-    if (document.getElementById('cs-delete-confirm').value.trim().toUpperCase() !== 'DELETE') { alert('Type DELETE to confirm.'); return; }
+    if (document.getElementById('cs-delete-confirm').value.trim().toUpperCase() !== 'DELETE') { showToast('Type DELETE to confirm.'); return; }
     const successor = document.getElementById('cs-successor').value || null;
     const me = myEmail();
     const notify = new Set(campaignMemberEmails(c)); if (successor) notify.add(successor); notify.delete(me);
@@ -2456,7 +2478,7 @@ window.deleteCampaign = async function() {
         if (notify.size === 0) { await purgeCampaign(c); }   // no one to notify → purge now
         else { for (const email of notify) { await setDoc(doc(db, "notifications", `${email}__${c}`), { email, campaign: c, deletedBy: me, kind: 'campaign-deleted', status: 'pending', createdAt: Date.now() }); } }
         closeCampaignSettings(); updateAccessUI(); window.navigateTo('home');
-    } catch (e) { console.error("Delete campaign error:", e); alert('Could not delete — try again.'); }
+    } catch (e) { console.error("Delete campaign error:", e); showToast('Could not delete — try again.'); }
 };
 async function purgeCampaign(c) {
     // Cascade: delete the campaign's sessions, its notifications, then the campaign doc.
@@ -2605,6 +2627,21 @@ window.confirmPoll = function(pollId, optId) {
     document.getElementById('scm-overlay').classList.add('open');
 };
 window.closeConfirmSession = function() { document.getElementById('scm-overlay').classList.remove('open'); pendingConfirm = null; };
+// Generic in-app confirmation for destructive actions (replaces native confirm()).
+let _gcCallback = null;
+window.openConfirm = function(opts) {
+    _gcCallback = opts.onConfirm || null;
+    const danger = opts.danger !== false;
+    const btnStyle = danger ? 'background:var(--error);color:#fff;border-color:var(--error)' : '';
+    document.getElementById('gc-modal').innerHTML =
+        `<div class="scm-eyebrow" style="color:${danger ? 'var(--error)' : 'var(--brand)'}">${escapeHtml(opts.title || 'Are you sure?')}</div>`
+        + `<p class="scm-note" style="margin:6px 0 20px;white-space:pre-line">${opts.message || ''}</p>`
+        + `<div class="scm-actions"><button class="cp-btn" onclick="closeGenericConfirm()">${escapeHtml(opts.cancelLabel || 'Cancel')}</button>`
+        + `<button class="cp-btn" style="${btnStyle}" onclick="runGenericConfirm()">${escapeHtml(opts.confirmLabel || 'Confirm')}</button></div>`;
+    document.getElementById('gc-overlay').classList.add('open');
+};
+window.closeGenericConfirm = function() { document.getElementById('gc-overlay').classList.remove('open'); _gcCallback = null; };
+window.runGenericConfirm = function() { const cb = _gcCallback; closeGenericConfirm(); if (cb) cb(); };
 window.confirmPollGo = async function() {
     if (!pendingConfirm) return;
     const { pollId, optId } = pendingConfirm;
@@ -2619,7 +2656,7 @@ window.confirmPollGo = async function() {
         if (allPolls[pollId]) allPolls[pollId].status = 'confirmed';
         showSessionConfirmed(opt, roster.length);
         renderCampaignPage(c); renderAll();
-    } catch (e) { console.error("confirm poll error:", e); alert('Could not confirm — try again.'); }
+    } catch (e) { console.error("confirm poll error:", e); showToast('Could not confirm — try again.'); }
     pendingConfirm = null;
 };
 function showSessionConfirmed(opt, count) {
@@ -2634,11 +2671,12 @@ function showSessionConfirmed(opt, count) {
         + `<div class="scm-actions"><button class="cp-btn cp-btn-primary" onclick="closeConfirmSession()">Done</button></div>`;
     document.getElementById('scm-overlay').classList.add('open');
 }
-window.deletePoll = async function(pollId) {
+window.deletePoll = function(pollId) {
     const poll = allPolls[pollId]; if (!poll || !canManageCampaign(poll.campaign)) return;
-    if (!confirm('Delete this availability poll? Responses will be lost.')) return;
-    try { await deleteDoc(doc(db, "polls", pollId)); delete allPolls[pollId]; renderCampaignPage(poll.campaign); renderAll(); }
-    catch (e) { console.error("delete poll error:", e); }
+    openConfirm({ title: 'Delete this poll?', message: 'All responses will be lost. This cannot be undone.', confirmLabel: 'Delete poll', onConfirm: async () => {
+        try { await deleteDoc(doc(db, "polls", pollId)); delete allPolls[pollId]; renderCampaignPage(poll.campaign); renderAll(); }
+        catch (e) { console.error("delete poll error:", e); }
+    }});
 };
 // ----- Create-poll modal: date + time options -----
 let pollCampaign = null, pollSlots = [];
@@ -2656,7 +2694,7 @@ window.closeCreatePoll = function() { document.getElementById('create-poll-overl
 window.addPollSlot = function() {
     const date = document.getElementById('poll-date-input').value;
     const time = document.getElementById('poll-time-input').value.trim();
-    if (!date) { alert('Pick a date first.'); return; }
+    if (!date) { showToast('Pick a date first.'); return; }
     if (pollSlots.some(s => s.date === date && s.time === time)) { renderPollSlotList(); return; }
     pollSlots.push({ id: 'o' + Date.now().toString(36) + pollSlots.length, date, time });
     pollSlots.sort((a, b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
@@ -2670,7 +2708,7 @@ function renderPollSlotList() {
 }
 window.submitCreatePoll = async function() {
     const c = pollCampaign; if (!c) return;
-    if (pollSlots.length < 2) { alert('Add at least 2 date/time options.'); return; }
+    if (pollSlots.length < 2) { showToast('Add at least 2 date/time options.'); return; }
     const id = `${c}-${Date.now().toString(36)}`;
     const data = { campaign: c, owner: myEmail(), title: document.getElementById('poll-title').value.trim() || 'When can we play?',
         options: pollSlots.map(s => ({ id: s.id, date: s.date, time: s.time })), responses: {}, status: 'open', createdAt: Date.now() };
@@ -2678,7 +2716,7 @@ window.submitCreatePoll = async function() {
         await setDoc(doc(db, "polls", id), data);
         allPolls[id] = { id, ...data };
         closeCreatePoll(); renderCampaignPage(c); renderAll();
-    } catch (e) { console.error("create poll error:", e); alert('Could not create the poll — try again.'); }
+    } catch (e) { console.error("create poll error:", e); showToast('Could not create the poll — try again.'); }
 };
 // ----- Poll rendering (campaign page section) -----
 const VOTE_META = { yes: { label: 'Yes', mark: '✓' }, maybe: { label: 'Maybe', mark: '~' }, no: { label: 'No', mark: '✗' } };
@@ -2751,6 +2789,15 @@ function renderPollsList() {
 let addMode = 'one';
 let multiDates = [];
 let ncColor = CAMPAIGN_SWATCHES[0];
+// Campaign icon picker — a curated set the user clicks (emoji input via keyboard is awkward, esp. on desktop).
+let ncIcon = '🎲';
+const NC_ICONS = ['🎲','🐉','⚔️','🏰','🗺️','🍺','👑','💀','🔮','🌲','⛵','🌙','🔥','🐺','🗡️','🛡️'];
+function renderNcIcons() {
+    const el = document.getElementById('nc-icons'); if (!el) return;
+    el.innerHTML = NC_ICONS.map(e => `<button type="button" class="icon-pick${e === ncIcon ? ' active' : ''}" aria-label="Choose icon ${e}" aria-pressed="${e === ncIcon}" onclick="pickNcIcon('${e}')">${e}</button>`).join('');
+    const hidden = document.getElementById('nc-icon'); if (hidden) hidden.value = ncIcon;
+}
+window.pickNcIcon = function(e) { ncIcon = e; renderNcIcons(); };
 let newSessionVisibility = 'private';
 let lastAddedSession = null;
 window.openAddSession = function() {
@@ -2760,7 +2807,7 @@ window.openAddSession = function() {
     document.getElementById('new-session-date').value = tstr;
     document.getElementById('rec-start').value = tstr;
     ['new-session-time','new-session-gm','new-session-duration','nc-name','nc-icon'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
-    multiDates = []; ncColor = CAMPAIGN_SWATCHES[0];
+    multiDates = []; ncColor = CAMPAIGN_SWATCHES[0]; ncIcon = '🎲';
     setAddMode('one');
     onNewCampaignToggle();
     applyDefaultVisibility();
@@ -2793,7 +2840,7 @@ function onNewCampaignToggle() {
     // so the per-session Just Me / Everyone toggle only applies to existing campaigns.
     const visRow = document.getElementById('session-visibility-row');
     if (visRow) visRow.style.display = (currentUser && !isNew) ? '' : 'none';
-    if (isNew) renderSwatches();
+    if (isNew) { renderSwatches(); renderNcIcons(); }
 }
 function renderSwatches() {
     const el = document.getElementById('nc-swatches'); if (!el) return;
@@ -2899,13 +2946,13 @@ window.submitAddSession = async function() {
     let dates = [];
     if (addMode === 'one') {
         const d = document.getElementById('new-session-date').value;
-        if (!d) { alert('Please select a date.'); return; }
+        if (!d) { showToast('Please select a date.'); return; }
         dates = [d];
     } else if (addMode === 'recurring') {
         dates = generateSessionDates(recOpts());
-        if (!dates.length) { alert('No dates generated — check the recurrence settings.'); return; }
+        if (!dates.length) { showToast('No dates generated — check the recurrence settings.'); return; }
     } else {
-        if (!multiDates.length) { alert('Add at least one date.'); return; }
+        if (!multiDates.length) { showToast('Add at least one date.'); return; }
         dates = [...multiDates];
     }
     const btn = document.querySelector('#add-form-fields .submit-btn');
@@ -2913,7 +2960,7 @@ window.submitAddSession = async function() {
     try {
         if (isNew) {
             const name = document.getElementById('nc-name').value.trim();
-            if (!name) { alert('Enter a campaign name.'); if (btn) { btn.disabled = false; btn.textContent = 'Add to Schedule'; } return; }
+            if (!name) { showToast('Enter a campaign name.'); if (btn) { btn.disabled = false; btn.textContent = 'Add to Schedule'; } return; }
             campaign = await createCampaignDoc(name, document.getElementById('nc-icon').value, ncColor);
         }
         const isPrivate = !!(currentUser && newSessionVisibility === 'private');
@@ -2933,7 +2980,7 @@ window.submitAddSession = async function() {
         showAddSuccess(campaign, dates);
     } catch (err) {
         console.error("Error scheduling:", err);
-        alert('Error saving — please try again.');
+        showToast('Error saving — please try again.');
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'Add to Schedule'; }
     }
@@ -3006,7 +3053,7 @@ window.generateJoinCode = async function() {
     const me = myEmail(); if (!me || !inviteCampaign) return;
     const campaign = inviteCampaign;
     const label = document.getElementById('code-name').value.trim();
-    if (!label) { alert("Enter the player's name so you know whose code this is."); return; }
+    if (!label) { showToast("Enter the player's name so you know whose code this is."); return; }
     const prefix = (campaign || 'TPK').replace(/[^a-z]/gi, '').slice(0, 4).toUpperCase();
     let code = `${prefix}-${randomCodeSuffix(4)}`;
     while (allCodes[code]) code = `${prefix}-${randomCodeSuffix(4)}`;
@@ -3015,14 +3062,15 @@ window.generateJoinCode = async function() {
         allCodes[code] = { owner: me, campaign, label };
         document.getElementById('code-name').value = '';
         updateInviteUI();
-    } catch(e) { console.error("Generate code error:", e); alert(`Error creating the code${e && e.code ? ` (${e.code})` : ''}.`); }
+    } catch(e) { console.error("Generate code error:", e); showToast(`Error creating the code${e && e.code ? ` (${e.code})` : ''}.`); }
 };
-window.revokeJoinCode = async function(code) {
+window.revokeJoinCode = function(code) {
     const me = myEmail(); if (!me) return;
     const g = allCodes[code]; if (!g || g.owner !== me) return;
-    if (!confirm(`Revoke ${g.label ? g.label + "'s" : 'this'} code? They will lose access on their next visit.`)) return;
-    try { await deleteDoc(doc(db, "codes", code)); delete allCodes[code]; updateInviteUI(); }
-    catch(e) { console.error("Revoke code error:", e); }
+    openConfirm({ title: 'Revoke this code?', message: `${g.label ? escapeHtml(g.label) + ' will' : 'Whoever holds this code will'} lose access on their next visit.`, confirmLabel: 'Revoke code', onConfirm: async () => {
+        try { await deleteDoc(doc(db, "codes", code)); delete allCodes[code]; updateInviteUI(); }
+        catch(e) { console.error("Revoke code error:", e); }
+    }});
 };
 window.copyJoinCode = function(code) {
     const clip = navigator.clipboard ? navigator.clipboard.writeText(code) : Promise.reject();
@@ -3050,8 +3098,8 @@ window.submitInvite = async function() {
     const s = inviteSid ? sessionById(inviteSid) : null;
     if (inviteScope === 'session' && (!s || s.owner !== me)) return;
     const email = document.getElementById('invite-email').value.trim().toLowerCase();
-    if (!email || !email.includes('@')) { alert('Enter a valid email address.'); return; }
-    if (email === me) { alert("That's you — no invite needed."); return; }
+    if (!email || !email.includes('@')) { showToast('Enter a valid email address.'); return; }
+    if (email === me) { showToast("That's you — no invite needed."); return; }
     const campaign = inviteCampaign;
     try {
         if (inviteScope === 'session') {
@@ -3066,7 +3114,7 @@ window.submitInvite = async function() {
             await setDoc(doc(db, "invites", invId), { email, campaign, invitedBy: me, owner: me, status: 'pending' }, { merge: true });
             if (!allInvites.some(i => i.id === invId)) allInvites.push({ id: invId, email, campaign, invitedBy: me, owner: me, status: 'pending' });
         }
-    } catch(e) { console.error("Invite error:", e); alert(`Error saving the invite${e && e.code ? ` (${e.code})` : ''}.`); return; }
+    } catch(e) { console.error("Invite error:", e); showToast(`Error saving the invite${e && e.code ? ` (${e.code})` : ''}.`); return; }
     document.getElementById('invite-email').value = '';
     updateInviteUI();
     // Open a pre-filled email so they know how to get in
@@ -3125,34 +3173,35 @@ window.acceptInviteFromProfile = async function(id) {
 
 // ===== PROFILE / ACCOUNT =====
 // Leave a campaign — forget any join code (guest) and drop account membership (share + profile grant).
-window.leaveCampaign = async function(c) {
+window.leaveCampaign = function(c) {
     const me = myEmail();
-    if (me && campaignOwner(c) === me) { alert("You own this campaign — use its Settings to archive, transfer, or delete it."); return; }
-    if (!confirm(`Leave ${campaignName(c)}? You'll lose access to it on this device.`)) return;
-    // Guest: forget the join code(s) for this campaign on this device.
-    const before = redeemedCodes.length;
-    redeemedCodes = redeemedCodes.filter(code => !(allCodes[code] && allCodes[code].campaign === c));
-    if (redeemedCodes.length !== before) localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes));
-    // Account: remove from the campaign share + profile grant.
-    if (me) {
-        try {
-            const owner = campaignOwner(c);
-            const key = owner ? shareKey(owner, c) : null;
-            if (key && (allShares[key] || []).includes(me)) {
-                await updateDoc(doc(db, "shares", key), { members: arrayRemove(me) });
-                allShares[key] = allShares[key].filter(x => x !== me);
-            }
-            if (userCampaigns.includes(c)) {
-                await setDoc(doc(db, "profiles", me), { campaigns: arrayRemove(c) }, { merge: true });
-                userCampaigns = userCampaigns.filter(x => x !== c);
-            }
-        } catch (e) { console.error("leave campaign error:", e); }
-    }
-    if (currentPage === c) window.navigateTo('home');
-    updateAccessUI(); renderAll();
-    if (document.getElementById('profile-overlay').classList.contains('open')) renderProfilePanel();
-    // A guest who left their only campaign has no access left — send them back to the gate.
-    if (!redeemedCodes.length && !currentUser) { document.getElementById('app').style.display = 'none'; document.getElementById('password-gate').style.display = 'flex'; }
+    if (me && campaignOwner(c) === me) { showToast("You own this campaign — use its Settings to archive, transfer, or delete it."); return; }
+    openConfirm({ title: `Leave ${campaignName(c)}?`, message: "You'll lose access to it on this device.", confirmLabel: 'Leave campaign', onConfirm: async () => {
+        // Guest: forget the join code(s) for this campaign on this device.
+        const before = redeemedCodes.length;
+        redeemedCodes = redeemedCodes.filter(code => !(allCodes[code] && allCodes[code].campaign === c));
+        if (redeemedCodes.length !== before) localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes));
+        // Account: remove from the campaign share + profile grant.
+        if (me) {
+            try {
+                const owner = campaignOwner(c);
+                const key = owner ? shareKey(owner, c) : null;
+                if (key && (allShares[key] || []).includes(me)) {
+                    await updateDoc(doc(db, "shares", key), { members: arrayRemove(me) });
+                    allShares[key] = allShares[key].filter(x => x !== me);
+                }
+                if (userCampaigns.includes(c)) {
+                    await setDoc(doc(db, "profiles", me), { campaigns: arrayRemove(c) }, { merge: true });
+                    userCampaigns = userCampaigns.filter(x => x !== c);
+                }
+            } catch (e) { console.error("leave campaign error:", e); }
+        }
+        if (currentPage === c) window.navigateTo('home');
+        updateAccessUI(); renderAll();
+        if (document.getElementById('profile-overlay').classList.contains('open')) renderProfilePanel();
+        // A guest who left their only campaign has no access left — send them back to the gate.
+        if (!redeemedCodes.length && !currentUser) { document.getElementById('app').style.display = 'none'; document.getElementById('password-gate').style.display = 'flex'; }
+    }});
 };
 function accessReason(c) {
     const me = myEmail();
@@ -3275,18 +3324,18 @@ window.changeEmailFromProfile = async function() {
     if (!next || !next.trim()) return;
     try {
         await verifyBeforeUpdateEmail(auth.currentUser, next.trim());
-        alert(`Confirmation link sent to ${next.trim()}. Click it to finish changing your email.`);
+        showToast(`Confirmation link sent to ${next.trim()}. Click it to finish changing your email.`, 'success');
     } catch (e) {
-        if (e.code === 'auth/requires-recent-login') alert('For security, please sign out and sign back in, then change your email.');
-        else if (e.code === 'auth/email-already-in-use') alert('That email is already in use by another account.');
-        else if (e.code === 'auth/invalid-email') alert('That email address looks invalid.');
-        else alert('Could not update email (' + (e.code || 'error') + ').');
+        if (e.code === 'auth/requires-recent-login') showToast('For security, please sign out and sign back in, then change your email.');
+        else if (e.code === 'auth/email-already-in-use') showToast('That email is already in use by another account.');
+        else if (e.code === 'auth/invalid-email') showToast('That email address looks invalid.');
+        else showToast('Could not update email (' + (e.code || 'error') + ').');
     }
 };
 window.resetPasswordFromProfile = async function() {
     const me = myEmail(); if (!me) return;
-    try { await sendPasswordResetEmail(auth, me); alert(`Password reset email sent to ${me}.`); }
-    catch (e) { alert('Could not send reset email (' + (e.code || 'error') + ').'); }
+    try { await sendPasswordResetEmail(auth, me); showToast(`Password reset email sent to ${me}.`, 'success'); }
+    catch (e) { showToast('Could not send reset email (' + (e.code || 'error') + ').'); }
 };
 window.exportMyData = function() {
     const me = myEmail();
@@ -3302,23 +3351,24 @@ window.exportMyData = function() {
     const a = document.createElement('a'); a.href = url; a.download = 'six-in-the-tpk-export.json'; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
-window.deleteAccountFromProfile = async function() {
+window.deleteAccountFromProfile = function() {
     const me = myEmail(); if (!me || !auth.currentUser) return;
     const owned = Object.values(allCampaigns).filter(c => c.owner === me && !c.deleted);
-    if (owned.length) { alert(`You still own ${owned.length} campaign${owned.length > 1 ? 's' : ''}. Transfer or delete ${owned.length > 1 ? 'them' : 'it'} first (each campaign's ⚙ Settings), then delete your account.`); return; }
-    if (!confirm('Permanently delete your account? This cannot be undone. Your characters and any campaign history stay, but you lose access and are removed from campaigns you joined.')) return;
-    try {
-        // Best-effort cleanup: drop from campaign shares + delete the profile grant doc.
-        for (const [key, members] of Object.entries(allShares)) {
-            if ((members || []).includes(me)) { try { await updateDoc(doc(db, "shares", key), { members: arrayRemove(me) }); } catch (_) {} }
+    if (owned.length) { showToast(`You still own ${owned.length} campaign${owned.length > 1 ? 's' : ''}. Transfer or delete ${owned.length > 1 ? 'them' : 'it'} first (each campaign's Settings), then delete your account.`); return; }
+    openConfirm({ title: 'Delete your account?', message: 'This cannot be undone. Your characters and campaign history stay, but you lose access and are removed from campaigns you joined.', confirmLabel: 'Delete account', onConfirm: async () => {
+        try {
+            // Best-effort cleanup: drop from campaign shares + delete the profile grant doc.
+            for (const [key, members] of Object.entries(allShares)) {
+                if ((members || []).includes(me)) { try { await updateDoc(doc(db, "shares", key), { members: arrayRemove(me) }); } catch (_) {} }
+            }
+            try { await deleteDoc(doc(db, "profiles", me)); } catch (_) {}
+            await deleteUser(auth.currentUser);   // onAuthStateChanged then starts a fresh anonymous session
+            showToast('Your account has been deleted.', 'success');
+        } catch (e) {
+            if (e.code === 'auth/requires-recent-login') showToast('For security, sign out and sign back in, then delete your account.');
+            else showToast('Could not delete the account (' + (e.code || 'error') + ').');
         }
-        try { await deleteDoc(doc(db, "profiles", me)); } catch (_) {}
-        await deleteUser(auth.currentUser);   // onAuthStateChanged then starts a fresh anonymous session
-        alert('Your account has been deleted.');
-    } catch (e) {
-        if (e.code === 'auth/requires-recent-login') alert('For security, sign out and sign back in, then delete your account.');
-        else alert('Could not delete the account (' + (e.code || 'error') + ').');
-    }
+    }});
 };
 window.openJoinCode = function() {
     if (typeof closeNav === 'function') closeNav();
@@ -3360,12 +3410,12 @@ window.skipJoinParty = function() {
 window.submitJoinParty = async function() {
     const campaign = joinPartyCampaign; if (!campaign) return;
     const name = document.getElementById('jp-name').value.trim();
-    if (!name) { alert('Enter a character name.'); return; }
+    if (!name) { showToast('Enter a character name.'); return; }
     const charClass = document.getElementById('jp-class').value.trim();
     const subclass = document.getElementById('jp-subclass').value.trim();
     const level = document.getElementById('jp-level').value.trim();
     if (!campaignRosters[campaign]) campaignRosters[campaign] = [];
-    if (campaignRosters[campaign].includes(name)) { alert('That name is already in the party.'); return; }
+    if (campaignRosters[campaign].includes(name)) { showToast('That name is already in the party.'); return; }
     campaignRosters[campaign].push(name);
     if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
     campaignCharacters[campaign][name] = { charClass, subclass, level };
@@ -3381,7 +3431,7 @@ window.submitJoinParty = async function() {
             const newAtt = { ...(s.attendance || {}) }; newAtt[name] = 'in';
             await updateDoc(doc(db, "sessions", s.id), { roster: newRoster, attendance: newAtt });
         }
-    } catch(e) { console.error("Join party error:", e); alert('Error saving your character.'); return; }
+    } catch(e) { console.error("Join party error:", e); showToast('Error saving your character.'); return; }
     document.getElementById('join-party-overlay').classList.remove('open');
     joinPartyCampaign = null;
     if (currentPage === campaign) renderCampaignPage(campaign);
@@ -3433,25 +3483,27 @@ window.openCampaignSchedule = function() {
 window.closeBulkUpdate = function() { document.getElementById('bulk-form-overlay').classList.remove('open'); };
 window.applyBulkUpdate = async function() {
     const start = document.getElementById('bulk-start').value;
-    if (!start) { alert('Pick a start date.'); return; }
+    if (!start) { showToast('Pick a start date.'); return; }
     const time = document.getElementById('bulk-time').value.trim();
     const gm = document.getElementById('bulk-gm').value.trim();
     const dur = document.getElementById('bulk-duration').value.trim();
-    if (!time && !gm && !dur) { alert('Enter at least one change (time, GM, or duration).'); return; }
+    if (!time && !gm && !dur) { showToast('Enter at least one change (time, GM, or duration).'); return; }
     const targets = bulkTargets();
-    if (!targets.length) { alert('No sessions match that range.'); return; }
+    if (!targets.length) { showToast('No sessions match that range.'); return; }
     const campaign = document.getElementById('bulk-campaign').value;
     const end = document.getElementById('bulk-end').value;
     const changes = [time && `time → ${time}`, gm && `GM → ${gm}`, dur && `duration → ${dur}`].filter(Boolean).join(', ');
-    if (!confirm(`Update ${targets.length} ${campaignName(campaign)} session${targets.length > 1 ? 's' : ''} ${end ? `between ${start} and ${end}` : `from ${start} onward`}?\n\n${changes}`)) return;
-    const updates = {};
-    if (time) updates.time = time;
-    if (gm) updates.gm = gm;
-    if (dur) updates.duration = dur;
-    try {
-        for (const s of targets) { await updateDoc(doc(db, "sessions", s.id), updates); }
-        closeBulkUpdate();
-    } catch(e) { console.error("Bulk update error:", e); alert('Error applying updates — some sessions may not have been changed.'); }
+    const range = end ? `between ${start} and ${end}` : `from ${start} onward`;
+    openConfirm({ title: `Update ${targets.length} session${targets.length > 1 ? 's' : ''}?`, message: `${escapeHtml(campaignName(campaign))} sessions ${range}:\n${escapeHtml(changes)}`, confirmLabel: 'Apply changes', danger: false, onConfirm: async () => {
+        const updates = {};
+        if (time) updates.time = time;
+        if (gm) updates.gm = gm;
+        if (dur) updates.duration = dur;
+        try {
+            for (const s of targets) { await updateDoc(doc(db, "sessions", s.id), updates); }
+            closeBulkUpdate();
+        } catch(e) { console.error("Bulk update error:", e); showToast('Error applying updates — some sessions may not have been changed.'); }
+    }});
 };
 
 // ===== FIREBASE =====
@@ -3650,7 +3702,7 @@ window.saveEditSession = async function(sd) {
             updates.attendance = att;
         }
         await updateDoc(doc(db, "sessions", s.id), updates);
-    } catch(e) { console.error("Edit error:", e); alert('Error saving changes.'); }
+    } catch(e) { console.error("Edit error:", e); showToast('Error saving changes.'); }
 };
 window.toggleAttendance = async function(sd, p) { const s = sessionById(sd); if (!s || !canManage(s)) return; const cur = (s.attendance && s.attendance[p]) || "in"; const newVal = cur === "in" ? "out" : "in"; if (!s.attendance) s.attendance = {}; s.attendance[p] = newVal; const card = findSessionCard(sd); const chip = card ? card.querySelector(`.att-chip[onclick*="'${p}'"]`) : null; if (chip) chip.className = `att-chip ${newVal}`; const u = {}; u[`attendance.${p}`] = newVal; await updateDoc(doc(db, "sessions", s.id), u); };
 
@@ -3684,8 +3736,8 @@ window.editRecap = function(sd) {
     if (s.recapHtml) activeQuills[sd].root.innerHTML = s.recapHtml;
 };
 window.uploadPdf = function(sd, inputEl) {
-    const file = inputEl.files[0]; if (!file || file.type !== 'application/pdf') { alert('Please select a PDF.'); return; }
-    if (file.size > 25 * 1024 * 1024) { alert('File too large. Max 25MB.'); return; }
+    const file = inputEl.files[0]; if (!file || file.type !== 'application/pdf') { showToast('Please select a PDF.'); return; }
+    if (file.size > 25 * 1024 * 1024) { showToast('File too large. Max 25MB.'); return; }
     const st = document.getElementById(`pdf-status-${sd}`); if (st) st.textContent = 'Uploading...';
     // Disable the upload button to prevent double-clicks
     const btn = inputEl.closest('.pdf-upload-btn'); if (btn) btn.style.pointerEvents = 'none';
@@ -3700,16 +3752,17 @@ window.uploadPdf = function(sd, inputEl) {
     }).then(() => { clearInterval(dotTimer); if (st) st.textContent = 'Uploaded!'; setTimeout(() => { if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage); }, 1000); }).catch(e => { clearInterval(dotTimer); console.error(e); if (st) st.textContent = 'Upload failed — try again'; if (btn) btn.style.pointerEvents = 'auto'; });
 };
 
-window.deletePdf = async function(sd) {
+window.deletePdf = function(sd) {
     const s = sessionById(sd); if (!s || !s.pdfUrl) return;
-    if (!confirm('Delete this PDF recap?')) return;
-    try {
-        // Try to delete from storage if it's a clean URL
-        const pdfPath = s.pdfUrl.startsWith('/recaps/') ? s.pdfUrl.slice(1) : null;
-        if (pdfPath) { try { await deleteObject(storageRef(storage, pdfPath)); } catch(e) { console.warn('Storage delete failed (may not exist):', e); } }
-        await updateDoc(doc(db, "sessions", s.id), { pdfUrl: '', pdfName: '' });
-        if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage);
-    } catch(e) { console.error(e); alert('Failed to delete PDF.'); }
+    openConfirm({ title: 'Delete this PDF recap?', message: 'The uploaded PDF will be removed from this session.', confirmLabel: 'Delete PDF', onConfirm: async () => {
+        try {
+            // Try to delete from storage if it's a clean URL
+            const pdfPath = s.pdfUrl.startsWith('/recaps/') ? s.pdfUrl.slice(1) : null;
+            if (pdfPath) { try { await deleteObject(storageRef(storage, pdfPath)); } catch(e) { console.warn('Storage delete failed (may not exist):', e); } }
+            await updateDoc(doc(db, "sessions", s.id), { pdfUrl: '', pdfName: '' });
+            if (currentPage === 'home') renderAll(); else renderCampaignPage(currentPage);
+        } catch(e) { console.error(e); showToast('Failed to delete PDF.'); }
+    }});
 };
 
 // Save recap from campaign overview editor
@@ -3898,7 +3951,7 @@ window.saveCharacterEdits = async function(campaign, index) {
 
     // If name changed, handle as a rename with scope
     if (name !== oldName) {
-        if (campaignRosters[campaign].includes(name)) { alert('That name already exists.'); return; }
+        if (campaignRosters[campaign].includes(name)) { showToast('That name already exists.'); return; }
         // Save character details under the new name first
         if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
         const oldChar = campaignCharacters[campaign][oldName] || {};
@@ -3928,8 +3981,8 @@ window.triggerAvatarUpload = function(campaign, index) {
 
 window.uploadAvatar = async function(campaign, index, inputEl) {
     const file = inputEl.files[0];
-    if (!file || !file.type.startsWith('image/')) { alert('Please select an image.'); return; }
-    if (file.size > 5 * 1024 * 1024) { alert('Image too large. Max 5MB.'); return; }
+    if (!file || !file.type.startsWith('image/')) { showToast('Please select an image.'); return; }
+    if (file.size > 5 * 1024 * 1024) { showToast('Image too large. Max 5MB.'); return; }
     const name = campaignRosters[campaign][index];
     const cleanName = name.replace(/\s+/g, '_');
     const ext = file.name.split('.').pop();
@@ -3943,7 +3996,7 @@ window.uploadAvatar = async function(campaign, index, inputEl) {
         campaignCharacters[campaign][name].imageUrl = url;
         await saveCharactersToFirestore();
         renderCampaignPage(campaign);
-    } catch(e) { console.error('Avatar upload failed:', e); alert('Upload failed. Try again.'); }
+    } catch(e) { console.error('Avatar upload failed:', e); showToast('Upload failed. Try again.'); }
 };
 
 // Add new party member
@@ -3959,7 +4012,7 @@ window.confirmAddMember = function(campaign) {
     const input = document.getElementById('add-member-input');
     const name = input ? input.value.trim() : '';
     if (!name) return;
-    if (campaignRosters[campaign].includes(name)) { alert('That name already exists in the party.'); return; }
+    if (campaignRosters[campaign].includes(name)) { showToast('That name already exists in the party.'); return; }
     pendingPartyAction = { type: 'add', campaign, newName: name };
     showScopeSelector('Add "' + name + '"', 'Where should this new party member appear?');
 };
@@ -4686,18 +4739,23 @@ renderAll = function() {
 // ===== SHARE LINK HELPER =====
 const shareIconSvg = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-function showShareToast(msg) {
+// Designed, non-blocking feedback (replaces raw showToast()). type: 'error' | 'success' | 'info'
+function showToast(msg, type) {
+    type = type || 'error';
     let toast = document.getElementById('share-toast');
     if (!toast) {
         toast = document.createElement('div');
         toast.id = 'share-toast';
-        toast.className = 'share-toast';
         document.body.appendChild(toast);
     }
-    toast.textContent = msg || 'Link copied!';
+    toast.className = 'share-toast toast-' + type;
+    toast.textContent = msg || '';
+    toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
     toast.classList.add('visible');
     clearTimeout(toast._timer);
-    toast._timer = setTimeout(() => toast.classList.remove('visible'), 2000);
+    toast._timer = setTimeout(() => toast.classList.remove('visible'), type === 'error' ? 4200 : 2200);
+}
+function showShareToast(msg) { showToast(msg || 'Link copied!', 'success');
 }
 
 window.shareCurrentCampaign = function() { window.shareLink(currentPage); };
