@@ -1367,6 +1367,23 @@
         .mychar-bar span { display: block; height: 100%; background: var(--brand); transition: width var(--dur) var(--ease); }
         .mychar-actions { margin-top: 10px; }
         .mychar-open { margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: var(--brand); }
+        .mychar-field-label { display: block; font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin: 10px 0 4px; }
+        /* Create-a-character: this is a moment, so give it a real card + primary CTA */
+        .mychar-add-trigger { width: 100%; margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; background: transparent; border: 1.5px dashed var(--border); border-radius: var(--r-md); color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), background var(--dur) var(--ease); }
+        .mychar-add-trigger:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-tint); }
+        .mychar-add-plus { font-size: 1.2rem; line-height: 1; }
+        .mychar-create { margin-top: 10px; padding: 18px; background: linear-gradient(160deg, var(--brand-tint), var(--surface)); border: 1px solid var(--brand-line, var(--border)); border-radius: var(--r-lg); box-shadow: var(--shadow-2); }
+        .mychar-create-head { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; color: var(--text); }
+        .mychar-create-sub { font-size: 0.8rem; color: var(--text-dim); margin: 3px 0 12px; line-height: 1.4; }
+        .mychar-create .player-edit-input { width: 100%; }
+        .mychar-field-row { display: flex; gap: 10px; }
+        .mychar-field-row > div { flex: 1; min-width: 0; }
+        .mychar-field-row .player-edit-input { width: 100%; }
+        .mychar-create-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+        .mychar-btn-primary { padding: 10px 20px; background: var(--brand); color: var(--brand-ink); border: none; border-radius: var(--r-md); font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: opacity var(--dur) var(--ease); }
+        .mychar-btn-primary:hover { opacity: 0.9; }
+        .mychar-btn-ghost { padding: 10px 16px; background: transparent; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-md); font-family: 'Inter', sans-serif; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+        .mychar-btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
         /* LeyFarer leveling hero (atop the character's campaign page) */
         .ley-hero { display: flex; gap: 18px; align-items: flex-start; background: linear-gradient(135deg, color-mix(in srgb, var(--cp) 16%, var(--surface)), var(--surface)); border: 1px solid var(--border); border-left: 4px solid var(--cp); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 16px; }
         .ley-hero-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 84px; padding: 12px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-md); }
@@ -2345,8 +2362,48 @@ function leyfarerNextLevelAt(sessions) {
 const LEYFARER_MALOREN_SESSIONS = [
   ['2024-05-31','Intro - 9 Lives','Intro'],['2024-07-03','Troads Less Traveled','Side Quest'],['2024-07-06','Bridge of Dreams','Side Quest'],['2024-07-10','Spa Day','Side Quest'],['2024-07-14','Stalking Jaw','Side Quest'],['2024-07-19','Dinner Party','Side Quest'],['2024-07-20','4.1 Session','Campaign'],['2024-08-03','4.2 Session','Campaign'],['2024-08-10','Beach Day','Side Quest'],['2024-08-11','Lost & Damned','Side Quest'],['2024-08-17','Treasures of the Abyss','Side Quest'],['2024-08-17','4.3 Session','Campaign'],['2024-08-24','4.4 Session','Campaign'],['2024-09-01','Player Submit #1','Side Quest'],['2024-09-13','Player Submit #2','Side Quest'],['2024-09-14','4.5 Session','Campaign'],['2024-09-28','4.6 Finale','Campaign'],['2024-10-19','Harvest of Reckoning','Side Quest'],['2024-10-19','5.1 Session','Campaign'],['2024-10-21','Magus','Side Quest'],['2024-11-02','A Feast for Tree Ants','Side Quest'],['2024-11-02','5.2 Session','Campaign'],['2024-11-16','Players Choice','Side Quest'],['2024-11-16','5.3 Session','Campaign'],['2024-12-07','The Lost Tome','Side Quest'],['2024-12-07','5.4 Session','Campaign'],['2024-12-20','Land on Your Feet','Side Quest'],['2024-12-21','5.5 Session','Campaign'],['2024-12-27','5.6 Finale','Campaign'],['2025-01-24','Beast Within','Side Quest'],['2025-01-25','6.1 Session','Campaign'],['2025-02-08','6.2 Session','Campaign'],['2025-02-22','6.3 Session','Campaign'],['2025-03-08','6.4 Session','Campaign'],['2025-03-22','6.5 Session','Campaign'],['2025-04-08','6.6 Finale','Campaign'],['2025-04-22','Fight the Moon','Side Quest'],['2025-05-06','Longshadow Dusk','Side Quest'],['2025-05-20','Beneath the Briars','Side Quest']
 ];
+// Row order = play order from the sheet; month/day kept, year rolls forward on any backward step (starts 2024-05-31).
 const LEYFARER_KRENN_SESSIONS = [
-  ['2024-05-31','Intro - 9 Lives','Intro'],['2024-07-24','Spa Day','Side Quest'],['2024-07-28','Bridge of Dreams','Side Quest'],['2024-08-02','Beach Day','Side Quest'],['2024-08-14','Treasures of the Abyss','Side Quest'],['2024-08-25','Dinner Party','Side Quest'],['2024-09-21','Player Submit #2','Side Quest'],['2024-10-05','Player Submit #1','Side Quest'],['2024-10-11','Stalking Jaw','Side Quest'],['2024-10-13','Lost and Damned','Side Quest'],['2024-10-26','Harvest Of Reckoning','Side Quest'],['2024-12-01','A Feat for Tree Ants','Side Quest'],['2024-12-21','Land on Your Feet','Side Quest'],['2024-12-28','Lost Tome','Side Quest'],['2024-01-19','6.1 Session','Campaign'],['2024-02-01','The Once and Future Ring','Side Quest'],['2024-02-02','6.2 Session','Campaign'],['2024-02-15','Beast Within','Side Quest'],['2024-02-16','6.3 Session','Campaign'],['2024-02-23','Standardized Questing','Side Quest'],['2024-03-02','6.4 Session','Campaign'],['2024-03-22','6.5 Session','Campaign'],['2024-04-05','6.6 Finale','Campaign'],['2024-04-19','7.1 Session','Campaign'],['2024-04-25','Harvest of Reckoning','Side Quest'],['2024-04-27','Secrets of the Library','Side Quest'],['2024-05-03','7.2 Session','Campaign'],['2024-05-17','7.3 Session','Campaign'],['2024-05-17','Beneath the Briars','Side Quest'],['2024-05-31','7.4 Session','Campaign'],['2024-06-14','7.5 Session','Campaign'],['2024-06-14','What The Stars Silenced','Side Quest'],['2024-06-28','7.6 Finale','Campaign'],['2024-07-19','Field Testing','Side Quest'],['2024-07-19','8.1 Session','Campaign'],['2024-08-02','8.2 Session','Campaign'],['2024-08-16','8.3 Session','Campaign'],['2024-08-31','8.4 Session','Campaign'],['2024-09-13','8.5 Session','Campaign'],['2024-09-27','8.6 Finale','Campaign']
+  ['2024-05-31',"Intro - 9 Lives","Intro"],
+  ['2024-07-24',"Spa Day","Side Quest"],
+  ['2024-07-28',"Bridge of Dreams","Side Quest"],
+  ['2024-08-02',"Beach Day","Side Quest"],
+  ['2024-08-14',"Treasures of the Abyss","Side Quest"],
+  ['2024-08-25',"Dinner Party","Side Quest"],
+  ['2024-09-21',"Player Submit #2","Side Quest"],
+  ['2024-10-05',"Player Submit #1","Side Quest"],
+  ['2024-10-11',"Stalking Jaw","Side Quest"],
+  ['2024-10-13',"Lost and Damned","Side Quest"],
+  ['2024-10-26',"Harvest Of Reckoning","Side Quest"],
+  ['2024-12-01',"A Feat for Tree Ants","Side Quest"],
+  ['2024-12-21',"Land on Your Feet","Side Quest"],
+  ['2024-12-28',"Lost Tome","Side Quest"],
+  ['2025-01-19',"6.1 Session","Campaign"],
+  ['2025-02-01',"The Once and Future Ring","Side Quest"],
+  ['2025-02-02',"6.2 Session","Campaign"],
+  ['2025-02-15',"Beast Within","Side Quest"],
+  ['2025-02-16',"6.3 Session","Campaign"],
+  ['2025-02-23',"Standardized Questing","Side Quest"],
+  ['2025-03-02',"6.4 Session","Campaign"],
+  ['2025-03-22',"6.5 Session","Campaign"],
+  ['2025-04-05',"6.6 Finale","Campaign"],
+  ['2025-04-19',"7.1 Session","Campaign"],
+  ['2025-04-25',"Harvest of Reckoning","Side Quest"],
+  ['2025-04-27',"Secrets of the Library","Side Quest"],
+  ['2025-05-03',"7.2 Session","Campaign"],
+  ['2025-05-17',"7.3 Session","Campaign"],
+  ['2025-05-17',"Beneath the Briars","Side Quest"],
+  ['2025-05-31',"7.4 Session","Campaign"],
+  ['2025-06-14',"7.5 Session","Campaign"],
+  ['2025-06-14',"What The Stars Silenced","Side Quest"],
+  ['2025-06-28',"7.6 Finale","Campaign"],
+  ['2025-07-19',"Field Testing","Side Quest"],
+  ['2025-07-19',"8.1 Session","Campaign"],
+  ['2025-08-02',"8.2 Session","Campaign"],
+  ['2025-08-16',"8.3 Session","Campaign"],
+  ['2025-08-31',"8.4 Session","Campaign"],
+  ['2025-09-13',"8.5 Session","Campaign"],
+  ['2025-09-27',"8.6 Finale","Campaign"]
 ];
 // Which campaigns use LeyFarer leveling (flagged on the campaign doc by the migration).
 function isLeyfarerCampaign(c) { return !!(allCampaigns[c] && allCampaigns[c].leyfarer); }
@@ -3282,44 +3339,107 @@ function renderMyCharacters() {
         }
         h += `</div>`;
     });
-    // Add a character
-    h += `<div id="addchar-wrap"><button class="edit-party-btn" style="width:100%;margin-top:8px" onclick="toggleAddChar()">+ Add a character</button>
-      <div id="addchar-form" style="display:none;margin-top:8px">
-        <input type="text" id="addchar-name" class="player-edit-input" placeholder="Character name" maxlength="24" style="width:100%;margin-bottom:6px">
-        <input type="text" id="addchar-class" class="player-edit-input" placeholder="Class (optional)" maxlength="30" style="width:100%;margin-bottom:6px">
-        <select id="addchar-campaign" class="player-edit-input" style="width:100%;margin-bottom:6px"></select>
-        <button class="submit-btn" style="width:100%" onclick="addMyCharacter()">Add character</button>
+    // Add a character — a real creation moment, not a bare form
+    h += `<div id="addchar-wrap">
+      <button class="mychar-add-trigger" id="addchar-trigger" onclick="toggleAddChar()"><span class="mychar-add-plus">+</span> Add a character</button>
+      <div id="addchar-form" class="mychar-create" style="display:none">
+        <div class="mychar-create-head">Create a character</div>
+        <div class="mychar-create-sub">Give them a name and class, then choose the campaign they belong to.</div>
+        <label class="mychar-field-label">Name</label>
+        <input type="text" id="addchar-name" class="player-edit-input" placeholder="e.g. Vloskev" maxlength="24">
+        <div class="mychar-field-row">
+          <div><label class="mychar-field-label">Class</label><input type="text" id="addchar-class" class="player-edit-input" placeholder="e.g. Rogue" maxlength="30"></div>
+          <div><label class="mychar-field-label">Subclass</label><input type="text" id="addchar-subclass" class="player-edit-input" placeholder="optional" maxlength="30"></div>
+        </div>
+        <label class="mychar-field-label">Campaign</label>
+        <select id="addchar-campaign" class="player-edit-input" onchange="onAddCharCampaign()"></select>
+        <div id="addchar-new" style="display:none">
+          <label class="mychar-field-label">New campaign name</label>
+          <input type="text" id="addchar-camp-name" class="player-edit-input" placeholder="e.g. Leyfarers: Vloskev" maxlength="40">
+          <label class="nc-ley-check" style="margin-top:12px"><input type="checkbox" id="addchar-ley" onchange="onAddCharLeyToggle()"> <span><strong>LeyFarer character</strong> — creates a leveling campaign (solo journey; level comes from completed sessions).</span></label>
+          <div id="addchar-ley-opts" style="display:none">
+            <label class="mychar-field-label">Starting chapter</label>
+            <select id="addchar-chapter" class="player-edit-input" onchange="onAddCharSessions()"><option value="12">Chapter 12 — max Lvl 16</option><option value="13">Chapter 13 — max Lvl 17</option><option value="14">Chapter 14 — max Lvl 18</option><option value="15">Chapter 15 — max Lvl 19</option><option value="16">Chapter 16 — max Lvl 20</option></select>
+            <label class="mychar-field-label">Sessions completed so far</label>
+            <input type="number" id="addchar-sessions" class="player-edit-input" min="0" value="0" oninput="onAddCharSessions()">
+            <div class="nc-hint" id="addchar-ley-hint" style="margin-top:6px"></div>
+          </div>
+        </div>
+        <div class="mychar-create-actions">
+          <button class="mychar-btn-ghost" onclick="toggleAddChar()">Cancel</button>
+          <button class="mychar-btn-primary" onclick="addMyCharacter()">Add character</button>
+        </div>
       </div></div>`;
     h += `<div class="mychar-actions" style="margin-top:8px"><button class="edit-party-btn" id="guide-toggle" onclick="toggleLevelGuide()">Show LeyFarer leveling guide</button></div><div id="level-guide" style="display:none;margin-top:8px">${leyfarerGuideHtml()}</div>`;
-    if (!leyfarerMigrated()) h += `<button class="submit-btn" id="ley-migrate-btn" style="width:100%;margin-top:10px" onclick="migrateLeyfarers()">Set up my LeyFarer journey (Maloren & Krenn)</button>`;
+    if (!leyfarerMigrated()) h += `<button class="mychar-btn-primary" id="ley-migrate-btn" style="width:100%;margin-top:10px" onclick="migrateLeyfarers()">Set up my LeyFarer journey (Maloren & Krenn)</button>`;
     body.innerHTML = h;
 }
 window.toggleAddChar = function() {
     const f = document.getElementById('addchar-form'); if (!f) return;
     const open = f.style.display !== 'none'; f.style.display = open ? 'none' : 'block';
-    if (!open) {   // populate the campaign picker with campaigns I can manage
+    const trigger = document.getElementById('addchar-trigger'); if (trigger) trigger.style.display = open ? '' : 'none';
+    if (!open) {   // populate the campaign picker with campaigns I can manage, plus a "new campaign" option
         const sel = document.getElementById('addchar-campaign'); if (sel) {
             const mine = Object.keys(allCampaigns).filter(c => canManageCampaign(c) && !isDeleted(c));
-            sel.innerHTML = mine.map(c => `<option value="${c}">${escapeHtml(campaignName(c))}</option>`).join('') || `<option value="">No campaigns you manage yet</option>`;
+            const existing = mine.map(c => `<option value="${c}">${escapeHtml(campaignName(c))}</option>`).join('');
+            const newOpt = currentUser ? `<option value="__new__">+ New campaign…</option>` : '';   // creating a campaign needs an account
+            sel.innerHTML = existing + newOpt;
+            sel.value = mine[0] || (currentUser ? '__new__' : '');
         }
+        ['addchar-name', 'addchar-class', 'addchar-subclass'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+        const ley = document.getElementById('addchar-ley'); if (ley) ley.checked = false;
+        const sess = document.getElementById('addchar-sessions'); if (sess) sess.value = '0';
+        const chap = document.getElementById('addchar-chapter'); if (chap) chap.value = '12';
+        onAddCharCampaign();
         const nm = document.getElementById('addchar-name'); if (nm) nm.focus();
     }
+};
+window.onAddCharCampaign = function() {
+    const isNew = document.getElementById('addchar-campaign').value === '__new__';
+    const blk = document.getElementById('addchar-new'); if (blk) blk.style.display = isNew ? '' : 'none';
+    if (isNew) onAddCharLeyToggle();
+};
+window.onAddCharLeyToggle = function() {
+    const on = !!document.getElementById('addchar-ley').checked;
+    const opts = document.getElementById('addchar-ley-opts'); if (opts) opts.style.display = on ? '' : 'none';
+    if (on) onAddCharSessions();
+};
+window.onAddCharSessions = function() {
+    const hint = document.getElementById('addchar-ley-hint'); if (!hint) return;
+    const n = Math.max(0, parseInt(document.getElementById('addchar-sessions').value, 10) || 0);
+    const chapter = parseInt(document.getElementById('addchar-chapter').value, 10) || LEYFARER_CURRENT_CHAPTER;
+    const lvl = Math.min(leyfarerLevelForSessions(n), leyfarerChapterMax(chapter));
+    hint.innerHTML = `Starts at <strong>Level ${lvl}</strong> — from ${n} session${n === 1 ? '' : 's'} completed, capped by Chapter ${chapter}.`;
 };
 window.addMyCharacter = async function() {
     const me = myOwnerId(); if (!me) { showToast('Sign in first to add characters.'); return; }
     const name = (document.getElementById('addchar-name').value || '').trim();
     const cls = (document.getElementById('addchar-class').value || '').trim();
-    const campaign = document.getElementById('addchar-campaign').value;
+    const sub = (document.getElementById('addchar-subclass').value || '').trim();
     if (!name) { showToast('Enter a character name.'); return; }
-    if (!campaign) { showToast('Pick a campaign for this character.'); return; }
+    let campaign = document.getElementById('addchar-campaign').value;
+    let ley = false;
+    if (campaign === '__new__') {
+        if (!currentUser) { showToast('Sign in to create a campaign.'); return; }
+        const campName = (document.getElementById('addchar-camp-name').value || '').trim();
+        if (!campName) { showToast('Name the new campaign.'); return; }
+        ley = !!document.getElementById('addchar-ley').checked;
+        const chapter = parseInt(document.getElementById('addchar-chapter').value, 10) || LEYFARER_CURRENT_CHAPTER;
+        const base = ley ? Math.max(0, parseInt(document.getElementById('addchar-sessions').value, 10) || 0) : 0;
+        try { campaign = await createCampaignDoc(campName, ley ? '🗺️' : '🎲', ley ? '#7e57c2' : CAMPAIGN_SWATCHES[0], { leyfarer: ley, chapter, baseSessions: base }); }
+        catch (e) { console.error('create campaign for character:', e); showToast('Could not create the campaign — try again.'); return; }
+    } else {
+        if (!campaign) { showToast('Pick a campaign for this character.'); return; }
+        ley = isLeyfarerCampaign(campaign);   // an existing LeyFarer campaign makes this a LeyFarer character
+    }
     if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
     if (!campaignRosters[campaign]) campaignRosters[campaign] = [];
     if (campaignCharacters[campaign][name]) { showToast('That character already exists in this campaign.'); return; }
-    campaignCharacters[campaign][name] = { charClass: cls, owner: me };   // self-claim: creating IS claiming
+    campaignCharacters[campaign][name] = { charClass: cls, subclass: sub, owner: me, ...(ley ? { leyfarer: true } : {}) };   // self-claim: creating IS claiming
     if (!campaignRosters[campaign].includes(name)) campaignRosters[campaign].push(name);
     try { await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]); showToast(`Added ${name}`, 'success'); }
     catch (e) { console.error('add character:', e); showToast('Could not save — try again.'); }
-    renderMyCharacters();
+    closeMyCharacters(); window.navigateTo(campaign);   // land on the character's (LeyFarer or normal) campaign page
 };
 // The visible leveling guide: sessions → level (Table 3) and the chapter caps (Table 2).
 function leyfarerGuideRows() {
