@@ -1382,6 +1382,9 @@
         .ley-hero-guide { margin-top: 12px; }
         .ley-type-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand); border: 1px solid var(--brand-line, var(--brand)); border-radius: var(--r-pill); padding: 2px 9px; }
         .ley-done-note { font-size: 0.78rem; color: var(--text-dim); }
+        .nc-ley-check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; cursor: pointer; }
+        .nc-ley-check input { accent-color: var(--brand); flex-shrink: 0; margin-top: 2px; }
+        .nc-ley-check strong { color: var(--text); }
         @media (max-width: 600px) { .ley-hero { gap: 12px; padding: 14px; } .ley-hero-badge { min-width: 66px; } .ley-hero-lvl { font-size: 2rem; } }
         .mychar-qlog { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
         .mychar-quest { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 0.82rem; color: var(--text); cursor: pointer; }
@@ -1517,6 +1520,27 @@
             <div class="form-group"><label>Campaign name</label><input type="text" id="nc-name" placeholder="e.g. Wild Beyond the Witchlight" maxlength="40"></div>
             <div class="form-group"><label>Icon</label><div id="nc-icons" class="icon-row"></div><input type="hidden" id="nc-icon"></div>
             <div class="form-group"><label>Color</label><div id="nc-swatches" class="swatch-row"></div></div>
+            <div class="form-group"><label>Type</label>
+                <label class="nc-ley-check"><input type="checkbox" id="nc-leyfarer" onchange="onNcLeyfarerToggle()"> <span><strong>LeyFarer campaign</strong> — a single character's solo journey. Level comes from completed sessions (campaign + side quests), capped by chapter.</span></label>
+            </div>
+            <div class="form-group" id="nc-chapter-group" style="display:none"><label>Starting chapter</label>
+                <select id="nc-chapter" onchange="onNcCharSessions()"><option value="12">Chapter 12 — max Lvl 16</option><option value="13">Chapter 13 — max Lvl 17</option><option value="14">Chapter 14 — max Lvl 18</option><option value="15">Chapter 15 — max Lvl 19</option><option value="16">Chapter 16 — max Lvl 20</option></select>
+            </div>
+            <div id="nc-ley-char" style="display:none">
+                <label class="nc-ley-check"><input type="checkbox" id="nc-add-char" checked onchange="onNcAddCharToggle()"> <span><strong>Add this campaign's character now</strong> — its solo journey. You can also do it later from My Characters.</span></label>
+                <div id="nc-char-fields">
+                    <div class="form-row">
+                        <div class="form-group"><label>Character name</label><input type="text" id="nc-char-name" placeholder="e.g. Bob" maxlength="24"></div>
+                        <div class="form-group" style="flex:0 0 130px"><label>Sessions done</label><input type="number" id="nc-char-sessions" min="0" value="0" oninput="onNcCharSessions()"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Class</label><input type="text" id="nc-char-class" placeholder="e.g. Magus" maxlength="30"></div>
+                        <div class="form-group"><label>Subclass</label><input type="text" id="nc-char-subclass" placeholder="optional" maxlength="30"></div>
+                    </div>
+                    <div class="nc-hint" id="nc-char-level-hint"></div>
+                </div>
+            </div>
+            <div class="nc-hint" id="nc-ley-hint" style="display:none">Tip: name it like <strong>“Leyfarers: Bob”</strong> — the level view uses the name after the colon.</div>
             <div class="nc-hint">You'll be the owner. Once it's created, invite players by email or a join code from the campaign's <strong>Share</strong> menu.</div>
         </div>
         <div class="form-row" id="session-visibility-row" style="display:none">
@@ -2331,7 +2355,9 @@ window.isLeyfarerCampaign = isLeyfarerCampaign;
 function campaignCompletedCount(c) { return sessions.filter(s => s.campaign === c && s.completed === true && s.status !== 'cancelled').length; }
 // A LeyFarer campaign's level = level-for-completed-sessions, capped by the campaign's chapter.
 function leyfarerCampaignInfo(c) {
-    const done = campaignCompletedCount(c);
+    // baseSessions = sessions completed before this campaign started logging (set at creation), + confirmed sessions here.
+    const base = (allCampaigns[c] && allCampaigns[c].baseSessions) || 0;
+    const done = base + campaignCompletedCount(c);
     const chapter = (allCampaigns[c] && allCampaigns[c].chapter) || LEYFARER_CURRENT_CHAPTER;
     const uncapped = leyfarerLevelForSessions(done);
     const chapterMax = leyfarerChapterMax(chapter);
@@ -2606,10 +2632,11 @@ function generateSessionDates(opts) {
 const CAMPAIGN_SWATCHES = ['#4fc3f7','#ef5350','#f5c518','#ce93d8','#4caf50','#ff9800','#26c6da','#ab47bc','#ec407a','#8d6e63'];
 function slugify(name) { const s = String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24); return s || 'campaign'; }
 function uniqueCampaignSlug(name) { let base = slugify(name), slug = base, i = 2; while (allCampaigns[slug] || campaignNames[slug]) slug = `${base}-${i++}`; return slug; }
-async function createCampaignDoc(name, icon, color) {
+async function createCampaignDoc(name, icon, color, opts) {
     const me = myEmail(); if (!me) throw new Error('Sign in to create a campaign.');
     const slug = uniqueCampaignSlug(name);
     const data = { name: name.trim(), icon: (icon || '🎲').trim() || '🎲', color: color || '#4fc3f7', owner: me, createdAt: Date.now() };
+    if (opts && opts.leyfarer) { data.leyfarer = true; data.chapter = opts.chapter || LEYFARER_CURRENT_CHAPTER; if (opts.baseSessions) data.baseSessions = opts.baseSessions; }
     await setDoc(doc(db, "campaigns", slug), data);
     allCampaigns[slug] = { id: slug, ...data };
     renderCampaignTheme();
@@ -3361,6 +3388,12 @@ window.openAddSession = function(preCampaign) {
     document.getElementById('rec-start').value = tstr;
     ['new-session-time','new-session-gm','new-session-duration','nc-name','nc-icon'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
     multiDates = []; ncColor = CAMPAIGN_SWATCHES[0]; ncIcon = '🎲';
+    const ncLeyEl = document.getElementById('nc-leyfarer'); if (ncLeyEl) ncLeyEl.checked = false;
+    const ncAddChar = document.getElementById('nc-add-char'); if (ncAddChar) ncAddChar.checked = true;
+    ['nc-char-name','nc-char-class','nc-char-subclass'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+    const ncSess = document.getElementById('nc-char-sessions'); if (ncSess) ncSess.value = '0';
+    const ncChap = document.getElementById('nc-chapter'); if (ncChap) ncChap.value = '12';
+    onNcLeyfarerToggle();
     setLeyStatus('scheduled');
     setAddMode('one');
     // Preselect the campaign when opened from a campaign page's "Add session" button.
@@ -3401,6 +3434,25 @@ function onNewCampaignToggle() {
     if (leyRow) leyRow.style.display = (!isNew && isLeyfarerCampaign(document.getElementById('new-session-campaign').value)) ? '' : 'none';
     if (isNew) { renderSwatches(); renderNcIcons(); }
 }
+window.onNcLeyfarerToggle = function() {
+    const on = !!document.getElementById('nc-leyfarer').checked;
+    const grp = document.getElementById('nc-chapter-group'); if (grp) grp.style.display = on ? '' : 'none';
+    const hint = document.getElementById('nc-ley-hint'); if (hint) hint.style.display = on ? '' : 'none';
+    const charBlk = document.getElementById('nc-ley-char'); if (charBlk) charBlk.style.display = on ? '' : 'none';
+    if (on) { onNcAddCharToggle(); onNcCharSessions(); }
+};
+window.onNcAddCharToggle = function() {
+    const on = !!document.getElementById('nc-add-char').checked;
+    const f = document.getElementById('nc-char-fields'); if (f) f.style.display = on ? '' : 'none';
+};
+// Live "→ Level N" preview: level comes from sessions completed so far, capped by the chosen chapter.
+window.onNcCharSessions = function() {
+    const hint = document.getElementById('nc-char-level-hint'); if (!hint) return;
+    const n = Math.max(0, parseInt(document.getElementById('nc-char-sessions').value, 10) || 0);
+    const chapter = parseInt(document.getElementById('nc-chapter').value, 10) || LEYFARER_CURRENT_CHAPTER;
+    const lvl = Math.min(leyfarerLevelForSessions(n), leyfarerChapterMax(chapter));
+    hint.innerHTML = `Starts at <strong>Level ${lvl}</strong> — from ${n} session${n === 1 ? '' : 's'} completed, capped by Chapter ${chapter}. Each session you mark completed raises it.`;
+};
 let leySessionStatus = 'scheduled';
 window.setLeyStatus = function(v) {
     leySessionStatus = v;
@@ -3526,7 +3578,22 @@ window.submitAddSession = async function() {
         if (isNew) {
             const name = document.getElementById('nc-name').value.trim();
             if (!name) { showToast('Enter a campaign name.'); if (btn) { btn.disabled = false; btn.textContent = 'Add to Schedule'; } return; }
-            campaign = await createCampaignDoc(name, document.getElementById('nc-icon').value, ncColor);
+            const ncLey = !!document.getElementById('nc-leyfarer').checked;
+            const ncChapter = parseInt(document.getElementById('nc-chapter').value, 10) || LEYFARER_CURRENT_CHAPTER;
+            const ncBase = ncLey ? Math.max(0, parseInt(document.getElementById('nc-char-sessions').value, 10) || 0) : 0;
+            campaign = await createCampaignDoc(name, document.getElementById('nc-icon').value, ncColor, { leyfarer: ncLey, chapter: ncChapter, baseSessions: ncBase });
+            // Optionally create this LeyFarer campaign's character (self-claimed to the creator).
+            if (ncLey && document.getElementById('nc-add-char').checked) {
+                let charName = (document.getElementById('nc-char-name').value || '').trim() || (name.split(':')[1] || '').trim();
+                if (charName) {
+                    const me = myOwnerId();
+                    if (!campaignCharacters[campaign]) campaignCharacters[campaign] = {};
+                    if (!campaignRosters[campaign]) campaignRosters[campaign] = [];
+                    campaignCharacters[campaign][charName] = { charClass: (document.getElementById('nc-char-class').value || '').trim(), subclass: (document.getElementById('nc-char-subclass').value || '').trim(), owner: me, leyfarer: true };
+                    if (!campaignRosters[campaign].includes(charName)) campaignRosters[campaign].push(charName);
+                    try { await Promise.all([saveCharactersToFirestore(), saveRostersToFirestore()]); } catch (e) { console.error('create ley character:', e); }
+                }
+            }
         }
         const isPrivate = !!(currentUser && newSessionVisibility === 'private');
         const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
