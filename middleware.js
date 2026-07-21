@@ -4,33 +4,82 @@
 //
 // This file runs on the server and is NOT served to browsers, so the values below aren't
 // exposed to visitors. (The email is already public in index.html's fallback list anyway,
-// and the project id is public in the Firebase config — so hardcoding them adds no exposure.)
-// No Vercel setup needed. Env vars, if set, override the defaults.
+// and the project id is public in the Firebase config.) No Vercel setup needed — env vars,
+// if set, override the defaults.
 //
 // The main app writes the token to the `__tpk_token` cookie on sign-in (see onIdTokenChanged
-// in index.html). Firebase tokens last ~1h and refresh automatically while the app is open.
+// in index.html). Tokens last ~1h and refresh automatically while the app is open.
+//
+// No external dependencies: the JWT is verified with the built-in Web Crypto API. Cookies are
+// parsed from the header (a plain Request has no .cookies helper outside Next.js).
 
-import { jwtVerify, createRemoteJWKSet } from 'jose';
-
-export const config = { matcher: ['/maloren', '/maloren/', '/maloren/:path*'] };
+export const config = { matcher: ['/maloren', '/maloren/:path*'] };
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'tpk-group-8cdc8';
 const ALLOWED = (process.env.MALOREN_ALLOWED_EMAIL || 'sthomas131@gmail.com').toLowerCase();
-// Firebase signs ID tokens with Google's securetoken keys (published as a JWK set).
-const JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/robot/v1/metadata/jwk/securetoken@system.gserviceaccount.com'));
+const JWK_URL = 'https://www.googleapis.com/robot/v1/metadata/jwk/securetoken@system.gserviceaccount.com';
+
+let jwksCache = null, jwksExp = 0;
+async function getKeys() {
+    if (jwksCache && Date.now() < jwksExp) return jwksCache;
+    const res = await fetch(JWK_URL);
+    const data = await res.json();
+    jwksCache = data.keys || [];
+    jwksExp = Date.now() + 3600000;
+    return jwksCache;
+}
+
+function b64urlBytes(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const bin = atob(s);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+}
+function b64urlJson(s) { return JSON.parse(new TextDecoder().decode(b64urlBytes(s))); }
+
+function getCookie(req, name) {
+    const raw = req.headers.get('cookie') || '';
+    for (const part of raw.split(';')) {
+        const eq = part.indexOf('=');
+        if (eq === -1) continue;
+        if (part.slice(0, eq).trim() === name) return decodeURIComponent(part.slice(eq + 1).trim());
+    }
+    return null;
+}
+
+async function verifyToken(token) {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const header = b64urlJson(parts[0]);
+    const payload = b64urlJson(parts[1]);
+    const keys = await getKeys();
+    const jwk = keys.find(k => k.kid === header.kid);
+    if (!jwk) return null;
+    const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    const signed = new TextEncoder().encode(parts[0] + '.' + parts[1]);
+    const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64urlBytes(parts[2]), signed);
+    if (!ok) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) return null;
+    if (payload.iss !== `https://securetoken.google.com/${PROJECT_ID}`) return null;
+    if (payload.aud !== PROJECT_ID) return null;
+    return payload;
+}
 
 export default async function middleware(req) {
+    // Fail safe: only ever act on /maloren, so nothing here can affect the rest of the site.
+    let pathname = '/';
+    try { pathname = new URL(req.url).pathname; } catch (e) { return; }
+    if (!pathname.startsWith('/maloren')) return;
+
     const deny = () => Response.redirect(new URL('/?maloren=login', req.url), 302);
-    if (!PROJECT_ID || !ALLOWED) return deny();   // misconfigured → fail closed
-    const token = req.cookies.get('__tpk_token')?.value;
+    const token = getCookie(req, '__tpk_token');
     if (!token) return deny();
     try {
-        const { payload } = await jwtVerify(token, JWKS, {
-            issuer: `https://securetoken.google.com/${PROJECT_ID}`,
-            audience: PROJECT_ID,
-        });
-        const email = String(payload.email || '').toLowerCase();
-        if (email && email === ALLOWED) return undefined;   // verified as the owner → serve the file
-    } catch (e) { /* invalid/expired token → deny */ }
+        const payload = await verifyToken(token);
+        if (payload && String(payload.email || '').toLowerCase() === ALLOWED) return;   // allow → serve the file
+    } catch (e) { /* fall through to deny */ }
     return deny();
 }
