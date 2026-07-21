@@ -1,11 +1,11 @@
 // Edge gate for /maloren — runs on Vercel's edge BEFORE the static file is served.
 // Only a request carrying a valid Firebase ID token for the allowed email gets through;
-// everyone else is redirected to the home page. The allowed email + project id live in
-// Vercel environment variables (NOT in this source), so the identity isn't in the code.
+// everyone else is redirected to the home page.
 //
-// Required Vercel env vars:
-//   FIREBASE_PROJECT_ID      (already set for build.sh)
-//   MALOREN_ALLOWED_EMAIL    e.g. sthomas131@gmail.com
+// This file runs on the server and is NOT served to browsers, so the values below aren't
+// exposed to visitors. (The email is already public in index.html's fallback list anyway,
+// and the project id is public in the Firebase config — so hardcoding them adds no exposure.)
+// No Vercel setup needed. Env vars, if set, override the defaults.
 //
 // The main app writes the token to the `__tpk_token` cookie on sign-in (see onIdTokenChanged
 // in index.html). Firebase tokens last ~1h and refresh automatically while the app is open.
@@ -14,8 +14,8 @@ import { jwtVerify, createRemoteJWKSet } from 'jose';
 
 export const config = { matcher: ['/maloren', '/maloren/', '/maloren/:path*'] };
 
-const PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
-const ALLOWED = (process.env.MALOREN_ALLOWED_EMAIL || '').toLowerCase();
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'tpk-group-8cdc8';
+const ALLOWED = (process.env.MALOREN_ALLOWED_EMAIL || 'sthomas131@gmail.com').toLowerCase();
 // Firebase signs ID tokens with Google's securetoken keys (published as a JWK set).
 const JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/robot/v1/metadata/jwk/securetoken@system.gserviceaccount.com'));
 
