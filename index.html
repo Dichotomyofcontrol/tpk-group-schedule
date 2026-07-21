@@ -474,6 +474,8 @@
         .session-detail-section { margin-bottom: 14px; }
         .session-detail-section:last-child { margin-bottom: 0; }
         .detail-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+        .session-manage { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; }
+        .session-manage-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .session-attendance { display: flex; flex-wrap: wrap; gap: 5px; }
         .att-chip { font-size: 0.72rem; font-weight: 500; padding: 3px 10px; border-radius: 100px; cursor: pointer; transition: all 0.2s; border: 1px solid rgba(102,187,106,0.3); background: rgba(102,187,106,0.12); color: var(--success); font-family: 'Inter', sans-serif; user-select: none; }
         .att-chip:hover { filter: brightness(1.2); transform: scale(1.05); }
@@ -5393,6 +5395,8 @@ function renderSessionCard(s, gi, ci) {
     }
     const inviteBtnHtml = isOwner ? `<button class="share-btn" onclick="event.stopPropagation(); openInvite('${sid}')">&#43; Invite</button>` : '';
     const shareSessionHtml = `<div class="session-detail-section" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap"><button class="share-btn" onclick="event.stopPropagation(); shareLink('${s.campaign}','${s.date}',false,event)">Share Session</button>${inviteBtnHtml}</div>`;
+    // Edit / cancel / delete live inside the expanded detail now — not on the collapsed tile.
+    const manageHtml = actionHtml ? `<div class="session-detail-section session-manage"><div class="detail-label">Manage session</div><div class="session-manage-actions" onclick="event.stopPropagation()">${actionHtml}</div></div>` : '';
     const titleHtml = s.title ? `${escapeHtml(campaignName(s.campaign))} &mdash; ${escapeHtml(s.title)}` : escapeHtml(campaignName(s.campaign));
     const levelHtml = s.level ? ` \u00b7 ${escapeHtml(s.level)}` : '';
     let ownerTag = '';
@@ -5404,7 +5408,7 @@ function renderSessionCard(s, gi, ci) {
             else ownerTag = `<button class="owner-tag owner-tag-btn" onclick="event.stopPropagation(); toggleSessionVisibility('${sid}')" title="${nInv ? 'Only you + invited can see this' : 'Only you can see this'} \u2014 click to share with the whole party">${label}</button>`;
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-action" onclick="event.stopPropagation()">${actionHtml}</div><div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}${manageHtml}</div></div>`;
 }
 
 function renderList() {
