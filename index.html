@@ -94,6 +94,7 @@
         .pass-form button { font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 500; padding: 12px 24px; border-radius: var(--r-sm); border: 1px solid var(--brand-line); background: var(--brand); color: var(--brand-ink); font-weight: 600; cursor: pointer; }
         .pass-form button:hover { background: var(--brand-strong); border-color: var(--brand-strong); }
         .pass-error { color: var(--error); font-size: 0.8rem; min-height: 1.2em; }
+        .gate-join-note { color: var(--brand); font-size: 0.85rem; line-height: 1.45; background: var(--brand-tint); border: 1px solid var(--brand-line, var(--brand)); border-radius: var(--r-md); padding: 10px 14px; margin-bottom: 14px; max-width: 320px; }
         .pass-hint { color: var(--text-dim); font-size: 0.75rem; margin-top: 24px; opacity: 0.5; }
         .gate-divider { display: flex; align-items: center; gap: 12px; width: 320px; max-width: 80vw; margin: 18px 0 14px; color: var(--text-dim); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
         .gate-divider::before, .gate-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
@@ -1490,6 +1491,7 @@
     <div class="gate-card">
     <h1>Six in the TPK</h1>
     <div class="subtitle">Plan the next session — and keep the story of the last one alive.</div>
+    <div class="gate-join-note" id="gate-join-note" style="display:none"></div>
     <div class="pass-form">
         <input type="text" id="pass-input" placeholder="Enter your join code" autocomplete="off" style="text-transform:uppercase">
         <button onclick="checkPassword()">Join</button>
@@ -2056,7 +2058,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, onIdTokenChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 /* ===== Iconography — one coherent monochrome stroke set (24px grid, currentColor) ===== */
 const ICO = {
@@ -2272,8 +2274,11 @@ let allShares = {};   // `${owner}__${campaign}` -> [member emails]
 // Join codes: bearer keys for people who don't want an account.
 // codes/{CODE} doc -> { owner, campaign }. Redeemed codes live in localStorage.
 let allCodes = {};    // CODE -> { owner, campaign }
+// Anonymous guest access is retired — a join code now requires an account (redeeming it adds you
+// as a campaign member under your login). Any old device-local guest codes are cleared on load.
 let redeemedCodes = [];
-try { redeemedCodes = JSON.parse(localStorage.getItem('tpk_codes') || '[]'); } catch(e) { redeemedCodes = []; }
+try { localStorage.removeItem('tpk_codes'); } catch(e) {}
+let pendingJoinCode = null;   // a code entered before signing in — auto-redeemed once an account exists
 let codesLoaded = false;
 function codeGrants() { return redeemedCodes.map(c => allCodes[c]).filter(Boolean); }
 function codeGrantsCampaign(c) { return codeGrants().some(g => g.campaign === c); }
@@ -2545,15 +2550,28 @@ const monthNames = ["January", "February", "March", "April", "May", "June", "Jul
 async function redeemCode(rawCode) {
     const code = (rawCode || '').trim().toUpperCase();
     if (!code) return { ok: false, reason: 'empty' };
+    let g;
     try {
         const snap = await getDoc(doc(db, "codes", code));
         if (!snap.exists()) return { ok: false, reason: 'notfound' };
-        const g = snap.data();
-        allCodes[code] = { owner: g.owner, campaign: g.campaign, label: g.label || '' };
-        const already = redeemedCodes.includes(code);
-        if (!already) { redeemedCodes.push(code); localStorage.setItem('tpk_codes', JSON.stringify(redeemedCodes)); }
-        return { ok: true, code, campaign: g.campaign, label: g.label || '', already };
-    } catch (e) { console.error("Code redeem error:", e); return { ok: false, reason: 'error' }; }
+        g = snap.data();
+    } catch (e) { console.error("Code lookup error:", e); return { ok: false, reason: 'error' }; }
+    allCodes[code] = { owner: g.owner, campaign: g.campaign, label: g.label || '' };
+    const me = myEmail();
+    // Codes require an account. If not signed in yet, hold the code and send them to create one.
+    if (!me) { pendingJoinCode = code; return { ok: false, reason: 'needaccount', campaign: g.campaign, label: g.label || '' }; }
+    const already = campaignShareMembers(g.campaign).includes(me) || userCampaigns.includes(g.campaign);
+    // Bind this account to the campaign (same membership path as accepting an invite) so access is login-based.
+    try {
+        if (g.owner) {
+            const key = shareKey(g.owner, g.campaign);
+            await setDoc(doc(db, "shares", key), { owner: g.owner, campaign: g.campaign, members: arrayUnion(me) }, { merge: true });
+            allShares[key] = [...new Set([...shareMembers(g.owner, g.campaign), me])];
+        }
+        await setDoc(doc(db, "profiles", me), { campaigns: arrayUnion(g.campaign) }, { merge: true });
+        if (!userCampaigns.includes(g.campaign)) userCampaigns.push(g.campaign);
+    } catch (e) { console.error("Join (code) error:", e); return { ok: false, reason: 'error' }; }
+    return { ok: true, code, campaign: g.campaign, label: g.label || '', already };
 }
 // Open the optional "add your character" prompt for a freshly joined campaign.
 function promptJoinParty(campaign, label, welcome) {
@@ -2568,11 +2586,20 @@ function promptJoinParty(campaign, label, welcome) {
 window.checkPassword = async function() {
     const raw = document.getElementById('pass-input').value.trim();
     const errEl = document.getElementById('pass-error');
-    // Join-code entry (the passphrase has been retired — access is code / invite / account only).
+    // Join-code entry. A valid code now requires an account — it adds you to the campaign under your login.
     const result = await redeemCode(raw);
     if (result.ok) {
         showApp(); renderAll();
         promptJoinParty(result.campaign, result.label, true);
+        return;
+    }
+    if (result.reason === 'needaccount') {
+        // Valid code, but no account yet: hold it, flip the gate to Create Account, and explain.
+        errEl.textContent = '';
+        if (!gateCreateMode) toggleGateMode();
+        const note = document.getElementById('gate-join-note');
+        if (note) { note.textContent = `You're invited to ${campaignNames[result.campaign] || result.campaign}. Create an account (or sign in) below and we'll add you.`; note.style.display = ''; }
+        const emailInput = document.getElementById('email-input'); if (emailInput) emailInput.focus();
         return;
     }
     errEl.textContent = result.reason === 'empty' ? "Enter your join code." : "That code doesn't match a campaign. Check it and try again.";
@@ -2634,23 +2661,37 @@ onAuthStateChanged(auth, async (user) => {
         } catch (e) { /* keep fallback */ }
         showApp();
         if (appStarted) { renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); }
+        // A join code entered before signing in — now redeem it against this account.
+        if (pendingJoinCode) {
+            const pc = pendingJoinCode; pendingJoinCode = null;
+            const r = await redeemCode(pc);
+            if (r.ok) {
+                const note = document.getElementById('gate-join-note'); if (note) note.style.display = 'none';
+                updateAccessUI(); renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage);
+                promptJoinParty(r.campaign, r.label, true);
+            }
+        }
         checkPendingInvites();
         checkCampaignNotifications();
     } else {
-        // No account. If there's no session at all, get an anonymous token so the app keeps
-        // working once Firestore rules require authentication.
+        // No account. Get an anonymous token so Firestore rules can require authentication, but
+        // an anonymous session grants NO access — it stays on the gate until a real account signs in.
         if (!user) { signInAnonymously(auth).catch(e => console.error('Anonymous sign-in failed — enable Anonymous auth in Firebase:', e)); }
         userCampaigns = [];
         updateAccessUI();
-        if (appStarted && redeemedCodes.length) {
-            if (!campaignVisible(activeFilter)) activeFilter = 'all';
-            if (currentPage !== 'home' && !campaignVisible(currentPage)) window.navigateTo('home');
-            renderAll();
-        }
     }
 });
-// Previously redeemed join codes (this device) skip the gate
-if (redeemedCodes.length) showApp();
+// Mirror the Firebase ID token into a cookie so the edge gate on /maloren can verify who you are
+// (server-side, before serving the file). Fires on sign-in and on each hourly token refresh.
+onIdTokenChanged(auth, async (user) => {
+    const secure = (location.protocol === 'https:') ? '; secure' : '';
+    if (user && user.email) {
+        try { const t = await user.getIdToken(); document.cookie = `__tpk_token=${t}; path=/; max-age=3600; samesite=lax${secure}`; }
+        catch (e) { /* leave any existing cookie; it'll refresh on the next tick */ }
+    } else {
+        document.cookie = `__tpk_token=; path=/; max-age=0; samesite=lax${secure}`;   // signed out / anonymous → no token
+    }
+});
 
 // ===== NAV =====
 window.openNav = function() { document.getElementById('nav-overlay').classList.add('open'); document.getElementById('nav-menu').classList.add('open'); };

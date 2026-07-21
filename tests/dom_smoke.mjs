@@ -34,7 +34,10 @@ function makeFirebase(codes = [], invites = [], user = null, campaigns = [], wri
         initializeApp: () => ({}), getFirestore: () => ({}), getStorage: () => ({}),
         collection: (db, name) => ({ name }), query: (coll) => ({ coll }), orderBy: () => ({}),
         doc: (db, coll, id) => ({ coll, id }),
-        getDoc: () => Promise.resolve({ exists: () => false, data: () => ({}) }),
+        getDoc: (ref) => {
+            if (ref && ref.coll === 'codes') { const c = codes.find(x => x.id === ref.id); return Promise.resolve({ exists: () => !!c, data: () => c || {} }); }
+            return Promise.resolve({ exists: () => false, data: () => ({}) });
+        },
         getDocs: () => Promise.resolve(snap([])),
         setDoc: (ref, data) => { writes.push({ op: 'set', coll: ref && ref.coll, id: ref && ref.id, data }); return Promise.resolve(); },
         updateDoc: (ref, data) => { writes.push({ op: 'update', coll: ref && ref.coll, id: ref && ref.id, data }); return Promise.resolve(); },
@@ -44,6 +47,7 @@ function makeFirebase(codes = [], invites = [], user = null, campaigns = [], wri
         createUserWithEmailAndPassword: () => Promise.resolve(), signOut: () => Promise.resolve(),
         signInAnonymously: () => Promise.resolve(), sendPasswordResetEmail: () => Promise.resolve(), verifyBeforeUpdateEmail: () => Promise.resolve(),
         onAuthStateChanged: (auth, cb) => { cb(user); return () => {}; },
+        onIdTokenChanged: (auth, cb) => { cb(user); return () => {}; },
         ref: () => ({}), uploadBytes: () => Promise.resolve(), getDownloadURL: () => Promise.resolve(''),
         deleteObject: () => Promise.resolve(), uploadBytesResumable: () => ({ on() {}, snapshot: {} }),
     };
@@ -73,22 +77,28 @@ async function run(name, { preCode, groupAuth, user, codes = [], invites = [], c
     catch (e) { fail++; console.log('FAIL  assertion threw:', e.message); }
 }
 
-await run('code guest (returning, STRA-1)',
-    { preCode: ['STRA-1'], codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
-    (window, document) => {
-        window.openProfile();
-        const overlay = document.getElementById('profile-overlay');
-        const body = document.getElementById('profile-body').innerHTML;
-        check('profile overlay opened', overlay.classList.contains('open'));
-        check('shows guest name Sandy', /Sandy/.test(body));
-        check('shows guest tag', /profile-guest-tag/.test(body));
-        check('lists Curse of Strahd', /Curse of Strahd/.test(body));
-        check('labels it via code', /via code/.test(body));
-        check('does NOT list Frostmaiden', !/Rime of the Frostmaiden/.test(body));
-        check('has Join a campaign action', /Join a campaign/.test(body));
-        check('offers Create an account (guest)', /Create an account/.test(body));
-        check('nav identity shows guest', /guest/.test(document.getElementById('nav-identity').textContent));
-        check('Add Session button hidden for guest', document.getElementById('nav-add-btn').style.display === 'none');
+// Codes now require an account: entering a valid code with no account holds it and routes to sign-up.
+await run('join code with no account → prompts account creation, holds the code, stays gated',
+    { codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
+    async (window, document) => {
+        document.getElementById('pass-input').value = 'STRA-1';
+        await window.checkPassword();
+        check('flipped the gate to Create Account', document.getElementById('email-submit-btn').textContent === 'Create Account');
+        const note = document.getElementById('gate-join-note');
+        check('shows an invite note', note.style.display !== 'none' && /invited to/i.test(note.textContent));
+        check('still gated — app not shown without an account', document.getElementById('app').style.display !== 'block');
+    });
+// A signed-in account redeeming a code binds membership (shares + profile) — that's how access is granted now.
+await run('signed-in account redeems a code → added as a campaign member (shares + profile)',
+    { user: { email: 'friend@x.com' },
+      codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
+    async (window, document, writes) => {
+        document.getElementById('join-code-input').value = 'STRA-1';
+        await window.submitJoinCode();
+        const shareWrite = writes.find(w => w.coll === 'shares' && w.id === 'dm@x__strahd' && w.data && w.data.members);
+        check('writes the account into the campaign share members', !!shareWrite);
+        const profWrite = writes.find(w => w.coll === 'profiles' && w.id === 'friend@x.com' && w.data && w.data.campaigns);
+        check('records the campaign on the account profile', !!profWrite);
     });
 
 await run('signed-in user with pending invite',
@@ -128,11 +138,12 @@ await run('DM (owner) on campaign page → Manage menu + scoping',
         check('campaign picker row hidden (scoped)', document.getElementById('bulk-campaign').closest('.form-row').style.display === 'none');
     });
 
-await run('code guest on campaign page → no Manage menu',
-    { preCode: ['STRA-1'], codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
+await run('non-owner member on a campaign page → no Manage menu',
+    { user: { email: 'player@x' }, campaigns: [{ id: 'strahd', owner: 'dm@x', name: 'Curse of Strahd' }],
+      shares: [{ owner: 'dm@x', campaign: 'strahd', members: ['player@x'] }] },
     (window, document) => {
         window.navigateTo('strahd');
-        check('Manage menu hidden for read-only guest', document.getElementById('campaign-manage-menu').style.display === 'none');
+        check('Manage menu hidden for read-only member', document.getElementById('campaign-manage-menu').style.display === 'none');
         check('Share still available to everyone', /Share/.test(document.querySelector('.cp-actions').textContent));
     });
 
@@ -371,11 +382,11 @@ await run('signed-in user gets Create/Join chooser; guest goes to Join',
         check('chooser offers Join with a code', /Join with a code/.test(document.getElementById('add-campaign-overlay').innerHTML));
         window.closeAddCampaign();
     });
-await run('guest Add Campaign → straight to Join code',
-    { preCode: ['STRA-1'], codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
+await run('no-account visitor Add Campaign → straight to Join code',
+    {},
     (window, document) => {
         window.openAddCampaign();
-        check('chooser NOT shown for guest', !document.getElementById('add-campaign-overlay').classList.contains('open'));
+        check('chooser NOT shown without an account', !document.getElementById('add-campaign-overlay').classList.contains('open'));
         check('join-code modal opened instead', document.getElementById('join-code-overlay').classList.contains('open'));
     });
 await run("'special' campaign now reads One-Shots",
@@ -403,6 +414,158 @@ await run('one-shots are PRIVATE: outsider does not see someone else\'s proposal
         check("outsider cannot see another owner's one-shot", !/Heist Night/.test(c));
         check('outsider still has the section + can propose their own', /Propose a one-shot/.test(c));
         check('one-shot poll not surfaced on home banner', !/Heist Night/.test(document.getElementById('poll-banners').innerHTML));
+    });
+await run('LeyFarer: level = completed sessions in the campaign, capped by chapter',
+    { user: { email: 'sthomas131@gmail.com' },
+      campaigns: [{ id: 'leyfarers', name: 'Leyfarers: Maloren', leyfarer: true, chapter: 12, owner: 'sthomas131@gmail.com', color: '#7e57c2' }],
+      // 39 completed sessions + 1 not-completed (must be excluded)
+      sessions: [ ...Array.from({ length: 39 }, (_, i) => ({ id: 'm' + i, campaign: 'leyfarers', date: '2024-01-01', status: 'active', completed: true, title: 'S' + i })),
+                  { id: 'pending', campaign: 'leyfarers', date: '2020-01-01', status: 'active', completed: false, title: 'Not done' } ] },
+    async (window, document) => {
+        const info = window.leyfarerCampaignInfo('leyfarers');
+        check('counts only completed sessions (39, excludes the pending one)', info.sessions === 39);
+        check('uncapped would be 20', info.uncapped === 20);
+        check('capped at 16 by Chapter 12', info.capped === 16);
+        check('flagged as a LeyFarer campaign', window.isLeyfarerCampaign('leyfarers') === true);
+        window.navigateTo('leyfarers');
+        const cp = document.getElementById('campaign-page-content').innerHTML;
+        check('leveling hero renders on the campaign page', /ley-hero/.test(cp) && /LEVEL/.test(cp));
+        check('hero shows level 16', /ley-hero-lvl">16</.test(cp));
+        check('hero shows 39 sessions completed', /39<\/strong> session/.test(cp));
+    });
+await run('LeyFarer migration seeds both journeys as dated completed sessions',
+    { user: { email: 'sthomas131@gmail.com' },
+      campaigns: [{ id: 'leyfarers', name: 'LeyFarers', owner: 'sthomas131@gmail.com' }] },
+    async (window, document, writes) => {
+        window.openMyCharacters();
+        check('offers the setup button before migrating', /migrateLeyfarers/.test(document.getElementById('mychars-body').innerHTML));
+        await window.migrateLeyfarers();
+        const camps = writes.filter(w => w.coll === 'campaigns');
+        check('renames leyfarers → "Leyfarers: Maloren" + flags it', camps.some(w => w.id === 'leyfarers' && w.data.name === 'Leyfarers: Maloren' && w.data.leyfarer === true));
+        check('creates the Leyfarers: Krenn campaign, flagged', camps.some(w => w.id === 'leyfarers-krenn' && w.data.leyfarer === true));
+        const mal = writes.filter(w => w.coll === 'sessions' && /^ley-mal-/.test(w.id));
+        const kren = writes.filter(w => w.coll === 'sessions' && /^ley-kren-/.test(w.id));
+        check('seeds 39 Maloren sessions', mal.length === 39);
+        check('seeds 40 Krenn sessions', kren.length === 40);
+        check('seeded sessions are completed + typed + dated', mal.every(w => w.data.completed === true && w.data.type && w.data.date));
+        check('both journeys start 2024-05-31', mal.some(w => w.data.date === '2024-05-31') && kren.some(w => w.data.date === '2024-05-31'));
+        // Krenn's dates now follow the sheet's play order chronologically (year rolls forward, no backward steps)
+        const krenById = kren.slice().sort((a, b) => (a.id.match(/\d+$/) - b.id.match(/\d+$/)));
+        const krenDates = krenById.map(w => w.data.date);
+        check('Krenn dates are non-decreasing in play order', krenDates.every((d, i) => i === 0 || d >= krenDates[i - 1]));
+        check('Krenn Intro is first & 8.6 Finale (2025-09-27) is last', krenDates[0] === '2024-05-31' && krenById[krenById.length - 1].data.title === '8.6 Finale' && krenDates[krenDates.length - 1] === '2025-09-27');
+    });
+await run('LeyFarer migration removes the stale Krenn from the old (single-campaign) model',
+    { user: { email: 'sthomas131@gmail.com' },
+      campaigns: [{ id: 'leyfarers', name: 'LeyFarers', owner: 'sthomas131@gmail.com' }] },
+    async (window, document) => {
+        await window.importLeyfarerCharacters();   // old model: seeds BOTH Maloren + Krenn into `leyfarers`
+        await window.migrateLeyfarers();            // new model: Krenn gets his own campaign
+        window.openMyCharacters();
+        const b = document.getElementById('mychars-body').innerHTML;
+        const krenns = (b.match(/mychar-nm">Krenn</g) || []).length;
+        check('exactly one Krenn after migration (no duplicate)', krenns === 1);
+        check('Maloren still present', /mychar-nm">Maloren</.test(b));
+        // Party panels: each LeyFarer campaign is one character's solo journey
+        window.navigateTo('leyfarers');
+        const malParty = document.getElementById('campaign-page-content').innerHTML;
+        check("Maloren's party has Maloren", /party-nm">Maloren</.test(malParty));
+        check("Maloren's party does NOT list Krenn", !/party-nm">Krenn</.test(malParty));
+        window.navigateTo('leyfarers-krenn');
+        const kreParty = document.getElementById('campaign-page-content').innerHTML;
+        check("Krenn's party has Krenn", /party-nm">Krenn</.test(kreParty));
+        check("Krenn's party does NOT list Maloren", !/party-nm">Maloren</.test(kreParty));
+    });
+await run('LeyFarer: marking a session completed raises the level',
+    { user: { email: 'sthomas131@gmail.com' },
+      campaigns: [{ id: 'leyfarers', name: 'Leyfarers: Maloren', leyfarer: true, chapter: 12, owner: 'sthomas131@gmail.com' }],
+      // 4 completed (→ Lvl 9) + 1 not-yet-completed
+      sessions: [ ...Array.from({ length: 4 }, (_, i) => ({ id: 'c' + i, campaign: 'leyfarers', date: '2024-01-01', status: 'active', completed: true })),
+                  { id: 'x', campaign: 'leyfarers', date: '2024-01-02', status: 'active', completed: false, title: 'Newly done' } ] },
+    async (window, document) => {
+        check('starts at Lvl 9 (4 sessions)', window.leyfarerCampaignInfo('leyfarers').capped === 9);
+        await window.setSessionCompleted('x', true);   // explicit confirmation (never auto by date)
+        check('confirming the 5th session → Lvl 10', window.leyfarerCampaignInfo('leyfarers').capped === 10);
+    });
+await run('Campaign creation can flag a new campaign as LeyFarer (with a starting chapter)',
+    { user: { email: 'sthomas131@gmail.com' } },
+    async (window, document, writes) => {
+        window.openAddSession();
+        document.getElementById('new-session-campaign').value = '__new__';
+        window.onAddCampaignChange();
+        check('LeyFarer toggle exists in the create form', !!document.getElementById('nc-leyfarer'));
+        check('chapter picker hidden until toggled', document.getElementById('nc-chapter-group').style.display === 'none');
+        document.getElementById('nc-name').value = 'Leyfarers: Bob';
+        document.getElementById('nc-leyfarer').checked = true;
+        window.onNcLeyfarerToggle();
+        check('chapter picker appears when toggled on', document.getElementById('nc-chapter-group').style.display !== 'none');
+        document.getElementById('nc-chapter').value = '13';
+        // Add its character with a starting sessions-completed count (drives the level)
+        document.getElementById('nc-char-name').value = 'Bob';
+        document.getElementById('nc-char-class').value = 'Magus';
+        document.getElementById('nc-char-subclass').value = 'Bladesinger';
+        document.getElementById('nc-char-sessions').value = '16';
+        window.onNcCharSessions();
+        check('live level preview shows the resulting level', /Level 14/.test(document.getElementById('nc-char-level-hint').innerHTML));
+        document.getElementById('new-session-date').value = '2024-06-01';
+        await window.submitAddSession();
+        const camp = writes.find(w => w.coll === 'campaigns' && w.data && w.data.name === 'Leyfarers: Bob');
+        check('new campaign is flagged leyfarer', !!camp && camp.data.leyfarer === true);
+        check('starting chapter saved (13)', !!camp && camp.data.chapter === 13);
+        check('baseSessions saved (16)', !!camp && camp.data.baseSessions === 16);
+        const sess = writes.find(w => w.coll === 'sessions' && w.data && w.data.date === '2024-06-01');
+        check('its first session carries type + completed flag', !!sess && !!sess.data.type && sess.data.completed === false);
+        check('level = baseSessions + completed, capped (16 → Lvl 14)', window.leyfarerCampaignInfo('leyfarers-bob').capped === 14);
+        window.navigateTo('leyfarers-bob');
+        check('the character was created in the campaign', /party-nm">Bob</.test(document.getElementById('campaign-page-content').innerHTML));
+    });
+await run('My Characters: Add character can create a new LeyFarer campaign for it',
+    { user: { email: 'sthomas131@gmail.com' } },
+    async (window, document, writes) => {
+        window.openMyCharacters();
+        window.toggleAddChar();
+        check('campaign picker offers "+ New campaign…"', /value="__new__"/.test(document.getElementById('addchar-campaign').innerHTML));
+        document.getElementById('addchar-name').value = 'Vex';
+        document.getElementById('addchar-class').value = 'Rogue';
+        document.getElementById('addchar-subclass').value = 'Assassin';
+        document.getElementById('addchar-campaign').value = '__new__';
+        window.onAddCharCampaign();
+        check('new-campaign fields revealed', document.getElementById('addchar-new').style.display !== 'none');
+        document.getElementById('addchar-camp-name').value = 'Leyfarers: Vex';
+        document.getElementById('addchar-ley').checked = true;
+        window.onAddCharLeyToggle();
+        check('LeyFarer options revealed', document.getElementById('addchar-ley-opts').style.display !== 'none');
+        document.getElementById('addchar-chapter').value = '12';
+        document.getElementById('addchar-sessions').value = '5';
+        window.onAddCharSessions();
+        check('live level preview (5 sessions → Lvl 10)', /Level 10/.test(document.getElementById('addchar-ley-hint').innerHTML));
+        await window.addMyCharacter();
+        const camp = writes.find(w => w.coll === 'campaigns' && w.data && w.data.name === 'Leyfarers: Vex');
+        check('created a LeyFarer campaign for the character', !!camp && camp.data.leyfarer === true && camp.data.baseSessions === 5);
+        check('landed on the new campaign page', /Leyfarers: Vex/.test(document.getElementById('campaign-page-title').textContent));
+        check('character shows on that campaign page', /party-nm">Vex</.test(document.getElementById('campaign-page-content').innerHTML));
+        check('its level = baseSessions (5 → Lvl 10)', window.leyfarerCampaignInfo(camp.id).capped === 10);
+    });
+await run("Maloren's Combat Hub link shows on her page (owner) and only there",
+    { user: { email: 'sthomas131@gmail.com' },
+      campaigns: [
+        { id: 'leyfarers', name: 'Leyfarers: Maloren', leyfarer: true, chapter: 12, owner: 'sthomas131@gmail.com' },
+        { id: 'leyfarers-krenn', name: 'Leyfarers: Krenn', leyfarer: true, chapter: 12, owner: 'sthomas131@gmail.com' } ] },
+    async (window, document) => {
+        window.navigateTo('leyfarers');
+        const mal = document.getElementById('campaign-page-content').innerHTML;
+        check('Combat Hub section present on Maloren page', /Combat Hub/.test(mal) && /Maloren Combat Hub/.test(mal));
+        check('links to the self-hosted /maloren route', /href="\/maloren"/.test(mal));
+        window.navigateTo('leyfarers-krenn');
+        check('NOT shown on Krenn page', !/Maloren Combat Hub/.test(document.getElementById('campaign-page-content').innerHTML));
+    });
+await run("Maloren's Combat Hub link is hidden from non-owners",
+    { user: { email: 'someone@else.com' },
+      campaigns: [{ id: 'leyfarers', name: 'Leyfarers: Maloren', leyfarer: true, chapter: 12, owner: 'sthomas131@gmail.com', access: { 'someone@else.com': 'viewer' } }],
+      shares: [{ owner: 'sthomas131@gmail.com', campaign: 'leyfarers', members: ['someone@else.com'] }] },
+    async (window, document) => {
+        window.navigateTo('leyfarers');
+        check('no Combat Hub link for a non-owner viewer', !/Maloren Combat Hub/.test(document.getElementById('campaign-page-content').innerHTML));
     });
 await run('view toggles are icon buttons',
     { user: { email: 'sthomas131@gmail.com' } },
@@ -592,17 +755,6 @@ await run('home banner surfaces a poll needing my response',
     });
 
 // ---- Leave a campaign ----
-await run('guest can leave — join code forgotten, sent to gate',
-    { preCode: ['STRA-1'], codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
-    async (window, document) => {
-        window.confirm = () => true;
-        window.openProfile();
-        check('Strahd listed with a Leave button', /leaveCampaign\('strahd'\)/.test(document.getElementById('profile-body').innerHTML));
-        window.leaveCampaign('strahd'); await window.runGenericConfirm();
-        check('code forgotten from localStorage', !JSON.parse(window.localStorage.getItem('tpk_codes') || '[]').includes('STRA-1'));
-        check('sent back to the gate (no access left)', document.getElementById('password-gate').style.display !== 'none');
-    });
-
 await run('signed-in member can leave — removed from share + profile',
     { user: { email: 'friend@x.com' },
       campaigns: [{ id: 'strahd', owner: 'dm@x.com', name: 'Strahd' }],
@@ -675,14 +827,6 @@ await run('account panel: Download my data + Delete account (signed-in)',
         const body = document.getElementById('profile-body').innerHTML;
         check('Download my data present', /exportMyData\(\)/.test(body));
         check('Delete account present for account', /deleteAccountFromProfile\(\)/.test(body));
-    });
-await run('guest sees export but not delete-account',
-    { preCode: ['STRA-1'], codes: [{ id: 'STRA-1', owner: 'dm@x', campaign: 'strahd', label: 'Sandy' }] },
-    (window, document) => {
-        window.openProfile();
-        const body = document.getElementById('profile-body').innerHTML;
-        check('guest can export', /exportMyData\(\)/.test(body));
-        check('guest has no Delete account', !/deleteAccountFromProfile\(\)/.test(body));
     });
 await run('export builds a JSON blob download',
     { user: { email: 'sthomas131@gmail.com' }, sessions: [{ id: 'e1', campaign: 'strahd', date: '2026-09-15', time: '6:00 PM', gm: 'Sage', status: 'active' }] },
