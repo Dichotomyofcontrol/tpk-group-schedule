@@ -2742,7 +2742,7 @@ function uniqueCampaignSlug(name) { let base = slugify(name), slug = base, i = 2
 async function createCampaignDoc(name, icon, color, opts) {
     const me = myEmail(); if (!me) throw new Error('Sign in to create a campaign.');
     const slug = uniqueCampaignSlug(name);
-    const data = { name: name.trim(), icon: (icon || '🎲').trim() || '🎲', color: color || '#4fc3f7', owner: me, createdAt: Date.now() };
+    const data = { name: name.trim(), icon: (icon || '🎲').trim() || '🎲', color: color || '#4fc3f7', owner: me, createdAt: Date.now(), readers: [me] };
     if (opts && opts.leyfarer) { data.leyfarer = true; data.chapter = opts.chapter || LEYFARER_CURRENT_CHAPTER; if (opts.baseSessions) data.baseSessions = opts.baseSessions; }
     await setDoc(doc(db, "campaigns", slug), data);
     allCampaigns[slug] = { id: slug, ...data };
@@ -2776,11 +2776,18 @@ function sessionReaderEmails(s) {
     if (s.owner) return [...new Set([String(s.owner).toLowerCase(), ...((s.invited || []).map(e => String(e).toLowerCase()))])].filter(Boolean);
     return campaignAllMemberEmails(s.campaign);
 }
+function campaignReaderEmails(c) { return campaignAllMemberEmails(c); }
+// One-shot poll → owner + the one-shot's share members; campaign poll → all campaign members.
+function pollReaderEmails(p) {
+    if (!p) return [];
+    if (isOneShots(p.campaign)) return [...new Set([String(p.owner || '').toLowerCase(), ...shareMembers(p.owner, p.campaign).map(e => String(e).toLowerCase())])].filter(Boolean);
+    return campaignAllMemberEmails(p.campaign);
+}
 function sameSet(a, b) { const x = (a || []).slice().sort().join(''); const y = (b || []).slice().sort().join(''); return x === y; }
 // The owner/editor's client is the authority for readers on sessions it manages: whenever data
 // changes (a member joins/leaves, a session is added), recompute and write any that drifted.
 // Idempotent — writes only on an actual change — so it's safe to call from every data listener.
-let _readersSyncing = false;
+let _readersSyncing = false, _configSplitDone = false;
 async function syncMyReaders() {
     if (_readersSyncing || !currentUser || !codesLoaded || !Object.keys(allCampaigns).length) return;
     _readersSyncing = true;
@@ -2792,6 +2799,22 @@ async function syncMyReaders() {
             s.readers = want;
             try { await updateDoc(doc(db, "sessions", s.id), { readers: want }); } catch (e) { /* additive prep — ignore */ }
         }
+        for (const cid of Object.keys(allCampaigns)) {
+            if (!(isCampaignOwner(cid) || canManageCampaign(cid))) continue;
+            const want = campaignReaderEmails(cid);
+            if (sameSet(allCampaigns[cid].readers, want)) continue;
+            allCampaigns[cid].readers = want;
+            try { await updateDoc(doc(db, "campaigns", cid), { readers: want }); } catch (e) { /* additive prep — ignore */ }
+        }
+        for (const p of Object.values(allPolls)) {
+            if (!canManagePoll(p)) continue;
+            const want = pollReaderEmails(p);
+            if (sameSet(p.readers, want)) continue;
+            p.readers = want;
+            try { await updateDoc(doc(db, "polls", p.id), { readers: want }); } catch (e) { /* additive prep — ignore */ }
+        }
+        // One-time: mirror characters/rosters into the per-campaign docs (backfill existing data).
+        if (!_configSplitDone) { _configSplitDone = true; try { await saveRostersToFirestore(); await saveCharactersToFirestore(); } catch (e) { /* additive prep */ } }
     } finally { _readersSyncing = false; }
 }
 window.sessionReaderEmails = sessionReaderEmails;   // for tests
@@ -3191,6 +3214,7 @@ window.submitCreatePoll = async function() {
     const id = `${c}-${Date.now().toString(36)}`;
     const data = { campaign: c, owner: myEmail(), title: document.getElementById('poll-title').value.trim() || 'When can we play?',
         options: pollSlots.map(s => ({ id: s.id, date: s.date, time: s.time })), responses: {}, status: 'open', createdAt: Date.now() };
+    data.readers = pollReaderEmails(data);   // who may read this poll (per-account rules prep)
     try {
         await setDoc(doc(db, "polls", id), data);
         allPolls[id] = { id, ...data };
@@ -4408,6 +4432,7 @@ async function initApp() {
         allPolls = {};
         snap.forEach(d => { allPolls[d.id] = { id: d.id, ...d.data() }; });
         scheduleRender();
+        syncMyReaders();
     }, (e) => console.error("polls listener:", e));
     onSnapshot(collection(db, "shares"), (snap) => {
         allShares = {};
@@ -4783,14 +4808,27 @@ async function loadSavedRosters() {
     } catch(e) { console.warn('Could not load saved rosters/characters:', e); }
 }
 
+// Dual-write during the migration: the legacy single doc (still the read path until 3c) PLUS
+// per-campaign docs (rosters/{cid}, characters/{cid}) that the scoped reads + rules will use.
+// Per-campaign writes are limited to campaigns you can access (so they're valid under the new rules).
 async function saveRostersToFirestore() {
-    try { await setDoc(doc(db, "config", "rosters"), { ...campaignRosters }); }
-    catch(e) { console.error('Failed to save rosters:', e); }
+    try {
+        await setDoc(doc(db, "config", "rosters"), { ...campaignRosters });
+        for (const cid of Object.keys(campaignRosters)) {
+            if (!campaignAccessible(cid)) continue;
+            try { await setDoc(doc(db, "rosters", cid), { list: campaignRosters[cid] || [] }); } catch (e) { /* additive prep */ }
+        }
+    } catch(e) { console.error('Failed to save rosters:', e); }
 }
 
 async function saveCharactersToFirestore() {
-    try { await setDoc(doc(db, "config", "characters"), { ...campaignCharacters }); }
-    catch(e) { console.error('Failed to save characters:', e); }
+    try {
+        await setDoc(doc(db, "config", "characters"), { ...campaignCharacters });
+        for (const cid of Object.keys(campaignCharacters)) {
+            if (!campaignAccessible(cid)) continue;
+            try { await setDoc(doc(db, "characters", cid), { chars: campaignCharacters[cid] || {} }); } catch (e) { /* additive prep */ }
+        }
+    } catch(e) { console.error('Failed to save characters:', e); }
 }
 
 // Player detail modal

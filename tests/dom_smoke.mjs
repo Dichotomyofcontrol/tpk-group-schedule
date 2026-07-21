@@ -685,6 +685,23 @@ await run('owner creates a poll with date+time options (incl. two on one day)',
         check('poll written with options[] (date+time)', !!pw && pw.data.options.length === 3 && !!pw.data.options[0].time && !!pw.data.options[0].date);
         check('two options share Aug 5', pw.data.options.filter(o => o.date === '2026-08-05').length === 2);
         check('poll open + owned', pw.data.status === 'open' && pw.data.owner === 'sthomas131@gmail.com');
+        check('poll written with a readers list', Array.isArray(pw.data.readers) && pw.data.readers.includes('sthomas131@gmail.com'));
+    });
+
+// Phase 3b: characters saved into a per-campaign doc (so the future rules can lock them per campaign).
+await run('Phase 3b: saving characters also writes a per-campaign characters/{cid} doc',
+    { user: { email: 'dm@x.com' }, campaigns: [{ id: 'strahd', owner: 'dm@x.com', name: 'Strahd' }] },
+    async (window, document, writes) => {
+        window.openMyCharacters();
+        window.toggleAddChar();
+        document.getElementById('addchar-name').value = 'Bruk';
+        document.getElementById('addchar-campaign').value = 'strahd';
+        window.onAddCharCampaign();
+        writes.length = 0;
+        await window.addMyCharacter();
+        check('legacy config/characters still written (read path intact)', !!writes.find(w => w.coll === 'config' && w.id === 'characters'));
+        const perCampaign = writes.find(w => w.coll === 'characters' && w.id === 'strahd');
+        check('per-campaign characters/strahd written', !!perCampaign && perCampaign.data && !!perCampaign.data.chars);
     });
 
 await run('vote/tally/best-option; owner confirms → session with that time',
