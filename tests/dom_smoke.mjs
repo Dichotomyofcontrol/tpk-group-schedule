@@ -32,7 +32,7 @@ function makeFirebase(codes = [], invites = [], user = null, campaigns = [], wri
     };
     return {
         initializeApp: () => ({}), getFirestore: () => ({}), getStorage: () => ({}),
-        collection: (db, name) => ({ name }), query: (coll) => ({ coll }), orderBy: () => ({}),
+        collection: (db, name) => ({ name }), query: (coll) => ({ coll }), orderBy: () => ({}), where: () => ({}),
         doc: (db, coll, id) => ({ coll, id }),
         getDoc: (ref) => {
             if (ref && ref.coll === 'codes') { const c = codes.find(x => x.id === ref.id); return Promise.resolve({ exists: () => !!c, data: () => c || {} }); }

@@ -2056,7 +2056,7 @@
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, onIdTokenChanged, signOut, sendPasswordResetEmail, verifyBeforeUpdateEmail, signInAnonymously, deleteUser } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
@@ -2270,6 +2270,7 @@ let activeFilter = "all";
 const FALLBACK_USER_CAMPAIGNS = { 'sthomas131@gmail.com': ['leyfarers', 'beerovia'] };
 let currentUser = null;
 let userCampaigns = [];
+let unsubSessions = null, unsubPolls = null, scopedFor = '__init__';   // Phase 3c scoped-data subscriptions
 let allShares = {};   // `${owner}__${campaign}` -> [member emails]
 // Join codes: bearer keys for people who don't want an account.
 // codes/{CODE} doc -> { owner, campaign }. Redeemed codes live in localStorage.
@@ -2671,6 +2672,7 @@ onAuthStateChanged(auth, async (user) => {
                 promptJoinParty(r.campaign, r.label, true);
             }
         }
+        if (appStarted) subscribeScopedData();   // (re)scope sessions/polls to this account
         checkPendingInvites();
         checkCampaignNotifications();
     } else {
@@ -2678,6 +2680,7 @@ onAuthStateChanged(auth, async (user) => {
         // an anonymous session grants NO access — it stays on the gate until a real account signs in.
         if (!user) { signInAnonymously(auth).catch(e => console.error('Anonymous sign-in failed — enable Anonymous auth in Firebase:', e)); }
         userCampaigns = [];
+        if (appStarted) subscribeScopedData();   // dropped to no account → clear scoped data
         updateAccessUI();
     }
 });
@@ -2787,18 +2790,28 @@ function sameSet(a, b) { const x = (a || []).slice().sort().join(''); const y =
 // The owner/editor's client is the authority for readers on sessions it manages: whenever data
 // changes (a member joins/leaves, a session is added), recompute and write any that drifted.
 // Idempotent — writes only on an actual change — so it's safe to call from every data listener.
-let _readersSyncing = false, _configSplitDone = false;
+let _readersSyncing = false, _configSplitDone = false, _fullReadersScanDone = false;
 async function syncMyReaders() {
     if (_readersSyncing || !currentUser || !codesLoaded || !Object.keys(allCampaigns).length) return;
     _readersSyncing = true;
     try {
-        for (const s of sessions) {
-            if (!canManage(s)) continue;   // only touch sessions you own/manage
-            const want = sessionReaderEmails(s);
-            if (sameSet(s.readers, want)) continue;
-            s.readers = want;
-            try { await updateDoc(doc(db, "sessions", s.id), { readers: want }); } catch (e) { /* additive prep — ignore */ }
+        // One-time safety net: the scoped session listener only sees sessions I'm already in
+        // `readers` for, so a full whole-collection scan (works while rules are still open) catches
+        // any straggler that never got backfilled and gives it a readers list before it's hidden.
+        if (!_fullReadersScanDone) {
+            _fullReadersScanDone = true;
+            try {
+                const snap = await getDocs(collection(db, "sessions"));
+                for (const d of snap.docs) {
+                    const s = { id: d.id, ...d.data() };
+                    if (!canManage(s)) continue;
+                    const want = sessionReaderEmails(s);
+                    if (sameSet(s.readers, want)) continue;
+                    try { await updateDoc(doc(db, "sessions", d.id), { readers: want }); } catch (e) { /* additive prep */ }
+                }
+            } catch (e) { /* whole-collection read denied → rules already strict → backfill already done */ }
         }
+        // Do the few-doc collections first so they fill in instantly (sessions can be many).
         for (const cid of Object.keys(allCampaigns)) {
             if (!(isCampaignOwner(cid) || canManageCampaign(cid))) continue;
             const want = campaignReaderEmails(cid);
@@ -2815,6 +2828,14 @@ async function syncMyReaders() {
         }
         // One-time: mirror characters/rosters into the per-campaign docs (backfill existing data).
         if (!_configSplitDone) { _configSplitDone = true; try { await saveRostersToFirestore(); await saveCharactersToFirestore(); } catch (e) { /* additive prep */ } }
+        // Sessions last — there can be many, so this pass may take a little longer.
+        for (const s of sessions) {
+            if (!canManage(s)) continue;   // only touch sessions you own/manage
+            const want = sessionReaderEmails(s);
+            if (sameSet(s.readers, want)) continue;
+            s.readers = want;
+            try { await updateDoc(doc(db, "sessions", s.id), { readers: want }); } catch (e) { /* additive prep — ignore */ }
+        }
     } finally { _readersSyncing = false; }
 }
 window.sessionReaderEmails = sessionReaderEmails;   // for tests
@@ -4402,6 +4423,44 @@ async function seedCampaigns() {
         });
     }
 }
+// Scoped data loading (Phase 3c): only fetch sessions/polls where I'm in `readers`.
+// Re-subscribes if the signed-in identity changes. No account → no data (the gate handles that).
+// (unsubSessions / unsubPolls / scopedFor are declared near the top so this is TDZ-safe.)
+function subscribeScopedData() {
+    const me = myEmail();
+    if (scopedFor === me) return;   // already subscribed for this identity
+    scopedFor = me;
+    if (unsubSessions) { unsubSessions(); unsubSessions = null; }
+    if (unsubPolls) { unsubPolls(); unsubPolls = null; }
+    if (!me) { sessions = []; allPolls = {}; scheduleRender(); return; }
+    const sq = query(collection(db, "sessions"), where('readers', 'array-contains', me));
+    unsubSessions = onSnapshot(sq, (snapshot) => {
+        sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
+        sessions.sort((a, b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
+        scheduleRender(); syncMyReaders();
+    }, (e) => console.error("sessions listener:", e));
+    const pq = query(collection(db, "polls"), where('readers', 'array-contains', me));
+    unsubPolls = onSnapshot(pq, (snap) => {
+        allPolls = {}; snap.forEach(d => { allPolls[d.id] = { id: d.id, ...d.data() }; });
+        scheduleRender(); syncMyReaders();
+    }, (e) => console.error("polls listener:", e));
+}
+// Load characters/rosters from the per-campaign docs (the lockable shape). Falls back to whatever
+// the legacy single doc already loaded, so nothing disappears during the transition. Runs per
+// accessible campaign, once each.
+let _perCampaignConfigLoaded = new Set();
+async function loadPerCampaignConfig() {
+    for (const cid of Object.keys(allCampaigns)) {
+        if (_perCampaignConfigLoaded.has(cid) || !campaignAccessible(cid)) continue;
+        _perCampaignConfigLoaded.add(cid);
+        try {
+            const [rs, cs] = await Promise.all([getDoc(doc(db, "rosters", cid)), getDoc(doc(db, "characters", cid))]);
+            if (rs.exists() && Array.isArray(rs.data().list)) campaignRosters[cid] = rs.data().list;
+            if (cs.exists() && cs.data().chars) campaignCharacters[cid] = cs.data().chars;
+            scheduleRender();
+        } catch (e) { /* per-campaign doc may not exist yet — legacy fallback already loaded */ }
+    }
+}
 async function initApp() {
     await loadSavedRosters();
     await seedFirestore();
@@ -4421,6 +4480,7 @@ async function initApp() {
         renderCampaignTheme();
         scheduleRender();
         syncMyReaders();
+        loadPerCampaignConfig();
     }, (e) => console.error("campaigns listener:", e));
     onSnapshot(collection(db, "notifications"), (snap) => {
         allNotifications = {};
@@ -4428,17 +4488,13 @@ async function initApp() {
         scheduleRender();
         checkCampaignNotifications();
     }, (e) => console.error("notifications listener:", e));
-    onSnapshot(collection(db, "polls"), (snap) => {
-        allPolls = {};
-        snap.forEach(d => { allPolls[d.id] = { id: d.id, ...d.data() }; });
-        scheduleRender();
-        syncMyReaders();
-    }, (e) => console.error("polls listener:", e));
+    // sessions + polls are loaded per-account via subscribeScopedData() (scoped queries).
     onSnapshot(collection(db, "shares"), (snap) => {
         allShares = {};
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
         scheduleRender();
         syncMyReaders();   // membership changed → refresh readers on my campaigns' sessions
+        loadPerCampaignConfig();   // access may have expanded → load those campaigns' party
     });
     onSnapshot(collection(db, "invites"), (snap) => {
         allInvites = [];
@@ -4462,14 +4518,7 @@ async function initApp() {
         }
         scheduleRender();
     });
-    const q = query(collection(db, "sessions"), orderBy("date"));
-    let firstLoad = true; let prevCount = 0;
-    onSnapshot(q, (snapshot) => {
-        sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
-        sessions.sort((a,b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
-        scheduleRender();
-        syncMyReaders();   // new/changed sessions → ensure they carry a readers list
-    });
+    subscribeScopedData();   // sessions + polls, scoped to this account
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
