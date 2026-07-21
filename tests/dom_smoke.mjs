@@ -567,6 +567,27 @@ await run("Maloren's Combat Hub link is hidden from non-owners",
         window.navigateTo('leyfarers');
         check('no Combat Hub link for a non-owner viewer', !/Maloren Combat Hub/.test(document.getElementById('campaign-page-content').innerHTML));
     });
+// Phase 3a: sessions carry a `readers` list (prep for the per-account lockdown).
+await run('readers: Everyone session = all campaign members; private = owner + invited only',
+    { user: { email: 'dm@x.com' },
+      campaigns: [{ id: 'strahd', owner: 'dm@x.com', name: 'Strahd' }],
+      shares: [{ owner: 'dm@x.com', campaign: 'strahd', members: ['p1@x.com', 'p2@x.com'] }] },
+    (window) => {
+        const everyone = window.sessionReaderEmails({ campaign: 'strahd' });
+        check('Everyone-session readers include owner + members', everyone.includes('dm@x.com') && everyone.includes('p1@x.com') && everyone.includes('p2@x.com'));
+        const priv = window.sessionReaderEmails({ campaign: 'strahd', owner: 'dm@x.com', invited: ['guest@x.com'] });
+        check('private-session readers = owner + invited only (not other members)', priv.includes('dm@x.com') && priv.includes('guest@x.com') && !priv.includes('p1@x.com'));
+    });
+await run('a newly added session is written with a readers list',
+    { user: { email: 'dm@x.com' }, campaigns: [{ id: 'strahd', owner: 'dm@x.com', name: 'Strahd' }] },
+    async (window, document, writes) => {
+        window.openAddSession('strahd');
+        document.getElementById('new-session-date').value = '2027-01-01';
+        await window.submitAddSession();
+        const s = writes.find(w => w.coll === 'sessions' && w.data && w.data.date === '2027-01-01');
+        check('session write includes a readers array', !!s && Array.isArray(s.data.readers));
+        check('readers includes the owner', !!s && s.data.readers.includes('dm@x.com'));
+    });
 await run('view toggles are icon buttons',
     { user: { email: 'sthomas131@gmail.com' } },
     (window, document) => {

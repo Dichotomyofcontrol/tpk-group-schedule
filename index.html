@@ -2762,6 +2762,39 @@ function populateCampaignDropdown(selId, opt) {
 // ===== CAMPAIGN LIFECYCLE (3f) =====
 // Email members of a campaign = campaign-level share members (accepted invites land here).
 function campaignMemberEmails(c) { const o = campaignOwner(c); return o ? [...shareMembers(o, c)] : []; }
+
+// ===== READ-ACCESS DENORMALIZATION (prep for per-account Firestore rules — Phase 3/4) =====
+// Each session carries `readers`: the exact set of emails allowed to read it. A scoped query
+// (readers array-contains me) plus a matching rule (my email in readers) is the only pattern
+// Firestore actually enforces for list reads. This is additive until the rules go live.
+function campaignAllMemberEmails(c) {
+    return [campaignOwner(c), ...campaignMemberEmails(c), ...Object.keys((allCampaigns[c] && allCampaigns[c].access) || {})]
+        .map(e => (e || '').toLowerCase()).filter((v, i, a) => v && a.indexOf(v) === i);
+}
+// Everyone-session → all campaign members; private/"Just Me" session → owner + per-session invitees.
+function sessionReaderEmails(s) {
+    if (s.owner) return [...new Set([String(s.owner).toLowerCase(), ...((s.invited || []).map(e => String(e).toLowerCase()))])].filter(Boolean);
+    return campaignAllMemberEmails(s.campaign);
+}
+function sameSet(a, b) { const x = (a || []).slice().sort().join(''); const y = (b || []).slice().sort().join(''); return x === y; }
+// The owner/editor's client is the authority for readers on sessions it manages: whenever data
+// changes (a member joins/leaves, a session is added), recompute and write any that drifted.
+// Idempotent — writes only on an actual change — so it's safe to call from every data listener.
+let _readersSyncing = false;
+async function syncMyReaders() {
+    if (_readersSyncing || !currentUser || !codesLoaded || !Object.keys(allCampaigns).length) return;
+    _readersSyncing = true;
+    try {
+        for (const s of sessions) {
+            if (!canManage(s)) continue;   // only touch sessions you own/manage
+            const want = sessionReaderEmails(s);
+            if (sameSet(s.readers, want)) continue;
+            s.readers = want;
+            try { await updateDoc(doc(db, "sessions", s.id), { readers: want }); } catch (e) { /* additive prep — ignore */ }
+        }
+    } finally { _readersSyncing = false; }
+}
+window.sessionReaderEmails = sessionReaderEmails;   // for tests
 let csCampaign = null, csColor = CAMPAIGN_SWATCHES[0];
 window.openCampaignSettings = function() {
     const c = currentPage; if (!c || !isCampaignOwner(c)) return;
@@ -3092,7 +3125,9 @@ window.confirmPollGo = async function() {
     roster.forEach(p => { attendance[p] = "in"; });
     const docId = `${opt.date}-${Date.now().toString(36)}-poll`;
     try {
-        await setDoc(doc(db, "sessions", docId), { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active", ...(isOneShots(c) ? { owner: poll.owner || myEmail() } : {}) });
+        const pollSessionData = { date: opt.date, time: opt.time || "6:00 PM", gm: "", duration: "4 hrs", campaign: c, attendance, roster, status: "active", ...(isOneShots(c) ? { owner: poll.owner || myEmail() } : {}) };
+        pollSessionData.readers = sessionReaderEmails(pollSessionData);
+        await setDoc(doc(db, "sessions", docId), pollSessionData);
         await updateDoc(doc(db, "polls", pollId), { status: 'confirmed', confirmedDate: opt.date, confirmedTime: opt.time || '', confirmedSessionId: docId });
         if (allPolls[pollId]) allPolls[pollId].status = 'confirmed';
         showSessionConfirmed(opt, roster.length);
@@ -3297,7 +3332,7 @@ window.migrateLeyfarers = async function() {
         const seed = async (arr, camp, prefix) => {
             for (let i = 0; i < arr.length; i++) {
                 const [date, title, type] = arr[i];
-                await setDoc(doc(db, "sessions", `${prefix}-${i}`), { date, title, type, completed: true, campaign: camp, time: '', gm: '', duration: '', status: 'active', attendance: {}, roster: [] }, { merge: true });
+                await setDoc(doc(db, "sessions", `${prefix}-${i}`), { date, title, type, completed: true, campaign: camp, time: '', gm: '', duration: '', status: 'active', attendance: {}, roster: [], readers: [me] }, { merge: true });
             }
         };
         await seed(LEYFARER_MALOREN_SESSIONS, 'leyfarers', 'ley-mal');
@@ -3777,6 +3812,7 @@ window.submitAddSession = async function() {
             if (isPrivate) { data.owner = myEmail(); data.invited = []; }
             // LeyFarer campaigns: carry the journey type + explicit completed flag (completed → counts toward level).
             if (isLeyfarerCampaign(campaign)) { data.type = document.getElementById('ley-session-type').value || 'Campaign'; data.completed = (leySessionStatus === 'completed'); }
+            data.readers = sessionReaderEmails(data);   // who may read this session (per-account rules prep)
             await setDoc(doc(db, "sessions", docId), data);
             if (!firstId) firstId = docId;
         }
@@ -4360,6 +4396,7 @@ async function initApp() {
         }
         renderCampaignTheme();
         scheduleRender();
+        syncMyReaders();
     }, (e) => console.error("campaigns listener:", e));
     onSnapshot(collection(db, "notifications"), (snap) => {
         allNotifications = {};
@@ -4376,6 +4413,7 @@ async function initApp() {
         allShares = {};
         snap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
         scheduleRender();
+        syncMyReaders();   // membership changed → refresh readers on my campaigns' sessions
     });
     onSnapshot(collection(db, "invites"), (snap) => {
         allInvites = [];
@@ -4405,6 +4443,7 @@ async function initApp() {
         sessions = []; snapshot.forEach(d => { sessions.push({ id: d.id, ...d.data() }); });
         sessions.sort((a,b) => a.date.localeCompare(b.date) || timeVal(a.time) - timeVal(b.time));
         scheduleRender();
+        syncMyReaders();   // new/changed sessions → ensure they carry a readers list
     });
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', () => {
