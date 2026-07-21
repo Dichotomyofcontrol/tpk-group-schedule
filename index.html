@@ -1399,6 +1399,15 @@
         .ley-hero-guide { margin-top: 12px; }
         .ley-type-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand); border: 1px solid var(--brand-line, var(--brand)); border-radius: var(--r-pill); padding: 2px 9px; }
         .ley-done-note { font-size: 0.78rem; color: var(--text-dim); }
+        /* Maloren Combat Hub link (sidebar, under Party) */
+        .cp-combat-hub { margin-top: 22px; }
+        .combat-hub-link { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 14%, var(--surface)), var(--surface)); border: 1px solid var(--brand-line, var(--border)); border-radius: var(--r-md); text-decoration: none; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+        .combat-hub-link:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); border-color: var(--brand); }
+        .combat-hub-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+        .combat-hub-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+        .combat-hub-title { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; color: var(--text); }
+        .combat-hub-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+        .combat-hub-arrow { color: var(--brand); font-size: 1.05rem; font-weight: 700; flex-shrink: 0; }
         .nc-ley-check { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; cursor: pointer; }
         .nc-ley-check input { accent-color: var(--brand); flex-shrink: 0; margin-top: 2px; }
         .nc-ley-check strong { color: var(--text); }
@@ -5389,6 +5398,15 @@ function renderCampaignPage(campaign) {
             partyHtml += `<div class="party-row" onclick="openPlayerDetail('${campaign}','${escapeHtml(p)}')"><div class="party-av">${av}</div><div class="party-body"><div class="party-nm">${escapeHtml(p)}${youBadge}${gmBadge}</div>${meta ? `<div class="party-mt">${escapeHtml(meta)}</div>` : ''}</div></div>`;
         });
         partyHtml += `</div></div>`;
+    }
+    // Maloren's Combat Hub — link to the standalone Psi Warrior roller, self-hosted at /maloren.
+    // Maloren's page only ('leyfarers'), owner-only (that page isn't visible to anyone else anyway).
+    if (campaign === 'leyfarers' && isCampaignOwner(campaign)) {
+        partyHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Combat Hub</span></div>`
+            + `<a class="combat-hub-link" href="/maloren" target="_blank" rel="noopener">`
+            + `<span class="combat-hub-icon" aria-hidden="true">⚔️</span>`
+            + `<span class="combat-hub-body"><span class="combat-hub-title">Maloren Combat Hub</span><span class="combat-hub-sub">Dual-wield roller · Psi Warrior tools</span></span>`
+            + `<span class="combat-hub-arrow" aria-hidden="true">↗</span></a></div>`;
     }
 
     // ----- Main column: Next-session hero → Availability poll → Sessions -----

@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MALOREN // Dual-Wield Turn Roller</title>
+<style>
+  :root{
+    --bg:#04070C;
+    --panel:#080E16;
+    --panel-2:#0C141F;
+    --line:#183048;
+    --cyan:#00D8FF;
+    --cyan-lt:#8AF0FF;
+    --cyan-dim:#0E6A85;
+    --text:#DCEEF8;
+    --muted:#7CA3B8;
+    --psi:#B14FFF;
+    --psi-lt:#DCA8FF;
+    --psi-dim:#5A2A8A;
+    --surge:#FF7A1A;
+    --surge-lt:#FFB066;
+    --surge-dim:#8A4210;
+    --hit:#00FFB2;
+    --hit-dim:#0A7A58;
+    --miss:#FF5470;
+    --miss-dim:#8A1E33;
+    --necro:#5CFF7A;
+    --necro-dim:#127A2E;
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",Menlo,Consolas,monospace;
+    --tap:44px;   /* Apple HIG minimum touch target */
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:
+      linear-gradient(rgba(0,216,255,.02) 1px, transparent 1px) 0 0/44px 44px,
+      linear-gradient(90deg, rgba(0,216,255,.02) 1px, transparent 1px) 0 0/44px 44px,
+      radial-gradient(ellipse 120% 80% at 50% -10%, #0A1E2E 0%, var(--bg) 55%);
+    background-attachment:fixed;
+    color:var(--text);
+    font:16px/1.5 -apple-system,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+    padding:14px;min-height:100vh;
+  }
+  .wrap{max-width:1500px;margin:0 auto}
+
+  /* ---------- header ---------- */
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding-bottom:12px;margin-bottom:14px;position:relative}
+  header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,var(--cyan),rgba(0,216,255,.15) 60%,transparent);
+    box-shadow:0 0 12px var(--cyan)}
+  .menu-btn{width:var(--tap);height:var(--tap);flex:none;
+    background:rgba(0,216,255,.08);border:1px solid var(--cyan-dim);border-radius:4px;
+    color:var(--cyan);font-size:20px;cursor:pointer;line-height:1}
+  .menu-btn:hover{background:rgba(0,216,255,.2);box-shadow:0 0 14px rgba(0,216,255,.4)}
+  header h1{font-size:26px;letter-spacing:5px;font-weight:300;color:#fff;
+    text-shadow:0 0 8px var(--cyan),0 0 26px rgba(0,216,255,.6)}
+  header .sub{color:var(--cyan);font-size:12px;letter-spacing:2px;font-weight:600;
+    text-transform:uppercase;opacity:.85}
+  header .who{margin-left:auto;font-family:var(--mono);font-size:13px;color:var(--muted)}
+  header .who b{color:var(--cyan-lt);font-weight:700}
+  @media(max-width:760px){ header .sub{display:none} header .who{font-size:11px} }
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+  .tab{background:transparent;border:1px solid var(--line);border-bottom:none;
+    border-radius:4px 4px 0 0;color:var(--muted);min-height:var(--tap);padding:0 22px;
+    font:inherit;font-size:14px;font-weight:700;letter-spacing:1.6px;cursor:pointer;
+    text-transform:uppercase;position:relative;top:1px;transition:all .15s}
+  .tab:hover{color:var(--cyan-lt);border-color:var(--cyan-dim)}
+  .tab.on{color:#fff;border-color:var(--cyan);background:rgba(0,216,255,.1);
+    text-shadow:0 0 8px var(--cyan);box-shadow:0 -2px 14px rgba(0,216,255,.22)}
+  .tab.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;
+    background:var(--bg)}
+
+  /* ---------- abilities ---------- */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .fchip{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;min-height:38px;padding:0 16px;font:inherit;font-size:12px;
+    font-weight:700;letter-spacing:.8px;cursor:pointer;transition:all .15s}
+  .fchip:hover{border-color:var(--cyan-dim);color:var(--cyan-lt)}
+  .fchip.on{background:rgba(0,216,255,.16);border-color:var(--cyan);color:#fff;
+    box-shadow:0 0 12px rgba(0,216,255,.32)}
+
+  .sit{margin-bottom:26px}
+  .sit-h{display:flex;align-items:center;gap:10px;font-size:13px;letter-spacing:2px;
+    font-weight:700;color:var(--cyan);text-transform:uppercase;margin-bottom:12px;
+    padding-bottom:9px;border-bottom:1px solid var(--line)}
+  .sit-i{font-size:17px;color:var(--cyan-lt)}
+  .sit-n{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted);
+    font-weight:700;letter-spacing:0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+
+  .acard{background:linear-gradient(180deg,rgba(12,22,34,.85),rgba(6,12,20,.85));
+    border:1px solid var(--line);border-left:3px solid var(--cyan-dim);border-radius:4px;
+    padding:13px;display:flex;flex-direction:column;gap:7px}
+  .acard.out{opacity:.5}
+  .acard.need{border-left-color:var(--surge);background:rgba(255,122,26,.05)}
+  .ac-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .ac-name{font-size:16px;font-weight:700;color:var(--cyan-lt);line-height:1.25}
+  .ac-src{font-size:11px;color:var(--muted);letter-spacing:.3px;margin-top:-4px}
+  .ac-text{font-size:13px;line-height:1.55;color:var(--text)}
+  .ac-text.need-text{color:var(--surge-lt);font-style:italic}
+  .ac-cost{font-size:11px;color:var(--muted);letter-spacing:.2px}
+  .ac-cost b{color:var(--hit);font-family:var(--mono)}
+  .ac-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:2px}
+  .ac-roll,.ac-use,.ac-undo{border-radius:4px;min-height:38px;padding:0 13px;font:inherit;
+    font-size:11px;font-weight:700;letter-spacing:.8px;cursor:pointer;
+    background:transparent;text-transform:uppercase}
+  .ac-roll{border:1px solid var(--psi-dim);color:var(--psi-lt);background:rgba(177,79,255,.14)}
+  .ac-roll:hover:not(:disabled){background:rgba(177,79,255,.34)}
+  .ac-use{border:1px solid var(--cyan-dim);color:var(--cyan-lt);background:rgba(0,216,255,.12)}
+  .ac-use:hover:not(:disabled){background:rgba(0,216,255,.3)}
+  .ac-undo{border:1px solid var(--line);color:var(--muted);min-width:40px;padding:0 9px}
+  .ac-undo:hover{color:var(--hit);border-color:var(--hit-dim)}
+  .ac-roll:disabled,.ac-use:disabled{opacity:.35;cursor:not-allowed}
+  .ac-result{font-family:var(--mono);font-size:12px;color:var(--hit)}
+  .ac-result b{font-size:16px;text-shadow:0 0 8px rgba(0,255,178,.5)}
+
+  .ac-act{font-size:10px;font-weight:700;letter-spacing:.9px;padding:4px 9px;
+    border-radius:999px;white-space:nowrap;text-transform:uppercase;flex:none}
+  .ac-act.Reaction{background:rgba(255,122,26,.18);color:var(--surge-lt);border:1px solid var(--surge-dim)}
+  .ac-act.BonusAction{background:rgba(0,216,255,.16);color:var(--cyan-lt);border:1px solid var(--cyan-dim)}
+  .ac-act.Action,.ac-act.Magicaction{background:rgba(177,79,255,.18);color:var(--psi-lt);border:1px solid var(--psi-dim)}
+  .ac-act.Free{background:rgba(0,255,178,.14);color:var(--hit);border:1px solid var(--hit-dim)}
+  .ac-act.Special{background:rgba(92,255,122,.14);color:var(--necro);border:1px solid var(--necro-dim)}
+  .ac-act.Passive{background:rgba(124,163,184,.12);color:var(--muted);border:1px solid var(--line)}
+  .ac-act.Unknown{background:rgba(255,122,26,.16);color:var(--surge-lt);border:1px solid var(--surge-dim)}
+
+  /* ---------- controls ---------- */
+  .controls{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  #rollAll{
+    background:linear-gradient(180deg,rgba(0,216,255,.24),rgba(0,216,255,.07));
+    color:#EAFBFF;border:1px solid var(--cyan);border-radius:4px;
+    min-height:var(--tap);padding:0 28px;font-size:15px;font-weight:700;letter-spacing:2.5px;
+    cursor:pointer;text-transform:uppercase;
+    box-shadow:0 0 18px rgba(0,216,255,.34),inset 0 0 18px rgba(0,216,255,.16);
+    text-shadow:0 0 8px var(--cyan);transition:all .15s}
+  #rollAll:hover{background:linear-gradient(180deg,rgba(0,216,255,.42),rgba(0,216,255,.16));
+    box-shadow:0 0 30px rgba(0,216,255,.62),inset 0 0 22px rgba(0,216,255,.28)}
+  #rollAll:active{transform:translateY(1px)}
+
+  .bay{display:flex;align-items:center;gap:9px;background:rgba(8,16,24,.75);
+    border:1px solid var(--line);border-radius:4px;padding:0 12px;min-height:var(--tap)}
+  .hl{font-size:11px;letter-spacing:1.4px;color:var(--muted);font-weight:700;
+    text-transform:uppercase;white-space:nowrap}
+
+  .mbtn{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:4px;min-height:36px;padding:0 14px;font:inherit;font-size:13px;
+    font-weight:700;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+  .mbtn:hover{border-color:var(--cyan-dim);color:var(--cyan-lt)}
+  .mbtn.on{background:rgba(0,216,255,.16);border-color:var(--cyan);color:#fff;
+    box-shadow:0 0 12px rgba(0,216,255,.4);text-shadow:0 0 6px var(--cyan)}
+
+  /* 16px on inputs — anything smaller makes iOS zoom the page on focus */
+  input[type=number],input[type=text]{background:#02080E;color:var(--cyan-lt);
+    border:1px solid var(--cyan-dim);border-radius:4px;padding:8px;
+    font-family:var(--mono);font-size:16px;font-weight:700;text-align:center;
+    width:72px;min-height:38px}
+  input:focus,select:focus{outline:2px solid var(--cyan);outline-offset:1px}
+  /* 16px: anything smaller and iOS zooms the page when the control is focused. */
+  select{background:#02080E;color:var(--cyan-lt);border:1px solid var(--cyan-dim);
+    border-radius:4px;padding:8px 30px 8px 10px;font:inherit;font-size:16px;
+    font-weight:500;cursor:pointer;min-height:var(--tap);
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%2300D8FF' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 10px center}
+  select option{background:#02080E;color:var(--cyan-lt)}
+  .warn{color:var(--surge-lt);font-size:12px;font-weight:600}
+
+  .intel{display:flex;align-items:center;gap:9px;background:rgba(8,16,24,.75);
+    border:1px solid var(--necro-dim);border-radius:4px;padding:0 12px;
+    flex:0 0 380px;width:380px;min-height:var(--tap);height:var(--tap);
+    white-space:nowrap;overflow:hidden}
+  .intel .lab{font-size:10px;letter-spacing:1.2px;color:var(--muted);font-weight:700}
+  .intel .val{font-family:var(--mono);font-weight:700;color:var(--necro);font-size:16px}
+  .intel .val.exact{color:var(--hit);text-shadow:0 0 8px var(--hit)}
+  .intel .val.bad{color:var(--miss)}
+  .intel .from{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+  .intel button{background:transparent;border:1px solid var(--necro-dim);color:var(--necro);
+    border-radius:4px;padding:7px 10px;font:inherit;font-size:11px;font-weight:700;
+    cursor:pointer;min-height:32px}
+  .intel button:hover{background:rgba(92,255,122,.2)}
+  @media(max-width:900px){ .intel{flex:1 1 100%;width:auto} }
+
+  /* ---------- prompts ----------
+     These live in the right column, never above the attack table: they appear
+     and disappear as you confirm each hit, and anything above the table would
+     shove it up and down under your finger mid-turn. */
+  /* Prompts are a column inside the Attack Action panel, right after the table.
+     attack-body flex-wraps, so on a narrow iPad the prompts drop directly below
+     the table — still inside the same panel, never above it. */
+  /* Table needs ~700px for its columns (Mastery must not clip) and the prompts
+     want ~250px, so side-by-side only fits above ~1100px of viewport. Below
+     that the prompts wrap to a full-width row directly under the table — still
+     inside the same panel, never above it. */
+  .attack-body{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+  .table-wrap{flex:1 1 680px;min-width:0;overflow-x:auto}
+  .prompts{flex:1 1 250px;display:flex;flex-direction:column;gap:9px;align-self:stretch}
+  .prompts-empty{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;
+    border:1px dashed var(--line);border-radius:4px;padding:14px;text-align:center;
+    display:flex;align-items:center;justify-content:center}
+  @media(max-width:1100px){
+    .prompts{flex-basis:100%;flex-direction:row;flex-wrap:wrap}
+    .prompts .prompt{flex:1 1 300px}
+    .prompts-empty{flex-basis:100%}
+  }
+  .prompt{display:flex;align-items:center;gap:12px;border-radius:4px;padding:12px 14px;
+    background:rgba(8,16,24,.85);border:1px solid var(--line);flex:none;min-width:0;
+    position:relative;overflow:hidden}
+  .prompt::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+  .prompt .pi{font-size:20px;line-height:1}
+  .prompt .ptx{min-width:0;flex:1}
+  .prompt .pt{font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+  .prompt .ps{font-size:12px;color:var(--muted);line-height:1.45;margin-top:3px}
+  .prompt button{border-radius:4px;min-height:var(--tap);padding:0 16px;font:inherit;
+    font-size:12px;font-weight:700;letter-spacing:1.2px;cursor:pointer;white-space:nowrap;
+    border:1px solid;text-transform:uppercase}
+  .p-curse{border-color:var(--necro-dim)}
+  .p-curse::before{background:var(--necro);box-shadow:0 0 12px var(--necro)}
+  .p-curse .pt{color:var(--necro)}
+  .p-curse button{background:rgba(92,255,122,.16);border-color:var(--necro);color:var(--necro)}
+  .p-psi{border-color:var(--psi-dim)}
+  .p-psi::before{background:var(--psi);box-shadow:0 0 12px var(--psi)}
+  .p-psi .pt{color:var(--psi-lt)}
+  .p-psi button{background:rgba(177,79,255,.2);border-color:var(--psi);color:var(--psi-lt)}
+  .p-ba{border-color:var(--cyan-dim)}
+  .p-ba::before{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+  .p-ba .pt{color:var(--cyan-lt)}
+  .p-ba button{background:rgba(0,216,255,.2);border-color:var(--cyan);color:var(--cyan-lt)}
+  .p-thrust{border-color:var(--surge-dim)}
+  .p-thrust::before{background:var(--surge);box-shadow:0 0 12px var(--surge)}
+  .p-thrust .pt{color:var(--surge-lt)}
+  .p-info{border-color:var(--line);opacity:.88}
+  .p-info::before{background:var(--muted)}
+  .p-info .pt{color:var(--muted)}
+  .p-done{border-color:var(--hit-dim);opacity:.85}
+  .p-done::before{background:var(--hit)}
+  .p-done .pt{color:var(--hit)}
+  .p-curse,.p-psi,.p-ba{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 20px rgba(0,216,255,.18)}}
+  @media (prefers-reduced-motion:reduce){.p-curse,.p-psi,.p-ba{animation:none}}
+
+  /* ---------- layout ---------- */
+  /* Two columns only when the attack table still has room for a full-width
+     mastery select; below that the sidebar drops under it and the table
+     reclaims the width. */
+  .grid{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+  @media(max-width:1160px){.grid{grid-template-columns:1fr}}
+
+  .panel{background:linear-gradient(180deg,rgba(12,22,34,.85),rgba(6,12,20,.85));
+    border:1px solid var(--line);border-radius:4px;padding:14px;margin-bottom:14px;
+    position:relative}
+  .panel::before{content:'';position:absolute;top:-1px;left:14px;right:14px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5}
+  .panel h2{font-size:13px;letter-spacing:2px;font-weight:700;color:var(--cyan);
+    margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    text-transform:uppercase}
+  .panel h2 .hint{font-size:11px;letter-spacing:.3px;color:var(--muted);font-weight:400;
+    text-transform:none;text-align:right}
+  .panel.psi{border-color:var(--psi-dim)}
+  .panel.psi::before{background:linear-gradient(90deg,transparent,var(--psi),transparent)}
+  .panel.psi h2{color:var(--psi-lt);border-bottom-color:var(--psi-dim)}
+  .panel.surge{border-color:var(--surge-dim)}
+  .panel.surge::before{background:linear-gradient(90deg,transparent,var(--surge),transparent)}
+  .panel.surge h2{color:var(--surge-lt);border-bottom-color:var(--surge-dim)}
+  .panel.necro{border-color:var(--necro-dim)}
+  .panel.necro::before{background:linear-gradient(90deg,transparent,var(--necro),transparent)}
+  .panel.necro h2{color:var(--necro);border-bottom-color:var(--necro-dim)}
+
+  /* ---------- attack table ----------
+     Fixed columns leave the rest to Mastery. On a narrow iPad (768 portrait)
+     that remainder isn't enough for the select's longest option, so the fixed
+     columns give ground rather than let the text truncate — the select must
+     stay at 16px or iOS zooms the page on tap. */
+  th.c-weap{width:130px} th.c-d20{width:88px} th.c-hit{width:106px}
+  th.c-dmg{width:140px}  th.c-tot{width:60px}
+  @media(max-width:860px){
+    th.c-weap{width:104px} th.c-d20{width:76px} th.c-hit{width:94px}
+    th.c-dmg{width:112px}  th.c-tot{width:48px}
+    tbody td{padding:10px 4px}
+  }
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:11px;letter-spacing:1.2px;color:var(--muted);text-align:left;
+    padding:6px 7px;font-weight:700;border-bottom:1px solid var(--line);text-transform:uppercase}
+  tbody td{padding:10px 7px;border-bottom:1px solid rgba(24,48,72,.6);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr.miss{opacity:.5}
+  tbody tr.pending{opacity:.36}
+  tbody tr.pending td{font-style:italic}
+  .wname{font-weight:600;color:var(--cyan-lt);font-size:15px;letter-spacing:.2px;
+    display:block;line-height:1.2}
+  .wname.off{color:#5FC4E8}
+  tr.surge-row .wname{color:var(--surge-lt)}
+  .slot{display:block;font-size:10px;letter-spacing:1px;color:var(--muted);
+    font-weight:700;margin-top:3px;text-transform:uppercase}
+  .waiting{font-size:12px;color:var(--muted)}
+
+  .d20{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;
+    border-radius:4px;background:rgba(0,216,255,.07);border:1px solid var(--cyan-dim);
+    font-family:var(--mono);font-weight:700;font-size:19px;color:var(--cyan-lt)}
+  .d20.nat20{background:rgba(0,216,255,.32);border-color:#fff;color:#fff;
+    box-shadow:0 0 18px var(--cyan),inset 0 0 12px rgba(0,216,255,.5);
+    text-shadow:0 0 8px var(--cyan)}
+  .d20.nat1{background:rgba(255,84,112,.22);border-color:var(--miss);color:var(--miss);
+    box-shadow:0 0 16px rgba(255,84,112,.55)}
+  .dropped{color:#5A8399;font-family:var(--mono);font-size:14px;
+    text-decoration:line-through;margin-left:5px}
+  .adv-tag{display:block;font-size:10px;letter-spacing:.6px;margin-top:4px;font-weight:700}
+  .adv-vex{color:var(--cyan)} .adv-studied{color:var(--psi-lt)}
+
+  .tohit{font-family:var(--mono);font-weight:700;font-size:21px;display:block}
+  .tohit.hit{color:var(--hit);text-shadow:0 0 8px rgba(0,255,178,.5)}
+  .tohit.miss{color:var(--miss)}
+  .tohit.ask{color:var(--cyan-lt)}
+  .hitbadge{font-size:10px;letter-spacing:1.2px;font-weight:700;display:block;margin-top:3px}
+  .hitbadge.hit{color:var(--hit)} .hitbadge.miss{color:var(--miss)}
+  .autobadge{font-size:10px;letter-spacing:.6px;font-weight:700;display:block;
+    margin-top:3px;color:var(--cyan)}
+  .undo{font-size:10px;color:#7096AA;cursor:pointer;display:inline-block;margin-top:4px;
+    letter-spacing:.8px;text-transform:uppercase;padding:4px 0}
+  .undo:hover{color:var(--cyan-lt)}
+  .askrow{display:flex;gap:5px;margin-top:5px}
+  .hitbtn,.missbtn{border-radius:4px;flex:1;min-height:38px;padding:0 4px;font:inherit;
+    font-size:12px;font-weight:700;cursor:pointer;background:transparent;letter-spacing:.6px}
+  .hitbtn{border:1px solid var(--hit-dim);color:var(--hit)}
+  .hitbtn:hover{background:rgba(0,255,178,.22);box-shadow:0 0 10px rgba(0,255,178,.4)}
+  .missbtn{border:1px solid var(--miss-dim);color:var(--miss)}
+  .missbtn:hover{background:rgba(255,84,112,.22);box-shadow:0 0 10px rgba(255,84,112,.4)}
+
+  .dmg{font-family:var(--mono);font-weight:700;color:#EAF7FD;font-size:17px}
+  .breakdown{font-family:var(--mono);font-size:11px;color:#6E93A8;display:block;margin-top:3px}
+  .riderline{display:block;margin-top:2px;white-space:nowrap}
+  .dtype{font-size:10px;letter-spacing:.8px;font-weight:700}
+  .t-Slashing,.t-Piercing,.t-Bludgeoning{color:var(--muted)}
+  .t-Thunder{color:var(--cyan)} .t-Necrotic{color:var(--necro)}
+  .t-Psychic,.t-Force{color:var(--psi-lt)}
+  .dash{color:#33566B}
+  .total{font-family:var(--mono);font-weight:700;color:var(--hit);font-size:19px;
+    text-shadow:0 0 8px rgba(0,255,178,.4)}
+  .crit-note{font-size:10px;color:var(--cyan);letter-spacing:.6px;display:block;
+    font-weight:700;margin-top:2px}
+
+  select.mastery{width:100%;font-size:16px;min-height:40px;padding:6px 28px 6px 8px}
+  .cleave-btn{background:rgba(92,255,122,.14);border:1px solid var(--necro-dim);
+    color:var(--necro);border-radius:4px;min-height:38px;padding:0 10px;font:inherit;
+    font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;width:100%}
+  .cleave-btn:hover:not(:disabled){background:rgba(92,255,122,.32)}
+  .cleave-btn:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ---------- psionic ---------- */
+  .psi-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+  .psi-stat{display:flex;flex-direction:column;gap:4px}
+  .psi-stat .lbl{font-size:10px;letter-spacing:1.2px;color:var(--muted);font-weight:700}
+  .psi-die{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;
+    border-radius:4px;background:rgba(177,79,255,.16);border:1px solid var(--psi-dim);
+    color:var(--psi-lt);font-family:var(--mono);font-weight:700;font-size:19px}
+  .psi-force{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--psi-lt);
+    text-shadow:0 0 10px var(--psi)}
+  .psi-dc{font-family:var(--mono);font-weight:700;color:var(--psi-lt);font-size:17px}
+  button.mini{background:rgba(177,79,255,.2);border:1px solid var(--psi-dim);color:var(--psi-lt);
+    border-radius:4px;min-height:var(--tap);padding:0 18px;font:inherit;font-weight:700;
+    font-size:12px;letter-spacing:1.2px;cursor:pointer;text-transform:uppercase;transition:all .15s}
+  button.mini:hover:not(:disabled){background:rgba(177,79,255,.4)}
+  button.mini:disabled{opacity:.35;cursor:not-allowed}
+  button.mini.go{border-color:var(--psi);box-shadow:0 0 14px rgba(177,79,255,.42)}
+  .gate{font-size:12px;color:var(--muted);font-style:italic}
+
+  /* ---------- resource bar (thin, single row) ----------
+     Individual pips can't fit a 10-die pool across five resources in one row,
+     so each resource is a compact −/count/+ stepper. The bar itself never wraps
+     (overflow-x scroll is the safety valve); it's sized to fit one row on iPad
+     landscape. */
+  .res-bar{display:flex;align-items:center;gap:6px;margin-bottom:6px;
+    padding:6px 8px;border-radius:4px;position:relative;overflow-x:auto;
+    background:linear-gradient(180deg,rgba(12,22,34,.82),rgba(6,12,20,.82));
+    border:1px solid var(--line)}
+  .res-bar::before{content:'';position:absolute;top:-1px;left:10px;right:10px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5}
+  .ru{display:flex;align-items:center;gap:3px;flex:none;
+    padding:3px 5px;border-radius:4px;border:1px solid var(--line);
+    border-left:2px solid var(--rc);background:rgba(0,216,255,.03)}
+  .ru-lbl{font-size:11px;font-weight:700;letter-spacing:.2px;color:var(--rc);
+    text-transform:uppercase;margin-right:1px}
+  .ru-ct{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);
+    min-width:30px;text-align:center;font-variant-numeric:tabular-nums}
+  .ru-ct.empty{color:var(--muted);opacity:.6}
+  .ru-btn{width:28px;height:34px;flex:none;border-radius:3px;cursor:pointer;
+    background:transparent;border:1px solid var(--line);color:var(--rc);
+    font-size:16px;font-weight:700;line-height:1;transition:all .12s}
+  .ru-btn:hover:not(:disabled){background:color-mix(in srgb,var(--rc) 22%,transparent);
+    border-color:var(--rc)}
+  .ru-btn:disabled{opacity:.28;cursor:not-allowed}
+  .ru-roll{width:30px;height:34px;flex:none;border-radius:3px;cursor:pointer;margin-left:1px;
+    background:rgba(0,255,178,.12);border:1px solid var(--hit-dim);font-size:14px;line-height:1}
+  .ru-roll:hover{background:rgba(0,255,178,.3)}
+  .ru-heal{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--hit);
+    white-space:nowrap;min-width:0;margin-left:1px}
+  .ru-sep{width:1px;align-self:stretch;background:var(--line);margin:0 1px;flex:none}
+
+  .rests{display:flex;gap:4px;flex:none}
+  .rbtn{width:34px;height:34px;flex:none;background:transparent;border:1px solid var(--line);
+    color:var(--muted);border-radius:4px;font-size:15px;cursor:pointer;transition:all .15s;
+    display:flex;align-items:center;justify-content:center}
+  .rbtn:hover{border-color:var(--cyan-dim);color:var(--cyan-lt);background:rgba(0,216,255,.1)}
+  .rbtn.fight{border-color:var(--cyan-dim);color:var(--cyan-lt);background:rgba(0,216,255,.12)}
+  .rbtn.fight:hover{background:rgba(0,216,255,.3);box-shadow:0 0 14px rgba(0,216,255,.35)}
+  .rbtn.session{border-color:var(--surge-dim);color:var(--surge-lt)}
+  .rbtn.session:hover{border-color:var(--surge);background:rgba(255,122,26,.18)}
+  .rest-note{font-size:11px;color:var(--muted);line-height:1.45;margin-bottom:14px}
+  .rest-note b{color:var(--cyan-lt)}
+
+  /* ---------- resources ---------- */
+  .res-blk{margin-bottom:16px} .res-blk:last-child{margin-bottom:0}
+  .res-head{display:flex;justify-content:space-between;align-items:baseline}
+  .res-title{font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase}
+  .res-count{font-family:var(--mono);font-size:13px;color:var(--muted);font-weight:700}
+  .res-note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
+  .pips{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 4px}
+  .pip{width:30px;height:30px;flex:none;border-radius:3px;cursor:pointer;
+    border:1px solid var(--psi);background:rgba(177,79,255,.72);
+    box-shadow:0 0 8px rgba(177,79,255,.6);transition:transform .12s;
+    transform:rotate(45deg) scale(.72)}
+  .pip:hover{transform:rotate(45deg) scale(.86)}
+  .pip.spent{background:transparent!important;box-shadow:none!important;
+    border-color:#2C4A60!important}
+  .pip.surge{border-color:var(--surge);background:rgba(255,122,26,.72);
+    box-shadow:0 0 8px rgba(255,122,26,.6)}
+  .pip.wind{border-color:var(--hit);background:rgba(0,255,178,.62);
+    box-shadow:0 0 8px rgba(0,255,178,.5)}
+  .pip.bulwark{border-color:var(--cyan);background:rgba(0,216,255,.62);
+    box-shadow:0 0 8px rgba(0,216,255,.5)}
+  .pip.cleaver{border-color:var(--necro);background:rgba(92,255,122,.62);
+    box-shadow:0 0 8px rgba(92,255,122,.5)}
+  .wind-roll{display:flex;align-items:center;gap:10px;margin-top:7px}
+  button.wind-btn{background:rgba(0,255,178,.14);border:1px solid var(--hit-dim);color:var(--hit);
+    border-radius:4px;min-height:38px;padding:0 14px;font:inherit;font-weight:700;
+    font-size:11px;letter-spacing:1px;cursor:pointer;text-transform:uppercase}
+  button.wind-btn:hover{background:rgba(0,255,178,.3)}
+  #windResult{font-family:var(--mono);font-weight:700;color:var(--hit);font-size:14px}
+
+  /* ---------- summary ---------- */
+  .sum-row{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:12px 14px;border-radius:4px;margin-bottom:8px;background:rgba(0,216,255,.04);
+    border-left:3px solid var(--line)}
+  .sum-row:last-child{margin-bottom:0}
+  .sum-label{font-size:13px;letter-spacing:1.2px;font-weight:700;text-transform:uppercase}
+  .sum-val{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1}
+  .sum-sub{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0;
+    text-transform:none;display:block;margin-top:3px}
+  .sum-attacks .sum-label{color:var(--muted)} .sum-attacks .sum-val{color:var(--text)}
+  .sum-hits{border-left-color:var(--hit);background:rgba(0,255,178,.06)}
+  .sum-hits .sum-label,.sum-hits .sum-val{color:var(--hit)}
+  .sum-hits .sum-val{text-shadow:0 0 12px rgba(0,255,178,.45)}
+  .sum-dealt{border-left-color:var(--psi);background:rgba(177,79,255,.08)}
+  .sum-dealt .sum-label,.sum-dealt .sum-val{color:var(--psi-lt)}
+  .sum-dealt .sum-val{text-shadow:0 0 12px var(--psi)}
+
+  /* ---------- necrotic ---------- */
+  button.necro-btn{background:rgba(92,255,122,.14);border:1px solid var(--necro-dim);
+    color:var(--necro);border-radius:4px;min-height:38px;padding:0 12px;font:inherit;
+    font-weight:700;font-size:11px;letter-spacing:.8px;cursor:pointer;text-transform:uppercase}
+  button.necro-btn:hover{background:rgba(92,255,122,.32)}
+  #dotList{font-size:12px;color:var(--muted)}
+  .dot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 0;
+    border-bottom:1px solid rgba(24,48,72,.7)}
+  .dot:last-child{border-bottom:none}
+  .dot-name{width:96px;padding:7px;font-size:16px;text-align:left;font-family:inherit}
+  .dot-last{font-family:var(--mono);font-weight:700;color:var(--necro);font-size:14px;min-width:64px}
+  .dot-sum{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .dot-clear{color:#7096AA;font-size:11px;margin-left:auto;text-decoration:none;
+    letter-spacing:.6px;text-transform:uppercase;padding:9px 8px;
+    display:inline-flex;align-items:center;min-height:34px}
+  .dot-clear:hover{color:var(--hit)}
+
+  .legend{font-size:12px;color:var(--muted);line-height:1.9}
+  .legend b{color:var(--cyan-lt)}
+  .empty{color:var(--muted);font-size:13px;font-style:italic;padding:18px 6px;text-align:center}
+
+  /* ---------- settings drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(0,4,8,.72);backdrop-filter:blur(2px);
+    opacity:0;pointer-events:none;transition:opacity .22s;z-index:40}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;left:0;bottom:0;width:460px;max-width:92vw;z-index:41;
+    background:linear-gradient(180deg,#0A1522,#050A11);
+    border-right:1px solid var(--cyan-dim);box-shadow:6px 0 40px rgba(0,216,255,.14);
+    transform:translateX(-100%);transition:transform .24s ease;
+    overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px}
+  .drawer.open{transform:none}
+  @media (prefers-reduced-motion:reduce){ .drawer{transition:none} }
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;
+    padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid var(--cyan-dim)}
+  .drawer-head span{font-size:14px;letter-spacing:3px;color:var(--cyan);font-weight:700;
+    text-transform:uppercase}
+  .drawer-head button{width:var(--tap);height:var(--tap);background:transparent;
+    border:1px solid var(--line);border-radius:4px;color:var(--muted);font-size:18px;cursor:pointer}
+  .drawer-head button:hover{color:var(--cyan-lt);border-color:var(--cyan-dim)}
+
+  .set-row{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:8px 0;border-bottom:1px solid rgba(24,48,72,.5)}
+  .set-row:last-child{border-bottom:none}
+  .set-row label{color:var(--text);font-size:14px}
+  .set-row .sublabel{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+  .derived{background:rgba(0,216,255,.06);border:1px solid var(--line);border-radius:4px;
+    padding:8px;width:72px;min-height:38px;text-align:center;font-family:var(--mono);
+    font-size:16px;font-weight:700;color:var(--cyan-lt);display:flex;
+    align-items:center;justify-content:center}
+  .load-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .load-row .hl{flex:0 0 58px}
+  .load-row select{flex:1}
+
+  .wtable{width:100%}
+  .wtable th{font-size:10px;letter-spacing:.8px;color:var(--muted);padding:6px 4px;
+    text-align:center;text-transform:uppercase}
+  .wtable th:first-child{text-align:left}
+  .wtable td{padding:8px 4px;text-align:center;font-size:13px;
+    border-bottom:1px solid rgba(24,48,72,.5)}
+  .wtable td:first-child{text-align:left;font-weight:600;color:var(--cyan-lt);font-size:14px}
+  .wtable input{width:58px;padding:6px;font-size:16px;min-height:36px}
+  .wtable .der{font-family:var(--mono);color:var(--text);font-weight:700;font-size:14px}
+  .wtable tr.eq td:first-child::before{content:'▸ ';color:var(--hit)}
+  .wprops{font-size:10px;color:var(--muted);font-weight:400;display:block;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Settings">
+  <div class="drawer-head">
+    <span>Loadout &amp; Character</span>
+    <button id="closeDrawer" aria-label="Close">✕</button>
+  </div>
+
+  <div class="panel">
+    <h2><span>⚔ Equipped</span><span class="hint">set once, not every fight</span></h2>
+    <div class="load-row"><span class="hl">Main</span><select id="mainHand"></select></div>
+    <div class="load-row"><span class="hl">Off</span><select id="offHand"></select></div>
+    <div class="warn" id="handWarn"></div>
+  </div>
+
+  <div class="panel">
+    <h2>⚙ Character</h2>
+    <div class="set-row"><label for="level">Fighter Level</label>
+      <input type="number" id="level" value="16" min="1" max="20"></div>
+    <div class="set-row"><label>Proficiency Bonus<span class="sublabel">derived from level</span></label>
+      <div class="derived" id="profBonus">+5</div></div>
+    <div class="set-row"><label for="dexMod">DEX Modifier<span class="sublabel">attack &amp; damage</span></label>
+      <input type="number" id="dexMod" value="5" min="-5" max="10"></div>
+    <div class="set-row"><label for="intMod">INT Modifier<span class="sublabel">psionics</span></label>
+      <input type="number" id="intMod" value="5" min="-5" max="10"></div>
+  </div>
+
+  <div class="panel">
+    <h2><span>⚔ Weapons</span><span class="hint">▸ equipped</span></h2>
+    <table class="wtable">
+      <thead><tr><th>Weapon</th><th>Die</th><th>Magic</th><th>To-Hit</th><th>Damage</th></tr></thead>
+      <tbody id="weaponLib"></tbody>
+    </table>
+  </div>
+
+  <div class="panel psi">
+    <h2>◈ Psionic</h2>
+    <div class="set-row"><label for="psiDieSize">Psionic Die</label>
+      <input type="number" id="psiDieSize" value="10" min="1"></div>
+    <div class="set-row"><label>Strike Damage Bonus<span class="sublabel">= INT modifier</span></label>
+      <div class="derived" id="psiBonus">+5</div></div>
+    <div class="set-row"><label>Telekinetic Thrust DC<span class="sublabel">8 + PB + INT</span></label>
+      <div class="derived" id="thrustDC">18</div></div>
+    <div class="set-row"><label for="thrustSave">Thrust Save</label>
+      <input type="text" id="thrustSave" value="STR" maxlength="3"></div>
+  </div>
+
+  <div class="panel">
+    <div class="legend">
+      <b>White d20</b> — nat 20 (crit: damage dice doubled, not modifiers)<br>
+      <b style="color:#FF5470">Red d20</b> — nat 1 (auto-miss)<br>
+      <b style="color:#00D8FF">ADV · Vex</b> — advantage from a Vex hit<br>
+      <b style="color:#DCA8FF">ADV · Studied</b> — advantage from Studied Attacks<br>
+      <b>Tactical Master</b> — swap any mastery for Push / Sap / Slow
+    </div>
+  </div>
+</aside>
+
+<div class="wrap">
+  <header>
+    <button class="menu-btn" id="menuBtn" aria-label="Loadout and character">☰</button>
+    <h1>MALOREN</h1>
+    <span class="sub">// Dual-Wield Turn</span>
+    <span class="who">FIGHTER 16 · PSI WARRIOR &nbsp; AC <b>18</b> &nbsp; HP <b>148</b> &nbsp; INIT <b>+10</b></span>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-tab="combat">⚔ Combat</button>
+    <button class="tab" data-tab="abilities">◈ Abilities</button>
+  </nav>
+
+  <section id="tabCombat">
+
+  <div class="res-bar" id="resBar">
+    <div class="ru" style="--rc:var(--psi-lt)">
+      <span class="ru-lbl">Psi</span>
+      <button class="ru-btn dn" data-spend="psi" aria-label="Spend a Psionic die">−</button>
+      <span class="ru-ct" id="psiCount">10/10</span>
+      <button class="ru-btn up" data-restore="psi" aria-label="Restore a Psionic die">+</button>
+    </div>
+    <div class="ru" style="--rc:var(--surge-lt)">
+      <span class="ru-lbl">Surge</span>
+      <button class="ru-btn dn" data-spend="surge" aria-label="Spend Action Surge">−</button>
+      <span class="ru-ct" id="surgeCount">1/1</span>
+      <button class="ru-btn up" data-restore="surge" aria-label="Restore Action Surge">+</button>
+    </div>
+    <div class="ru" style="--rc:var(--hit)">
+      <span class="ru-lbl">Wind</span>
+      <button class="ru-btn dn" data-spend="wind" aria-label="Spend Second Wind">−</button>
+      <span class="ru-ct" id="windCount">4/4</span>
+      <button class="ru-btn up" data-restore="wind" aria-label="Restore Second Wind">+</button>
+      <button class="ru-roll" id="rollWind" aria-label="Roll Second Wind heal">🎲</button>
+      <span class="ru-heal" id="windResult"></span>
+    </div>
+    <div class="ru" style="--rc:var(--cyan-lt)">
+      <span class="ru-lbl">Bulw</span>
+      <button class="ru-btn dn" data-spend="bulwark" aria-label="Spend Bulwark of Force">−</button>
+      <span class="ru-ct" id="bulwarkCount">1/1</span>
+      <button class="ru-btn up" data-restore="bulwark" aria-label="Restore Bulwark of Force">+</button>
+    </div>
+    <div class="ru" style="--rc:var(--necro)">
+      <span class="ru-lbl">Curse</span>
+      <button class="ru-btn dn" data-spend="cleaver" aria-label="Spend Cleaver Curse">−</button>
+      <span class="ru-ct" id="cleaverCount">5/5</span>
+      <button class="ru-btn up" data-restore="cleaver" aria-label="Restore Cleaver Curse">+</button>
+    </div>
+    <div class="ru-sep"></div>
+    <div class="rests">
+      <button class="rbtn fight" id="btnFight" title="New Fight — clears the turn, AC intel and curses; keeps spent resources">⟲</button>
+      <button class="rbtn" id="btnShort" title="Short Rest">☾</button>
+      <button class="rbtn" id="btnLong" title="Long Rest">☀</button>
+      <button class="rbtn session" id="btnSession" title="New Session — refills everything incl. Cleaver curse">✦</button>
+    </div>
+  </div>
+  <div class="rest-note" id="restNote">Tap −/+ to spend or restore. 🎲 rolls a Second Wind heal.</div>
+
+  <div class="controls">
+    <button id="rollAll">⟳ Roll All</button>
+    <div class="bay">
+      <span class="hl">Resolve</span>
+      <button class="mbtn" id="modeManual">Ask the DM</button>
+      <button class="mbtn" id="modeAuto">Known AC</button>
+    </div>
+    <div class="bay" id="acBox">
+      <span class="hl">Enemy AC</span>
+      <input type="number" id="enemyAC" value="15" min="1" max="40">
+    </div>
+    <div class="bay">
+      <span class="hl">Bonus Action</span>
+      <select id="baChoice"></select>
+    </div>
+    <div class="intel" id="intel"></div>
+  </div>
+
+  <div class="panel attack-panel">
+    <h2><span>⚔ Attack Action</span>
+        <span class="hint">Extra Attack ×3 · Nick extra · Dual Wielder bonus action</span></h2>
+    <div class="attack-body">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="c-weap">Weapon</th><th class="c-d20">d20</th>
+            <th class="c-hit">To-Hit</th><th class="c-dmg">Damage</th>
+            <th class="c-tot">Total</th><th>Mastery</th>
+          </tr></thead>
+          <tbody id="mainAttacks">
+            <tr><td colspan="6" class="empty">Roll to resolve the turn.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prompts" id="prompts">
+        <div class="prompts-empty">Confirm each hit — actions you can take
+          this turn appear here.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="panel psi">
+        <h2><span>◈ Psionic Strike</span>
+            <span class="hint">1/turn · after you hit · expends a die</span></h2>
+        <div class="psi-row" id="psiBody"><span class="gate">Roll the turn first.</span></div>
+      </div>
+
+      <div class="panel surge">
+        <h2><span>⚡ Action Surge</span>
+            <span class="hint">Second Attack action · Nick already used</span></h2>
+        <table>
+          <thead><tr>
+            <th class="c-weap">Weapon</th><th class="c-d20">d20</th>
+            <th class="c-hit">To-Hit</th><th class="c-dmg">Damage</th>
+            <th class="c-tot">Total</th><th>Mastery</th>
+          </tr></thead>
+          <tbody id="surgeAttacks">
+            <tr><td colspan="6" class="empty">Chain continues from the attacks above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <div>
+      <div class="panel">
+        <h2>▤ Damage Summary</h2>
+        <div class="sum-row sum-attacks">
+          <span class="sum-label">All Attacks<span class="sum-sub">ignores AC</span></span>
+          <span class="sum-val" id="sumAttacks">—</span>
+        </div>
+        <div class="sum-row sum-hits">
+          <span class="sum-label">Hits Only<span class="sum-sub" id="hitsNote"></span></span>
+          <span class="sum-val" id="sumHits">—</span>
+        </div>
+        <div class="sum-row sum-dealt">
+          <span class="sum-label">Total Dealt<span class="sum-sub" id="dealtNote">hits + Psionic Strike</span></span>
+          <span class="sum-val" id="sumDealt">—</span>
+        </div>
+      </div>
+
+      <div class="panel necro">
+        <h2><span>☣ Ongoing Necrotic</span></h2>
+        <div id="dotList">No creatures cursed.</div>
+        <div class="res-note" style="margin-top:9px">Ticks at the <b>start of the target's turn</b>.
+          It re-saves DC 14 CON at the <b>end</b> of each of its turns, ending on a success.</div>
+      </div>
+    </div>
+  </div>
+  </section>
+
+  <section id="tabAbilities" hidden>
+    <div class="filters" id="filters"></div>
+    <div id="abilityList"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Maloren — Human Fighter 16 (Psi Warrior). Data from the sheet export.
+   Attack economy per turn:
+     Attack action ........... 3 attacks (Extra Attack, "attack 3 times")
+     Nick .................... relocates the Light property's extra attack INTO
+                               the Attack action, freeing the Bonus Action
+     Enhanced Dual Wielding .. 1 attack, costs the Bonus Action
+     Action Surge ............ a second Attack action = 3 more (Nick is 1/turn)
+   You get ONE Bonus Action, so attack 5 competes with Second Wind / Bulwark /
+   Misty Step / Psi-Powered Leap — hence the Bonus Action selector.
+   Two-Weapon Fighting restores the ability modifier the Light property and
+   Enhanced Dual Wielding withhold, so every attack adds DEX to damage.
+   ============================================================ */
+
+const $ = id => document.getElementById(id);
+const d = n => Math.floor(Math.random() * n) + 1;
+const roll = (r, n) => Math.floor(r * n) + 1;
+const uni = () => Math.random();
+const sign = n => (n >= 0 ? '+' : '') + n;
+
+const WEAPONS = {
+  leafsong: { name:'Leafsong', die:6, magic:2, type:'Slashing', mastery:'Nick', light:true,
+              rider:{ die:4, type:'Thunder' },
+              props:'Martial, Finesse, Light, Nick · +1d4 Thunder' },
+  cleaver:  { name:"Butcher's Cleaver", die:6, magic:1, type:'Piercing', mastery:'Vex', light:true,
+              rider:null, curse:{ dc:14, save:'CON', dot:'1d6 Necrotic' },
+              props:"Martial, Finesse, Light, Vex · +1 Shortsword · DC 14 CON curse" },
+  shortsword:{ name:'Shortsword', die:6, magic:0, type:'Piercing', mastery:'Vex', light:true,
+              rider:null, props:'Martial, Finesse, Light, Vex' },
+  dagger:   { name:'Dagger', die:4, magic:0, type:'Piercing', mastery:'Nick', light:true,
+              rider:null, props:'Simple, Finesse, Light, Nick' },
+  torch:    { name:'Torch of Burning Thoughts', die:6, magic:0, type:'Psychic', mastery:'', light:false,
+              rider:null, props:'1d6 Psychic · no mastery' }
+};
+
+/* Kept short enough to read inside the column without truncating, but every
+   option still states what it actually does. */
+/* Every option still says what it does; widths are measured to fit the column
+   at 16px without truncating (16px is also the iOS no-zoom floor). */
+const MASTERY = {
+  Nick: 'extra attack',
+  Vex:  'adv. next attack',
+  Slow: 'speed −10 ft',
+  Sap:  'foe has disadv.',
+  Push: 'shove 10 ft'
+};
+const TACTICAL_MASTER = ['Push','Sap','Slow'];
+
+const BA_OPTIONS = {
+  attack:  { label:'Extra attack — Dual Wielder', keepsAttack:true },
+  wind:    { label:'Second Wind — heal 1d10+level', res:'wind',
+             note:'Tactical Shift: move 15 ft without provoking Opportunity Attacks.' },
+  bulwark: { label:'Bulwark of Force — ½ cover ×5', res:'bulwark',
+             note:'Half cover for up to 5 creatures within 30 ft for 1 minute. 1/LR or spend a Psi Die.' },
+  misty:   { label:'Misty Step — teleport 30 ft',
+             note:'Free once per long rest via Fey Touched, or spend a spell slot.' },
+  leap:    { label:'Psi-Powered Leap — fly 60 ft',
+             note:'Fly Speed equal to twice your Speed until the end of your turn. 1/SR or spend a Psi Die.' },
+  none:    { label:'Save it — no Bonus Action',
+             note:'Bonus Action kept free (Reactions are unaffected).' }
+};
+
+/* ============================================================
+   ABILITIES — grouped by the situation that triggers them, because at the
+   table you reach for these by "what just happened", not by action type.
+   `res` ties an ability to the live resource tracker; `roll` makes it rollable.
+   Text is quoted from the 2024 PHB / the sheet export. Anything the export
+   named but didn't describe is flagged needsText so it can't masquerade as
+   verified rules.
+   ============================================================ */
+const SITUATIONS = [
+  { key:'incoming',  label:'Someone is about to take damage',    icon:'🛡' },
+  { key:'hitme',     label:'An attack hits you — or you miss',   icon:'⚔' },
+  { key:'save',      label:'You failed a saving throw',          icon:'✦' },
+  { key:'check',     label:'You failed an ability check',        icon:'◇' },
+  { key:'condition', label:'You are Charmed or Frightened',      icon:'◉' },
+  { key:'hurt',      label:'You are hurt',                       icon:'✚' },
+  { key:'reposition',label:'Reposition — you, an ally, or an object', icon:'➤' },
+  { key:'ranged',    label:'Strike or control at range',         icon:'◎' },
+  { key:'more',      label:'You need more out of your turn',     icon:'⚡' },
+  { key:'utility',   label:'Out of combat',                      icon:'◈' },
+  { key:'passive',   label:'Always on',                          icon:'∞' },
+  { key:'unknown',   label:'Homebrew — needs rules text',        icon:'?'  }
+];
+
+const ABILITIES = [
+  { name:'Protective Field', src:'Psi Warrior 3', sit:'incoming', act:'Reaction',
+    res:'psi', cost:'1 Psionic Energy Die',
+    roll:{ die:10, bonus:'int', label:'damage reduced by' },
+    text:'When you or a creature you can see within 30 ft takes damage, expend a Psionic Energy Die to reduce that damage by the number rolled + your INT modifier.' },
+
+  { name:'Defensive Duelist — Parry', src:'Feat', sit:'hitme', act:'Reaction',
+    text:"If you're holding a Finesse weapon and a creature hits you with a <b>melee</b> attack, add 5 to your AC against melee attacks until the start of your next turn — potentially causing that attack to miss." },
+  { name:'Juke', src:"Krenn Human Traits: Leyfarer's Guide", sit:'hitme', act:'Reaction',
+    res:'juke', cost:'Proficiency bonus per long rest',
+    text:'When you are hit with an attack <b>or you miss with an attack roll</b>, the attacker must reroll and use the new result. Works on any attack, melee or ranged — unlike Parry. <b>Careful:</b> rerolling your own miss into a hit costs you the Studied Attacks advantage that miss would have granted.' },
+
+  { name:'Indomitable', src:'Fighter 9', sit:'save', act:'Special', res:'indom',
+    cost:'2 per long rest',
+    text:'If you fail a saving throw, reroll it with a +16 bonus. You must use the new roll.' },
+  { name:'Guarded Mind (Mage Slayer)', src:'Feat', sit:'save', act:'Free', res:'mageslayer',
+    cost:'1 per short rest',
+    text:'If you fail an INT, WIS, or CHA saving throw, you can cause yourself to succeed instead.' },
+  { name:'Tattoo: Owl', src:'Magic tattoo', sit:'save', act:'Free', res:'owl',
+    cost:'2 per day',
+    roll:{ die:4, bonus:0, label:'added to the save' },
+    text:'Add 1d4 to a WIS or INT saving throw. No action required.' },
+
+  { name:'Tactical Mind', src:'Fighter 2', sit:'check', act:'Special', res:'wind',
+    cost:'1 Second Wind use — refunded if the check still fails',
+    roll:{ die:10, bonus:0, label:'added to the check' },
+    text:'When you fail an ability check, expend a use of Second Wind and — instead of regaining HP — roll 1d10 and add it to the check. If it still fails, the use is not expended.' },
+
+  { name:'Guarded Mind (Psi Warrior)', src:'Psi Warrior 10', sit:'condition', act:'Free',
+    res:'psi', cost:'1 Psionic Energy Die',
+    text:'If you start your turn Charmed or Frightened, expend a Psionic Energy Die (no action required) to end every effect giving you those conditions.' },
+
+  { name:'Second Wind', src:'Fighter 1', sit:'hurt', act:'Bonus Action', res:'wind',
+    cost:'4 per long rest · 1 back on a short rest',
+    roll:{ die:10, bonus:'level', label:'HP regained' },
+    text:'Regain 1d10 + your Fighter level HP. Tactical Shift: you may also move up to 15 ft without provoking Opportunity Attacks.' },
+
+  { name:'Misty Step', src:'Fey Touched', sit:'reposition', act:'Bonus Action', res:'misty',
+    cost:'Free 1/long rest, or a spell slot',
+    text:'Teleport up to 30 ft to an unoccupied space you can see.' },
+  { name:'Psi-Powered Leap', src:'Psi Warrior 7', sit:'reposition', act:'Bonus Action', res:'leap',
+    cost:'1/short rest, or spend a Psionic Energy Die',
+    text:'Gain a Fly Speed equal to twice your Speed (60 ft) until the end of your current turn.' },
+  { name:'Tactical Shift', src:'Fighter 5', sit:'reposition', act:'Bonus Action',
+    cost:'Rides along with Second Wind',
+    text:'Whenever you activate Second Wind with a Bonus Action, move up to 15 ft without provoking Opportunity Attacks.' },
+  { name:'Telekinetic Movement', src:'Psi Warrior 3', sit:'reposition', act:'Magic action', res:'telekinesis',
+    cost:'1/short rest, or spend a Psionic Energy Die',
+    text:'Move a loose object (Large or smaller) <b>or a willing creature other than you</b> up to 30 ft to a space you can see — pull an ally out of a bad spot, or drag one into reach. A Tiny object can be moved to or from your hand. Works in combat as much as out of it.' },
+
+  { name:'Action Surge', src:'Fighter 2', sit:'more', act:'Special', res:'surge',
+    cost:'1 per short rest',
+    text:'Take one additional action on your turn, except the Magic action. Usually a second Attack action — three more attacks.' },
+  { name:'Bulwark of Force', src:'Psi Warrior 15', sit:'more', act:'Bonus Action', res:'bulwark',
+    cost:'1/long rest, or spend a Psionic Energy Die',
+    text:'Choose up to 5 creatures (including yourself) within 30 ft to gain Half Cover for 1 minute, or until you are Incapacitated.' },
+  { name:'Tactical Master', src:'Fighter 9', sit:'more', act:'Free',
+    text:'When you attack with a weapon whose mastery you can use, replace that property with Push, Sap, or Slow for that attack. No limit — swap it per attack on the Combat tab.' },
+
+  { name:'Command', src:'Fey Touched', sit:'ranged', act:'Action', res:'command',
+    cost:'Free 1/long rest, or a spell slot',
+    text:'One creature within 60 ft makes a <b>WIS save (DC 18)</b> or obeys a one-word command on its next turn — Drop, Flee, Grovel, Halt. A whole enemy turn, taken off the board.' },
+  { name:'Mind Sliver', src:'Cantrip', sit:'ranged', act:'Action',
+    text:'One creature within 60 ft makes an <b>INT save (DC 13)</b> or takes psychic damage and <b>subtracts 1d4 from its next saving throw</b>. That debuff sets up your DC 18 Telekinetic Thrust or DC 14 Cleaver curse on the following turn.' },
+  { name:'Comprehend Languages', src:'Leyfarer: Mentor', sit:'utility', act:'Action (ritual)',
+    text:'Understand any spoken or written language you hear or touch for 1 hour.' },
+  { name:'Mending', src:'Cantrip', sit:'utility', act:'1 minute',
+    text:'Repair a single break or tear in an object you touch.' },
+
+  { name:'Studied Attacks', src:'Fighter 13', sit:'passive',
+    text:'If you make an attack roll against a creature and miss, you have Advantage on your next attack roll against that creature before the end of your turn. Wired into the Combat tab chain.' },
+  { name:'Extra Attack', src:'Fighter 11', sit:'passive',
+    text:'Attack 3 times whenever you take the Attack action.' },
+  { name:'Psychic Resistance', src:'Psi Warrior 10', sit:'passive',
+    text:'You have Resistance to Psychic damage.' },
+  { name:'Concentration Breaker', src:'Mage Slayer', sit:'passive',
+    text:'When you damage a creature that is concentrating, it has Disadvantage on the save to maintain Concentration.' },
+  { name:'Alert', src:'Feat', sit:'passive',
+    text:'+5 to Initiative (already in your +10). You may also swap your Initiative with a willing ally immediately after rolling.' },
+  { name:'Quick Draw', src:'Dual Wielder', sit:'passive',
+    text:'Draw or stow two weapons that lack the Two-Handed property when you would normally draw or stow only one.' },
+  { name:'Resourceful', src:'Human', sit:'passive',
+    text:'You gain Heroic Inspiration whenever you finish a Long Rest.' },
+
+  /* Named on the sheet but the export carries no rules text. Flagged, not guessed. */
+  { name:'Harnessed Beast Mutation: Legs', src:'Reward', sit:'unknown', act:'Bonus Action', needsText:true },
+  { name:'Greater Primordial Rune', src:'Lost Tome Reward', sit:'unknown', needsText:true },
+  { name:'Wyd Touched', src:'Feat', sit:'unknown', needsText:true },
+  { name:'Codex Bow — charges', src:'Magic item · 3 charges', sit:'unknown', needsText:true },
+  { name:'Quiver of Fire Arrows', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Spider Shot ×3', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'The Fearnaught', src:'Attuned magic item', sit:'unknown', needsText:true },
+  { name:'Gloves of the Goatfriend', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Star of the Traveler', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Crimson Mantle', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Token of the Lizard Wizard', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Torch of Burning Thoughts', src:'Magic item · +10, 1d6+5 Psychic', sit:'unknown', needsText:true },
+  { name:'Voice of Stone', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Vial of Living Blood', src:'Magic item', sit:'unknown', needsText:true },
+  { name:'Broiled Leather', src:'Armor', sit:'unknown', needsText:true }
+];
+
+const SEQUENCE = [
+  { hand:'main', slot:'Attack action',   def:'Nick', block:'main' },
+  { hand:'off',  slot:'Nick extra',      def:'Vex',  block:'main' },
+  { hand:'main', slot:'Attack action',   def:'Slow', block:'main' },
+  { hand:'main', slot:'Attack action',   def:'Sap',  block:'main' },
+  { hand:'off',  slot:'Dual Wielder BA', def:'Push', block:'main', ba:true },
+  { hand:'main', slot:'Surge attack',    def:'Slow', block:'surge' },
+  { hand:'main', slot:'Surge attack',    def:'Sap',  block:'surge' },
+  { hand:'main', slot:'Surge attack',    def:'Slow', block:'surge' }
+];
+
+const SETTINGS = ['level','dexMod','intMod','enemyAC','psiDieSize','thrustSave',
+                  'mainHand','offHand','baChoice'];
+
+let entropy = null, lastRoll = null;
+let masteryPick = SEQUENCE.map(s => s.def);
+let resolveMode = 'manual';
+let marks = SEQUENCE.map(() => null);
+let turnId = 0, cursedIdx = [], acLog = [];
+let acLo = 1, acHi = 40, acMarks = 0;
+let psionic = null, windDie = null, dots = [];
+let baUsed = false;
+
+const baPick = () => $('baChoice').value;
+
+function cfg(){
+  const n = id => Number($(id).value);
+  const level = n('level');
+  const prof = level <= 4 ? 2 : level <= 8 ? 3 : level <= 12 ? 4 : level <= 16 ? 5 : 6;
+  const dex = n('dexMod'), int = n('intMod');
+  const build = key => {
+    const w = Object.assign({}, WEAPONS[key]);
+    w.key = key; w.toHit = prof + dex + w.magic; w.dmgMod = dex + w.magic;
+    return w;
+  };
+  return { level, prof, dex, int, enemyAC: n('enemyAC'), psiDieSize: n('psiDieSize'),
+           psiBonus: int, thrustDC: 8 + prof + int,
+           thrustSave: $('thrustSave').value.toUpperCase(),
+           main: build($('mainHand').value), off: build($('offHand').value), build };
+}
+
+function freshEntropy(){
+  return { attacks: SEQUENCE.map(() => ({ a:uni(), b:uni(), w1:uni(), w2:uni(), r1:uni(), r2:uni() })) };
+}
+
+/* nat 20 always hits and nat 1 always misses regardless of AC, so those resolve
+   themselves even when the DM hasn't told you the number. */
+function decideHit(nat, total, c, i){
+  if (nat === 20) return true;
+  if (nat === 1)  return false;
+  if (resolveMode === 'auto') return total >= c.enemyAC;
+  return marks[i];
+}
+
+function resolveAttack(e, spec, mast, prev, c, i){
+  const w = spec.hand === 'main' ? c.main : c.off;
+  const adv = [];
+  if (prev){
+    if (prev.mastery === 'Vex' && prev.hit) adv.push('Vex');
+    if (!prev.hit) adv.push('Studied Attacks');
+  }
+  const hasAdv = adv.length > 0;
+  const r1 = roll(e.a, 20), r2 = roll(e.b, 20);
+  const nat = hasAdv ? Math.max(r1, r2) : r1;
+  const dropped = hasAdv ? Math.min(r1, r2) : null;
+  const toHit = nat + w.toHit;
+  const hit = decideHit(nat, toHit, c, i);
+  const crit = nat === 20;
+
+  const wDice = crit ? [roll(e.w1, w.die), roll(e.w2, w.die)] : [roll(e.w1, w.die)];
+  const dmg = wDice.reduce((a,b)=>a+b,0) + w.dmgMod;
+
+  let rDice = [], rider = null;
+  if (w.rider){
+    rDice = crit ? [roll(e.r1, w.rider.die), roll(e.r2, w.rider.die)]
+                 : [roll(e.r1, w.rider.die)];
+    rider = rDice.reduce((a,b)=>a+b,0);
+  }
+  return { spec, idx:i, w, mastery:mast, nat, dropped, hasAdv, advReason: adv[0] || '',
+           toHit, hit, crit, wDice, dmg, rDice, rider, total: dmg + (rider || 0) };
+}
+
+/* An attack is revealed only once every attack before it is resolved: until you
+   know whether the last one hit, you don't know whether this one has advantage,
+   so its d20 isn't determined. The Dual Wielder attack drops out entirely when
+   the Bonus Action is spent elsewhere — the chain then links across the gap. */
+function resolve(c){
+  const attacks = [];
+  let prev = null, blocked = false;
+  SEQUENCE.forEach((spec, i) => {
+    if (spec.ba && baPick() !== 'attack') return;
+    if (blocked){
+      attacks.push({ spec, idx:i, w: spec.hand === 'main' ? c.main : c.off,
+                     mastery: masteryPick[i], pending:true, hit:null, total:0 });
+      return;
+    }
+    const r = resolveAttack(entropy.attacks[i], spec, masteryPick[i], prev, c, i);
+    attacks.push(r);
+    if (r.hit === null) blocked = true;
+    prev = r;
+  });
+  return { attacks };
+}
+
+/* ---------- AC intel ----------
+   A hit means AC <= its total; a miss means AC >= total+1. Nat 20/1 resolve
+   without reference to AC, so they teach nothing. Observations are logged
+   rather than folded into the bounds, so changing an answer retracts its old
+   constraint instead of stacking a contradictory one on top. */
+function observe(i, r){
+  if (!r || r.pending || r.hit === null) return;
+  if (r.nat === 20 || r.nat === 1) return;
+  const at = acLog.findIndex(o => o.t === turnId && o.i === i);
+  const rec = { t:turnId, i, toHit:r.toHit, hit:r.hit };
+  if (at >= 0) acLog[at] = rec; else acLog.push(rec);
+  recomputeAC();
+}
+function forget(i){
+  const at = acLog.findIndex(o => o.t === turnId && o.i === i);
+  if (at >= 0){ acLog.splice(at, 1); recomputeAC(); }
+}
+function recomputeAC(){
+  acLo = 1; acHi = 40;
+  for (const o of acLog){
+    if (o.hit) acHi = Math.min(acHi, o.toHit);
+    else       acLo = Math.max(acLo, o.toHit + 1);
+  }
+  acMarks = acLog.length;
+  saveIntel(); renderIntel();
+}
+
+function renderIntel(){
+  const box = $('intel');
+  if (acMarks === 0){
+    box.innerHTML = `<span class="lab">AC Intel</span>
+      <span class="from">mark hits &amp; misses to narrow it</span>`;
+    return;
+  }
+  let val, cls = '', act = '';
+  if (acLo > acHi){
+    val = `${acLo}–${acHi} impossible`; cls = 'bad';
+    act = `<button id="acReset">reset</button>`;
+  } else if (acLo === acHi){
+    val = `AC = ${acLo}`; cls = 'exact';
+    act = `<button id="acUse">use it</button><button id="acReset">new</button>`;
+  } else {
+    val = acHi >= 40 ? `AC ≥ ${acLo}` : acLo <= 1 ? `AC ≤ ${acHi}` : `AC ${acLo}–${acHi}`;
+    act = `<button id="acUse">use ${Math.min(acHi,40)}</button><button id="acReset">new</button>`;
+  }
+  box.innerHTML = `<span class="lab">AC Intel</span><span class="val ${cls}">${val}</span>
+    <span class="from">${acMarks} mark${acMarks===1?'':'s'}</span>${act}`;
+  if ($('acUse')) $('acUse').onclick = () => {
+    $('enemyAC').value = acLo === acHi ? acLo : Math.min(acHi, 40); setMode('auto'); };
+  if ($('acReset')) $('acReset').onclick = () => { acLog = []; recomputeAC(); };
+}
+
+/* ---------- render ---------- */
+function masterySelect(i, r){
+  const opts = [r.w.mastery, ...TACTICAL_MASTER].filter((v,k,a)=> v && a.indexOf(v)===k);
+  return `<select class="mastery" data-i="${i}">` + opts.map(o =>
+    `<option value="${o}"${o===masteryPick[i]?' selected':''}>${o} — ${MASTERY[o]}</option>`
+  ).join('') + `</select>`;
+}
+
+function attackRow(r){
+  const i = r.idx;
+  const tr = document.createElement('tr');
+
+  if (r.pending){
+    tr.className = 'pending' + (r.spec.block === 'surge' ? ' surge-row' : '');
+    tr.innerHTML = `
+      <td><span class="wname ${r.spec.hand==='off'?'off':''}">${r.w.name}</span>
+          <span class="slot">${r.spec.slot}</span></td>
+      <td colspan="5"><span class="waiting">waiting — resolve the attack above first
+        (advantage depends on whether it hit)</span></td>`;
+    return tr;
+  }
+
+  tr.className = (r.hit === false ? 'miss ' : '') + (r.spec.block === 'surge' ? 'surge-row' : '');
+  const d20cls = r.nat === 20 ? 'nat20' : r.nat === 1 ? 'nat1' : '';
+  const advCls = r.advReason === 'Vex' ? 'adv-vex' : 'adv-studied';
+  const advLbl = r.advReason === 'Vex' ? 'ADV · VEX' : 'ADV · STUDIED';
+
+  let hitCell;
+  if (r.nat === 20 || r.nat === 1){
+    hitCell = `<span class="tohit ${r.hit?'hit':'miss'}">${r.toHit}</span>
+               <span class="autobadge">NAT ${r.nat} · AUTO ${r.hit?'HIT':'MISS'}</span>`;
+  } else if (r.hit === null){
+    hitCell = `<span class="tohit ask">${r.toHit}</span>
+               <span class="askrow">
+                 <button class="hitbtn"  data-mark="${i}" data-v="1">HIT</button>
+                 <button class="missbtn" data-mark="${i}" data-v="0">MISS</button>
+               </span>`;
+  } else {
+    hitCell = `<span class="tohit ${r.hit?'hit':'miss'}">${r.toHit}</span>
+               <span class="hitbadge ${r.hit?'hit':'miss'}">${r.hit?'HIT':'MISS'}</span>`
+            + (resolveMode === 'manual' ? `<span class="undo" data-unmark="${i}">change</span>` : '');
+  }
+
+  // Damage + rider merged into one column, each on its own line so the rider
+  // never wraps away from its own number.
+  const riderPart = r.rider !== null
+    ? `<span class="riderline"><span class="dmg">+ ${r.rider}</span> <span class="dtype t-${r.w.rider.type}">${r.w.rider.type}</span></span>`
+    : '';
+  const brk = r.crit
+    ? `<span class="crit-note">CRIT — ${r.wDice.join(' + ')} + ${r.w.dmgMod}`
+      + (r.rider !== null ? ` · ${r.rDice.join(' + ')}` : '') + `</span>`
+    : `<span class="breakdown">${r.wDice.join(' + ')} + ${r.w.dmgMod}`
+      + (r.rider !== null ? ` · ${r.rDice.join(' + ')}` : '') + `</span>`;
+
+  let mastery = masterySelect(i, r);
+  if (r.w.curse && r.hit){
+    const left = RESOURCES.cleaver.max - spent.cleaver;
+    const done = cursedIdx.includes(i);
+    mastery += `<button class="cleave-btn" data-curse="${i}" ${(done||left<=0)?'disabled':''}>`
+            + (done ? 'cursed ✓' : `☣ DC ${r.w.curse.dc} ${r.w.curse.save} → curse${left<=0?' (0 left)':''}`)
+            + `</button>`;
+  }
+
+  tr.innerHTML = `
+    <td><span class="wname ${r.spec.hand==='off'?'off':''}">${r.w.name}</span>
+        <span class="slot">${r.spec.slot}</span></td>
+    <td><span class="d20 ${d20cls}">${r.nat}</span>${r.dropped!==null?`<span class="dropped">${r.dropped}</span>`:''}
+        ${r.hasAdv?`<span class="adv-tag ${advCls}">${advLbl}</span>`:''}</td>
+    <td>${hitCell}</td>
+    <td><span class="dmg">${r.dmg}</span> <span class="dtype t-${r.w.type}">${r.w.type}</span>${riderPart}
+        ${brk}</td>
+    <td><span class="total">${r.total}</span></td>
+    <td>${mastery}</td>`;
+  return tr;
+}
+
+function applyCurse(i){
+  const r = lastRoll.attacks.find(a => a.idx === i);
+  if (!r || !r.w.curse || r.hit !== true) return;
+  if (cursedIdx.includes(i)) return;
+  if (RESOURCES.cleaver.max - spent.cleaver <= 0) return;
+  cursedIdx.push(i);
+  dots.push({ w:r.w.name, dc:r.w.curse.dc, save:r.w.curse.save, src:{ t:turnId, i },
+              name:`Target ${dots.length+1}`, last:null, sum:0 });
+  spent.cleaver++; saveResources(); renderPips(); renderDots(); render();
+}
+function revokeCurse(i){
+  const at = cursedIdx.indexOf(i);
+  if (at < 0) return;
+  cursedIdx.splice(at, 1);
+  const k = dots.findIndex(x => x.src && x.src.t === turnId && x.src.i === i);
+  if (k >= 0) dots.splice(k, 1);
+  spent.cleaver = Math.max(0, spent.cleaver - 1);
+  saveResources(); renderPips(); renderDots();
+}
+
+/* ---------- turn prompts ---------- */
+/* Prompts live in a column inside the Attack Action panel, right after Mastery,
+   so confirming a hit never resizes anything above the table. */
+function renderPrompts(c){
+  const box = $('prompts');
+  const out = [];
+  if (!entropy || !lastRoll){
+    box.innerHTML = '<div class="prompts-empty">Confirm each hit — actions you '
+                  + 'can take this turn appear here.</div>';
+    return;
+  }
+
+  const rows = lastRoll.attacks.filter(r => !r.pending);
+  const confirmed = rows.filter(r => r.hit !== null);
+  const hits = rows.filter(r => r.hit === true);
+  const waiting = lastRoll.attacks.length - confirmed.length;
+
+  const uncursed = hits.filter(r => r.w.curse && !cursedIdx.includes(r.idx));
+  const cursesLeft = RESOURCES.cleaver.max - spent.cleaver;
+  if (uncursed.length){
+    const cw = uncursed[0].w;
+    out.push({ cls:'p-curse', icon:'☣',
+      title:`${cw.name} hit${uncursed.length>1?` ×${uncursed.length}`:''} — curse it`,
+      sub: cursesLeft > 0
+        ? `DC ${cw.curse.dc} ${cw.curse.save} or 1d6 necrotic at the start of each of its turns · ${cursesLeft} left this session`
+        : 'No uses left this session — regains on a new session, not a rest.',
+      btn: cursesLeft > 0 ? 'Curse' : null, act: () => applyCurse(uncursed[0].idx) });
+  } else if (cursedIdx.length){
+    out.push({ cls:'p-done', icon:'☣', title:`Cursed ×${cursedIdx.length} this turn`,
+      sub:`Roll the tick at the start of each cursed target's turn · ${cursesLeft} left this session` });
+  }
+
+  const diceLeft = RESOURCES.psi.max - spent.psi;
+  if (!psionic && hits.length && diceLeft > 0){
+    out.push({ cls:'p-psi', icon:'◈', title:'Psionic Strike available',
+      sub:`You hit — 1d${c.psiDieSize} + ${c.psiBonus} Force · spends a Psionic Energy Die · ${diceLeft} left`,
+      btn:'Strike', act:() => { const die = d(c.psiDieSize);
+        psionic = { die, force: die + c.psiBonus };
+        spent.psi++; saveResources(); renderPips(); render(); } });
+  }
+  if (psionic){
+    out.push({ cls:'p-thrust', icon:'◎', title:`Telekinetic Thrust — DC ${c.thrustDC} ${c.thrustSave}`,
+      sub:'You dealt Psionic Strike damage, so you can force the save: on a fail, Prone or shove 10 ft. Costs nothing.' });
+  }
+
+  const pick = baPick(), opt = BA_OPTIONS[pick];
+  if (pick === 'attack'){
+    const a5 = lastRoll.attacks.find(r => r.spec.ba);
+    if (a5 && !a5.pending)
+      out.push({ cls:'p-info', icon:'⬡', title:'Bonus Action — extra attack',
+        sub:'Enhanced Dual Wielding spent it. No Second Wind, Bulwark, Misty Step or Psi-Powered Leap this turn.' });
+  } else if (pick === 'none'){
+    out.push({ cls:'p-info', icon:'⬡', title:'Bonus Action — held', sub:opt.note });
+  } else if (!baUsed){
+    const res = opt.res;
+    const left = res ? RESOURCES[res].max - spent[res] : null;
+    out.push({ cls:'p-ba', icon:'⬡', title:`Bonus Action — ${opt.label.split(' — ')[0]}`,
+      sub:(opt.note || '') + (left !== null ? ` · ${left} left` : ''),
+      btn: (left === null || left > 0) ? 'Use' : null,
+      act: () => {
+        if (res){ spent[res]++; saveResources(); renderPips(); }
+        if (pick === 'wind') windDie = d(10);
+        baUsed = true; refresh();
+      } });
+  } else {
+    out.push({ cls:'p-done', icon:'⬡', title:`Bonus Action — ${opt.label.split(' — ')[0]} used`,
+      sub: pick === 'wind' && windDie !== null
+        ? `Healed ${windDie + c.level} HP (1d10+${c.level}) · Tactical Shift: move 15 ft free`
+        : (opt.note || '') });
+  }
+
+  if (waiting && resolveMode === 'manual'){
+    out.push({ cls:'p-info', icon:'◷', title:`${waiting} attack${waiting>1?'s':''} unresolved`,
+      sub:'Ask the DM whether each one hits — advantage downstream depends on it.' });
+  }
+
+  box.innerHTML = out.length ? out.map((p, k) => `
+    <div class="prompt ${p.cls}">
+      <span class="pi">${p.icon}</span>
+      <span class="ptx"><span class="pt">${p.title}</span><span class="ps">${p.sub}</span></span>
+      ${p.btn ? `<button data-p="${k}">${p.btn}</button>` : ''}
+    </div>`).join('')
+    : '<div class="prompts-empty">Nothing to act on yet — confirm a hit.</div>';
+  box.querySelectorAll('[data-p]').forEach(b => b.onclick = e => {
+    const p = out[+e.currentTarget.dataset.p]; if (p.act) p.act();
+  });
+}
+
+function renderPsionic(c){
+  const box = $('psiBody');
+  if (!lastRoll){ box.innerHTML = '<span class="gate">Roll the turn first.</span>'; return; }
+  const anyHit = lastRoll.attacks.some(r => r.hit);
+  const diceLeft = RESOURCES.psi.max - spent.psi;
+
+  if (psionic){
+    box.innerHTML = `
+      <div class="psi-stat"><span class="lbl">d${c.psiDieSize}</span><span class="psi-die">${psionic.die}</span></div>
+      <div class="psi-stat"><span class="lbl">Force</span><span class="psi-force">${psionic.force}</span></div>
+      <div class="psi-stat"><span class="lbl">Thrust</span><span class="psi-dc">DC${c.thrustDC} ${c.thrustSave}</span></div>
+      <div class="psi-stat"><span class="lbl">On Fail</span><span class="gate">Prone, or shove 10 ft</span></div>
+      <button class="mini" id="rerollPsi">Reroll Die</button>
+      <span class="gate">Die spent · ${diceLeft} left</span>`;
+    $('rerollPsi').onclick = () => { psionic.die = d(c.psiDieSize);
+      psionic.force = psionic.die + c.psiBonus; render(); };
+    return;
+  }
+  const why = !anyHit ? 'Requires a hit — Psionic Strike triggers immediately after you hit and deal damage.'
+            : diceLeft <= 0 ? 'No Psionic Energy Dice remaining.' : '';
+  box.innerHTML = `
+    <button class="mini go" id="doPsi" ${(!anyHit||diceLeft<=0)?'disabled':''}>Spend Die → Strike</button>
+    <span class="gate">${why || `1d${c.psiDieSize} + ${c.psiBonus} Force · then DC${c.thrustDC} ${c.thrustSave} Thrust`}</span>`;
+  if (anyHit && diceLeft > 0) $('doPsi').onclick = () => {
+    const die = d(c.psiDieSize);
+    psionic = { die, force: die + c.psiBonus };
+    spent.psi++; saveResources(); renderPips(); render();
+  };
+}
+
+function markAttack(i, v){
+  marks[i] = v;
+  if (v === null) forget(i);
+  if (v !== true) revokeCurse(i);
+  for (let j = i + 1; j < marks.length; j++){ marks[j] = null; forget(j); revokeCurse(j); }
+  render();
+  if (v !== null){
+    const r = lastRoll.attacks.find(a => a.idx === i);
+    if (r) observe(i, r);
+  }
+}
+
+function render(){
+  const c = cfg();
+  $('handWarn').textContent =
+    (!c.main.light) ? '⚠ Main hand must be Light to trigger the extra attack'
+    : (c.main.key === c.off.key) ? '⚠ Off hand must be a different weapon'
+    : (!c.off.light && baPick() === 'attack') ? '⚠ Off hand is not Light — Nick needs a Light weapon'
+    : '';
+
+  if (entropy){
+    lastRoll = resolve(c);
+    const main = $('mainAttacks'), surge = $('surgeAttacks');
+    main.innerHTML = ''; surge.innerHTML = '';
+    lastRoll.attacks.forEach(r =>
+      (r.spec.block === 'main' ? main : surge).appendChild(attackRow(r)));
+
+    document.querySelectorAll('select.mastery').forEach(s => s.onchange = e => {
+      masteryPick[+e.target.dataset.i] = e.target.value; saveSettings(); render(); });
+    document.querySelectorAll('[data-curse]').forEach(b => b.onclick = e =>
+      applyCurse(+e.currentTarget.dataset.curse));
+    document.querySelectorAll('[data-mark]').forEach(b => b.onclick = e =>
+      markAttack(+e.currentTarget.dataset.mark, e.currentTarget.dataset.v === '1'));
+    document.querySelectorAll('[data-unmark]').forEach(a => a.onclick = e =>
+      markAttack(+e.currentTarget.dataset.unmark, null));
+
+    const shown = lastRoll.attacks.filter(r => !r.pending);
+    const settled = shown.filter(r => r.hit !== null);
+    const hits = shown.filter(r => r.hit === true);
+    const all = shown.reduce((s,r)=>s+r.total,0);
+    const hitTotal = hits.reduce((s,r)=>s+r.total,0);
+    const waiting = lastRoll.attacks.length - settled.length;
+
+    $('sumAttacks').textContent = all;
+    $('sumHits').textContent = hitTotal;
+    $('hitsNote').textContent = waiting
+      ? `${hits.length} so far · ${waiting} unresolved`
+      : `${hits.length}/${lastRoll.attacks.length}` +
+        (resolveMode === 'auto' ? ` vs AC ${c.enemyAC}` : ` confirmed`);
+    $('sumDealt').textContent = hitTotal + (psionic ? psionic.force : 0);
+    $('dealtNote').textContent = psionic
+      ? `hits ${hitTotal} + Psionic ${psionic.force}` : 'hits + Psionic Strike';
+  }
+  renderPrompts(c);
+  renderPsionic(c);
+}
+
+function renderLib(){
+  const c = cfg();
+  const body = $('weaponLib');
+  body.innerHTML = '';
+  for (const key of Object.keys(WEAPONS)){
+    const w = c.build(key);
+    const tr = document.createElement('tr');
+    if (key === c.main.key || key === c.off.key) tr.className = 'eq';
+    tr.innerHTML = `
+      <td>${w.name}<span class="wprops">${w.props}</span></td>
+      <td>d<input type="number" class="wdie" data-k="${key}" value="${w.die}" min="1"></td>
+      <td><input type="number" class="wmagic" data-k="${key}" value="${w.magic}" min="0"></td>
+      <td class="der">${sign(w.toHit)}</td>
+      <td class="der">1d${w.die}${sign(w.dmgMod)}</td>`;
+    body.appendChild(tr);
+  }
+  body.querySelectorAll('.wdie').forEach(i => i.onchange = e => {
+    WEAPONS[e.target.dataset.k].die = Number(e.target.value); refresh(); });
+  body.querySelectorAll('.wmagic').forEach(i => i.onchange = e => {
+    WEAPONS[e.target.dataset.k].magic = Number(e.target.value); refresh(); });
+}
+
+function renderDots(){
+  const box = $('dotList');
+  if (!dots.length){ box.innerHTML = 'No creatures cursed.'; return; }
+  box.innerHTML = dots.map((x,i) => `
+    <div class="dot">
+      <input class="dot-name" data-name="${i}" value="${x.name}" placeholder="Target">
+      <button class="necro-btn" data-tick="${i}">1d6 tick</button>
+      <span class="dot-last">${x.last === null ? '—' : x.last + ' necrotic'}</span>
+      <span class="dot-sum">total ${x.sum}</span>
+      <a href="#" data-clear="${i}" class="dot-clear">saved — clear</a>
+    </div>`).join('');
+  box.querySelectorAll('[data-tick]').forEach(b => b.onclick = e => {
+    const i = +e.currentTarget.dataset.tick, v = d(6);
+    dots[i].last = v; dots[i].sum += v; renderDots();
+  });
+  box.querySelectorAll('[data-clear]').forEach(a => a.onclick = e => {
+    e.preventDefault(); dots.splice(+e.currentTarget.dataset.clear, 1); renderDots();
+  });
+  box.querySelectorAll('[data-name]').forEach(inp => inp.oninput = e => {
+    dots[+e.target.dataset.name].name = e.target.value;
+  });
+}
+
+function refresh(){
+  const c = cfg();
+  $('profBonus').textContent = sign(c.prof);
+  $('psiBonus').textContent  = sign(c.psiBonus);
+  $('thrustDC').textContent  = c.thrustDC;
+  // Compact heal readout: blank until you roll, then just the HP number.
+  $('windResult').textContent = windDie === null ? '' : `${windDie + c.level} HP`;
+  $('rollWind').title = `Roll Second Wind heal (1d10+${c.level})`;
+  // Both of these are written as "proficiency bonus per ...", so they follow level.
+  RESOURCES.cleaver.max = c.prof;
+  RESOURCES.juke.max = c.prof;
+  if (spent.cleaver > c.prof) spent.cleaver = c.prof;
+  if (spent.juke > c.prof) spent.juke = c.prof;
+  saveSettings(); renderLib(); renderPips(); renderIntel(); render();
+}
+
+function rollAll(){
+  entropy = freshEntropy();
+  psionic = null; baUsed = false;
+  turnId++;
+  marks = SEQUENCE.map(() => null);
+  cursedIdx = [];
+  render();
+}
+
+/* New fight / rests.
+   A new fight is not a rest: the enemy and the turn reset, but spent resources
+   stay spent — they only come back when you actually rest. Conversely a Long
+   Rest refills resources without touching the encounter, and never refills the
+   Cleaver curse, which the item scopes to a whole session. */
+function newFight(){
+  entropy = null; lastRoll = null; psionic = null; baUsed = false;
+  marks = SEQUENCE.map(() => null);
+  cursedIdx = []; abilityRolls = {};
+  acLog = []; recomputeAC();              // different enemy — old AC intel is worthless
+  dots = []; renderDots();                // old targets aren't in this fight
+  $('mainAttacks').innerHTML  = '<tr><td colspan="6" class="empty">Roll to resolve the turn.</td></tr>';
+  $('surgeAttacks').innerHTML = '<tr><td colspan="6" class="empty">Chain continues from the attacks above.</td></tr>';
+  ['sumAttacks','sumHits','sumDealt'].forEach(id => $(id).textContent = '—');
+  $('hitsNote').textContent = '';
+  $('dealtNote').textContent = 'hits + Psionic Strike';
+  refresh();
+  if (!$('tabAbilities').hidden) renderAbilities();
+}
+
+function doRest(kind){
+  for (const [k, r] of Object.entries(RESOURCES)){
+    if (r.rest === 'session') continue;                 // no rest refills it
+    if (kind === 'short'){
+      if (r.regainOne) spent[k] = Math.max(0, spent[k] - 1);
+      else if (r.rest === 'short') spent[k] = 0;
+    } else {
+      spent[k] = 0;                                     // long rest refills everything else
+    }
+  }
+  windDie = null;
+  saveResources(); renderPips(); refresh();
+  if (!$('tabAbilities').hidden) renderAbilities();
+}
+
+function newSession(){
+  doRest('long');
+  spent.cleaver = 0;                                    // the one thing a rest can't restore
+  saveResources(); renderPips();
+  newFight();
+}
+
+function setMode(m){
+  resolveMode = m;
+  $('modeManual').classList.toggle('on', m === 'manual');
+  $('modeAuto').classList.toggle('on', m === 'auto');
+  $('acBox').style.display = m === 'auto' ? '' : 'none';
+  saveSettings(); render();
+}
+
+/* ---------- resources ---------- */
+/* `rest` = the rest that refills it. `regainOne` = a short rest gives back a
+   single use rather than the lot. `session` never comes back on a rest at all. */
+const RESOURCES = {
+  psi:     { max:10, countId:'psiCount',     rest:'long', regainOne:true },
+  surge:   { max:1,  countId:'surgeCount',   rest:'short' },
+  wind:    { max:4,  countId:'windCount',    rest:'long', regainOne:true },
+  bulwark: { max:1,  countId:'bulwarkCount', rest:'long' },
+  cleaver: { max:5,  countId:'cleaverCount', rest:'session' },
+  // Abilities-tab only — not on the combat bar, so no countId.
+  juke:        { max:5, label:'Juke',                 rest:'long' },   // max = PB, set in refresh()
+  indom:       { max:2, label:'Indomitable',          rest:'long' },
+  mageslayer:  { max:1, label:'Guarded Mind',         rest:'short' },
+  owl:         { max:2, label:'Tattoo: Owl',          rest:'long' },
+  telekinesis: { max:1, label:'Telekinetic Movement', rest:'short' },
+  leap:        { max:1, label:'Psi-Powered Leap',     rest:'short' },
+  misty:       { max:1, label:'Misty Step',           rest:'long' },
+  command:     { max:1, label:'Command',              rest:'long' }
+};
+let spent = { psi:0, surge:0, wind:0, bulwark:0, cleaver:0, juke:0,
+              indom:0, mageslayer:0, owl:0, telekinesis:0, leap:0, misty:0, command:0 };
+
+/* Update the combat-bar steppers: count text, empty styling, and the −/+
+   disabled states (can't spend past 0 or restore past max). Named renderPips
+   for its call sites; the bar uses steppers now, not pips. */
+function renderPips(){
+  for (const [key, r] of Object.entries(RESOURCES)){
+    if (!r.countId) continue;                 // abilities-only resource, not on the bar
+    const left = r.max - spent[key];
+    const ct = $(r.countId);
+    ct.textContent = `${left}/${r.max}`;
+    ct.classList.toggle('empty', left <= 0);
+    const dn = document.querySelector(`[data-spend="${key}"]`);
+    const up = document.querySelector(`[data-restore="${key}"]`);
+    if (dn) dn.disabled = left <= 0;
+    if (up) up.disabled = left >= r.max;
+  }
+}
+
+function spendRes(key){
+  if (spent[key] >= RESOURCES[key].max) return;
+  spent[key]++; saveResources(); renderPips(); render();
+}
+function restoreRes(key){
+  if (spent[key] <= 0) return;
+  spent[key]--; saveResources(); renderPips(); render();
+}
+
+/* ---------- persistence ---------- */
+const KEY = 'maloren.v3';
+const store = (k, v) => { try{ localStorage.setItem(KEY + k, JSON.stringify(v)); }catch(e){} };
+function saveSettings(){
+  const s = {};
+  SETTINGS.forEach(id => s[id] = $(id).value);
+  s._w = Object.fromEntries(Object.entries(WEAPONS).map(([k,w]) => [k, {die:w.die, magic:w.magic}]));
+  s._m = masteryPick; s._mode = resolveMode;
+  store('.settings', s);
+}
+function saveResources(){ store('.resources', spent); }
+function saveIntel(){ store('.intel', { acLog }); }
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY + '.settings'));
+    if (s){
+      SETTINGS.forEach(id => { if (s[id] !== undefined && $(id)) $(id).value = s[id]; });
+      if (s._w) for (const [k,v] of Object.entries(s._w))
+        if (WEAPONS[k]) Object.assign(WEAPONS[k], v);
+      if (Array.isArray(s._m) && s._m.length === SEQUENCE.length) masteryPick = s._m;
+      if (s._mode === 'auto' || s._mode === 'manual') resolveMode = s._mode;
+    }
+    const r = JSON.parse(localStorage.getItem(KEY + '.resources'));
+    if (r) spent = Object.assign(spent, r);
+    const k = JSON.parse(localStorage.getItem(KEY + '.intel'));
+    if (k && Array.isArray(k.acLog)){
+      acLog = k.acLog;
+      turnId = acLog.reduce((m,o) => Math.max(m, o.t), 0) + 1;
+    }
+  }catch(e){}
+}
+
+/* ---------- abilities tab ---------- */
+let abilityFilter = 'all';
+let abilityRolls = {};        // name -> last roll result, so it survives re-render
+
+const ACT_KINDS = ['Action','Bonus Action','Reaction','Free','Special','Magic action'];
+
+function abilityRoll(a, c){
+  const bonus = a.roll.bonus === 'int' ? c.int
+              : a.roll.bonus === 'level' ? c.level
+              : Number(a.roll.bonus) || 0;
+  const die = d(a.roll.die);
+  return { die, bonus, total: die + bonus };
+}
+
+function renderFilters(){
+  const box = $('filters');
+  const kinds = ['all', ...ACT_KINDS, 'Passive'];
+  box.innerHTML = kinds.map(k =>
+    `<button class="fchip${abilityFilter===k?' on':''}" data-f="${k}">${k==='all'?'Everything':k}</button>`
+  ).join('');
+  box.querySelectorAll('[data-f]').forEach(b => b.onclick = e => {
+    abilityFilter = e.currentTarget.dataset.f; renderFilters(); renderAbilities();
+  });
+}
+
+function renderAbilities(){
+  const c = cfg();
+  const box = $('abilityList');
+  /* "Passive" means the always-on group — not merely "we don't know its action
+     type", which is what the undescribed homebrew entries are. */
+  const match = a => abilityFilter === 'all'
+    || (abilityFilter === 'Passive' ? a.sit === 'passive' : a.act === abilityFilter);
+
+  box.innerHTML = SITUATIONS.map(s => {
+    const list = ABILITIES.filter(a => a.sit === s.key && match(a));
+    if (!list.length) return '';
+    return `<div class="sit">
+      <h3 class="sit-h"><span class="sit-i">${s.icon}</span>${s.label}
+        <span class="sit-n">${list.length}</span></h3>
+      <div class="cards">` + list.map(a => {
+        const left = a.res ? RESOURCES[a.res].max - spent[a.res] : null;
+        const out  = left !== null && left <= 0;
+        const shown = abilityRolls[a.name];
+        return `<div class="acard${a.needsText?' need':''}${out?' out':''}">
+          <div class="ac-top">
+            <span class="ac-name">${a.name}</span>
+            ${a.act ? `<span class="ac-act ${a.act.replace(/ /g,'')}">${a.act}</span>`
+                    : a.needsText ? '<span class="ac-act Unknown">Action ?</span>'
+                                  : '<span class="ac-act Passive">Passive</span>'}
+          </div>
+          <div class="ac-src">${a.src}</div>
+          ${a.text ? `<div class="ac-text">${a.text}</div>`
+                   : `<div class="ac-text need-text">Not in the D&amp;D Beyond export — paste the rules text and I'll wire it up.</div>`}
+          ${a.cost ? `<div class="ac-cost">${a.cost}${left!==null?` · <b>${left} left</b>`:''}</div>` : ''}
+          <div class="ac-actions">
+            ${a.roll ? `<button class="ac-roll" data-roll="${a.name}" ${out?'disabled':''}>Roll ${a.roll.die===10?'1d10':'1d'+a.roll.die}</button>` : ''}
+            ${a.res ? `<button class="ac-use" data-use="${a.res}" ${out?'disabled':''}>${out?'None left':'Spend 1'}</button>
+                       <button class="ac-undo" data-undo="${a.res}">+1</button>` : ''}
+            ${shown ? `<span class="ac-result">${shown.die}${shown.bonus?` + ${shown.bonus}`:''} = <b>${shown.total}</b> ${a.roll.label}</span>` : ''}
+          </div>
+        </div>`;
+      }).join('') + `</div></div>`;
+  }).join('');
+
+  box.querySelectorAll('[data-roll]').forEach(b => b.onclick = e => {
+    const a = ABILITIES.find(x => x.name === e.currentTarget.dataset.roll);
+    abilityRolls[a.name] = abilityRoll(a, cfg());
+    renderAbilities();
+  });
+  box.querySelectorAll('[data-use]').forEach(b => b.onclick = e => {
+    const k = e.currentTarget.dataset.use;
+    if (RESOURCES[k].max - spent[k] <= 0) return;
+    spent[k]++; saveResources(); renderPips(); renderAbilities(); render();
+  });
+  box.querySelectorAll('[data-undo]').forEach(b => b.onclick = e => {
+    const k = e.currentTarget.dataset.undo;
+    spent[k] = Math.max(0, spent[k] - 1);
+    saveResources(); renderPips(); renderAbilities(); render();
+  });
+}
+
+function setTab(t){
+  $('tabCombat').hidden = t !== 'combat';
+  $('tabAbilities').hidden = t !== 'abilities';
+  document.querySelectorAll('.tab').forEach(b =>
+    b.classList.toggle('on', b.dataset.tab === t));
+  if (t === 'abilities') renderAbilities();
+}
+
+/* ---------- drawer ---------- */
+function openDrawer(v){
+  $('drawer').classList.toggle('open', v);
+  $('scrim').classList.toggle('open', v);
+}
+
+/* ---------- init ---------- */
+(function init(){
+  const wopts = Object.entries(WEAPONS)
+    .map(([k,w]) => `<option value="${k}">${w.name}${w.light?'':' (not Light)'}</option>`).join('');
+  $('mainHand').innerHTML = wopts; $('offHand').innerHTML = wopts;
+  $('mainHand').value = 'leafsong'; $('offHand').value = 'cleaver';
+  $('baChoice').innerHTML = Object.entries(BA_OPTIONS)
+    .map(([k,o]) => `<option value="${k}">${o.label}</option>`).join('');
+  $('baChoice').value = 'attack';
+
+  load();
+  SETTINGS.forEach(id => $(id).addEventListener('input', refresh));
+  $('baChoice').addEventListener('change', () => { baUsed = false; refresh(); });
+  $('rollAll').onclick = rollAll;
+  $('rollWind').onclick = () => { windDie = d(10); refresh(); };
+  // Resource steppers (delegated so they survive nothing — the bar is static).
+  $('resBar').querySelectorAll('[data-spend]').forEach(b =>
+    b.onclick = () => spendRes(b.dataset.spend));
+  $('resBar').querySelectorAll('[data-restore]').forEach(b =>
+    b.onclick = () => restoreRes(b.dataset.restore));
+  $('btnFight').onclick   = newFight;
+  $('btnShort').onclick   = () => doRest('short');
+  $('btnLong').onclick    = () => doRest('long');
+  $('btnSession').onclick = () => {
+    if (confirm('New session?\n\nRefills everything including the Cleaver curse, and clears the fight.')) newSession();
+  };
+  // Explain what each button does, before it's pressed.
+  const DEFAULT_NOTE = 'Tap −/+ to spend or restore. 🎲 rolls a Second Wind heal.';
+  const NOTES = {
+    btnFight:'<b>New Fight:</b> clears the turn, AC intel and ongoing curses. Does not give back spent resources.',
+    btnShort:'<b>Short Rest:</b> regain 1 Psionic die and 1 Second Wind. Refills Action Surge, Guarded Mind, Telekinetic Movement, Psi-Powered Leap.',
+    btnLong:'<b>Long Rest:</b> refills everything except the Cleaver curse — the item scopes that to a session, not a rest.',
+    btnSession:'<b>New Session:</b> refills everything including the Cleaver curse, and clears the fight.'
+  };
+  Object.entries(NOTES).forEach(([id, html]) => {
+    const set = t => $('restNote').innerHTML = t;
+    $(id).addEventListener('pointerenter', () => set(html));
+    $(id).addEventListener('focus', () => set(html));
+    $(id).addEventListener('pointerleave', () => set(DEFAULT_NOTE));
+    $(id).addEventListener('blur', () => set(DEFAULT_NOTE));
+  });
+  $('modeManual').onclick = () => setMode('manual');
+  $('modeAuto').onclick   = () => setMode('auto');
+  document.querySelectorAll('.tab').forEach(b =>
+    b.onclick = () => setTab(b.dataset.tab));
+  renderFilters();
+  $('menuBtn').onclick = () => openDrawer(true);
+  $('closeDrawer').onclick = () => openDrawer(false);
+  $('scrim').onclick = () => openDrawer(false);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') openDrawer(false); });
+  setMode(resolveMode);
+  recomputeAC();
+  refresh(); renderDots();
+})();
+</script>
+</body>
+</html>
