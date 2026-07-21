@@ -4461,6 +4461,26 @@ async function loadPerCampaignConfig() {
         } catch (e) { /* per-campaign doc may not exist yet — legacy fallback already loaded */ }
     }
 }
+// Before the scoped view turns on, make sure EVERY session I manage already has a readers list —
+// otherwise a session created before `readers` existed (e.g. the LeyFarer seeds) would be invisible
+// to `array-contains me`. Loads campaigns + shares first so canManage() is correct. Runs under the
+// still-open rules; once rules are strict the whole-collection read is denied (caught) but by then
+// the backfill is long done.
+async function primeReadersBeforeScoping() {
+    try {
+        const [csnap, ssnap] = await Promise.all([getDocs(collection(db, "campaigns")), getDocs(collection(db, "shares"))]);
+        csnap.forEach(d => { allCampaigns[d.id] = { id: d.id, ...d.data() }; });
+        ssnap.forEach(d => { const x = d.data(); if (x.owner && x.campaign) allShares[shareKey(x.owner, x.campaign)] = x.members || []; });
+        const sessSnap = await getDocs(collection(db, "sessions"));
+        for (const d of sessSnap.docs) {
+            const s = { id: d.id, ...d.data() };
+            if (!canManage(s)) continue;
+            const want = sessionReaderEmails(s);
+            if (sameSet(s.readers, want)) continue;
+            try { await updateDoc(doc(db, "sessions", d.id), { readers: want }); } catch (e) { /* additive prep */ }
+        }
+    } catch (e) { console.error('prime readers before scoping:', e); }
+}
 async function initApp() {
     await loadSavedRosters();
     await seedFirestore();
@@ -4518,7 +4538,8 @@ async function initApp() {
         }
         scheduleRender();
     });
-    subscribeScopedData();   // sessions + polls, scoped to this account
+    await primeReadersBeforeScoping();   // guarantee every session I manage has readers first
+    subscribeScopedData();               // then load sessions + polls, scoped to this account
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
