@@ -1406,6 +1406,7 @@
         .cp-combat-hub { margin-top: 22px; }
         .combat-hub-link { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 14%, var(--surface)), var(--surface)); border: 1px solid var(--brand-line, var(--border)); border-radius: var(--r-md); text-decoration: none; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
         .combat-hub-link:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); border-color: var(--brand); }
+        .combat-hub-link-alt { margin-top: 8px; background: var(--surface); }
         .combat-hub-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
         .combat-hub-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
         .combat-hub-title { font-family: var(--font-display); font-weight: 700; font-size: 0.95rem; color: var(--text); }
@@ -5600,12 +5601,18 @@ function renderCampaignPage(campaign) {
             + `<span class="combat-hub-body"><span class="combat-hub-title">Maloren Combat Hub</span><span class="combat-hub-sub">Dual-wield roller · Psi Warrior tools</span></span>`
             + `<span class="combat-hub-arrow" aria-hidden="true">↗</span></a></div>`;
     }
-    // Iven Hero Hub — links to the Iven Forge hero sheet. Draw Steel campaign only, owner-only.
+    // Iven Hero Hub — Draw Steel campaign only, owner-only. Two links: the self-hosted, login-gated
+    // copy (private, fresh localStorage) and the original Vercel deploy (kept as a backup — that's
+    // where the existing hero data lives, since heroes are per-origin localStorage).
     if (campaign === 'drawsteel' && isCampaignOwner(campaign)) {
         partyHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Hero Hub</span></div>`
-            + `<a class="combat-hub-link" href="https://iven-forge.vercel.app/hero/14b153d3-1f85-4a99-9f4a-dc4b87f5b5b9" target="_blank" rel="noopener">`
+            + `<a class="combat-hub-link" href="/iven/" target="_blank" rel="noopener">`
             + `<span class="combat-hub-icon" aria-hidden="true">🛡️</span>`
-            + `<span class="combat-hub-body"><span class="combat-hub-title">Iven Hero Hub</span><span class="combat-hub-sub">Draw Steel hero sheet · Iven Forge</span></span>`
+            + `<span class="combat-hub-body"><span class="combat-hub-title">Iven Hero Hub</span><span class="combat-hub-sub">Self-hosted · behind your login</span></span>`
+            + `<span class="combat-hub-arrow" aria-hidden="true">↗</span></a>`
+            + `<a class="combat-hub-link combat-hub-link-alt" href="https://iven-forge.vercel.app/hero/14b153d3-1f85-4a99-9f4a-dc4b87f5b5b9" target="_blank" rel="noopener">`
+            + `<span class="combat-hub-icon" aria-hidden="true">🔗</span>`
+            + `<span class="combat-hub-body"><span class="combat-hub-title">Iven Forge (Vercel)</span><span class="combat-hub-sub">Backup · your existing hero</span></span>`
             + `<span class="combat-hub-arrow" aria-hidden="true">↗</span></a></div>`;
     }
 
