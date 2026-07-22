@@ -1,6 +1,6 @@
-// Edge gate for /maloren — runs on Vercel's edge BEFORE the static file is served.
+// Edge gate for /maloren and /iven — runs on Vercel's edge BEFORE the static files are served.
 // Only a request carrying a valid Firebase ID token for the allowed email gets through;
-// everyone else is redirected to the home page.
+// everyone else is redirected to the home page. (/iven = the self-hosted Iven Forge static export.)
 //
 // This file runs on the server and is NOT served to browsers, so the values below aren't
 // exposed to visitors. (The email is already public in index.html's fallback list anyway,
@@ -13,7 +13,7 @@
 // No external dependencies: the JWT is verified with the built-in Web Crypto API. Cookies are
 // parsed from the header (a plain Request has no .cookies helper outside Next.js).
 
-export const config = { matcher: ['/maloren', '/maloren/:path*'] };
+export const config = { matcher: ['/maloren', '/maloren/:path*', '/iven', '/iven/:path*'] };
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'tpk-group-8cdc8';
 const ALLOWED = (process.env.MALOREN_ALLOWED_EMAIL || 'sthomas131@gmail.com').toLowerCase();
@@ -69,10 +69,10 @@ async function verifyToken(token) {
 }
 
 export default async function middleware(req) {
-    // Fail safe: only ever act on /maloren, so nothing here can affect the rest of the site.
+    // Fail safe: only ever act on the gated paths, so nothing here can affect the rest of the site.
     let pathname = '/';
     try { pathname = new URL(req.url).pathname; } catch (e) { return; }
-    if (!pathname.startsWith('/maloren')) return;
+    if (!pathname.startsWith('/maloren') && !pathname.startsWith('/iven')) return;
 
     const deny = () => Response.redirect(new URL('/?maloren=login', req.url), 302);
     const token = getCookie(req, '__tpk_token');
