@@ -5600,6 +5600,14 @@ function renderCampaignPage(campaign) {
             + `<span class="combat-hub-body"><span class="combat-hub-title">Maloren Combat Hub</span><span class="combat-hub-sub">Dual-wield roller · Psi Warrior tools</span></span>`
             + `<span class="combat-hub-arrow" aria-hidden="true">↗</span></a></div>`;
     }
+    // Iven Hero Hub — links to the Iven Forge hero sheet. Draw Steel campaign only, owner-only.
+    if (campaign === 'drawsteel' && isCampaignOwner(campaign)) {
+        partyHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Hero Hub</span></div>`
+            + `<a class="combat-hub-link" href="https://iven-forge.vercel.app/hero/14b153d3-1f85-4a99-9f4a-dc4b87f5b5b9" target="_blank" rel="noopener">`
+            + `<span class="combat-hub-icon" aria-hidden="true">🛡️</span>`
+            + `<span class="combat-hub-body"><span class="combat-hub-title">Iven Hero Hub</span><span class="combat-hub-sub">Draw Steel hero sheet · Iven Forge</span></span>`
+            + `<span class="combat-hub-arrow" aria-hidden="true">↗</span></a></div>`;
+    }
 
     // ----- Main column: Next-session hero → Availability poll → Sessions -----
     // (The old "Last Session" block was removed — the hero's "Read last recap" covers it; recaps are edited in the session cards.)
