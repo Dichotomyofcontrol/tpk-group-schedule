@@ -218,8 +218,10 @@
   .prompt::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
   .prompt .pi{font-size:20px;line-height:1}
   .prompt .ptx{min-width:0;flex:1}
-  .prompt .pt{font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
-  .prompt .ps{font-size:12px;color:var(--muted);line-height:1.45;margin-top:3px}
+  /* Both must be block: as inline spans the title ran straight into the detail
+     ("…CURSE ITDC 14 CON…") once the prompts moved into the full-width rows. */
+  .prompt .pt{display:block;font-size:14px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+  .prompt .ps{display:block;font-size:12px;color:var(--muted);line-height:1.45;margin-top:3px}
   .prompt button{border-radius:4px;min-height:var(--tap);padding:0 16px;font:inherit;
     font-size:12px;font-weight:700;letter-spacing:1.2px;cursor:pointer;white-space:nowrap;
     border:1px solid;text-transform:uppercase}
@@ -281,11 +283,17 @@
      that remainder isn't enough for the select's longest option, so the fixed
      columns give ground rather than let the text truncate — the select must
      stay at 16px or iOS zooms the page on tap. */
-  th.c-weap{width:130px} th.c-d20{width:88px} th.c-hit{width:106px}
-  th.c-dmg{width:140px}  th.c-tot{width:60px}
+  /* Mastery is CAPPED (it used to be the only unsized column, so it swallowed
+     every spare pixel on a wide screen while the real numbers stayed cramped).
+     Damage is now the flexible one — it carries the most content, so the slack
+     goes where it's actually read. */
+  th.c-weap{width:150px} th.c-d20{width:88px} th.c-hit{width:112px}
+  th.c-dmg{min-width:150px} th.c-tot{width:64px}
+  th.c-mast{width:230px}
   @media(max-width:860px){
     th.c-weap{width:104px} th.c-d20{width:76px} th.c-hit{width:94px}
-    th.c-dmg{width:112px}  th.c-tot{width:48px}
+    th.c-dmg{min-width:112px} th.c-tot{width:48px}
+    th.c-mast{width:170px}
     tbody td{padding:10px 4px}
   }
   table{width:100%;border-collapse:collapse}
@@ -350,11 +358,6 @@
     font-weight:700;margin-top:2px}
 
   select.mastery{width:100%;font-size:16px;min-height:40px;padding:6px 28px 6px 8px}
-  .cleave-btn{background:rgba(92,255,122,.14);border:1px solid var(--necro-dim);
-    color:var(--necro);border-radius:4px;min-height:38px;padding:0 10px;font:inherit;
-    font-size:11px;font-weight:700;cursor:pointer;margin-top:6px;width:100%}
-  .cleave-btn:hover:not(:disabled){background:rgba(92,255,122,.32)}
-  .cleave-btn:disabled{opacity:.4;cursor:not-allowed}
 
   /* ---------- psionic ---------- */
   .psi-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
@@ -674,7 +677,7 @@
           <thead><tr>
             <th class="c-weap">Weapon</th><th class="c-d20">d20</th>
             <th class="c-hit">To-Hit</th><th class="c-dmg">Damage</th>
-            <th class="c-tot">Total</th><th>Mastery</th>
+            <th class="c-tot">Total</th><th class="c-mast">Mastery</th>
           </tr></thead>
           <tbody id="mainAttacks">
             <tr><td colspan="6" class="empty">Roll to resolve the turn.</td></tr>
@@ -703,7 +706,7 @@
           <thead><tr>
             <th class="c-weap">Weapon</th><th class="c-d20">d20</th>
             <th class="c-hit">To-Hit</th><th class="c-dmg">Damage</th>
-            <th class="c-tot">Total</th><th>Mastery</th>
+            <th class="c-tot">Total</th><th class="c-mast">Mastery</th>
           </tr></thead>
           <tbody id="surgeAttacks">
             <tr><td colspan="6" class="empty">Chain continues from the attacks above.</td></tr>
@@ -1147,14 +1150,9 @@ function attackRow(r){
     : `<span class="breakdown">${r.wDice.join(' + ')} + ${r.w.dmgMod}`
       + (r.rider !== null ? ` · ${r.rDice.join(' + ')}` : '') + `</span>`;
 
-  let mastery = masterySelect(i, r);
-  if (r.w.curse && r.hit){
-    const left = RESOURCES.cleaver.max - spent.cleaver;
-    const done = cursedIdx.includes(i);
-    mastery += `<button class="cleave-btn" data-curse="${i}" ${(done||left<=0)?'disabled':''}>`
-            + (done ? 'cursed ✓' : `☣ DC ${r.w.curse.dc} ${r.w.curse.save} → curse${left<=0?' (0 left)':''}`)
-            + `</button>`;
-  }
+  // Curse lives solely in this attack's prompt row underneath — it used to be
+  // duplicated here as a second green button, which also bloated the column.
+  const mastery = masterySelect(i, r);
 
   tr.innerHTML = `
     <td><span class="wname ${r.spec.hand==='off'?'off':''}">${r.w.name}</span>
@@ -1203,21 +1201,22 @@ function buildPrompts(c){
 
   // One curse prompt per uncursed hit, attached to that hit — so each cleaver
   // strike carries its own button instead of one prompt for "the first one".
-  const uncursed = hits.filter(r => r.w.curse && !cursedIdx.includes(r.idx));
+  // Every cleaver hit carries its own curse state — actionable while uncursed,
+  // then a confirmation in the same spot. This is the only place curse appears.
   const cursesLeft = RESOURCES.cleaver.max - spent.cleaver;
-  if (uncursed.length){
-    uncursed.forEach(u => {
-      out.push({ attach:u.idx, cls:'p-curse', icon:'☣',
-        title:`${u.w.name} hit — curse it`,
+  hits.filter(r => r.w.curse).forEach(r => {
+    if (cursedIdx.includes(r.idx)){
+      out.push({ attach:r.idx, cls:'p-done', icon:'☣', title:'Cursed ✓',
+        sub:`Roll 1d6 necrotic at the start of this target's turn · ${cursesLeft} left this session` });
+    } else {
+      out.push({ attach:r.idx, cls:'p-curse', icon:'☣',
+        title:`${r.w.name} hit — curse it`,
         sub: cursesLeft > 0
-          ? `DC ${u.w.curse.dc} ${u.w.curse.save} or 1d6 necrotic at the start of each of its turns · ${cursesLeft} left this session`
+          ? `DC ${r.w.curse.dc} ${r.w.curse.save} or 1d6 necrotic at the start of each of its turns · ${cursesLeft} left this session`
           : 'No uses left this session — regains on a new session, not a rest.',
-        btn: cursesLeft > 0 ? 'Curse' : null, act: () => applyCurse(u.idx) });
-    });
-  } else if (cursedIdx.length){
-    out.push({ cls:'p-done', icon:'☣', title:`Cursed ×${cursedIdx.length} this turn`,
-      sub:`Roll the tick at the start of each cursed target's turn · ${cursesLeft} left this session` });
-  }
+        btn: cursesLeft > 0 ? 'Curse' : null, act: () => applyCurse(r.idx) });
+    }
+  });
 
   // Psionic Strike rides one hit of your choosing, so offer it under EVERY hit
   // and remember which attack took it — that's the whole "which attack am I
@@ -1377,8 +1376,6 @@ function render(){
 
     document.querySelectorAll('select.mastery').forEach(s => s.onchange = e => {
       masteryPick[+e.target.dataset.i] = e.target.value; saveSettings(); render(); });
-    document.querySelectorAll('[data-curse]').forEach(b => b.onclick = e =>
-      applyCurse(+e.currentTarget.dataset.curse));
     document.querySelectorAll('[data-mark]').forEach(b => b.onclick = e =>
       markAttack(+e.currentTarget.dataset.mark, e.currentTarget.dataset.v === '1'));
     document.querySelectorAll('[data-unmark]').forEach(a => a.onclick = e =>
