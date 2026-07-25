@@ -279,21 +279,17 @@
   .panel.necro h2{color:var(--necro);border-bottom-color:var(--necro-dim)}
 
   /* ---------- attack table ----------
-     Fixed columns leave the rest to Mastery. On a narrow iPad (768 portrait)
-     that remainder isn't enough for the select's longest option, so the fixed
-     columns give ground rather than let the text truncate — the select must
-     stay at 16px or iOS zooms the page on tap. */
-  /* Mastery is CAPPED (it used to be the only unsized column, so it swallowed
-     every spare pixel on a wide screen while the real numbers stayed cramped).
-     Damage is now the flexible one — it carries the most content, so the slack
-     goes where it's actually read. */
-  th.c-weap{width:150px} th.c-d20{width:88px} th.c-hit{width:112px}
-  th.c-dmg{min-width:150px} th.c-tot{width:64px}
-  th.c-mast{width:230px}
+     Proportional widths, not fixed px. Any single unsized (or min-width) column
+     just absorbs all the spare space as dead air at one end of the row — which
+     is what left the numbers bunched on the left with a void before Mastery.
+     Percentages share the width across every column instead, so the row stays
+     evenly distributed at any panel width. min-width keeps it scrollable rather
+     than crushed on a narrow iPad; the select must stay 16px or iOS zooms on tap. */
+  table{table-layout:fixed;min-width:840px}
+  th.c-weap{width:18%} th.c-d20{width:11%} th.c-hit{width:15%}
+  th.c-dmg{width:24%}  th.c-tot{width:10%} th.c-mast{width:22%}
   @media(max-width:860px){
-    th.c-weap{width:104px} th.c-d20{width:76px} th.c-hit{width:94px}
-    th.c-dmg{min-width:112px} th.c-tot{width:48px}
-    th.c-mast{width:170px}
+    table{min-width:760px}
     tbody td{padding:10px 4px}
   }
   table{width:100%;border-collapse:collapse}
