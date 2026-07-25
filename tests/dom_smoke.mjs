@@ -680,8 +680,25 @@ await run('session cards show Reached Level / Level / Not completed (LeyFarer on
         const html = document.getElementById('campaign-page-content').innerHTML;
         check('a level-up session reads "Reached Level 9"', /sc-lvl up">[^<]*Reached Level 9</.test(html));
         check('a non-level-up completed session reads "Level 8"', /sc-lvl">Level 8</.test(html));
-        check('an incomplete session reads "Not completed"', /sc-lvl pending">Not completed</.test(html));
+        check('a PAST incomplete session reads "Not completed"', /sc-lvl pending">Not completed</.test(html));
         check('incomplete card is flagged sc-pending', /session-card[^"]*sc-pending/.test(html));
+    });
+
+await run('a FUTURE unfinished session gets no "Not completed" pill (it is obvious)',
+    { user: { email: 'dm@x.com' }, campaigns: [LEY_CAMP],
+      sessions: [
+        { id: 'P1', campaign: 'leyfarers', date: '2024-01-01', status: 'active', completed: false, type: 'Campaign' },
+        { id: 'F1', campaign: 'leyfarers', date: '2099-01-01', status: 'active', completed: false, type: 'Campaign' },
+      ] },
+    (window, document) => {
+        window.navigateTo('leyfarers');
+        window.setCampaignTimeFilter('all', 'leyfarers');
+        const root = document.getElementById('campaign-page-content');
+        const past = root.querySelector('[data-session-id="P1"]');
+        const future = root.querySelector('[data-session-id="F1"]');
+        check('past unfinished session still flags it', /Not completed/.test(past.innerHTML));
+        check('future session shows NO pill', !/Not completed/.test(future.innerHTML));
+        check('future session is not dimmed', !future.classList.contains('sc-pending'));
     });
 
 await run('ordinary campaigns get NO level label (the gate holds)',

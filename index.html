@@ -31,22 +31,25 @@
             --beerovia-primary: #ff9800;
             --beerovia-bg: #2a1804;
             --beerovia-accent: #ffb74d;
-            /* ===== Ember Almanac — modern neutral-graphite foundation ===== */
-            --bg: #151414;              /* near-neutral charcoal, whisper of warmth */
-            --surface: #1e1d1c;         /* base surface */
-            --surface-2: #262523;       /* raised surface */
-            --surface-hover: #2b2a28;
-            --text: #f4f3f1;            /* neutral warm-white */
-            --text-dim: #9c9995;        /* neutral grey */
-            --border: #302e2b;
+            /* ===== Ember Almanac — true graphite foundation =====
+               Every neutral sits at or a hair below neutral (B >= R), so nothing in
+               the chrome reads brown. Warmth is reserved entirely for the ember
+               brand — which is what makes it read as the accent rather than the room. */
+            --bg: #0f1012;              /* graphite, faintest cool lean */
+            --surface: #17191c;         /* base surface */
+            --surface-2: #1f2226;       /* raised surface */
+            --surface-hover: #262a2f;
+            --text: #f2f3f5;            /* clean white */
+            --text-dim: #9aa0a8;        /* neutral grey */
+            --border: #2a2e34;
             /* Ownable brand — warm ember (the hearth) */
             --brand: #e8843c;
             --brand-strong: #f6a054;
             --brand-tint: rgba(232,132,60,0.14);
             --brand-line: rgba(232,132,60,0.35);
             --brand-ink: #1a1008;       /* text on ember fills */
-            /* Editorial "memory" surface — gently warm against the neutral chrome */
-            --paper: #221f1b;
+            /* Editorial "memory" surface — a shade lifted off the base, still neutral */
+            --paper: #16181b;
             /* Semantic (warm-tuned) */
             --success: #6bbf85; --success-tint: rgba(107,191,133,0.14);
             --warn: #e2ab4b;    --warn-tint: rgba(226,171,75,0.14);
@@ -5509,8 +5512,12 @@ function renderSessionCard(s, gi, ci) {
     let levelText = '', pendingCls = '';
     if (isLeyfarerCampaign(s.campaign) && !isCancelled) {
         if (s.completed !== true) {
-            levelText = `<span class="sc-lvl pending">Not completed</span>`;
-            pendingCls = ' sc-pending';
+            // Only worth flagging once the date has passed — a future session is
+            // obviously not completed yet, so the pill would just be noise.
+            if (isPast) {
+                levelText = `<span class="sc-lvl pending">Not completed</span>`;
+                pendingCls = ' sc-pending';
+            }
         } else {
             const step = campaignLevelTimeline(s.campaign)[sid];
             if (step) {
