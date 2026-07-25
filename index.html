@@ -586,7 +586,7 @@
         .cp-section-actions { display: flex; gap: 8px; flex-shrink: 0; }
         @media (max-width: 600px) { .cp-title { font-size: 1.15rem; } .cp-icon { font-size: 1.6rem; } .cp-hero { align-items: flex-start; } }
         /* Two-column campaign layout: sessions (main) + party (sidebar) */
-        .cp-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
+        .cp-layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 28px; align-items: start; }
         .cp-main { min-width: 0; }
         .cp-side .cp-section-head { margin-bottom: 12px; }
         .party-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px; }
@@ -1435,6 +1435,20 @@
         .dash-prog .ley-guide-toggle { margin-left: auto; background: none; border: 0; padding: 4px 2px; font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--text-dim); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
         .dash-prog .ley-guide-toggle:hover { color: var(--text); }
         .dash-prog .ley-hero-guide { flex-basis: 100%; }
+        /* In the sidebar the dash has ~330px, not a full column — tighten it so the
+           level, the journey and the chapter control all still read cleanly. */
+        .cp-side .ley-dash { margin-bottom: 26px; }
+        .cp-side .ley-hero-top { padding: 14px 15px; gap: 13px; }
+        .cp-side .ley-hero-badge { min-width: 62px; padding: 9px 6px; }
+        .cp-side .ley-hero-lvl { font-size: 2rem; }
+        .cp-side .ley-hero-name { font-size: 0.98rem; }
+        .cp-side .ley-hero-meta { font-size: 0.76rem; margin-bottom: 8px; }
+        .cp-side .journey-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cp-side .journey-summary .js-cell:nth-child(3) { border-left: 0; }
+        .cp-side .journey-summary .js-cell:nth-child(n+3) { border-top: 1px solid var(--border); }
+        .cp-side .dash-prog { padding: 10px 15px; gap: 8px; }
+        .cp-side .dash-prog .ley-guide-toggle { margin-left: 0; flex-basis: 100%; text-align: left; }
+        .cp-side .cp-combat-hub { margin-top: 0; margin-bottom: 26px; }
         @media (max-width: 600px) {
             .journey-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .journey-summary .js-cell:nth-child(3) { border-left: 0; }
@@ -5805,10 +5819,13 @@ function renderCampaignPage(campaign) {
         });
         partyHtml += `</div></div>`;
     }
+    // Hubs are built separately from the party so the sidebar can order itself
+    // character-first: level → hub → party.
+    let hubHtml = '';
     // Maloren's Combat Hub — link to the standalone Psi Warrior roller, self-hosted at /maloren.
     // Maloren's page only ('leyfarers'), owner-only (that page isn't visible to anyone else anyway).
     if (campaign === 'leyfarers' && isCampaignOwner(campaign)) {
-        partyHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Combat Hub</span></div>`
+        hubHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Combat Hub</span></div>`
             + `<a class="combat-hub-link" href="/maloren" target="_blank" rel="noopener">`
             + `<span class="combat-hub-icon" aria-hidden="true">⚔️</span>`
             + `<span class="combat-hub-body"><span class="combat-hub-title">Maloren Combat Hub</span><span class="combat-hub-sub">Dual-wield roller · Psi Warrior tools</span></span>`
@@ -5818,7 +5835,7 @@ function renderCampaignPage(campaign) {
     // copy (private, fresh localStorage) and the original Vercel deploy (kept as a backup — that's
     // where the existing hero data lives, since heroes are per-origin localStorage).
     if (campaign === 'drawsteel' && isCampaignOwner(campaign)) {
-        partyHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Hero Hub</span></div>`
+        hubHtml += `<div class="cp-combat-hub"><div class="cp-section-head"><span class="section-heading">Hero Hub</span></div>`
             + `<a class="combat-hub-link" href="/iven/" target="_blank" rel="noopener">`
             + `<span class="combat-hub-icon" aria-hidden="true">🛡️</span>`
             + `<span class="combat-hub-body"><span class="combat-hub-title">Iven Hero Hub</span><span class="combat-hub-sub">Self-hosted · behind your login</span></span>`
@@ -5832,10 +5849,11 @@ function renderCampaignPage(campaign) {
     // ----- Main column: Next-session hero → Availability poll → Sessions -----
     // (The old "Last Session" block was removed — the hero's "Read last recap" covers it; recaps are edited in the session cards.)
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
-    // LeyFarer campaigns lead with the character's climb: level hero → journey
-    // summary → chapter & levels. Ordinary campaigns skip all of it entirely.
+    // The character's climb lives in the sidebar with the rest of the character
+    // material, so the main column stays purely the schedule. Ordinary campaigns
+    // skip it entirely.
     const leyHtml = isLeyfarerCampaign(campaign) ? leyfarerDashboard(campaign, cs, past) : '';
-    let mainHtml = leyHtml + campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
+    let mainHtml = campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
     const addSessionBtn = canManageCampaign(campaign) ? `<button class="cp-btn" onclick="openAddSession('${campaign}')">+ Add session</button>` : '';
     if (cs.length > 0) {
         mainHtml += `<div class="sessions-wrapper">`;
@@ -5876,7 +5894,8 @@ function renderCampaignPage(campaign) {
     }
 
     document.getElementById('campaign-page-content').innerHTML =
-        `${banner}<div class="cp-layout${isOneShots(campaign) ? ' cp-solo' : ''}"><main class="cp-main">${mainHtml}</main>${isOneShots(campaign) ? '' : `<aside class="cp-side">${partyHtml}</aside>`}</div>`;
+        // Sidebar reads character-first: level & journey → hub → party.
+        `${banner}<div class="cp-layout${isOneShots(campaign) ? ' cp-solo' : ''}"><main class="cp-main">${mainHtml}</main>${isOneShots(campaign) ? '' : `<aside class="cp-side">${leyHtml}${hubHtml}${partyHtml}</aside>`}</div>`;
 }
 window.setCampaignView = function(v, campaign) { campaignView = v; renderCampaignPage(campaign); };
 window.toggleCampaignSort = function(campaign) { campaignSortNewest = !campaignSortNewest; renderCampaignPage(campaign); };

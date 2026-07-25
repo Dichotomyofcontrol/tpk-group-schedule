@@ -737,6 +737,24 @@ await run('chapter panel: raises the cap, never grants levels; clamps 12–16',
         check('non-numeric falls back to the current chapter', window.clampChapter('abc') === 12);
     });
 
+await run('character material lives in the sidebar; the main column is just the schedule',
+    { user: { email: 'sthomas131@gmail.com' }, campaigns: [{ ...LEY_CAMP, owner: 'sthomas131@gmail.com' }], sessions: LEY_SESSIONS },
+    (window, document) => {
+        window.navigateTo('leyfarers');
+        const main = document.querySelector('#campaign-page-content .cp-main');
+        const side = document.querySelector('#campaign-page-content .cp-side');
+        check('level dash is in the sidebar', !!side && /ley-dash/.test(side.innerHTML));
+        check('level dash is NOT in the main column', !/ley-dash/.test(main.innerHTML));
+        check('main column still has the sessions list', /sessions-wrapper|session-card/.test(main.innerHTML));
+        // Sidebar order: level & journey → hub → party
+        const html = side.innerHTML;
+        const iDash = html.indexOf('ley-dash');
+        const iHub = html.indexOf('cp-combat-hub');
+        const iParty = html.indexOf('>Party<');
+        check('combat hub sits above Party', iHub > -1 && iParty > -1 && iHub < iParty);
+        check('level dash sits above the hub', iDash > -1 && iDash < iHub);
+    });
+
 await run('journey summary counts campaign vs side quests, level-ups and start',
     { user: { email: 'dm@x.com' }, campaigns: [LEY_CAMP], sessions: LEY_SESSIONS },
     (window, document) => {
