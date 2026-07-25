@@ -647,6 +647,88 @@ await run('cards animate on arrival but NOT on background updates (no flicker)',
         check('re-render does NOT re-animate', onUpdate.length > 0 && onUpdate.every((c) => !c.classList.contains('enter')));
         check('no stale animation-delay on re-render', onUpdate.every((c) => !c.getAttribute('style')?.includes('animation-delay')));
     });
+// ---- LeyFarer leveling: timeline, session-card level label, chapter panel, journey ----
+const LEY_CAMP = { id: 'leyfarers', name: 'Leyfarers: Maloren', leyfarer: true, chapter: 12, owner: 'dm@x.com' };
+// 5 completed (→ Lvl 10 at session 5) + 1 not completed + 1 cancelled-but-completed (must not count)
+const LEY_SESSIONS = [
+  { id: 'L1', campaign: 'leyfarers', date: '2024-01-01', status: 'active', completed: true, type: 'Intro' },
+  { id: 'L2', campaign: 'leyfarers', date: '2024-02-01', status: 'active', completed: true, type: 'Campaign' },
+  { id: 'L3', campaign: 'leyfarers', date: '2024-03-01', status: 'active', completed: true, type: 'Side Quest' },
+  { id: 'L4', campaign: 'leyfarers', date: '2024-04-01', status: 'active', completed: true, type: 'Side Quest' },
+  { id: 'L5', campaign: 'leyfarers', date: '2024-05-01', status: 'active', completed: true },   // untyped → campaign
+  { id: 'L6', campaign: 'leyfarers', date: '2024-06-01', status: 'active', completed: false, type: 'Campaign' },
+  { id: 'L7', campaign: 'leyfarers', date: '2024-07-01', status: 'cancelled', completed: true, type: 'Campaign' },
+];
+
+await run('campaignLevelTimeline walks completed sessions in DATE order',
+    { user: { email: 'dm@x.com' }, campaigns: [LEY_CAMP], sessions: LEY_SESSIONS },
+    (window) => {
+        const tl = window.campaignLevelTimeline('leyfarers');
+        check('only completed, non-cancelled sessions appear', Object.keys(tl).sort().join(',') === 'L1,L2,L3,L4,L5');
+        check('levels climb 8,8,9,9,10 by the table', [tl.L1, tl.L2, tl.L3, tl.L4, tl.L5].map(x => x.level).join(',') === '8,8,9,9,10');
+        check('level-ups flagged only where the level rose', [tl.L1, tl.L2, tl.L3, tl.L4, tl.L5].map(x => x.levelUp).join(',') === 'false,false,true,false,true');
+        check('final timeline level matches leyfarerCampaignInfo', tl.L5.level === window.leyfarerCampaignInfo('leyfarers').capped);
+    });
+
+await run('session cards show Reached Level / Level / Not completed (LeyFarer only)',
+    { user: { email: 'dm@x.com' }, campaigns: [LEY_CAMP], sessions: LEY_SESSIONS },
+    (window, document) => {
+        window.navigateTo('leyfarers');
+        window.setCampaignTimeFilter('all', 'leyfarers');
+        const html = document.getElementById('campaign-page-content').innerHTML;
+        check('a level-up session reads "Reached Level 9"', /sc-lvl up">[^<]*Reached Level 9</.test(html));
+        check('a non-level-up completed session reads "Level 8"', /sc-lvl">Level 8</.test(html));
+        check('an incomplete session reads "Not completed"', /sc-lvl pending">Not completed</.test(html));
+        check('incomplete card is flagged sc-pending', /session-card[^"]*sc-pending/.test(html));
+    });
+
+await run('ordinary campaigns get NO level label (the gate holds)',
+    { user: { email: 'dm@x.com' },
+      campaigns: [{ id: 'strahd', name: 'Curse of Strahd', owner: 'dm@x.com' }],
+      sessions: [{ id: 'S1', campaign: 'strahd', date: '2024-01-01', status: 'active', completed: true, type: 'Campaign' }] },
+    (window, document) => {
+        window.navigateTo('strahd');
+        window.setCampaignTimeFilter('all', 'strahd');
+        const html = document.getElementById('campaign-page-content').innerHTML;
+        check('no level label on a non-LeyFarer session', !/sc-lvl/.test(html));
+        check('no chapter panel', !/Chapter &amp; levels|Chapter & levels/.test(html));
+        check('no journey summary', !/journey-summary/.test(html));
+        check('session still renders normally', /session-card/.test(html));
+    });
+
+await run('chapter panel: raises the cap, never grants levels; clamps 12–16',
+    { user: { email: 'dm@x.com' }, campaigns: [LEY_CAMP],
+      // 22 completed → uncapped level 16, so chapter 12 (cap 16) is not capping yet
+      sessions: Array.from({ length: 22 }, (_, i) => ({ id: 'c' + i, campaign: 'leyfarers', date: '2024-01-' + String((i % 28) + 1).padStart(2, '0'), status: 'active', completed: true, type: 'Campaign' })) },
+    async (window, document, writes) => {
+        window.navigateTo('leyfarers');
+        const html = document.getElementById('campaign-page-content').innerHTML;
+        check('chapter panel rendered for a LeyFarer campaign', /Chapter &amp; levels|Chapter & levels/.test(html));
+        check('chapter input present for the owner', /setCampaignChapter\('leyfarers'/.test(html));
+        const before = window.leyfarerCampaignInfo('leyfarers').capped;
+        await window.setCampaignChapter('leyfarers', 14);
+        const after = window.leyfarerCampaignInfo('leyfarers');
+        check('chapter written to the campaign doc', !!writes.find(w => w.coll === 'campaigns' && w.id === 'leyfarers' && w.data.chapter === 14));
+        check('raising the chapter does NOT grant a level', after.capped === before);
+        check('it does raise the cap', after.chapterMax === 18);
+        check('clamps above the range', window.clampChapter(99) === 16);
+        check('clamps below the range', window.clampChapter(3) === 12);
+        check('non-numeric falls back to the current chapter', window.clampChapter('abc') === 12);
+    });
+
+await run('journey summary counts campaign vs side quests, level-ups and start',
+    { user: { email: 'dm@x.com' }, campaigns: [LEY_CAMP], sessions: LEY_SESSIONS },
+    (window, document) => {
+        window.navigateTo('leyfarers');
+        const html = document.getElementById('campaign-page-content').innerHTML;
+        check('journey summary rendered', /journey-summary/.test(html));
+        const cells = [...html.matchAll(/js-num[^>]*>([^<]+)</g)].map(m => m[1].trim());
+        check('3 campaign sessions (Intro + Campaign + untyped)', cells[0] === '3');
+        check('2 side quests', cells[1] === '2');
+        check('2 level-ups', cells[2] === '2');
+        check('since Jan 2024 (earliest completed session)', /Jan 2024/.test(cells[3] || ''));
+    });
+
 await run('view toggles are icon buttons',
     { user: { email: 'sthomas131@gmail.com' } },
     (window, document) => {

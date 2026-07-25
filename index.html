@@ -1405,6 +1405,25 @@
         .ley-hero-guide { margin-top: 12px; }
         .ley-type-tag { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brand); border: 1px solid var(--brand-line, var(--brand)); border-radius: var(--r-pill); padding: 2px 9px; }
         .ley-done-note { font-size: 0.78rem; color: var(--text-dim); }
+        /* Where a LeyFarer session sits in the climb (session card, LeyFarer campaigns only) */
+        .sc-lvl { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-pill); padding: 2px 8px; margin-left: 8px; white-space: nowrap; }
+        .sc-lvl.up { color: var(--brand); border-color: var(--brand); background: var(--brand-tint); }
+        .sc-lvl.pending { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
+        .session-card.sc-pending { opacity: 0.82; }
+        /* Chapter & levels panel + journey summary (LeyFarer campaign pages) */
+        .dash-prog { margin-bottom: 16px; gap: 0; }
+        .dash-prog .ley-hero-body { width: 100%; }
+        .dash-prog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .dash-chapter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .dash-chapter-row input { width: 62px; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+        .dash-chapter-row input:focus { outline: none; border-color: var(--brand); }
+        .dash-cap-note { font-size: 0.75rem; color: var(--text-dim); }
+        .journey-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .journey-summary .js-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px; text-align: center; }
+        .journey-summary .js-num { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--text); }
+        .journey-summary .js-num.accent { color: var(--brand); }
+        .journey-summary .js-lbl { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-top: 5px; }
+        @media (max-width: 600px) { .journey-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         /* Maloren Combat Hub link (sidebar, under Party) */
         .cp-combat-hub { margin-top: 22px; }
         .combat-hub-link { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 14%, var(--surface)), var(--surface)); border: 1px solid var(--brand-line, var(--border)); border-radius: var(--r-md); text-decoration: none; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
@@ -2451,6 +2470,39 @@ function leyfarerCampaignInfo(c) {
     return { sessions: done, uncapped, capped: Math.min(uncapped, chapterMax), chapter, chapterMax };
 }
 window.leyfarerCampaignInfo = leyfarerCampaignInfo;
+// Valid chapter range comes from the cap table, so the inputs, the clamps and the
+// table can never drift apart. Every chapter writer runs through clampChapter.
+const LEYFARER_CHAPTERS = Object.keys(LEYFARER_CHAPTER_MAX).map(Number).sort((a, b) => a - b);
+const LEYFARER_CHAPTER_MIN = LEYFARER_CHAPTERS[0];
+const LEYFARER_CHAPTER_TOP = LEYFARER_CHAPTERS[LEYFARER_CHAPTERS.length - 1];
+function clampChapter(v) {
+    const n = parseInt(v, 10);
+    if (!Number.isFinite(n)) return LEYFARER_CURRENT_CHAPTER;
+    return Math.max(LEYFARER_CHAPTER_MIN, Math.min(LEYFARER_CHAPTER_TOP, n));
+}
+window.clampChapter = clampChapter;
+// The level after each completed session, walked in DATE order (not entry order),
+// so a session added late still lands at the right point in the journey.
+// Returns { [sessionId]: { level, levelUp, n } } — consumed by the session-card
+// label and the journey summary's level-up count.
+function campaignLevelTimeline(campaign) {
+    const camp = allCampaigns[campaign] || {};
+    const base = camp.baseSessions || 0;
+    const cap = leyfarerChapterMax(camp.chapter || LEYFARER_CURRENT_CHAPTER);
+    const done = sessions
+        .filter(s => s.campaign === campaign && s.completed === true && s.status !== 'cancelled')
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.id).localeCompare(String(b.id)));
+    const out = {};
+    let prev = Math.min(leyfarerLevelForSessions(base), cap);   // level before the first logged session
+    done.forEach((s, i) => {
+        const n = base + i + 1;
+        const level = Math.min(leyfarerLevelForSessions(n), cap);
+        out[s.id] = { level, levelUp: level > prev, n };
+        prev = level;
+    });
+    return out;
+}
+window.campaignLevelTimeline = campaignLevelTimeline;
 
 // The two characters' completed quest logs (from the LeyFarer spreadsheet; every entry counts as one session).
 const LEYFARER_SEED_CHARACTERS = {
@@ -2768,7 +2820,9 @@ async function createCampaignDoc(name, icon, color, opts) {
     const me = myEmail(); if (!me) throw new Error('Sign in to create a campaign.');
     const slug = uniqueCampaignSlug(name);
     const data = { name: name.trim(), icon: (icon || '🎲').trim() || '🎲', color: color || '#4fc3f7', owner: me, createdAt: Date.now(), readers: [me] };
-    if (opts && opts.leyfarer) { data.leyfarer = true; data.chapter = opts.chapter || LEYFARER_CURRENT_CHAPTER; if (opts.baseSessions) data.baseSessions = opts.baseSessions; }
+    // Both creation paths (new-campaign form and add-character) funnel through here,
+    // so this is the one place creation-time chapters need clamping.
+    if (opts && opts.leyfarer) { data.leyfarer = true; data.chapter = clampChapter(opts.chapter); if (opts.baseSessions) data.baseSessions = opts.baseSessions; }
     await setDoc(doc(db, "campaigns", slug), data);
     allCampaigns[slug] = { id: slug, ...data };
     renderCampaignTheme();
@@ -5437,6 +5491,22 @@ function renderSessionCard(s, gi, ci) {
     const manageHtml = actionHtml ? `<div class="session-detail-section session-manage"><div class="detail-label">Manage session</div><div class="session-manage-actions" onclick="event.stopPropagation()">${actionHtml}</div></div>` : '';
     const titleHtml = s.title ? `${escapeHtml(campaignName(s.campaign))} &mdash; ${escapeHtml(s.title)}` : escapeHtml(campaignName(s.campaign));
     const levelHtml = s.level ? ` \u00b7 ${escapeHtml(s.level)}` : '';
+    // LeyFarer only: where this session sits in the character's climb. Ordinary
+    // campaigns fall straight through with no level label at all.
+    let levelText = '', pendingCls = '';
+    if (isLeyfarerCampaign(s.campaign) && !isCancelled) {
+        if (s.completed !== true) {
+            levelText = `<span class="sc-lvl pending">Not completed</span>`;
+            pendingCls = ' sc-pending';
+        } else {
+            const step = campaignLevelTimeline(s.campaign)[sid];
+            if (step) {
+                levelText = step.levelUp
+                    ? `<span class="sc-lvl up">&uarr; Reached Level ${step.level}</span>`
+                    : `<span class="sc-lvl">Level ${step.level}</span>`;
+            }
+        }
+    }
     let ownerTag = '';
     if (s.owner) {
         // Only one-shots are private-by-design, so only they get a tag (Private / Shared\u00b7N). Normal
@@ -5448,7 +5518,7 @@ function renderSessionCard(s, gi, ci) {
             }
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}${entryClass()}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)"${animateEntry ? ` style="animation-delay:${(gi*0.05)+(ci*0.03)}s"` : ''}><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}${manageHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}${pendingCls}${entryClass()}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)"${animateEntry ? ` style="animation-delay:${(gi*0.05)+(ci*0.03)}s"` : ''}><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}${levelText}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}${manageHtml}</div></div>`;
 }
 
 function renderList() {
@@ -5556,8 +5626,6 @@ function leyfarerHero(campaign) {
         <div class="ley-hero-name">${nm ? escapeHtml(nm) + ' · ' : ''}Chapter ${info.chapter}</div>
         <div class="ley-hero-meta"><strong>${info.sessions}</strong> session${info.sessions === 1 ? '' : 's'} completed${capped ? ` · capped at ${info.chapterMax} this chapter (would be ${info.uncapped})` : (nextAt ? ` · next level at ${nextAt}` : ' · max level for this chapter')}</div>
         <div class="ley-hero-bar"><span style="width:${Math.max(4, Math.min(100, pct))}%"></span></div>
-        <button class="cp-btn ley-guide-toggle" onclick="toggleLevelGuideInline(this)">Show leveling guide</button>
-        <div class="ley-hero-guide" style="display:none">${leyfarerGuideHtml()}</div>
       </div>
     </div>`;
 }
@@ -5565,6 +5633,80 @@ window.toggleLevelGuideInline = function(btn) {
     const g = btn.parentElement.querySelector('.ley-hero-guide'); if (!g) return;
     const open = g.style.display !== 'none'; g.style.display = open ? 'none' : 'block'; btn.textContent = open ? 'Show leveling guide' : 'Hide leveling guide';
 };
+
+// ===== Chapter writers — every one clamps through clampChapter and writes the
+// campaign doc's `chapter`. Raising the chapter never grants levels; it only
+// raises the cap, and leyfarerCampaignInfo does the rest.
+window.setCampaignChapter = async function(campaign, val) {
+    if (!isLeyfarerCampaign(campaign)) return;
+    if (!canManageCampaign(campaign)) { showToast('Only the campaign owner can change the chapter.'); return; }
+    const chapter = clampChapter(val);
+    const prev = (allCampaigns[campaign] || {}).chapter;
+    if (prev === chapter) { renderCampaignPage(campaign); return; }   // re-render to snap a clamped input back
+    allCampaigns[campaign].chapter = chapter;
+    renderCampaignPage(campaign); scheduleRender();
+    try {
+        await updateDoc(doc(db, "campaigns", campaign), { chapter });
+        showToast(`Chapter ${chapter} · level cap ${leyfarerChapterMax(chapter)}`, 'success');
+    } catch (e) {
+        console.error('set chapter:', e);
+        allCampaigns[campaign].chapter = prev;
+        showToast('Could not save the chapter — try again.');
+        renderCampaignPage(campaign);
+    }
+};
+window.advanceChapter = function(campaign) {
+    const cur = (allCampaigns[campaign] || {}).chapter || LEYFARER_CURRENT_CHAPTER;
+    setCampaignChapter(campaign, cur + 1);
+};
+
+// Feature 2 — "Chapter & levels": the cap that's currently governing this
+// character, editable by the owner, with the sessions→level chart behind a toggle.
+function dashProgressionCard(campaign, info) {
+    const can = canManageCampaign(campaign);
+    const capped = info.capped < info.uncapped;
+    const atTop = info.chapter >= LEYFARER_CHAPTER_TOP;
+    const chapterCtl = can
+        ? `<input type="number" min="${LEYFARER_CHAPTER_MIN}" max="${LEYFARER_CHAPTER_TOP}" value="${info.chapter}" aria-label="Chapter"
+             onchange="setCampaignChapter('${campaign}', this.value)">
+           <button class="edit-party-btn" ${atTop ? 'disabled' : ''} onclick="advanceChapter('${campaign}')">Advance &rarr; ${Math.min(info.chapter + 1, LEYFARER_CHAPTER_TOP)}</button>`
+        : `<span class="dash-cap-note">Chapter ${info.chapter}</span>`;
+    return `<div class="ley-hero dash-prog" style="--cp:${campaignColor(campaign)}">
+      <div class="ley-hero-body">
+        <div class="dash-prog-head">
+          <span class="section-heading">Chapter &amp; levels</span>
+          <span class="dash-cap-note">${capped
+            ? `Capped at ${info.chapterMax} &mdash; ${info.sessions} sessions would give ${info.uncapped}`
+            : `Level cap ${info.chapterMax} this chapter`}</span>
+        </div>
+        <div class="dash-chapter-row">${chapterCtl}
+          <span class="dash-cap-note">Raising the chapter lifts the cap; it never grants levels on its own.</span>
+        </div>
+        <button class="cp-btn ley-guide-toggle" style="margin-top:12px" onclick="toggleLevelGuideInline(this)">Show leveling guide</button>
+        <div class="ley-hero-guide" style="display:none">${leyfarerGuideHtml()}</div>
+      </div>
+    </div>`;
+}
+
+// Feature 3 — the journey so far. Untyped sessions fall back to "campaign" so
+// nothing silently drops out of the totals.
+function dashJourney(campaign, cs, past) {
+    const done = cs.filter(s => s.completed === true && s.status !== 'cancelled');
+    const side = done.filter(s => s.type === 'Side Quest').length;
+    const campaignRuns = done.length - side;   // 'Campaign' | 'Intro' | untyped
+    const levelUps = Object.values(campaignLevelTimeline(campaign)).filter(x => x.levelUp).length;
+    const firstDate = done.map(s => s.date).filter(Boolean).sort()[0]
+        || cs.map(s => s.date).filter(Boolean).sort()[0];
+    const since = firstDate
+        ? parseDate(firstDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        : '—';
+    return `<div class="journey-summary">
+      <div class="js-cell"><div class="js-num">${campaignRuns}</div><div class="js-lbl">Campaign</div></div>
+      <div class="js-cell"><div class="js-num">${side}</div><div class="js-lbl">Side quests</div></div>
+      <div class="js-cell"><div class="js-num accent">${levelUps}</div><div class="js-lbl">Level-ups</div></div>
+      <div class="js-cell"><div class="js-num" style="font-size:1.05rem">${since}</div><div class="js-lbl">Since</div></div>
+    </div>`;
+}
 function renderCampaignPage(campaign) {
     const today = getToday();
     const cs = sessions.filter(s => s.campaign === campaign && sessionVisible(s));
@@ -5658,7 +5800,14 @@ function renderCampaignPage(campaign) {
     // ----- Main column: Next-session hero → Availability poll → Sessions -----
     // (The old "Last Session" block was removed — the hero's "Read last recap" covers it; recaps are edited in the session cards.)
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
-    let mainHtml = (isLeyfarerCampaign(campaign) ? leyfarerHero(campaign) : '') + campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
+    // LeyFarer campaigns lead with the character's climb: level hero → journey
+    // summary → chapter & levels. Ordinary campaigns skip all of it entirely.
+    let leyHtml = '';
+    if (isLeyfarerCampaign(campaign)) {
+        const info = leyfarerCampaignInfo(campaign);
+        leyHtml = leyfarerHero(campaign) + dashJourney(campaign, cs, past) + dashProgressionCard(campaign, info);
+    }
+    let mainHtml = leyHtml + campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
     const addSessionBtn = canManageCampaign(campaign) ? `<button class="cp-btn" onclick="openAddSession('${campaign}')">+ Add session</button>` : '';
     if (cs.length > 0) {
         mainHtml += `<div class="sessions-wrapper">`;
