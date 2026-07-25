@@ -1411,19 +1411,32 @@
         .sc-lvl.pending { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
         .session-card.sc-pending { opacity: 0.82; }
         /* Chapter & levels panel + journey summary (LeyFarer campaign pages) */
-        .dash-prog { margin-bottom: 16px; gap: 0; }
-        .dash-prog .ley-hero-body { width: 100%; }
-        .dash-prog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-        .dash-chapter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .dash-chapter-row input { width: 62px; padding: 6px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.85rem; }
-        .dash-chapter-row input:focus { outline: none; border-color: var(--brand); }
-        .dash-cap-note { font-size: 0.75rem; color: var(--text-dim); }
-        .journey-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
-        .journey-summary .js-cell { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px; text-align: center; }
-        .journey-summary .js-num { font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--text); }
+        /* One card for the whole climb: level → what you've done → chapter control.
+           Internal bands are separated by hairlines instead of three stacked cards. */
+        .ley-dash { background: linear-gradient(135deg, color-mix(in srgb, var(--cp) 14%, var(--surface)), var(--surface)); border: 1px solid var(--border); border-left: 4px solid var(--cp); border-radius: var(--r-lg); margin-bottom: 16px; overflow: hidden; }
+        .ley-hero-top { display: flex; gap: 18px; align-items: flex-start; padding: 18px 20px; }
+        .ley-hero-bar.at-cap span { background: var(--text-dim); }
+        .journey-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+        .journey-summary .js-cell { padding: 12px 10px; text-align: center; border-left: 1px solid var(--border); }
+        .journey-summary .js-cell:first-child { border-left: 0; }
+        .journey-summary .js-num { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; line-height: 1; color: var(--text); }
         .journey-summary .js-num.accent { color: var(--brand); }
-        .journey-summary .js-lbl { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-top: 5px; }
-        @media (max-width: 600px) { .journey-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .journey-summary .js-lbl { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin-top: 5px; }
+        .dash-prog { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 20px; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--bg) 55%, transparent); }
+        .dash-prog-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); }
+        .dash-chapter-row { display: flex; align-items: center; gap: 8px; }
+        .dash-chapter-row input { width: 56px; padding: 5px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+        .dash-chapter-row input:focus { outline: none; border-color: var(--brand); }
+        .dash-chapter-val { font-size: 0.95rem; color: var(--text); }
+        .dash-cap-note { font-size: 0.72rem; color: var(--text-dim); }
+        .dash-prog .ley-guide-toggle { margin-left: auto; background: none; border: 0; padding: 4px 2px; font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--text-dim); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+        .dash-prog .ley-guide-toggle:hover { color: var(--text); }
+        .dash-prog .ley-hero-guide { flex-basis: 100%; }
+        @media (max-width: 600px) {
+            .journey-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .journey-summary .js-cell:nth-child(3) { border-left: 0; }
+            .journey-summary .js-cell:nth-child(n+3) { border-top: 1px solid var(--border); }
+        }
         /* Maloren Combat Hub link (sidebar, under Party) */
         .cp-combat-hub { margin-top: 22px; }
         .combat-hub-link { display: flex; align-items: center; gap: 12px; padding: 14px; background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 14%, var(--surface)), var(--surface)); border: 1px solid var(--brand-line, var(--border)); border-radius: var(--r-md); text-decoration: none; transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
@@ -5611,7 +5624,9 @@ function leyfarerCharName(campaign) {
     const leyName = Object.keys(chars).find(n => chars[n] && chars[n].leyfarer);
     return leyName || (campaignName(campaign).split(':')[1] || '').trim() || null;
 }
-// Leveling hero atop a LeyFarer campaign page — this is the character's "detailed leveling view".
+// The level badge + where the climb stands. Each fact appears exactly once across
+// the whole progression block: the level here, the counts in the journey strip,
+// the chapter in the chapter row.
 function leyfarerHero(campaign) {
     const info = leyfarerCampaignInfo(campaign);
     const nextAt = leyfarerNextLevelAt(info.sessions);
@@ -5619,15 +5634,30 @@ function leyfarerHero(campaign) {
     const prevAt = (() => { for (let s = info.sessions; s >= 0; s--) { if (s === 0 || leyfarerLevelForSessions(s) < leyfarerLevelForSessions(info.sessions)) return s; } return 0; })();
     const pct = nextAt ? Math.round(((info.sessions - prevAt) / (nextAt - prevAt)) * 100) : 100;
     const nm = leyfarerCharName(campaign);
-    const col = campaignColor(campaign);
-    return `<div class="ley-hero" style="--cp:${col}">
+    // At the cap the bar isn't measuring progress any more, so say so instead of
+    // showing a permanently full "100%".
+    const status = capped
+        ? `At the Chapter ${info.chapter} cap — advance the chapter to keep climbing`
+        : nextAt
+            ? `Next level at ${nextAt} sessions · ${nextAt - info.sessions} to go`
+            : 'Max level';
+    return `<div class="ley-hero-top">
       <div class="ley-hero-badge"><span class="ley-hero-lvl">${info.capped}</span><span class="ley-hero-lvl-cap">LEVEL</span></div>
       <div class="ley-hero-body">
-        <div class="ley-hero-name">${nm ? escapeHtml(nm) + ' · ' : ''}Chapter ${info.chapter}</div>
-        <div class="ley-hero-meta"><strong>${info.sessions}</strong> session${info.sessions === 1 ? '' : 's'} completed${capped ? ` · capped at ${info.chapterMax} this chapter (would be ${info.uncapped})` : (nextAt ? ` · next level at ${nextAt}` : ' · max level for this chapter')}</div>
-        <div class="ley-hero-bar"><span style="width:${Math.max(4, Math.min(100, pct))}%"></span></div>
+        <div class="ley-hero-name">${nm ? escapeHtml(nm) : campaignName(campaign)}</div>
+        <div class="ley-hero-meta">${status}</div>
+        <div class="ley-hero-bar${capped ? ' at-cap' : ''}"><span style="width:${capped ? 100 : Math.max(4, Math.min(100, pct))}%"></span></div>
       </div>
     </div>`;
+}
+// One card for the whole climb: level → what you've done → chapter control.
+function leyfarerDashboard(campaign, cs, past) {
+    const info = leyfarerCampaignInfo(campaign);
+    return `<div class="ley-dash" style="--cp:${campaignColor(campaign)}">`
+         + leyfarerHero(campaign)
+         + dashJourney(campaign, cs, past)
+         + dashProgressionCard(campaign, info)
+         + `</div>`;
 }
 window.toggleLevelGuideInline = function(btn) {
     const g = btn.parentElement.querySelector('.ley-hero-guide'); if (!g) return;
@@ -5662,29 +5692,24 @@ window.advanceChapter = function(campaign) {
 
 // Feature 2 — "Chapter & levels": the cap that's currently governing this
 // character, editable by the owner, with the sessions→level chart behind a toggle.
+// The chapter row: the cap that's governing this character, editable by the owner.
+// The *consequence* of the cap is stated once, in the hero status line above —
+// this row is the control, not a second explanation of it.
 function dashProgressionCard(campaign, info) {
     const can = canManageCampaign(campaign);
-    const capped = info.capped < info.uncapped;
     const atTop = info.chapter >= LEYFARER_CHAPTER_TOP;
-    const chapterCtl = can
-        ? `<input type="number" min="${LEYFARER_CHAPTER_MIN}" max="${LEYFARER_CHAPTER_TOP}" value="${info.chapter}" aria-label="Chapter"
+    const ctl = can
+        ? `<input type="number" min="${LEYFARER_CHAPTER_MIN}" max="${LEYFARER_CHAPTER_TOP}" value="${info.chapter}"
+             aria-label="Chapter" title="Raising the chapter lifts the level cap; it never grants levels on its own"
              onchange="setCampaignChapter('${campaign}', this.value)">
-           <button class="edit-party-btn" ${atTop ? 'disabled' : ''} onclick="advanceChapter('${campaign}')">Advance &rarr; ${Math.min(info.chapter + 1, LEYFARER_CHAPTER_TOP)}</button>`
-        : `<span class="dash-cap-note">Chapter ${info.chapter}</span>`;
-    return `<div class="ley-hero dash-prog" style="--cp:${campaignColor(campaign)}">
-      <div class="ley-hero-body">
-        <div class="dash-prog-head">
-          <span class="section-heading">Chapter &amp; levels</span>
-          <span class="dash-cap-note">${capped
-            ? `Capped at ${info.chapterMax} &mdash; ${info.sessions} sessions would give ${info.uncapped}`
-            : `Level cap ${info.chapterMax} this chapter`}</span>
-        </div>
-        <div class="dash-chapter-row">${chapterCtl}
-          <span class="dash-cap-note">Raising the chapter lifts the cap; it never grants levels on its own.</span>
-        </div>
-        <button class="cp-btn ley-guide-toggle" style="margin-top:12px" onclick="toggleLevelGuideInline(this)">Show leveling guide</button>
-        <div class="ley-hero-guide" style="display:none">${leyfarerGuideHtml()}</div>
-      </div>
+           ${atTop ? '' : `<button class="edit-party-btn" onclick="advanceChapter('${campaign}')">Advance &rarr; ${info.chapter + 1}</button>`}`
+        : `<strong class="dash-chapter-val">${info.chapter}</strong>`;
+    return `<div class="dash-prog">
+      <span class="dash-prog-label">Chapter</span>
+      <div class="dash-chapter-row">${ctl}</div>
+      <span class="dash-cap-note">Level cap ${info.chapterMax}</span>
+      <button class="ley-guide-toggle" onclick="toggleLevelGuideInline(this)">Leveling guide</button>
+      <div class="ley-hero-guide" style="display:none">${leyfarerGuideHtml()}</div>
     </div>`;
 }
 
@@ -5802,11 +5827,7 @@ function renderCampaignPage(campaign) {
     const lastPast = past.length > 0 ? past[past.length - 1] : null;
     // LeyFarer campaigns lead with the character's climb: level hero → journey
     // summary → chapter & levels. Ordinary campaigns skip all of it entirely.
-    let leyHtml = '';
-    if (isLeyfarerCampaign(campaign)) {
-        const info = leyfarerCampaignInfo(campaign);
-        leyHtml = leyfarerHero(campaign) + dashJourney(campaign, cs, past) + dashProgressionCard(campaign, info);
-    }
+    const leyHtml = isLeyfarerCampaign(campaign) ? leyfarerDashboard(campaign, cs, past) : '';
     let mainHtml = leyHtml + campaignNextHero(campaign, nextUp, lastPast) + renderPollSection(campaign);
     const addSessionBtn = canManageCampaign(campaign) ? `<button class="cp-btn" onclick="openAddSession('${campaign}')">+ Add session</button>` : '';
     if (cs.length > 0) {

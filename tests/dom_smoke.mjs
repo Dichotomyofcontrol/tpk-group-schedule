@@ -431,7 +431,9 @@ await run('LeyFarer: level = completed sessions in the campaign, capped by chapt
         const cp = document.getElementById('campaign-page-content').innerHTML;
         check('leveling hero renders on the campaign page', /ley-hero/.test(cp) && /LEVEL/.test(cp));
         check('hero shows level 16', /ley-hero-lvl">16</.test(cp));
-        check('hero shows 39 sessions completed', /39<\/strong> session/.test(cp));
+        // The session count lives in the journey strip now (broken down), not restated in the hero.
+        check('journey strip shows the 39 completed sessions', /js-num[^>]*>39</.test(cp));
+        check('hero does not restate the session count', !/39<\/strong> session/.test(cp));
     });
 await run('LeyFarer migration seeds both journeys as dated completed sessions',
     { user: { email: 'sthomas131@gmail.com' },
@@ -703,8 +705,10 @@ await run('chapter panel: raises the cap, never grants levels; clamps 12–16',
     async (window, document, writes) => {
         window.navigateTo('leyfarers');
         const html = document.getElementById('campaign-page-content').innerHTML;
-        check('chapter panel rendered for a LeyFarer campaign', /Chapter &amp; levels|Chapter & levels/.test(html));
+        check('chapter row rendered for a LeyFarer campaign', /dash-prog-label">Chapter</.test(html));
         check('chapter input present for the owner', /setCampaignChapter\('leyfarers'/.test(html));
+        check('the whole climb is one card, not three', (html.match(/class="ley-dash/g) || []).length === 1);
+        check('cap stated once, not duplicated', (html.match(/Level cap \d+/g) || []).length === 1);
         const before = window.leyfarerCampaignInfo('leyfarers').capped;
         await window.setCampaignChapter('leyfarers', 14);
         const after = window.leyfarerCampaignInfo('leyfarers');
