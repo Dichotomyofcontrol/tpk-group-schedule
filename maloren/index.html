@@ -195,17 +195,23 @@
      want ~250px, so side-by-side only fits above ~1100px of viewport. Below
      that the prompts wrap to a full-width row directly under the table — still
      inside the same panel, never above it. */
-  .attack-body{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
-  .table-wrap{flex:1 1 680px;min-width:0;overflow-x:auto}
-  .prompts{flex:1 1 250px;display:flex;flex-direction:column;gap:9px;align-self:stretch}
-  .prompts-empty{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;
+  /* The table runs the full width and each attack's own follow-ups sit directly
+     under that attack (see .prompt-row), so it's never ambiguous which strike a
+     rider belongs to. Only turn-level prompts (bonus action, etc.) sit in the
+     strip below the table. */
+  .attack-body{display:block}
+  .table-wrap{min-width:0;overflow-x:auto}
+  .prompts{display:flex;flex-direction:row;flex-wrap:wrap;gap:9px;margin-top:12px}
+  .prompts .prompt{flex:1 1 320px}
+  .prompts-empty{flex:1 1 100%;font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;
     border:1px dashed var(--line);border-radius:4px;padding:14px;text-align:center;
     display:flex;align-items:center;justify-content:center}
-  @media(max-width:1100px){
-    .prompts{flex-basis:100%;flex-direction:row;flex-wrap:wrap}
-    .prompts .prompt{flex:1 1 300px}
-    .prompts-empty{flex-basis:100%}
-  }
+  /* A follow-up attached to the attack in the row above it. */
+  tr.prompt-row > td{padding:0 0 10px 0;border-top:0}
+  .prompt-stack{display:flex;flex-direction:column;gap:6px;
+    margin-left:14px;padding-left:14px;border-left:2px solid var(--line)}
+  .prompt-stack .prompt{padding:9px 12px}
+  .prompt-stack .prompt .pt{font-size:12.5px}
   .prompt{display:flex;align-items:center;gap:12px;border-radius:4px;padding:12px 14px;
     background:rgba(8,16,24,.85);border:1px solid var(--line);flex:none;min-width:0;
     position:relative;overflow:hidden}
@@ -1097,6 +1103,7 @@ function masterySelect(i, r){
 function attackRow(r){
   const i = r.idx;
   const tr = document.createElement('tr');
+  tr.dataset.row = i;   // lets this attack's follow-up prompts be inserted right below it
 
   if (r.pending){
     tr.className = 'pending' + (r.spec.block === 'surge' ? ' surge-row' : '');
@@ -1183,47 +1190,55 @@ function revokeCurse(i){
 }
 
 /* ---------- turn prompts ---------- */
-/* Prompts live in a column inside the Attack Action panel, right after Mastery,
-   so confirming a hit never resizes anything above the table. */
-function renderPrompts(c){
-  const box = $('prompts');
+/* Prompts carry an optional `attach` — the index of the attack they belong to.
+   Those render as a row directly beneath that attack so you can see exactly
+   which strike a rider applies to; everything turn-level (bonus action, etc.)
+   goes in the strip under the table. */
+function buildPrompts(c){
   const out = [];
-  if (!entropy || !lastRoll){
-    box.innerHTML = '<div class="prompts-empty">Confirm each hit — actions you '
-                  + 'can take this turn appear here.</div>';
-    return;
-  }
+  if (!entropy || !lastRoll) return out;
 
   const rows = lastRoll.attacks.filter(r => !r.pending);
-  const confirmed = rows.filter(r => r.hit !== null);
   const hits = rows.filter(r => r.hit === true);
-  const waiting = lastRoll.attacks.length - confirmed.length;
 
+  // One curse prompt per uncursed hit, attached to that hit — so each cleaver
+  // strike carries its own button instead of one prompt for "the first one".
   const uncursed = hits.filter(r => r.w.curse && !cursedIdx.includes(r.idx));
   const cursesLeft = RESOURCES.cleaver.max - spent.cleaver;
   if (uncursed.length){
-    const cw = uncursed[0].w;
-    out.push({ cls:'p-curse', icon:'☣',
-      title:`${cw.name} hit${uncursed.length>1?` ×${uncursed.length}`:''} — curse it`,
-      sub: cursesLeft > 0
-        ? `DC ${cw.curse.dc} ${cw.curse.save} or 1d6 necrotic at the start of each of its turns · ${cursesLeft} left this session`
-        : 'No uses left this session — regains on a new session, not a rest.',
-      btn: cursesLeft > 0 ? 'Curse' : null, act: () => applyCurse(uncursed[0].idx) });
+    uncursed.forEach(u => {
+      out.push({ attach:u.idx, cls:'p-curse', icon:'☣',
+        title:`${u.w.name} hit — curse it`,
+        sub: cursesLeft > 0
+          ? `DC ${u.w.curse.dc} ${u.w.curse.save} or 1d6 necrotic at the start of each of its turns · ${cursesLeft} left this session`
+          : 'No uses left this session — regains on a new session, not a rest.',
+        btn: cursesLeft > 0 ? 'Curse' : null, act: () => applyCurse(u.idx) });
+    });
   } else if (cursedIdx.length){
     out.push({ cls:'p-done', icon:'☣', title:`Cursed ×${cursedIdx.length} this turn`,
       sub:`Roll the tick at the start of each cursed target's turn · ${cursesLeft} left this session` });
   }
 
+  // Psionic Strike rides one hit of your choosing, so offer it under EVERY hit
+  // and remember which attack took it — that's the whole "which attack am I
+  // applying this to?" question answered in place.
   const diceLeft = RESOURCES.psi.max - spent.psi;
   if (!psionic && hits.length && diceLeft > 0){
-    out.push({ cls:'p-psi', icon:'◈', title:'Psionic Strike available',
-      sub:`You hit — 1d${c.psiDieSize} + ${c.psiBonus} Force · spends a Psionic Energy Die · ${diceLeft} left`,
-      btn:'Strike', act:() => { const die = d(c.psiDieSize);
-        psionic = { die, force: die + c.psiBonus };
-        spent.psi++; saveResources(); renderPips(); render(); } });
+    hits.forEach(h => {
+      out.push({ attach:h.idx, cls:'p-psi', icon:'◈', title:'Psionic Strike — add to this hit',
+        sub:`1d${c.psiDieSize} + ${c.psiBonus} Force · spends a Psionic Energy Die · ${diceLeft} left`,
+        btn:'Strike', act:() => { const die = d(c.psiDieSize);
+          psionic = { die, force: die + c.psiBonus, idx: h.idx };
+          spent.psi++; saveResources(); renderPips(); render(); } });
+    });
   }
   if (psionic){
-    out.push({ cls:'p-thrust', icon:'◎', title:`Telekinetic Thrust — DC ${c.thrustDC} ${c.thrustSave}`,
+    const on = psionic.idx != null ? lastRoll.attacks.find(a => a.idx === psionic.idx) : null;
+    out.push({ attach: psionic.idx ?? undefined, cls:'p-psi', icon:'◈',
+      title:`Psionic Strike — +${psionic.force} Force`,
+      sub:`1d${c.psiDieSize} rolled ${psionic.die} + ${c.psiBonus}${on ? ` · added to ${on.w.name}` : ''} · ${diceLeft} dice left` });
+    out.push({ attach: psionic.idx ?? undefined, cls:'p-thrust', icon:'◎',
+      title:`Telekinetic Thrust — DC ${c.thrustDC} ${c.thrustSave}`,
       sub:'You dealt Psionic Strike damage, so you can force the save: on a fail, Prone or shove 10 ft. Costs nothing.' });
   }
 
@@ -1231,7 +1246,7 @@ function renderPrompts(c){
   if (pick === 'attack'){
     const a5 = lastRoll.attacks.find(r => r.spec.ba);
     if (a5 && !a5.pending)
-      out.push({ cls:'p-info', icon:'⬡', title:'Bonus Action — extra attack',
+      out.push({ attach:a5.idx, cls:'p-info', icon:'⬡', title:'This is your Bonus Action attack',
         sub:'Enhanced Dual Wielding spent it. No Second Wind, Bulwark, Misty Step or Psi-Powered Leap this turn.' });
   } else if (pick === 'none'){
     out.push({ cls:'p-info', icon:'⬡', title:'Bonus Action — held', sub:opt.note });
@@ -1253,20 +1268,53 @@ function renderPrompts(c){
         : (opt.note || '') });
   }
 
-  if (waiting && resolveMode === 'manual'){
-    out.push({ cls:'p-info', icon:'◷', title:`${waiting} attack${waiting>1?'s':''} unresolved`,
-      sub:'Ask the DM whether each one hits — advantage downstream depends on it.' });
-  }
+  return out;
+}
 
-  box.innerHTML = out.length ? out.map((p, k) => `
-    <div class="prompt ${p.cls}">
+function promptHtml(p, k){
+  return `<div class="prompt ${p.cls}">
       <span class="pi">${p.icon}</span>
       <span class="ptx"><span class="pt">${p.title}</span><span class="ps">${p.sub}</span></span>
       ${p.btn ? `<button data-p="${k}">${p.btn}</button>` : ''}
-    </div>`).join('')
-    : '<div class="prompts-empty">Nothing to act on yet — confirm a hit.</div>';
-  box.querySelectorAll('[data-p]').forEach(b => b.onclick = e => {
-    const p = out[+e.currentTarget.dataset.p]; if (p.act) p.act();
+    </div>`;
+}
+
+/* Turn-level prompts only — anything with `attach` is drawn under its attack. */
+function renderPrompts(out){
+  const box = $('prompts');
+  if (!entropy || !lastRoll){
+    box.innerHTML = '<div class="prompts-empty">Confirm each hit — actions you '
+                  + 'can take this turn appear here.</div>';
+    return;
+  }
+  const loose = out.map((p, k) => ({ p, k })).filter(x => x.p.attach == null);
+  box.innerHTML = loose.length
+    ? loose.map(x => promptHtml(x.p, x.k)).join('')
+    : '<div class="prompts-empty">Nothing turn-level to act on — per-attack options appear under each attack.</div>';
+}
+
+/* Insert each attack's own follow-ups as a row directly beneath it. */
+function renderInlinePrompts(out){
+  const byAttack = new Map();
+  out.forEach((p, k) => {
+    if (p.attach == null) return;
+    if (!byAttack.has(p.attach)) byAttack.set(p.attach, []);
+    byAttack.get(p.attach).push({ p, k });
+  });
+  byAttack.forEach((list, idx) => {
+    const host = document.querySelector(`tr[data-row="${idx}"]`);
+    if (!host) return;
+    const tr = document.createElement('tr');
+    tr.className = 'prompt-row' + (host.classList.contains('surge-row') ? ' surge-row' : '');
+    tr.innerHTML = `<td colspan="6"><div class="prompt-stack">`
+                 + list.map(x => promptHtml(x.p, x.k)).join('') + `</div></td>`;
+    host.after(tr);
+  });
+}
+
+function wirePrompts(out){
+  document.querySelectorAll('[data-p]').forEach(b => b.onclick = e => {
+    const p = out[+e.currentTarget.dataset.p]; if (p && p.act) p.act();
   });
 }
 
@@ -1353,7 +1401,10 @@ function render(){
     $('dealtNote').textContent = psionic
       ? `hits ${hitTotal} + Psionic ${psionic.force}` : 'hits + Psionic Strike';
   }
-  renderPrompts(c);
+  const prompts = buildPrompts(c);
+  renderInlinePrompts(prompts);   // per-attack follow-ups, under their attack
+  renderPrompts(prompts);         // turn-level strip below the table
+  wirePrompts(prompts);
   renderPsionic(c);
 }
 
