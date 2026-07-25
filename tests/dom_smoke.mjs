@@ -567,6 +567,18 @@ await run("Maloren's Combat Hub link is hidden from non-owners",
         window.navigateTo('leyfarers');
         check('no Combat Hub link for a non-owner viewer', !/Maloren Combat Hub/.test(document.getElementById('campaign-page-content').innerHTML));
     });
+await run("Iven Hero Hub shows on the Draw Steel page (owner) and links to Iven Forge",
+    { user: { email: 'sthomas131@gmail.com' },
+      campaigns: [{ id: 'drawsteel', name: 'Draw Steel', owner: 'sthomas131@gmail.com' }, { id: 'strahd', name: 'Strahd', owner: 'sthomas131@gmail.com' }] },
+    async (window, document) => {
+        window.navigateTo('drawsteel');
+        const ds = document.getElementById('campaign-page-content').innerHTML;
+        check('Hero Hub section present on Draw Steel page', /Iven Hero Hub/.test(ds));
+        check('self-hosted link points at the login-gated /iven route', /href="\/iven\/"/.test(ds));
+        check('keeps the Vercel backup link', /href="https:\/\/iven-forge\.vercel\.app\/hero\/14b153d3-1f85-4a99-9f4a-dc4b87f5b5b9"/.test(ds));
+        window.navigateTo('strahd');
+        check('NOT shown on other campaigns', !/Iven Hero Hub/.test(document.getElementById('campaign-page-content').innerHTML));
+    });
 // Phase 3a: sessions carry a `readers` list (prep for the per-account lockdown).
 await run('readers: Everyone session = all campaign members; private = owner + invited only',
     { user: { email: 'dm@x.com' },
@@ -587,6 +599,16 @@ await run('a newly added session is written with a readers list',
         const s = writes.find(w => w.coll === 'sessions' && w.data && w.data.date === '2027-01-01');
         check('session write includes a readers array', !!s && Array.isArray(s.data.readers));
         check('readers includes the owner', !!s && s.data.readers.includes('dm@x.com'));
+        check('normal session is campaign-visible (no owner, no visibility toggle)', !!s && !s.data.owner);
+    });
+await run('a one-shot session stays owner-private (invite-only)',
+    { user: { email: 'dm@x.com' }, campaigns: [{ id: 'special', owner: 'dm@x.com', name: 'One-Shots' }] },
+    async (window, document, writes) => {
+        window.openAddSession('special');
+        document.getElementById('new-session-date').value = '2027-03-01';
+        await window.submitAddSession();
+        const s = writes.find(w => w.coll === 'sessions' && w.data && w.data.date === '2027-03-01');
+        check('one-shot session carries an owner (private)', !!s && s.data.owner === 'dm@x.com');
     });
 await run('view toggles are icon buttons',
     { user: { email: 'sthomas131@gmail.com' } },

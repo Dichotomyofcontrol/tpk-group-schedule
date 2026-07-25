@@ -1574,14 +1574,8 @@
             <div class="nc-hint" id="nc-ley-hint" style="display:none">Tip: name it like <strong>“Leyfarers: Bob”</strong> — the level view uses the name after the colon.</div>
             <div class="nc-hint">You'll be the owner. Once it's created, invite players by email or a join code from the campaign's <strong>Share</strong> menu.</div>
         </div>
-        <div class="form-row" id="session-visibility-row" style="display:none">
-            <div class="form-group"><label>Visibility</label>
-                <div class="seg-pair">
-                    <button type="button" class="seg-btn seg-left active" id="vis-private" onclick="setSessionVisibility('private')">Just Me</button>
-                    <button type="button" class="seg-btn seg-right" id="vis-everyone" onclick="setSessionVisibility('everyone')">Everyone</button>
-                </div>
-            </div>
-        </div>
+        <!-- Visibility toggle removed: normal sessions are always campaign-visible; one-shots are invite-only by design. -->
+        <div class="form-row" id="session-visibility-row" style="display:none"></div>
         <div class="form-row" id="ley-session-opts" style="display:none">
             <div class="form-group"><label>Type</label>
                 <select id="ley-session-type"><option value="Campaign">Campaign session</option><option value="Side Quest">Side quest</option></select>
@@ -2793,11 +2787,22 @@ function sameSet(a, b) { const x = (a || []).slice().sort().join(''); const y =
 // The owner/editor's client is the authority for readers on sessions it manages: whenever data
 // changes (a member joins/leaves, a session is added), recompute and write any that drifted.
 // Idempotent — writes only on an actual change — so it's safe to call from every data listener.
-let _readersSyncing = false, _configSplitDone = false, _fullReadersScanDone = false;
+let _readersSyncing = false, _configSplitDone = false, _fullReadersScanDone = false, _unprivatizeDone = false;
 async function syncMyReaders() {
     if (_readersSyncing || !currentUser || !codesLoaded || !Object.keys(allCampaigns).length) return;
     _readersSyncing = true;
     try {
+        // One-time: the old "Just Me" toggle is gone — normal sessions are always campaign-visible.
+        // Convert my own private sessions in campaigns I own to normal (Everyone). One-shots stay private.
+        if (!_unprivatizeDone) {
+            _unprivatizeDone = true;
+            for (const s of sessions) {
+                if (s.owner !== myEmail() || isOneShots(s.campaign) || campaignOwner(s.campaign) !== myEmail()) continue;
+                s.owner = ''; s.invited = [];
+                s.readers = sessionReaderEmails(s);
+                try { await updateDoc(doc(db, "sessions", s.id), { owner: '', invited: [], readers: s.readers }); } catch (e) { /* best-effort */ }
+            }
+        }
         // One-time safety net: the scoped session listener only sees sessions I'm already in
         // `readers` for, so a full whole-collection scan (works while rules are still open) catches
         // any straggler that never got backfilled and gives it a readers list before it's hidden.
@@ -3724,9 +3729,9 @@ function applyDefaultVisibility() {
     window.setSessionVisibility((c === '__new__' || canManageCampaign(c)) ? 'everyone' : 'private');
 }
 window.setSessionVisibility = function(v) {
-    newSessionVisibility = v;
-    document.getElementById('vis-private').classList.toggle('active', v === 'private');
-    document.getElementById('vis-everyone').classList.toggle('active', v === 'everyone');
+    newSessionVisibility = v;   // toggle UI removed; kept as a no-op so existing callers don't break
+    const p = document.getElementById('vis-private'); if (p) p.classList.toggle('active', v === 'private');
+    const e = document.getElementById('vis-everyone'); if (e) e.classList.toggle('active', v === 'everyone');
 };
 window.setAddMode = function(mode) {
     addMode = mode;
@@ -3848,7 +3853,9 @@ window.submitAddSession = async function() {
                 }
             }
         }
-        const isPrivate = !!(currentUser && newSessionVisibility === 'private');
+        // Normal campaign sessions are always visible to the whole campaign. Only one-shots stay
+        // owner-private (invite-only) — that's their whole point. No per-session visibility toggle.
+        const isPrivate = isOneShots(campaign);
         const time = document.getElementById('new-session-time').value.trim() || "6:00 PM";
         const gm = document.getElementById('new-session-gm').value.trim() || "Max Hobbs";
         const duration = document.getElementById('new-session-duration').value.trim() || "4 hrs";
@@ -4570,7 +4577,7 @@ function updateCancelStates() {
         const c = s.status === "cancelled"; card.classList.toggle('cancelled', c);
         const today = getToday(); const isPast = parseDate(s.date) < today;
         const editBtn = `<button class="edit-session-btn" onclick="event.stopPropagation(); openEditSession('${d}')">${icon('edit')}</button>`;
-        const a = card.querySelector('.session-action'); if (!a) return;
+        const a = card.querySelector('.session-manage-actions'); if (!a) return;
         a.innerHTML = c ? `${editBtn}<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${d}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">Delete</button>` : isPast ? `${editBtn}<button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${d}')">&#10005;</button>` : `${editBtn}<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${d}')">${icon('close')}</button>`;
     });
 }
@@ -4584,13 +4591,13 @@ function findSessionCard(sd) {
     const root = container || document;
     return root.querySelector(`[data-session-id="${sd}"]`) || root.querySelector(`[data-session-date="${sd}"]`);
 }
-window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = findSessionCard(sd).querySelector('.session-action'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
+window.initiateCancelSession = function(sd) { cancelPendingSession = sd; const c = findSessionCard(sd).querySelector('.session-manage-actions'); c.innerHTML = `<span class="cancel-confirm">Cancel?</span><button class="cancel-btn" onclick="event.stopPropagation(); confirmCancelSession('${sd}')">Yes</button><button class="cancel-btn" onclick="event.stopPropagation(); cancelCancelSession()">No</button>`; };
 window.confirmCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "cancelled" }); cancelPendingSession = null; } catch(e) { console.error(e); } };
-window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = findSessionCard(cancelPendingSession).querySelector('.session-action'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">${icon('close')}</button>`; cancelPendingSession = null; };
+window.cancelCancelSession = function() { if (!cancelPendingSession) return; const c = findSessionCard(cancelPendingSession).querySelector('.session-manage-actions'); c.innerHTML = `<button class="cancel-btn" onclick="event.stopPropagation(); initiateCancelSession('${cancelPendingSession}')">${icon('close')}</button>`; cancelPendingSession = null; };
 window.undoCancelSession = async function(sd) { try { await updateDoc(doc(db, "sessions", sd), { status: "active" }); } catch(e) { console.error(e); } };
-window.initiateDeleteSession = function(sd) { const a = findSessionCard(sd).querySelector('.session-action'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
+window.initiateDeleteSession = function(sd) { const a = findSessionCard(sd).querySelector('.session-manage-actions'); a.innerHTML = `<span class="delete-confirm-text">Remove?</span><button class="delete-btn" onclick="event.stopPropagation(); confirmDeleteSession('${sd}')">Yes</button><button class="undo-btn" onclick="event.stopPropagation(); cancelDeleteSession('${sd}')">No</button>`; };
 window.confirmDeleteSession = async function(sd) { try { await deleteDoc(doc(db, "sessions", sd)); } catch(e) { console.error(e); } };
-window.cancelDeleteSession = function(sd) { const c = findSessionCard(sd); if (!c) return; c.querySelector('.session-action').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
+window.cancelDeleteSession = function(sd) { const c = findSessionCard(sd); if (!c) return; c.querySelector('.session-manage-actions').innerHTML = `<button class="undo-btn" onclick="event.stopPropagation(); undoCancelSession('${sd}')">Undo</button><button class="delete-btn" onclick="event.stopPropagation(); initiateDeleteSession('${sd}')">Delete</button>`; };
 window.openEditSession = function(sd) {
     const s = sessionById(sd);
     if (!s || !canManage(s)) return;
@@ -5402,11 +5409,13 @@ function renderSessionCard(s, gi, ci) {
     const levelHtml = s.level ? ` \u00b7 ${escapeHtml(s.level)}` : '';
     let ownerTag = '';
     if (s.owner) {
+        // Only one-shots are private-by-design, so only they get a tag (Private / Shared\u00b7N). Normal
+        // campaign sessions carry no tag. A session someone else owns still shows who it's from.
         if (isOwner) {
-            const nInv = (s.invited || []).length + shareMembers(s.owner, s.campaign).length;
-            const label = nInv ? `Shared \u00b7 ${nInv}` : 'Private';
-            if (isOneShots(s.campaign)) ownerTag = `<span class="owner-tag">${label}</span>`;
-            else ownerTag = `<button class="owner-tag owner-tag-btn" onclick="event.stopPropagation(); toggleSessionVisibility('${sid}')" title="${nInv ? 'Only you + invited can see this' : 'Only you can see this'} \u2014 click to share with the whole party">${label}</button>`;
+            if (isOneShots(s.campaign)) {
+                const nInv = (s.invited || []).length + shareMembers(s.owner, s.campaign).length;
+                ownerTag = `<span class="owner-tag">${nInv ? `Shared \u00b7 ${nInv}` : 'Private'}</span>`;
+            }
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
     return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}${manageHtml}</div></div>`;
