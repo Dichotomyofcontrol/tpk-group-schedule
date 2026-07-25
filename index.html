@@ -1501,11 +1501,13 @@
     </div>
     <div class="pass-error" id="pass-error"></div>
     <div class="gate-divider"><span>or sign in with email</span></div>
-    <div class="email-form">
-        <input type="email" id="email-input" placeholder="Email" autocomplete="email">
-        <input type="password" id="email-pass-input" placeholder="Password" autocomplete="current-password">
-        <button id="email-submit-btn" onclick="emailSignIn()">Sign In</button>
-    </div>
+    <!-- A real <form> with a submit button: password managers only offer to save
+         (and later autofill) credentials from a proper form submission. -->
+    <form class="email-form" id="email-form" onsubmit="event.preventDefault(); emailSignIn();">
+        <input type="email" id="email-input" name="username" placeholder="Email" autocomplete="username" autocapitalize="none" spellcheck="false">
+        <input type="password" id="email-pass-input" name="password" placeholder="Password" autocomplete="current-password">
+        <button type="submit" id="email-submit-btn">Sign In</button>
+    </form>
     <div class="pass-error" id="email-error"></div>
     <button class="gate-mode-link" id="gate-mode-link" onclick="toggleGateMode()">Invited? Create an account</button>
     <div class="pass-hint">Ask your GM for a join code</div>
@@ -2148,12 +2150,25 @@ function renderCampaignTheme() {
         const col = `rgb(${r}, ${g}, ${b})`;
         const bg = `rgb(${Math.round(14 + (r-14)*0.15)}, ${Math.round(14 + (g-14)*0.15)}, ${Math.round(18 + (b-18)*0.15)})`;
         const soft = `rgba(${r}, ${g}, ${b}, 0.1)`;
+        // Mirror every per-campaign rule the seven original campaigns get in the static CSS —
+        // otherwise a campaign you create later is only half-themed (e.g. its session dates
+        // stayed default white while the accent bar was coloured).
         css += `:root{--${id}-primary:${col};--${id}-bg:${bg};}`
             + `.nav-campaign-dot.${id}{background:${col};}`
             + `.stat-filter.${id} .sf-count{color:${col};}`
             + `.stat-filter.active.${id}{background:${bg};border-color:${col};}`
             + `.month-pill.${id}{color:${col};border-color:${col};background:${soft};}`
-            + `.session-card.${id}::before{background:${col};}`;
+            + `.session-card.${id}::before{background:${col};}`
+            + `.session-card.${id} .day-num{color:${col};}`
+            + `.cal-day.${id}{border-left:2px solid ${col};}`
+            + `.cal-day.${id} .cal-dot{background:${col};}`
+            + `.hero-card.${id}::before{background:${col};}`
+            + `.hero-card.${id} .hero-campaign{color:${col};}`
+            + `.last-sessions-header .ls-dot.${id}{background:${col};}`
+            + `.last-session-card.${id}::before{background:${col};}`
+            + `.last-session-card.${id} .lsc-campaign{color:${col};}`
+            + `.reader-modal.${id}::before{background:${col};}`
+            + `.reader-modal.${id} .reader-title{color:${col};}`;
     });
     let el = document.getElementById('campaign-theme');
     if (!el) { el = document.createElement('style'); el.id = 'campaign-theme'; document.head.appendChild(el); }
@@ -2548,6 +2563,10 @@ const monthNames = ["January", "February", "March", "April", "May", "June", "Jul
 async function redeemCode(rawCode) {
     const code = (rawCode || '').trim().toUpperCase();
     if (!code) return { ok: false, reason: 'empty' };
+    const me = myEmail();
+    // Codes require an account. Signed out we can't even read the code (rules require auth, and we
+    // no longer mint anonymous sessions), so hold it and redeem once they've signed in.
+    if (!me) { pendingJoinCode = code; return { ok: false, reason: 'needaccount' }; }
     let g;
     try {
         const snap = await getDoc(doc(db, "codes", code));
@@ -2555,9 +2574,6 @@ async function redeemCode(rawCode) {
         g = snap.data();
     } catch (e) { console.error("Code lookup error:", e); return { ok: false, reason: 'error' }; }
     allCodes[code] = { owner: g.owner, campaign: g.campaign, label: g.label || '' };
-    const me = myEmail();
-    // Codes require an account. If not signed in yet, hold the code and send them to create one.
-    if (!me) { pendingJoinCode = code; return { ok: false, reason: 'needaccount', campaign: g.campaign, label: g.label || '' }; }
     const already = campaignShareMembers(g.campaign).includes(me) || userCampaigns.includes(g.campaign);
     // Bind this account to the campaign (same membership path as accepting an invite) so access is login-based.
     try {
@@ -2596,7 +2612,7 @@ window.checkPassword = async function() {
         errEl.textContent = '';
         if (!gateCreateMode) toggleGateMode();
         const note = document.getElementById('gate-join-note');
-        if (note) { note.textContent = `You're invited to ${campaignNames[result.campaign] || result.campaign}. Create an account (or sign in) below and we'll add you.`; note.style.display = ''; }
+        if (note) { note.textContent = `Code saved. Create an account (or sign in) below and we'll add you to the campaign.`; note.style.display = ''; }
         const emailInput = document.getElementById('email-input'); if (emailInput) emailInput.focus();
         return;
     }
@@ -2608,6 +2624,9 @@ window.toggleGateMode = function() {
     document.getElementById('email-submit-btn').textContent = gateCreateMode ? 'Create Account' : 'Sign In';
     document.getElementById('gate-mode-link').textContent = gateCreateMode ? 'Have an account? Sign in' : 'Invited? Create an account';
     document.getElementById('email-error').textContent = '';
+    // Tell the password manager whether to autofill an existing password or offer a new one.
+    const pw = document.getElementById('email-pass-input');
+    if (pw) pw.setAttribute('autocomplete', gateCreateMode ? 'new-password' : 'current-password');
 };
 window.emailSignIn = async function() {
     const email = document.getElementById('email-input').value.trim();
@@ -2637,7 +2656,7 @@ window.logout = function() {
     document.getElementById('password-gate').style.display = 'flex';
 };
 document.getElementById('pass-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') window.checkPassword(); });
-document.getElementById('email-pass-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') window.emailSignIn(); });
+// (Enter is handled by the form's submit — no extra keydown listener, or it fires twice.)
 let appStarted = false;
 function showApp() {
     document.getElementById('password-gate').style.display = 'none';
@@ -2673,9 +2692,10 @@ onAuthStateChanged(auth, async (user) => {
         checkPendingInvites();
         checkCampaignNotifications();
     } else {
-        // No account. Get an anonymous token so Firestore rules can require authentication, but
-        // an anonymous session grants NO access — it stays on the gate until a real account signs in.
-        if (!user) { signInAnonymously(auth).catch(e => console.error('Anonymous sign-in failed — enable Anonymous auth in Firebase:', e)); }
+        // No account → stay on the gate. We deliberately do NOT sign in anonymously any more:
+        // Firebase persists exactly one session per browser, so an automatic anonymous sign-in
+        // overwrites the remembered email login and forces a fresh sign-in on every visit.
+        // (Guest access was retired when codes started requiring an account, so nothing needs it.)
         userCampaigns = [];
         if (appStarted) subscribeScopedData();   // dropped to no account → clear scoped data
         updateAccessUI();
