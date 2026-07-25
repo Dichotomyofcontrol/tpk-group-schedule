@@ -85,7 +85,7 @@ await run('join code with no account → prompts account creation, holds the cod
         await window.checkPassword();
         check('flipped the gate to Create Account', document.getElementById('email-submit-btn').textContent === 'Create Account');
         const note = document.getElementById('gate-join-note');
-        check('shows an invite note', note.style.display !== 'none' && /invited to/i.test(note.textContent));
+        check('shows an invite note', note.style.display !== 'none' && /create an account/i.test(note.textContent));
         check('still gated — app not shown without an account', document.getElementById('app').style.display !== 'block');
     });
 // A signed-in account redeeming a code binds membership (shares + profile) — that's how access is granted now.
@@ -609,6 +609,43 @@ await run('a one-shot session stays owner-private (invite-only)',
         await window.submitAddSession();
         const s = writes.find(w => w.coll === 'sessions' && w.data && w.data.date === '2027-03-01');
         check('one-shot session carries an owner (private)', !!s && s.data.owner === 'dm@x.com');
+    });
+await run('a user-created campaign gets the SAME theming as the built-in ones',
+    { user: { email: 'dm@x.com' },
+      campaigns: [{ id: 'ghosts-of-saltmarsh', name: 'Ghosts of Saltmarsh', owner: 'dm@x.com', color: '#4fc3f7' }] },
+    (window, document) => {
+        const css = document.getElementById('campaign-theme')?.textContent ?? '';
+        // The date number was the reported bug: accent bar coloured, date left white.
+        check('session date number is themed', /\.session-card\.ghosts-of-saltmarsh \.day-num\{color:/.test(css));
+        check('session accent bar is themed', /\.session-card\.ghosts-of-saltmarsh::before\{background:/.test(css));
+        check('calendar day + dot themed', /\.cal-day\.ghosts-of-saltmarsh\{/.test(css) && /\.cal-day\.ghosts-of-saltmarsh \.cal-dot\{/.test(css));
+        check('hero card + recap reader themed', /\.hero-card\.ghosts-of-saltmarsh::before\{/.test(css) && /\.reader-modal\.ghosts-of-saltmarsh \.reader-title\{/.test(css));
+    });
+await run('the sign-in form is a real <form> so password managers can save it',
+    {},
+    (window, document) => {
+        const form = document.getElementById('email-form');
+        check('email fields live in a <form>', !!form && form.tagName === 'FORM');
+        check('submit button is type=submit', document.getElementById('email-submit-btn')?.type === 'submit');
+        check('email field is autocomplete=username', document.getElementById('email-input')?.getAttribute('autocomplete') === 'username');
+        check('password field is autocomplete=current-password', document.getElementById('email-pass-input')?.getAttribute('autocomplete') === 'current-password');
+        window.toggleGateMode();
+        check('create-account mode asks for a new-password', document.getElementById('email-pass-input')?.getAttribute('autocomplete') === 'new-password');
+    });
+await run('cards animate on arrival but NOT on background updates (no flicker)',
+    { user: { email: 'dm@x.com' },
+      campaigns: [{ id: 'strahd', owner: 'dm@x.com', name: 'Strahd' }],
+      sessions: [{ id: 'f1', campaign: 'strahd', date: '2027-02-01', status: 'active' },
+                 { id: 'f2', campaign: 'strahd', date: '2027-02-08', status: 'active' }] },
+    async (window, document) => {
+        window.navigateTo('strahd');   // future-dated sessions show under the default filter
+        const onArrival = [...document.querySelectorAll('#campaign-page-content .session-card')];
+        check('cards fade in when you arrive', onArrival.length > 0 && onArrival.every((c) => c.classList.contains('enter')));
+        // A data update re-renders the same list — it must not replay the stagger.
+        window.renderCampaignPage('strahd');
+        const onUpdate = [...document.querySelectorAll('#campaign-page-content .session-card')];
+        check('re-render does NOT re-animate', onUpdate.length > 0 && onUpdate.every((c) => !c.classList.contains('enter')));
+        check('no stale animation-delay on re-render', onUpdate.every((c) => !c.getAttribute('style')?.includes('animation-delay')));
     });
 await run('view toggles are icon buttons',
     { user: { email: 'sthomas131@gmail.com' } },

@@ -1136,7 +1136,10 @@
         .empty-state .es-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .empty-state .icon { font-size: 2rem; margin-bottom: 8px; } /* legacy fallback */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .session-card, .cal-month { animation: fadeIn 0.3s ease forwards; }
+        /* Entry animation only on arrival (.enter). Lists are re-rendered from scratch on every
+           data change, so animating unconditionally replayed the whole staggered cascade on each
+           update — which read as the page flickering. */
+        .session-card.enter, .cal-month.enter { animation: fadeIn 0.3s ease forwards; }
 
         @media (max-width: 600px) {
             .container { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); }
@@ -2718,11 +2721,13 @@ window.openNav = function() { document.getElementById('nav-overlay').classList.a
 window.closeNav = function() { document.getElementById('nav-overlay').classList.remove('open'); document.getElementById('nav-menu').classList.remove('open'); };
 window.navigateTo = function(page) {
     closeNav(); currentPage = page;
+    animateEntry = true;   // arriving somewhere new — let the cards fade in once
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     const activeItem = document.getElementById('nav-' + page);
     if (activeItem) activeItem.classList.add('active');
     if (page === 'home') { document.getElementById('home-view').style.display = 'block'; document.getElementById('campaign-page').classList.remove('active'); collapsedMonths.clear(); allMonthsCollapsed = false; }
     else { document.getElementById('home-view').style.display = 'none'; document.getElementById('campaign-page').classList.add('active'); campaignSortNewest = false; campaignTimeFilter = 'upcoming'; campaignView = 'list'; collapsedMonths.clear(); allMonthsCollapsed = false; partyEditMode = null; renderCampaignPage(page); }
+    animateEntry = false;   // that arrival render used it up; background updates stay still
 };
 // ===== RECURRENCE ENGINE (3e) — verified in recurrence_test.mjs =====
 function fmtDateLocal(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -4784,11 +4789,16 @@ function renderPollBanners() {
 function renderAll() { updateAccessUI(); renderPollBanners(); renderCampaignGrid(); renderHero(); renderRecentRecaps(); renderStatsBar(); renderList(); renderCalendar(); }
 // Coalesce rapid Firestore snapshots into a single render per frame (prevents flicker on batch writes).
 let _renderScheduled = false;
+// Cards fade in when you ARRIVE somewhere (first paint, or navigating to a page), but not when a
+// background data update re-renders the same list — replaying the stagger every time looked like
+// the page was flickering. navigateTo() re-arms it; the first render pass after that clears it.
+let animateEntry = true;
+function entryClass() { return animateEntry ? ' enter' : ''; }
 function scheduleRender() {
     if (_recapEditing || isEditingParty()) { _renderPendingWhileEditing = true; return; }   // don't wipe an open editor / unsaved party edits mid-write
     if (_renderScheduled) return;
     _renderScheduled = true;
-    const run = () => { _renderScheduled = false; renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); initExpandedRecapEditors(); };
+    const run = () => { _renderScheduled = false; renderAll(); if (currentPage !== 'home') renderCampaignPage(currentPage); initExpandedRecapEditors(); animateEntry = false; };
     (typeof requestAnimationFrame === 'function') ? requestAnimationFrame(run) : setTimeout(run, 16);
 }
 function parseDate(ds) { const [y,m,d] = ds.split('-').map(Number); return new Date(y, m-1, d); }
@@ -5438,7 +5448,7 @@ function renderSessionCard(s, gi, ci) {
             }
         } else ownerTag = `<span class="owner-tag">from ${escapeHtml(s.owner.split('@')[0])}</span>`;
     }
-    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)" style="animation-delay:${(gi*0.05)+(ci*0.03)}s"><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}${manageHtml}</div></div>`;
+    return `<div class="session-card ${s.campaign}${isCancelled?' cancelled':''}${expandedSessions.has(sid)?' expanded':''}${entryClass()}" data-session-id="${sid}" data-session-date="${s.date}" onclick="toggleSessionExpand('${sid}', event)"${animateEntry ? ` style="animation-delay:${(gi*0.05)+(ci*0.03)}s"` : ''}><div class="session-card-header"><div class="session-date"><div class="day-num">${dn}</div><div class="day-name">${dw}</div></div><div class="session-divider"></div><div class="session-info"><div class="session-campaign">${titleHtml}${ownerTag}</div><div class="session-meta">GM: ${s.gm} \u00b7 ${s.time} \u00b7 ${s.duration}${levelHtml}</div></div>${ctaHtml}<div class="session-expand-icon">&#9654;</div></div><div class="session-detail"><div class="session-detail-section"><div class="detail-label">${oneShot ? 'Signed up' : 'Attendance'}</div><div class="session-attendance">${attHtml}</div>${signupBtn ? `<div style="margin-top:10px">${signupBtn}</div>` : ''}</div>${charPickHtml}${recapHtml}${shareSessionHtml}${manageHtml}</div></div>`;
 }
 
 function renderList() {
@@ -5703,7 +5713,7 @@ function buildCalendarHtml(list) {
     let html = '';
     months.forEach(k => {
         const [y,m] = k.split('-').map(Number); const fd = new Date(y,m-1,1).getDay(); const dim = new Date(y,m,0).getDate();
-        html += `<div class="cal-month"><div class="month-label">${getMonthLabel(k)}</div><div class="cal-header">${dayNames.map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-body">`;
+        html += `<div class="cal-month${entryClass()}"><div class="month-label">${getMonthLabel(k)}</div><div class="cal-header">${dayNames.map(d=>`<span>${d}</span>`).join('')}</div><div class="cal-body">`;
         for (let i = 0; i < fd; i++) html += `<div class="cal-day empty"></div>`;
         for (let day = 1; day <= dim; day++) {
             const ds = `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
