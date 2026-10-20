@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { groupStats } from "@/lib/stats";
 import { formatMonthLabel } from "@/lib/time";
 import { accentInk } from "@/lib/color";
+import { EmptyState } from "./empty-state";
 import { Hero, NeedsYou, PlayRow } from "./schedule";
 
 export function HomeView() {
@@ -63,18 +64,17 @@ export function HomeView() {
         {stats.streak > 1 && <span className="chip">{stats.streak}-session streak</span>}
       </div>
       {!state.me.id && (
-        <div className="card welcome">
-          <h2>Your table awaits</h2>
-          <p>Sign in with the email your organizer knows. We&apos;ll send a one-tap link. No password.</p>
-          <Link className="b p" href="/signin">Sign in</Link>
-        </div>
+        <EmptyState title="Your table awaits" action={<Link className="b p" href="/signin">Sign in</Link>}>
+          Sign in with the email your organizer knows. We&apos;ll send a one-tap link. No password.
+        </EmptyState>
       )}
       {state.me.id && mine.length === 0 && (
-        <div className="card">
-          <h2>You&apos;re signed in</h2>
-          <p>Ask your organizer for an invite link. You&apos;ll only see the tables you&apos;re on.</p>
-          {state.me.canCreateCampaigns && <Link className="b p" href="/campaigns/new">Create your first campaign</Link>}
-        </div>
+        <EmptyState
+          title="You're signed in"
+          action={state.me.canCreateCampaigns ? <Link className="b p" href="/campaigns/new">Create your first campaign</Link> : undefined}
+        >
+          Ask your organizer for an invite link. You&apos;ll only see the tables you&apos;re on.
+        </EmptyState>
       )}
       {next && <Hero session={next} />}
       <NeedsYou />

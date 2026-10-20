@@ -5,6 +5,7 @@ import { memberCampaigns, upcomingSessions } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { coverArt } from "@/lib/covers";
 import { relativeWhen } from "@/lib/time";
+import { EmptyState } from "./empty-state";
 
 export function CampaignsView() {
   const { state } = useStore();
@@ -16,10 +17,16 @@ export function CampaignsView() {
         {state.me.canCreateCampaigns && <Link className="b p" href="/campaigns/new" style={{ marginLeft: "auto" }}>+ New campaign</Link>}
       </div>
       {mine.length === 0 && (
-        <div className="card">
-          <h2>Your table awaits</h2>
-          <p>Ask your Organizer for an invite link.</p>
-        </div>
+        <EmptyState
+          title={state.me.id ? "You're not on a table yet" : "Sign in to see your tables"}
+          action={state.me.id
+            ? (state.me.canCreateCampaigns ? <Link className="b p" href="/campaigns/new">New campaign</Link> : undefined)
+            : <Link className="b p" href="/signin">Sign in</Link>}
+        >
+          {state.me.id
+            ? "Ask your organizer for an invite link. Campaigns only show up after you're on the roster."
+            : "Your campaigns, next session, and the people at the table live here after you sign in."}
+        </EmptyState>
       )}
       <div className="camp-grid">
         {mine.map((campaign) => {

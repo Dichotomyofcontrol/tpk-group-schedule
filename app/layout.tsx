@@ -1,26 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Crimson_Pro, IM_Fell_English, IM_Fell_English_SC } from "next/font/google";
+import { Newsreader, Source_Sans_3 } from "next/font/google";
 import { Suspense } from "react";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const crimson = Crimson_Pro({
+const sans = Source_Sans_3({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
-  variable: "--font-crimson",
+  variable: "--font-sans",
   display: "swap",
 });
-const fell = IM_Fell_English({
+const display = Newsreader({
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "600"],
   style: ["normal", "italic"],
-  variable: "--font-fell",
-  display: "swap",
-});
-const fellSc = IM_Fell_English_SC({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-fell-sc",
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -32,14 +26,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#efe2c4",
+  themeColor: "#f4efe4",
 };
 
 const themeBoot = `try{var t=localStorage.getItem('tpk-theme');if(t==='system'){t='light';localStorage.setItem('tpk-theme','light');}document.documentElement.dataset.theme=t==='dark'?'dark':'light';}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${crimson.variable} ${fell.variable} ${fellSc.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>

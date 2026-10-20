@@ -6,6 +6,7 @@ import { isStaff, membersOf, rankedOptions } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { partsInZone, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
+import { EmptyState } from "./empty-state";
 
 export function PollList() {
   const { state } = useStore();
@@ -14,8 +15,17 @@ export function PollList() {
   return (
     <>
       <div className="mh"><h1>Polls</h1></div>
-      <p className="tz">Polls are for the occasional placeholder, not the usual night. Tap the times you can make. The organizer locks the winner in as a real play date.</p>
-      {polls.length === 0 && <div className="card">No polls open. Be the first to mark your nights when one starts.</div>}
+      {state.me.id && <p className="tz">Polls are for the occasional placeholder, not the usual night. Tap the times you can make. The organizer locks the winner in as a real play date.</p>}
+      {polls.length === 0 && (
+        <EmptyState
+          title={state.me.id ? "No polls open" : "Sign in to see polls"}
+          action={state.me.id ? undefined : <Link className="b p" href="/signin">Sign in</Link>}
+        >
+          {state.me.id
+            ? "When an organizer needs a date that isn't the usual night, the poll shows up here."
+            : "Date polls stay with your tables. Sign in with the email your organizer knows."}
+        </EmptyState>
+      )}
       {polls.map((poll) => {
         const campaign = state.campaigns.find((c) => c.id === poll.cid);
         return (
@@ -34,11 +44,26 @@ export function PollList() {
 export function PollView({ pollId }: { pollId: string }) {
   const store = useStore();
   const poll = store.state.polls.find((p) => p.id === pollId);
-  if (!poll) return <div className="card">That poll isn&apos;t on your table.</div>;
+  if (!poll) {
+    return (
+      <EmptyState title="That poll isn't here" action={<Link className="b p" href="/polls">All polls</Link>}>
+        It may have been locked in, or it belongs to another table.
+      </EmptyState>
+    );
+  }
   const campaign = store.state.campaigns.find((c) => c.id === poll.cid);
   if (!campaign) return null;
   const member = (store.state.members[poll.cid] || []).find((m) => m.id === store.state.me.id);
-  if (!member) return <div className="card">You can vote after you&apos;re invited.</div>;
+  if (!member) {
+    return (
+      <EmptyState
+        title={store.state.me.id ? "You're not on this poll" : "Sign in to vote"}
+        action={store.state.me.id ? <Link className="b p" href="/polls">All polls</Link> : <Link className="b p" href="/signin">Sign in</Link>}
+      >
+        {store.state.me.id ? "Ask your organizer for an invite to this table." : "Use the email your organizer knows. The poll opens after you're on the roster."}
+      </EmptyState>
+    );
+  }
   return <PollBoard poll={poll} />;
 }
 

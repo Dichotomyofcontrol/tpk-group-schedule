@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "test": "node --import tsx --test tests/unit/*.test.ts",
+    "test:layout": "node tests/visual/layout-qa.mjs",
     "test:legacy": "node tests/run-all.mjs",
     "migrate": "node --import tsx scripts/migrate.ts",
     "shots": "node scripts/shots.mjs"

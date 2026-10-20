@@ -10,6 +10,7 @@ import { hasRecap, markdownToHtml, validatePdf } from "@/lib/recap";
 import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, formatRangePretty } from "@/lib/time";
+import { EmptyState } from "./empty-state";
 import { Face, Stack } from "./faces";
 import { PdfPreview } from "./pdf-preview";
 import { RecapEditor } from "./recap-editor";
@@ -21,11 +22,15 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   const session = store.state.sessions.find((item) => item.id === sid && item.cid === cid);
   if (!campaign || !member) {
     return (
-      <div className="card">
-        <h1>You&apos;re not at this table</h1>
-        <p>Recaps stay with the campaign. Open an invite if you were asked to join.</p>
-        <Link className="b" href="/">Back to play dates</Link>
-      </div>
+      <>
+        <div className="mh"><h1>Session</h1></div>
+        <EmptyState
+          title={store.state.me.id ? "You're not at this table" : "Sign in to open this session"}
+          action={store.state.me.id ? <Link className="b" href="/">Play dates</Link> : <Link className="b p" href="/signin">Sign in</Link>}
+        >
+          Recaps stay with the campaign. Open an invite if you were asked to join.
+        </EmptyState>
+      </>
     );
   }
   if (!session) {

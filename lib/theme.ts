@@ -20,5 +20,5 @@ export function writeThemeChoice(theme: ThemeChoice) {
 export function applyThemeChoice(theme: ThemeChoice) {
   document.documentElement.dataset.theme = theme;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#1a1410" : "#efe2c4");
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#1c1814" : "#f4efe4");
 }
