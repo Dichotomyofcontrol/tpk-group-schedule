@@ -1,11 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Crimson_Pro, IM_Fell_English, IM_Fell_English_SC } from "next/font/google";
 import { Suspense } from "react";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", display: "swap" });
+const crimson = Crimson_Pro({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-crimson",
+  display: "swap",
+});
+const fell = IM_Fell_English({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-fell",
+  display: "swap",
+});
+const fellSc = IM_Fell_English_SC({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-fell-sc",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Six in the TPK",
@@ -15,14 +32,17 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#1c1f24",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#efe2c4" },
+    { media: "(prefers-color-scheme: dark)", color: "#1a1410" },
+  ],
 };
 
 const themeBoot = `try{var t=localStorage.getItem('tpk-theme')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${crimson.variable} ${fell.variable} ${fellSc.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>

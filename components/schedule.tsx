@@ -73,7 +73,7 @@ function AttendanceControl({
       {!rsvp && mine === "in" && <span className="chip y">You&apos;re in</span>}
       {mine === "maybe" && <span className="chip w">Maybe</span>}
       {rsvp && mine === "in" && <span className="chip y">Going</span>}
-      <button className="b" onClick={() => setOpen(!open)}>{open ? "Close" : "Can't make it"}</button>
+      <button className="b p" onClick={() => setOpen(!open)}>{open ? "Close" : "Can't make it"}</button>
       {open && <CantSheet session={session} onClose={() => setOpen(false)} />}
     </>
   );
@@ -193,7 +193,7 @@ export function Hero({ session }: { session: Session }) {
           ) : (
             <>
               <span className="chip y">{sessionRequiresRsvp(campaign, session) ? "Going" : "You're in"}</span>
-              <button className="b" onClick={() => setOpen((v) => !v)}>Can&apos;t make it</button>
+              <button className="b p" onClick={() => setOpen((v) => !v)}>Can&apos;t make it</button>
             </>
           )}
           <a className="b" href={add}>Add to calendar</a>

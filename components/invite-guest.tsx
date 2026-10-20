@@ -56,7 +56,7 @@ export function InviteGuest({ token }: { token: string }) {
             <div className={sent ? "done" : "on"}>2 · Check your email</div>
             <div className={sent ? "on" : ""}>3 · Add to calendar</div>
           </div>
-          <h2 style={{ margin: "0 0 4px", fontFamily: "var(--display)", fontWeight: 560 }}>Join as a <span className="role">{invite.role === "coorganizer" ? "Co-organizer" : "Member"}</span></h2>
+          <h2 style={{ margin: "0 0 4px" }}>Join as a <span className="role">{invite.role === "coorganizer" ? "Co-organizer" : "Member"}</span></h2>
           <p className="tz">You&apos;ll see this campaign&apos;s play dates. No password: we email a one-tap sign-in link. You only ever see campaigns you&apos;re invited to.</p>
           <div className="field"><label htmlFor="email">Your email</label><input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="field"><label htmlFor="name">Name at the table</label><input id="name" required value={name} onChange={(e) => setName(e.target.value)} /></div>

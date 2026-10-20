@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { canInvite, isOrganizer, memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import type { Invite } from "@/lib/types";
@@ -15,7 +15,8 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   const [link, setLink] = useState("");
   const campaign = mine.find((c) => c.id === cid);
   const organizer = campaign ? isOrganizer(state, cid) : false;
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
   const feed = `${origin}/api/cal/${state.me.calToken}.ics?hide=${state.hiddenCids.join(",")}`;
   const webcal = feed.replace(/^https?:/, "webcal:");
   return (

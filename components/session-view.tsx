@@ -7,7 +7,7 @@ import { isStaff, membersOf } from "@/lib/model";
 import { hasRecap, markdownToHtml, validatePdf } from "@/lib/recap";
 import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
-import { formatRangePretty } from "@/lib/time";
+import { formatDayHeading, formatRangePretty } from "@/lib/time";
 import { Stack } from "./faces";
 import { PdfPreview } from "./pdf-preview";
 import { RecapEditor } from "./recap-editor";
@@ -38,19 +38,24 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   const grey = new Set(members.filter((item) => isGreyed(campaign, session, item.id)).map((item) => item.id));
   const staff = isStaff(store.state, cid);
   const html = session.recapHtml || (session.recapMarkdown ? markdownToHtml(session.recapMarkdown) : "");
+  const when = formatDayHeading(session.startsAt, session.tz);
   const [editing, setEditing] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
 
   return (
     <>
       <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})` }}>
-        <small>
-          <Link href={`/campaigns/${cid}`}>{campaign.icon} {campaign.name}</Link>
-          {" · "}
-          {formatRangePretty(session.startsAt, session.endsAt, session.tz)}
-        </small>
-        <h1>{session.title}</h1>
-        <p style={{ margin: "6px 0 0" }}>{session.location}{session.status === "cancelled" ? " · Skipped" : ""}</p>
+        <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
+        <div className="tx">
+          <small>
+            <Link href={`/campaigns/${cid}`}>{campaign.icon} {campaign.name}</Link>
+            {" · "}
+            {formatRangePretty(session.startsAt, session.endsAt, session.tz)}
+          </small>
+          <h1>{session.title}</h1>
+          <div className="tile" aria-hidden="true"><small>{when.dow}</small><b>{when.day}</b><small>{when.mon}</small></div>
+          <p style={{ margin: "6px 0 0" }}>{session.location}{session.status === "cancelled" ? " · Skipped" : ""}</p>
+        </div>
       </section>
       <div className="two">
         <div>

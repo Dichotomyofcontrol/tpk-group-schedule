@@ -35,12 +35,15 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
     <>
       {welcome && <div className="todo"><b>You&apos;re in.</b> Add the nights to your calendar whenever you like.</div>}
       <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})` }}>
-        <small>
-          Organized by {organizerName(store.state.members[cid])}
-          {cadence ? ` · Every ${cadence.interval === 2 ? "other " : cadence.interval > 2 ? `${cadence.interval} ` : ""}${weekdayName(cadence.weekday)} ${prettyTime(cadence.startTime)}` : ""}
-          {campaign.defaultLocation ? ` · ${campaign.defaultLocation}` : ""}
-        </small>
-        <h1>{campaign.icon} {campaign.name}</h1>
+        <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
+        <div className="tx">
+          <small>
+            Organized by {organizerName(store.state.members[cid])}
+            {cadence ? ` · Every ${cadence.interval === 2 ? "other " : cadence.interval > 2 ? `${cadence.interval} ` : ""}${weekdayName(cadence.weekday)} ${prettyTime(cadence.startTime)}` : ""}
+            {campaign.defaultLocation ? ` · ${campaign.defaultLocation}` : ""}
+          </small>
+          <h1>{campaign.icon} {campaign.name}</h1>
+        </div>
       </section>
       <div className="two">
         <div>
@@ -61,7 +64,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
             <p className="tz" style={{ marginTop: 8 }}>Every square is a game night. Grey ones were skipped.</p>
           </div>
           <div className="mh">
-            <h2 style={{ margin: 0, fontFamily: "var(--display)", fontWeight: 560 }}>Play dates</h2>
+            <h2 style={{ margin: 0 }}>Play dates</h2>
             {staff && <CadenceButton cid={cid} />}
           </div>
           {upcoming.map((session) => <PlayRow key={session.id} session={session} manage />)}
@@ -220,10 +223,11 @@ function Previously({ cid, value }: { cid: string; value: string }) {
 
 function CalendarCard({ cid }: { cid: string }) {
   const { state } = useStore();
-  const origin = typeof window === "undefined" ? "https://sixinthetpk.com" : window.location.origin;
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
   const token = state.me.calToken;
   const http = `${origin}/api/cal/${token}/${cid}.ics`;
-  const webcal = http.replace(/^https?:/, "webcal:");
+  const webcal = origin ? http.replace(/^https?:/, "webcal:") : http;
   const [copied, setCopied] = useState(false);
   return (
     <div className="card sub">
