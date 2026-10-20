@@ -58,10 +58,10 @@ async function loadFirestore(): Promise<{ data: LegacyExport; source: string } |
     const list = doc.data().list;
     rosters[doc.id] = Array.isArray(list) ? list.filter((item): item is string => typeof item === "string") : [];
   }
-  const configCharacters = configCharsSnap.exists()
+  const configCharacters = configCharsSnap.exists
     ? configCharsSnap.data() as LegacyExport["configCharacters"]
     : undefined;
-  const configRosterRaw = configRostersSnap.exists() ? configRostersSnap.data() ?? {} : undefined;
+  const configRosterRaw = configRostersSnap.exists ? configRostersSnap.data() ?? {} : undefined;
   const configRosters = configRosterRaw
     ? Object.fromEntries(Object.entries(configRosterRaw).map(([cid, list]) => [
       cid,
