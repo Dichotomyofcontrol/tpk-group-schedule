@@ -21,6 +21,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebase } from "./firebase-client";
+import { magicLinkContinueUrl } from "./magic-link";
 import { nestedRecapPath, validatePdf } from "./recap";
 import {
   acceptInvite as acceptInviteModel,
@@ -44,6 +45,7 @@ import {
   transferOrganizer,
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
+import { applyThemeChoice, readThemeChoice, writeThemeChoice, type ThemeChoice } from "./theme";
 import { omitUndefined } from "./omit";
 import type { AppState, Attendance, AttendanceState, Campaign, Invite, Member, Poll, Session, SessionFile, Toast, User } from "./types";
 
@@ -116,7 +118,7 @@ function attendanceMap(list: Attendance[]): Record<string, Attendance> {
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [theme, setThemeState] = useState<"light" | "dark" | "system">("system");
+  const [theme, setThemeState] = useState<ThemeChoice>(() => (typeof window === "undefined" ? "light" : readThemeChoice()));
   const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
   const [online, setOnline] = useState(true);
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
@@ -131,21 +133,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem("tpk-theme");
-    if (saved === "light" || saved === "dark" || saved === "system") setThemeState(saved);
+    setThemeState(readThemeChoice());
     document.body.dataset.ready = "1";
   }, []);
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const dark = theme === "dark" || (theme === "system" && media.matches);
-      document.documentElement.dataset.theme = dark ? "dark" : "light";
-      setResolved(dark ? "dark" : "light");
-    };
-    apply();
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
+    applyThemeChoice(theme);
+    setResolved(theme);
   }, [theme]);
 
   useEffect(() => {
@@ -250,8 +244,9 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = useCallback((next: "light" | "dark" | "system") => {
-    setThemeState(next);
-    window.localStorage.setItem("tpk-theme", next);
+    const choice: ThemeChoice = next === "dark" ? "dark" : "light";
+    setThemeState(choice);
+    writeThemeChoice(choice);
   }, []);
 
   const signedOut: StoreApi = useMemo(() => ({
@@ -302,10 +297,24 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       const { auth } = getFirebase();
-      const url = new URL("/auth/finish", window.location.origin);
-      if (inviteToken) url.searchParams.set("invite", inviteToken);
-      await sendSignInLinkToEmail(auth, email, { url: url.toString(), handleCodeInApp: true });
+      const url = magicLinkContinueUrl(window.location.origin, inviteToken);
+      await sendSignInLinkToEmail(auth, email, { url, handleCodeInApp: true });
       window.localStorage.setItem("tpk-email", email);
+    },
+    finishMagicLink: async (email?: string) => {
+      if (!firebaseConfigured()) return "not-link";
+      const { auth } = getFirebase();
+      const href = window.location.href;
+      if (!isSignInWithEmailLink(auth, href)) return "not-link";
+      const stored = (email || window.localStorage.getItem("tpk-email") || "").trim();
+      if (!stored) return "need-email";
+      await signInWithEmailLink(auth, stored, href);
+      window.localStorage.setItem("tpk-email", stored);
+      return "ok";
+    },
+    signOut: async () => {
+      const { signOut } = await import("firebase/auth");
+      await signOut(getFirebase().auth);
     },
     signedIn: false,
   }), [online, toasts, theme, resolvedTheme, setTheme, flash]);
@@ -557,16 +566,6 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       sendMagicLink: signedOut.sendMagicLink,
     };
   }, [state, authUser, signedOut, flash, persistSession]);
-
-  useEffect(() => {
-    if (!firebaseConfigured() || !authUser) return;
-    if (!isSignInWithEmailLink(getFirebase().auth, window.location.href)) return;
-    const email = window.localStorage.getItem("tpk-email");
-    if (!email) return;
-    void signInWithEmailLink(getFirebase().auth, email, window.location.href).catch((err) => {
-      flash(err instanceof Error ? err.message : "That sign-in link didn't work.", "err");
-    });
-  }, [authUser, flash]);
 
   return <StoreContext.Provider value={api ?? signedOut}>{children}</StoreContext.Provider>;
 }

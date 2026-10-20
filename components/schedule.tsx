@@ -9,6 +9,7 @@ import { useStore } from "@/lib/store";
 import { formatDayHeading, formatRangePretty, relativeWhen, zoneLong } from "@/lib/time";
 import { googleEventTemplate } from "@/lib/ics";
 import type { Session } from "@/lib/types";
+import { coverArt } from "@/lib/covers";
 import { Stack } from "./faces";
 
 export function PlayRow({ session, manage = false }: { session: Session; manage?: boolean }) {
@@ -24,7 +25,8 @@ export function PlayRow({ session, manage = false }: { session: Session; manage?
   const [open, setOpen] = useState(false);
   const [move, setMove] = useState(false);
   return (
-    <article id={session.id} className="pd" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})`, ["--ink-on" as string]: textOn(campaign.color), ["--accent" as string]: accentInk(campaign.color) }}>
+    <article id={session.id} className="pd" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})`, ["--ink-on" as string]: textOn(campaign.color), ["--accent" as string]: accentInk(campaign.color) }}>
+      <span className="ribbon" aria-hidden="true" />
       <div className="tile"><small>{when.dow}</small><b>{when.day}</b><small>{when.mon}</small></div>
       <div className="cov" role="img" aria-label="" />
       <div className="inf">
@@ -165,7 +167,7 @@ export function Hero({ session }: { session: Session }) {
   const [open, setOpen] = useState(false);
   const add = googleEventTemplate(session, campaign);
   return (
-    <section className="hero" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})`, ["--accent" as string]: accentInk(campaign.color) }}>
+    <section className="hero" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})`, ["--accent" as string]: accentInk(campaign.color) }}>
       <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
       <div className="tx">
         <div className="kick">Next session · {relativeWhen(session.startsAt, store.state.me.tz).toLowerCase()}</div>
@@ -183,8 +185,8 @@ export function Hero({ session }: { session: Session }) {
         </div>
         {campaign.previouslyOn && (
           <Link className="prev" href={campaign.previouslyOnSessionId ? `/campaigns/${campaign.id}/sessions/${campaign.previouslyOnSessionId}` : `/campaigns/${campaign.id}`}>
-            <b>Previously on {campaign.name}</b>
             <q>{campaign.previouslyOn}</q>
+            <cite>Previously on {campaign.name}</cite>
           </Link>
         )}
         <div className="actions" style={{ marginTop: 10 }}>

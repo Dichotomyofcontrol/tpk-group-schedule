@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { memberCampaigns, upcomingSessions } from "@/lib/model";
 import { useStore } from "@/lib/store";
+import { coverArt } from "@/lib/covers";
 import { relativeWhen } from "@/lib/time";
 
 export function CampaignsView() {
@@ -25,7 +26,7 @@ export function CampaignsView() {
           const next = upcomingSessions(state, campaign.id)[0];
           return (
             <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="camp-card" style={{ ["--c" as string]: campaign.color }}>
-              <div style={{ height: 92, background: `linear-gradient(90deg, rgba(0,0,0,.45), rgba(0,0,0,.05)), url(${campaign.cover.src}) center/cover` }} />
+              <div style={{ height: 92, background: `linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.02)), url(${coverArt(campaign.cover.src)}) center/cover` }} />
               <div className="pad">
                 <div className="kick" style={{ color: campaign.color }}>{campaign.icon} {campaign.system || "Table"}</div>
                 <h2>{campaign.name}</h2>

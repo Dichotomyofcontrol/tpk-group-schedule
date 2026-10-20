@@ -10,6 +10,7 @@ import { weekdayName } from "@/lib/time";
 import type { Cadence, Member, Session, TableCharacter } from "@/lib/types";
 import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
+import { coverArt } from "@/lib/covers";
 import { PlayRow } from "./schedule";
 
 export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: boolean }) {
@@ -34,7 +35,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   return (
     <>
       {welcome && <div className="todo"><b>You&apos;re in.</b> Add the nights to your calendar whenever you like.</div>}
-      <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})` }}>
+      <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})` }}>
         <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
         <div className="tx">
           <small>

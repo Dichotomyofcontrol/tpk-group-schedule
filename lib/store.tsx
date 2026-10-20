@@ -20,6 +20,7 @@ export type StoreApi = {
   mode: "demo" | "live";
   online: boolean;
   toasts: Toast[];
+  /** Night is opt-in. "system" is treated as daylight. */
   theme: "light" | "dark" | "system";
   resolvedTheme: "light" | "dark";
   setTheme: (theme: "light" | "dark" | "system") => void;
@@ -52,6 +53,9 @@ export type StoreApi = {
   createInvite: (cid: string, role: Invite["role"], email?: string) => string | null;
   acceptInvite: (token: string, person?: { id: string; email: string; displayName: string; characterName?: string }) => boolean;
   sendMagicLink: (email: string, inviteToken?: string) => Promise<void>;
+  /** Completes an email-link landing on /auth/finish. */
+  finishMagicLink: (email?: string) => Promise<"ok" | "need-email" | "not-link">;
+  signOut: () => Promise<void>;
   signedIn: boolean;
 };
 

@@ -32,13 +32,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#efe2c4" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1410" },
-  ],
+  themeColor: "#efe2c4",
 };
 
-const themeBoot = `try{var t=localStorage.getItem('tpk-theme')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';}catch(e){}`;
+const themeBoot = `try{var t=localStorage.getItem('tpk-theme');if(t==='system'){t='light';localStorage.setItem('tpk-theme','light');}document.documentElement.dataset.theme=t==='dark'?'dark':'light';}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -47,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
       <body>
-        <Providers>
+        <Providers allowFixture={process.env.VERCEL_ENV !== "production"}>
           <Suspense fallback={<p style={{ padding: 24 }}>Loading your table…</p>}>
             {children}
           </Suspense>
