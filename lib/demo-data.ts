@@ -300,7 +300,7 @@ const out = (uid: string, by = uid): Attendance => ({
   updatedAt: "2026-10-18T18:00:00.000Z",
 });
 
-function titledStrahd(ymd: string, indexOnLattice: number): string {
+function titledStrahd(ymd: string, indexOnLattice: number): string | null {
   const special: Record<string, string> = {
     "2026-09-25": "Argynvostholt",
     "2026-10-09": "The Wizard of Wines",
@@ -309,7 +309,9 @@ function titledStrahd(ymd: string, indexOnLattice: number): string {
     "2026-11-20": "Session 14",
     "2026-12-04": "Session 15",
   };
-  return special[ymd] ?? `Session ${indexOnLattice + 1}`;
+  if (special[ymd]) return special[ymd];
+  if (ymd > "2026-12-04") return null;
+  return `Session ${indexOnLattice + 1}`;
 }
 
 function buildSessions(): Session[] {
@@ -320,14 +322,16 @@ function buildSessions(): Session[] {
     "2027-02-01",
   );
   const snacks = ["ben", "kai", "giada", "sam", "amy", "seth"];
+  let afterFifteen = 16;
   strahdDates.forEach((ymd, i) => {
     const cancelled = ymd === "2026-08-14" || ymd === "2025-12-26";
+    const named = titledStrahd(ymd, i);
     sessions.push(makeSession({
       cid: "strahd",
       ymd,
       hm: "18:30",
       durationMin: 240,
-      title: titledStrahd(ymd, i),
+      title: named ?? `Session ${afterFifteen++}`,
       location: ymd === "2026-11-20" ? "Seth's place" : "TPK Brewing, back table",
       seriesId: "strahd-series",
       status: cancelled ? "cancelled" : "scheduled",
