@@ -1,0 +1,45 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember(cid) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/campaigns/$(cid)/members/$(request.auth.uid));
+    }
+    function isStaff(cid) {
+      return isMember(cid)
+        && firestore.get(/databases/(default)/documents/campaigns/$(cid)/members/$(request.auth.uid)).data.role in ['organizer', 'coorganizer'];
+    }
+    function pdfOk() {
+      return request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType == 'application/pdf';
+    }
+
+    // Portraits. Signed-in only. Not treated as session recaps.
+    match /recaps/avatars/{file} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // New recap uploads. Three segments so this does not overlap the legacy rule.
+    match /recaps/{cid}/{sid}/{file} {
+      allow read: if isMember(cid);
+      allow create, update: if isStaff(cid) && pdfOk();
+      allow delete: if isStaff(cid);
+    }
+
+    // Legacy files already stored as recaps/{sessionId}_{name}.
+    // Membership comes from the admin-written recapFiles/{file} document.
+    // Clients cannot overwrite these; new PDFs go in the nested path above.
+    match /recaps/{file} {
+      allow read: if signedIn()
+        && firestore.exists(/databases/(default)/documents/recapFiles/$(file))
+        && isMember(firestore.get(/databases/(default)/documents/recapFiles/$(file)).data.cid);
+      allow write: if false;
+    }
+  }
+}
