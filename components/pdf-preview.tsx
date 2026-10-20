@@ -2,23 +2,25 @@
 
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
-import type { Session } from "@/lib/types";
+import type { Session, SessionFile } from "@/lib/types";
 
-export function PdfPreview({ session }: { session: Session }) {
+export function PdfPreview({ session, file }: { session: Session; file?: SessionFile }) {
   const store = useStore();
-  const memory = store.pdfPreviewUrl(session.id);
+  const pdfPath = file?.path ?? session.pdfPath;
+  const pdfName = file?.name ?? session.pdfName;
+  const memory = file ? null : store.pdfPreviewUrl(session.id);
   const [liveUrl, setLiveUrl] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    if (store.mode !== "live" || !session.pdfPath || memory) return;
+    if (store.mode !== "live" || !pdfPath || memory) return;
     let cancelled = false;
     let created: string | null = null;
     void (async () => {
       try {
         const { getFirebase } = await import("@/lib/firebase-client");
         const { getBlob, ref } = await import("firebase/storage");
-        const blob = await getBlob(ref(getFirebase().storage, session.pdfPath!));
+        const blob = await getBlob(ref(getFirebase().storage, pdfPath));
         created = URL.createObjectURL(blob);
         if (!cancelled) setLiveUrl(created);
       } catch {
@@ -29,21 +31,21 @@ export function PdfPreview({ session }: { session: Session }) {
       cancelled = true;
       if (created) URL.revokeObjectURL(created);
     };
-  }, [store.mode, session.id, session.pdfPath, memory]);
+  }, [store.mode, session.id, pdfPath, memory]);
 
-  const sample = session.pdfUrl && session.pdfUrl.startsWith("/") && !session.pdfUrl.startsWith("/recaps")
+  const sample = !file && session.pdfUrl && session.pdfUrl.startsWith("/") && !session.pdfUrl.startsWith("/recaps")
     ? session.pdfUrl
     : null;
   const src = memory || liveUrl || sample;
-  if (!session.pdfPath && !session.pdfName && !src) return null;
+  if (!pdfPath && !pdfName && !src) return null;
   return (
     <div>
       <div className="pdf-meta">
-        <b>{session.pdfName || "Session PDF"}</b>
-        {session.pdfPath && <span className="tz">{session.pdfPath}</span>}
+        <b>{pdfName || "Session PDF"}</b>
+        {pdfPath && <span className="tz">{pdfPath}</span>}
       </div>
       {src ? (
-        <iframe className="pdf-frame" src={src} title={session.pdfName || "Session recap PDF"} />
+        <iframe className="pdf-frame" src={src} title={pdfName || "Session recap PDF"} />
       ) : (
         <p className="tz">
           {failed

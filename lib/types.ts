@@ -1,5 +1,23 @@
 export type Role = "organizer" | "coorganizer" | "member";
 
+/** A table character from the old characters/rosters docs. Not an account. */
+export type TableCharacter = {
+  name: string;
+  charClass?: string;
+  subclass?: string;
+  level?: string;
+  /** Email on the old character sheet. Not turned into a member. */
+  ownerEmail?: string;
+  /** Storage path for a portrait. Never a download-token URL. */
+  imagePath?: string;
+  leyfarer?: boolean;
+};
+
+export type SessionFile = {
+  path: string;
+  name: string;
+};
+
 export type Member = {
   id: string;
   uid?: string;
@@ -61,6 +79,10 @@ export type Campaign = {
   seatLimit?: number | null;
   /** Reserved for a future Discord bot (guild, channel, webhook). */
   discord?: { guildId?: string; channelId?: string; webhookUrl?: string } | null;
+  /** Table characters in roster order. Absent when the old docs had none. */
+  characters?: TableCharacter[];
+  /** Roster order. Matches `characters` when both were migrated. */
+  roster?: string[];
   legacy?: Record<string, unknown>;
 };
 
@@ -105,6 +127,11 @@ export type Session = {
    * Never a Firebase download-token URL. Live preview reads `pdfPath` with the Storage SDK.
    */
   pdfUrl?: string;
+  /**
+   * Other PDFs in Storage for this night that were not the session's pdfUrl.
+   * Bytes stay put. The primary recap remains `pdfPath`.
+   */
+  extraPdfs?: SessionFile[];
   legacy?: Record<string, unknown>;
   attendance: Attendance[];
   reminder3dSent?: boolean;

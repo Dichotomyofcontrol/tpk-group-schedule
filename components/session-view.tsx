@@ -79,6 +79,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
             <b>PDF</b>
             <p className="tz">The same file the current site stores for this session. Only people in the campaign can open it.</p>
             {(session.pdfPath || session.pdfName || session.pdfUrl) ? <PdfPreview session={session} /> : <p>No PDF attached.</p>}
+            {session.extraPdfs?.map((file) => <PdfPreview key={file.path} session={session} file={file} />)}
             {staff && (
               <div className="field">
                 <label htmlFor="recap-pdf">Upload a PDF, 25 MB max</label>

@@ -7,7 +7,7 @@ import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { groupStats } from "@/lib/stats";
 import { weekdayName } from "@/lib/time";
-import type { Cadence, Member, Session } from "@/lib/types";
+import type { Cadence, Member, Session, TableCharacter } from "@/lib/types";
 import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
 import { PlayRow } from "./schedule";
@@ -278,6 +278,7 @@ function PartyCard({ cid }: { cid: string }) {
           </div>
         </div>
       ))}
+      {campaign.characters && campaign.characters.length > 0 && <CharacterRoster characters={campaign.characters} />}
       {organizer && (
         <>
           <Toggle
@@ -330,6 +331,34 @@ function DmTags({ cid }: { cid: string }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function characterLine(character: TableCharacter): string {
+  return [character.charClass, character.subclass, character.level ? `level ${character.level}` : ""].filter(Boolean).join(" · ");
+}
+
+function CharacterRoster({ characters }: { characters: TableCharacter[] }) {
+  return (
+    <div>
+      <h3 style={{ margin: "14px 0 0" }}>Characters · {characters.length}</h3>
+      <p className="tz">The table&apos;s characters, in roster order. These are not accounts.</p>
+      <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        {characters.map((character) => {
+          const line = characterLine(character);
+          return (
+            <li className="mem" key={character.name}>
+              <span className="av" aria-hidden>{character.name.slice(0, 1)}</span>
+              <div>
+                <b>{character.name}</b>
+                {character.leyfarer && <span className="role"> Leyfarer</span>}
+                <div className="tz">{line || "No class on file"}{character.imagePath ? ` · portrait ${character.imagePath}` : ""}</div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

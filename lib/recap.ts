@@ -119,7 +119,7 @@ export function storagePathFromPdfUrl(pdfUrl: unknown): { path?: string; avatar?
     }
   }
   if (!path.startsWith("recaps/") || path.includes("..")) return {};
-  if (path === "recaps/avatars" || path.startsWith("recaps/avatars/")) return { avatar: true };
+  if (path === "recaps/avatars" || path.startsWith("recaps/avatars/")) return { avatar: true, path, tokenStripped };
   return { path, tokenStripped };
 }
 

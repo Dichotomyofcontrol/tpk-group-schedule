@@ -1,5 +1,5 @@
 import { cadenceDates, occurrenceInstant } from "./recurrence";
-import type { AppState, Attendance, Campaign, Invite, Member, Poll, Session, User } from "./types";
+import type { AppState, Attendance, Campaign, Invite, Member, Poll, Session, TableCharacter, User } from "./types";
 
 const TZ = "America/Los_Angeles";
 
@@ -81,6 +81,15 @@ export const CAMPAIGNS: Campaign[] = [
     },
     rotation: { enabled: true, order: ["ben", "kai", "giada", "sam", "amy", "seth"], nextIndex: 0 },
     discord: null,
+    roster: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
+    characters: [
+      { name: "Aralyth", charClass: "Paladin", level: "3" },
+      { name: "Vloskev", charClass: "Rogue", subclass: "Medic", level: "3", ownerEmail: "sthomas131@gmail.com" },
+      { name: "Ichabod", charClass: "Fighter", level: "3" },
+      { name: "Lysander", charClass: "Artificer", level: "3" },
+      { name: "Lizbeth", charClass: "Monk", level: "3" },
+      { name: "Giada", charClass: "Wizard", subclass: "Divination", level: "3" },
+    ] satisfies TableCharacter[],
   },
   {
     id: "frostmaiden",
@@ -113,6 +122,14 @@ export const CAMPAIGNS: Campaign[] = [
     },
     rotation: { enabled: true, order: ["lizbeth", "amy", "seth"], nextIndex: 0 },
     discord: null,
+    roster: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
+    characters: [
+      { name: "Ryn", charClass: "Fighter", subclass: "Rune Knight", level: "8", ownerEmail: "sthomas131@gmail.com", imagePath: "recaps/avatars/frostmaiden_Ryn.png" },
+      { name: "Oli", charClass: "Sorcerer", subclass: "Spellfire", level: "8" },
+      { name: "Cooter", charClass: "Ranger / Rogue", subclass: "Gloomstalker / Scout", level: "8" },
+      { name: "Rosie", charClass: "Druid / Cleric", level: "8" },
+      { name: "Gordo", charClass: "Cleric", subclass: "Light", level: "8" },
+    ] satisfies TableCharacter[],
   },
   {
     id: "drawsteel",

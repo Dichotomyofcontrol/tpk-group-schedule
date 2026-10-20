@@ -44,7 +44,8 @@ import {
   transferOrganizer,
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
-import type { AppState, Attendance, AttendanceState, Campaign, Invite, Member, Poll, Session, Toast, User } from "./types";
+import { omitUndefined } from "./omit";
+import type { AppState, Attendance, AttendanceState, Campaign, Invite, Member, Poll, Session, SessionFile, Toast, User } from "./types";
 
 function emptyState(me: User): AppState {
   return {
@@ -66,8 +67,15 @@ function asAttendance(raw: unknown): Attendance[] {
   return [];
 }
 
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
 function sessionFrom(id: string, cid: string, data: DocumentData): Session {
-  return {
+  const extraPdfs = Array.isArray(data.extraPdfs)
+    ? data.extraPdfs.filter((file): file is SessionFile => !!file && typeof file.path === "string" && typeof file.name === "string")
+    : undefined;
+  return omitUndefined({
     id,
     cid,
     seriesId: data.seriesId ?? null,
@@ -81,21 +89,22 @@ function sessionFrom(id: string, cid: string, data: DocumentData): Session {
     exception: data.exception ?? null,
     requireRsvps: data.requireRsvps ?? null,
     snackUid: data.snackUid ?? null,
-    notes: data.notes,
+    notes: optionalString(data.notes),
     seq: data.seq ?? 0,
-    recapHtml: data.recapHtml,
-    recapText: data.recapText,
-    recapMarkdown: data.recapMarkdown,
-    pdfPath: data.pdfPath,
-    pdfName: data.pdfName,
+    recapHtml: optionalString(data.recapHtml),
+    recapText: optionalString(data.recapText),
+    recapMarkdown: optionalString(data.recapMarkdown),
+    pdfPath: optionalString(data.pdfPath),
+    pdfName: optionalString(data.pdfName),
     pdfUrl: typeof data.pdfUrl === "string" && !data.pdfUrl.includes("token=") && !data.pdfUrl.startsWith("blob:")
       ? data.pdfUrl
       : undefined,
-    legacy: data.legacy,
+    extraPdfs: extraPdfs?.length ? extraPdfs : undefined,
+    legacy: data.legacy && typeof data.legacy === "object" ? data.legacy as Record<string, unknown> : undefined,
     attendance: asAttendance(data.attendance),
-    reminder3dSent: data.reminder3dSent,
-    reminder3hSent: data.reminder3hSent,
-  };
+    reminder3dSent: typeof data.reminder3dSent === "boolean" ? data.reminder3dSent : undefined,
+    reminder3hSent: typeof data.reminder3hSent === "boolean" ? data.reminder3hSent : undefined,
+  });
 }
 
 function attendanceMap(list: Attendance[]): Record<string, Attendance> {
@@ -236,7 +245,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
 
   const persistSession = useCallback(async (session: Session) => {
     const { db } = getFirebase();
-    const payload = { ...session, attendance: attendanceMap(session.attendance) };
+    const payload = omitUndefined({ ...session, attendance: attendanceMap(session.attendance) });
     await setDoc(doc(db, "campaigns", session.cid, "sessions", session.id), payload);
   }, []);
 
@@ -470,7 +479,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           const member = next.members[created.id]?.[0];
           if (member) await setDoc(doc(db, "campaigns", created.id, "members", member.id), { ...member, uid: authUser.uid });
           for (const session of next.sessions.filter((s) => s.cid === created.id)) {
-            await setDoc(doc(db, "campaigns", created.id, "sessions", session.id), { ...session, attendance: attendanceMap(session.attendance) });
+            await setDoc(doc(db, "campaigns", created.id, "sessions", session.id), omitUndefined({ ...session, attendance: attendanceMap(session.attendance) }));
           }
         })();
         return created.id;

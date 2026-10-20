@@ -8,6 +8,7 @@ import { demoFeed } from "../../lib/calendar-feed.ts";
 import { buildIcs } from "../../lib/ics.ts";
 import { sampleLegacyExport } from "../../lib/legacy-fixture.ts";
 import { formatDryRun, planMigration } from "../../lib/migrate.ts";
+import { containsUndefined } from "../../lib/omit.ts";
 import { applyCadence, lockPoll, saveRecap, skipSession, upcomingSessions } from "../../lib/model.ts";
 import { markdownToHtml } from "../../lib/recap.ts";
 import { cadenceDates } from "../../lib/recurrence.ts";
@@ -201,6 +202,132 @@ test("migration keeps recap HTML and the original PDF storage path", () => {
   assert.match(firestoreRules, /allow write: if false/);
   const nextConfig = readFileSync(new URL("../../next.config.ts", import.meta.url), "utf8");
   assert.doesNotMatch(nextConfig, /firebasestorage/);
+});
+
+test("production-shaped export keeps characters, drops undefined pdf fields, and compares counts", () => {
+  const plan = planMigration({
+    "campaigns/strahd": { fields: {
+      name: { stringValue: "Curse of Strahd" },
+      color: { stringValue: "#ef5350" },
+      icon: { stringValue: "🧛" },
+      owner: { stringValue: "sthomas131@gmail.com" },
+      bridge: { booleanValue: true },
+      readers: { arrayValue: { values: [{ stringValue: "sthomas131@gmail.com" }] } },
+    } },
+    "campaigns/special": { fields: {
+      name: { stringValue: "One-Shots" },
+      color: { stringValue: "#ce93d8" },
+      icon: { stringValue: "✨" },
+      owner: { stringValue: "sthomas131@gmail.com" },
+    } },
+    "sessions/2026-01-30": { fields: {
+      campaign: { stringValue: "strahd" },
+      date: { stringValue: "2026-01-30" },
+      time: { stringValue: "6:00 PM" },
+      title: { stringValue: "Session 04" },
+      pdfUrl: { stringValue: "/recaps/2026-01-30_Session_04_-_Shadows_of_the_Black_Gate.pdf" },
+      pdfName: { stringValue: "Session 04.pdf" },
+      recap: { stringValue: "We stand on the bridge." },
+      status: { stringValue: "active" },
+      gm: { stringValue: "Max Hobbs" },
+      attendance: { mapValue: { fields: { Giada: { stringValue: "in" }, Ryn: { stringValue: "unknown" } } } },
+    } },
+    "sessions/2026-02-01": { fields: {
+      campaign: { stringValue: "strahd" },
+      date: { stringValue: "2026-02-01" },
+      time: { stringValue: "" },
+      status: { stringValue: "active" },
+    } },
+    "sessions/2026-09-16-1800": { fields: {
+      campaign: { stringValue: "special" },
+      date: { stringValue: "2026-09-21" },
+      time: { stringValue: "6:00 PM" },
+      title: { stringValue: "Trial of Hearts" },
+      status: { stringValue: "cancelled" },
+    } },
+    "characters/strahd": { fields: { chars: { mapValue: { fields: {
+      Vloskev: { mapValue: { fields: {
+        charClass: { stringValue: "Rogue" },
+        subclass: { stringValue: "Medic" },
+        level: { stringValue: "3" },
+        owner: { stringValue: "sthomas131@gmail.com" },
+      } } },
+      Aralyth: { mapValue: { fields: { charClass: { stringValue: "Paladin" }, level: { stringValue: "3" } } } },
+    } } } } },
+    "rosters/strahd": { fields: { list: { arrayValue: { values: [{ stringValue: "Aralyth" }, { stringValue: "Vloskev" }] } } } },
+    "codes/STRA-ES78": { fields: {
+      label: { stringValue: "Test" },
+      campaign: { stringValue: "strahd" },
+      owner: { stringValue: "sthomas131@gmail.com" },
+    } },
+    "config/characters": { fields: {
+      rokugan: { mapValue: { fields: { Kazu: { mapValue: { fields: { charClass: { stringValue: "" } } } } } } },
+    } },
+    "config/rosters": { fields: {
+      rokugan: { arrayValue: { values: [{ stringValue: "Kazu" }, { stringValue: "Nobu" }] } },
+    } },
+    "ivenHeroes/abc": { fields: {
+      heroesJson: { stringValue: "{\"a\":1}" },
+      updatedAt: { integerValue: "1785981899173" },
+    } },
+  });
+  const bare = plan.sessions.find((session) => session.id === "legacy-2026-02-01");
+  assert.ok(bare);
+  assert.equal("pdfPath" in bare, false);
+  assert.equal(bare.pdfUrl, undefined);
+  assert.equal(containsUndefined(plan.sessions), false);
+  assert.equal(containsUndefined(plan.campaigns), false);
+  const withPdf = plan.sessions.find((session) => session.id === "legacy-2026-01-30");
+  assert.equal(withPdf?.pdfPath, "recaps/2026-01-30_Session_04_-_Shadows_of_the_Black_Gate.pdf");
+  assert.equal(withPdf?.attendance.find((row) => row.uid === "name:Ryn")?.state, "unset");
+  assert.equal(withPdf?.legacy?.gm, "Max Hobbs");
+  const moved = plan.sessions.find((session) => session.id === "legacy-2026-09-16-1800");
+  assert.equal(moved?.occurrenceKey, "2026-09-21");
+  assert.equal(moved?.status, "cancelled");
+  const strahd = plan.campaigns.find((campaign) => campaign.id === "strahd");
+  assert.deepEqual(strahd?.roster, ["Aralyth", "Vloskev"]);
+  assert.equal(strahd?.characters?.[0]?.name, "Aralyth");
+  assert.equal(strahd?.characters?.[1]?.charClass, "Rogue");
+  assert.equal(strahd?.characters?.[1]?.ownerEmail, "sthomas131@gmail.com");
+  assert.equal(strahd?.legacy?.bridge, true);
+  assert.equal(plan.campaigns.some((campaign) => campaign.id === "rokugan"), false);
+  assert.equal(plan.sessions.some((session) => /wizard of wines/i.test(session.title)), false);
+
+  const stored = planMigration({
+    campaigns: [{ id: "strahd", name: "Curse of Strahd", color: "#ef5350", icon: "🧛", owner: "seth@example.com" }],
+    sessions: [{
+      id: "2026-01-30",
+      campaign: "strahd",
+      date: "2026-01-30",
+      time: "6:00 PM",
+      pdfUrl: "/recaps/2026-01-30_Session_04_-_Shadows_of_the_Black_Gate.pdf",
+      pdfName: "Session 04.pdf",
+    }],
+    storage: [
+      { name: "recaps/2026-01-30_Session 04 - Shadows of the Black Gate.pdf", md5Hash: "same" },
+      { name: "recaps/2026-01-30_Session_04_-_Shadows_of_the_Black_Gate.pdf", md5Hash: "same" },
+      { name: "recaps/2026-01-30_handout.pdf" },
+      { name: "recaps/2026-05-06_Session_01_-_Into_the_Spider's_Lair.pdf" },
+      { name: "recaps/avatars/frostmaiden_Ryn.png", contentType: "image/png" },
+    ],
+  });
+  const night = stored.sessions[0];
+  assert.equal(night?.extraPdfs?.length, 1);
+  assert.equal(night?.extraPdfs?.[0]?.path, "recaps/2026-01-30_handout.pdf");
+  assert.equal(stored.recapFiles.some((file) => file.file.includes("Spider")), false);
+  assert.equal(stored.recapFiles.some((file) => file.path.endsWith("handout.pdf")), true);
+
+  const report = formatDryRun(plan, "rest");
+  assert.match(report, /No writes/);
+  assert.match(report, /strahd\s+sessions 2\/2\s+recaps 1\/1\s+pdfs 1\/1/);
+  assert.match(report, /special\s+sessions 1\/1\s+recaps 0\/0\s+pdfs 0\/0/);
+  assert.match(report, /rokugan/);
+  assert.match(report, /codes\/STRA-ES78/);
+  assert.match(report, /ivenHeroes\/abc/);
+  assert.match(report, /2026-09-16-1800 plays on 2026-09-21/);
+  const storedReport = formatDryRun(stored, "storage");
+  assert.match(storedReport, /not attached a second time/);
+  assert.match(storedReport, /no session is dated 2026-05-06/);
 });
 
 test("saving the latest recap refreshes Previously on and leaves older nights alone", () => {
