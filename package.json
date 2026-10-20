@@ -1,13 +1,33 @@
 {
   "name": "six-in-the-tpk",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Six in the TPK — D&D group scheduler + recaps (single-file app in index.html).",
+  "description": "Six in the TPK — play dates for a D&D group. Next.js app. The legacy single-file site remains in index.html until cutover.",
   "scripts": {
-    "test": "node tests/run-all.mjs"
+    "dev": "next dev",
+    "prebuild": "node scripts/stage-legacy-static.mjs",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --import tsx --test tests/unit/*.test.ts",
+    "test:legacy": "node tests/run-all.mjs",
+    "migrate": "node --import tsx scripts/migrate.ts",
+    "shots": "node scripts/shots.mjs"
+  },
+  "dependencies": {
+    "firebase": "^11.10.0",
+    "firebase-admin": "^13.6.0",
+    "next": "^15.5.4",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "jsdom": "^24.0.0"
+    "@types/node": "^22.18.8",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "jsdom": "^24.0.0",
+    "puppeteer-core": "^24.23.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.2"
   }
 }

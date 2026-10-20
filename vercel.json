@@ -1,10 +1,7 @@
 {
-  "buildCommand": "bash build.sh",
-  "outputDirectory": ".",
-  "rewrites": [
-    {
-      "source": "/recaps/:path*",
-      "destination": "https://firebasestorage.googleapis.com/v0/b/tpk-group-8cdc8.firebasestorage.app/o/recaps%2F:path*?alt=media"
-    }
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
+  "crons": [
+    { "path": "/api/cron/reminders", "schedule": "0 * * * *" }
   ]
 }

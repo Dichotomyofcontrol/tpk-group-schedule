@@ -5,3 +5,12 @@
 
 # Build backup
 index.html.bak
+
+node_modules
+.next
+out
+*.tsbuildinfo
+public/iven
+public/maloren
+shots
+migration-out

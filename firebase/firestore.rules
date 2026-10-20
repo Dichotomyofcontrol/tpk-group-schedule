@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function email() {
+      return request.auth.token.email;
+    }
+    function isCreator() {
+      return signedIn() && (
+        (exists(/databases/$(database)/documents/config/allowlist)
+          && email() in get(/databases/$(database)/documents/config/allowlist).data.emails)
+        || exists(/databases/$(database)/documents/creators/$(email()))
+      );
+    }
+    function memberPath(cid) {
+      return /databases/$(database)/documents/campaigns/$(cid)/members/$(request.auth.uid);
+    }
+    function isMember(cid) {
+      return signedIn() && exists(memberPath(cid));
+    }
+    function memberRole(cid) {
+      return get(memberPath(cid)).data.role;
+    }
+    function isOrganizer(cid) {
+      return isMember(cid) && memberRole(cid) == 'organizer';
+    }
+    function isStaff(cid) {
+      return isMember(cid) && memberRole(cid) in ['organizer', 'coorganizer'];
+    }
+    function ownAttendance() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendance'])
+        && request.resource.data.attendance.diff(resource.data.attendance).affectedKeys().hasOnly([request.auth.uid]);
+    }
+    function ownVote() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes'])
+        && request.resource.data.votes.diff(resource.data.votes).affectedKeys().hasOnly([request.auth.uid]);
+    }
+
+    match /config/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /creators/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /invites/{token} {
+      allow read, write: if false;
+    }
+    match /calTokens/{token} {
+      allow read, write: if false;
+    }
+    match /recapFiles/{file} {
+      allow get: if signedIn() && isMember(resource.data.cid);
+      allow list: if false;
+      allow write: if false;
+    }
+    match /emailIndex/{id} {
+      allow read, write: if false;
+    }
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.email == email()
+        && !request.resource.data.keys().hasAny(['calToken']);
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.get('calToken', null) == resource.data.get('calToken', null);
+      allow delete: if false;
+    }
+
+    match /campaigns/{cid} {
+      allow read: if signedIn() && (resource.data.ownerUid == request.auth.uid || isMember(cid));
+      allow create: if isCreator()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'active';
+      allow update: if isOrganizer(cid) && request.resource.data.ownerUid == resource.data.ownerUid;
+      allow delete: if isOrganizer(cid);
+
+      match /members/{uid} {
+        allow read: if signedIn() && (resource.data.uid == request.auth.uid || isMember(cid));
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == 'organizer'
+          && get(/databases/$(database)/documents/campaigns/$(cid)).data.ownerUid == request.auth.uid;
+        allow update: if isMember(cid) && request.auth.uid == uid
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.email == resource.data.email
+          || (isOrganizer(cid) && uid != request.auth.uid
+            && request.resource.data.role in ['member', 'coorganizer']);
+        allow delete: if isOrganizer(cid) && uid != request.auth.uid;
+      }
+
+      match /sessions/{sid} {
+        allow read: if isMember(cid);
+        allow create: if isStaff(cid) && request.resource.data.cid == cid;
+        allow update: if (isStaff(cid) && request.resource.data.cid == cid) || (isMember(cid) && ownAttendance());
+        allow delete: if isStaff(cid);
+      }
+
+      match /polls/{pid} {
+        allow read: if isMember(cid);
+        allow create: if isStaff(cid) && request.resource.data.cid == cid;
+        allow update: if isStaff(cid) || (isMember(cid) && ownVote());
+        allow delete: if isStaff(cid);
+      }
+    }
+  }
+}
