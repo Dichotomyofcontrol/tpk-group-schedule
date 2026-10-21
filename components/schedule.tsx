@@ -3,45 +3,43 @@
 import Link from "next/link";
 import { useState } from "react";
 import { attendanceState, headcountLabel, isGreyed, seatsLeft, sessionRequiresRsvp } from "@/lib/attendance";
-import { accentInk, textOn } from "@/lib/color";
-import { campaignById, membersOf, snackName } from "@/lib/model";
+import { isStaff, campaignById, membersOf } from "@/lib/model";
+import { coverSrc } from "@/lib/covers";
 import { useStore } from "@/lib/store";
-import { formatDayHeading, formatRangePretty, relativeWhen, zoneLong } from "@/lib/time";
+import { daysUntil, formatDayHeading, formatRangePretty, relativeWhen } from "@/lib/time";
 import { googleEventTemplate } from "@/lib/ics";
 import type { Session } from "@/lib/types";
-import { coverArt } from "@/lib/covers";
-import { Stack } from "./faces";
+import { Avatar, DateBlock, Icon } from "./ui";
 
-export function PlayRow({ session, manage = false }: { session: Session; manage?: boolean }) {
+export function PlayRow({ session, manage = false, current = false }: { session: Session; manage?: boolean; current?: boolean }) {
   const store = useStore();
   const campaign = campaignById(store.state, session.cid);
   if (!campaign) return null;
   const members = membersOf(store.state, session.cid);
-  const mine = attendanceState(campaign, session, store.state.me.id);
   const grey = new Set(members.filter((m) => isGreyed(campaign, session, m.id)).map((m) => m.id));
-  const maybe = new Set(members.filter((m) => attendanceState(campaign, session, m.id) === "maybe").map((m) => m.id));
   const when = formatDayHeading(session.startsAt, session.tz);
   const seats = seatsLeft(campaign, session, members);
-  const [open, setOpen] = useState(false);
+  const label = headcountLabel(campaign, session, members);
   const [move, setMove] = useState(false);
+  const outs = grey.size > 0;
   return (
-    <article id={session.id} className="pd" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})`, ["--ink-on" as string]: textOn(campaign.color), ["--accent" as string]: accentInk(campaign.color) }}>
-      <span className="ribbon" aria-hidden="true" />
-      <div className="tile"><small>{when.dow}</small><b>{when.day}</b><small>{when.mon}</small></div>
-      <div className="cov" role="img" aria-label="" />
-      <div className="inf">
-        <div className="kick">{campaign.name}</div>
-        <h3><Link href={`/campaigns/${session.cid}/sessions/${session.id}`}>{session.title}</Link></h3>
-        <p>{formatRangePretty(session.startsAt, session.endsAt, session.tz)} · {session.location}</p>
-        {seats !== null && <p>{seats} seat{seats === 1 ? "" : "s"} left</p>}
-        {manage && <StaffTools session={session} move={move} setMove={setMove} />}
-      </div>
-      <div className="act">
-        <AttendanceControl session={session} mine={mine} open={open} setOpen={setOpen} />
-        <Stack members={members} grey={grey} maybe={maybe} color={campaign.color} />
-        <span className="hc">{headcountLabel(campaign, session, members)}</span>
-      </div>
-    </article>
+    <div id={session.id}>
+      <Link className="row" href={`/campaigns/${session.cid}/sessions/${session.id}`} aria-current={current ? "true" : undefined}>
+        <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
+        <div className="t">
+          <b>{session.title}</b>
+          <span>{formatRangePretty(session.startsAt, session.endsAt, session.tz)} · {session.location}{seats !== null ? ` · ${seats} seats left` : ""}</span>
+          <div style={{ marginTop: 8, display: "flex", gap: 12, alignItems: "center" }}>
+            <span className="stack">
+              {members.slice(0, 6).map((m) => <Avatar key={m.id} name={m.characterName || m.displayName} id={m.id} out={grey.has(m.id)} />)}
+            </span>
+            <span className={outs ? "status warn" : "status"}>{label}</span>
+          </div>
+        </div>
+        <div className="thumb"><img className="art" src={coverSrc(campaign.cover.src, campaign.id)} alt="" /></div>
+      </Link>
+      {manage && <div style={{ padding: "0 20px 12px" }}><StaffTools session={session} move={move} setMove={setMove} /></div>}
+    </div>
   );
 }
 
@@ -91,9 +89,8 @@ function CantSheet({ session, onClose }: { session: Session; onClose: () => void
     <div className="sheet" style={{ gridColumn: "1 / -1" }}>
       <b>Can&apos;t make this one?</b>
       <p className="tz" style={{ marginTop: 4 }}>The game still happens. Your portrait goes grey so the table can see it. Talk it through in Discord if you want.</p>
-      <button className="opt" onClick={() => { store.mark(session.id, store.state.me.id, "out", note || undefined); onClose(); }}>
-        <span>🎲</span>
-        <span><b>Play without me</b><span className="tz">Marks you out. Everyone else stays assumed in.</span></span>
+      <button className="btn pri sm" onClick={() => { store.mark(session.id, store.state.me.id, "out", note || undefined); onClose(); }}>
+        Play without me
       </button>
       <div className="field">
         <label htmlFor={`note-${session.id}`}>Note for the organizer (optional)</label>
@@ -162,47 +159,63 @@ export function Hero({ session }: { session: Session }) {
   const members = membersOf(store.state, session.cid);
   const mine = attendanceState(campaign, session, store.state.me.id);
   const grey = new Set(members.filter((m) => isGreyed(campaign, session, m.id)).map((m) => m.id));
-  const snack = snackName(store.state, session);
-  const when = formatRangePretty(session.startsAt, session.endsAt, session.tz);
+  const when = formatDayHeading(session.startsAt, session.tz);
+  const range = formatRangePretty(session.startsAt, session.endsAt, session.tz);
   const [open, setOpen] = useState(false);
+  const [marking, setMarking] = useState(false);
+  const staff = isStaff(store.state, campaign.id);
+  const counts = headcountLabel(campaign, session, members);
+  const outNames = members.filter((m) => grey.has(m.id)).map((m) => m.displayName);
+  const days = daysUntil(session.startsAt, session.tz);
+  const soon = days < 0 ? "earlier" : relativeWhen(session.startsAt, store.state.me.tz).toLowerCase();
   const add = googleEventTemplate(session, campaign);
   return (
-    <section className="hero" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})`, ["--accent" as string]: accentInk(campaign.color) }}>
-      <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
-      <div className="tx">
-        <div className="kick">Next session · {relativeWhen(session.startsAt, store.state.me.tz).toLowerCase()}</div>
-        <h2>{campaign.name}</h2>
-        <p className="hero-session">{session.title}</p>
-        <p className="big hero-when">{when}</p>
-        <p className="tz hero-zone">{zoneLong(session.tz)} · shown in your time zone</p>
-        <p className="hero-place">
-          {session.location}
-          {snack ? ` · Snacks: ${snack}` : ""}
-        </p>
-        <div className="hero-party">
-          <Stack members={members} grey={grey} color={campaign.color} />
-          <div className="hc">{headcountLabel(campaign, session, members)}</div>
+    <article className="card next">
+      <span className="ribbon" />
+      <div className="cover">
+        <img className="art" src={coverSrc(campaign.cover.src, campaign.id)} alt="" />
+        <div className="ctop">
+          <div className="eyebrow">Up next · {soon}</div>
+          <h2>{campaign.name}</h2>
         </div>
-        {campaign.previouslyOn && (
-          <Link className="prev" href={campaign.previouslyOnSessionId ? `/campaigns/${campaign.id}/sessions/${campaign.previouslyOnSessionId}` : `/campaigns/${campaign.id}`}>
-            <q>{campaign.previouslyOn}</q>
-            <cite>Previously on {campaign.name}</cite>
-          </Link>
-        )}
-        <div className="actions">
-          {mine === "out" ? (
-            <button className="b" onClick={() => store.mark(session.id, store.state.me.id, "in")}>I&apos;m back in</button>
-          ) : (
-            <>
-              <span className="chip y">{sessionRequiresRsvp(campaign, session) ? "Going" : "You're in"}</span>
-              <button className="b p" onClick={() => setOpen((v) => !v)}>Can&apos;t make it</button>
-            </>
-          )}
-          <a className="b" href={add}>Add to calendar</a>
-        </div>
-        {open && <CantSheet session={session} onClose={() => setOpen(false)} />}
       </div>
-    </section>
+      <div className="nb">
+        <div className="when">
+          <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
+          <span className="vr" />
+          <div className="meta">
+            <div><Icon name="clock" />{range}</div>
+            <div><Icon name="pin" />{session.location}</div>
+            <div><Icon name="quill" />{session.title}</div>
+          </div>
+        </div>
+        <hr className="hair" />
+        <div>
+          <div className="ph">
+            <span className={grey.size ? "status warn" : "status"}>{counts.replace(/ in$/, " attending")}</span>
+            {outNames.length > 0 && <span className="note">{outNames.join(", ")} {outNames.length === 1 ? "is" : "are"} out</span>}
+          </div>
+          <div className="party">
+            {members.map((m) => (
+              <span key={m.id} className={grey.has(m.id) ? "pp out" : "pp"}>
+                <Avatar name={m.displayName} id={m.id} />
+                <span>{m.displayName.split(" ")[0]}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="acts">
+          {mine === "out" ? (
+            <button className="btn pri sm" onClick={() => store.mark(session.id, store.state.me.id, "in")}>I&apos;m back in</button>
+          ) : (
+            <button className="btn pri sm" onClick={() => { setOpen((v) => !v); setMarking(false); }}><Icon name="x" className="ic sm" />I can&apos;t make it</button>
+          )}
+          {staff && <button className="btn ghost sm" onClick={() => { setMarking((v) => !v); setOpen(true); }}>Mark someone out</button>}
+          <a className="btn ghost sm" href={add}>Add to calendar</a>
+        </div>
+        {(open || marking) && <CantSheet session={session} onClose={() => { setOpen(false); setMarking(false); }} />}
+      </div>
+    </article>
   );
 }
 

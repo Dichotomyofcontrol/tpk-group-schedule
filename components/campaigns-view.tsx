@@ -2,44 +2,44 @@
 
 import Link from "next/link";
 import { memberCampaigns, upcomingSessions } from "@/lib/model";
+import { coverSrc } from "@/lib/covers";
 import { useStore } from "@/lib/store";
-import { coverArt } from "@/lib/covers";
 import { relativeWhen } from "@/lib/time";
-import { EmptyState } from "./empty-state";
+import { Icon } from "./ui";
 
 export function CampaignsView() {
   const { state } = useStore();
   const mine = memberCampaigns(state);
   return (
     <>
-      <div className="mh">
-        <h1>Campaigns</h1>
-        {state.me.canCreateCampaigns && <Link className="b p" href="/campaigns/new" style={{ marginLeft: "auto" }}>+ New campaign</Link>}
+      <div className="ptitle">
+        <div>
+          <div className="eyebrow">{mine.length} {mine.length === 1 ? "table" : "tables"}</div>
+          <h1 className="lt">Campaigns</h1>
+        </div>
+        {state.me.canCreateCampaigns && <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New</Link>}
       </div>
       {mine.length === 0 && (
-        <EmptyState
-          title={state.me.id ? "You're not on a table yet" : "Sign in to see your tables"}
-          action={state.me.id
-            ? (state.me.canCreateCampaigns ? <Link className="b p" href="/campaigns/new">New campaign</Link> : undefined)
-            : <Link className="b p" href="/signin">Sign in</Link>}
-        >
-          {state.me.id
-            ? "Ask your organizer for an invite link. Campaigns only show up after you're on the roster."
-            : "Your campaigns, next session, and the people at the table live here after you sign in."}
-        </EmptyState>
+        <div className="card ph-poll">
+          <h2>Your table awaits</h2>
+          <p className="note">{state.me.id ? "Ask your organizer for an invite link." : "Sign in from the home page to see the campaigns you're invited to."}</p>
+        </div>
       )}
       <div className="camp-grid">
         {mine.map((campaign) => {
           const next = upcomingSessions(state, campaign.id)[0];
+          const hidden = state.hiddenCids.includes(campaign.id);
           return (
-            <Link key={campaign.id} href={`/campaigns/${campaign.id}`} className="camp-card" style={{ ["--c" as string]: campaign.color }}>
-              <div style={{ height: 92, background: `linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.02)), url(${coverArt(campaign.cover.src)}) center/cover` }} />
-              <div className="pad">
-                <div className="kick" style={{ color: campaign.color }}>{campaign.icon} {campaign.system || "Table"}</div>
-                <h2>{campaign.name}</h2>
-                <p className="tz">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()}` : "No upcoming night"}</p>
-              </div>
-            </Link>
+            <article key={campaign.id} className="card camp-card">
+              <Link href={`/campaigns/${campaign.id}`}>
+                <div className="cover"><img className="art" src={coverSrc(campaign.cover.src, campaign.id)} alt="" /></div>
+                <div className="pad">
+                  <div className="eyebrow">{campaign.system || "Tabletop"}</div>
+                  <h2>{campaign.name}</h2>
+                  <p className="note">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()}` : "No upcoming night"}{hidden ? " · hidden from play dates" : ""}</p>
+                </div>
+              </Link>
+            </article>
           );
         })}
       </div>

@@ -1,21 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { memberCampaigns, upcomingSessions, visibleCampaigns } from "@/lib/model";
+import { isStaff, memberCampaigns, upcomingSessions } from "@/lib/model";
 import { useStore } from "@/lib/store";
-import { groupStats } from "@/lib/stats";
-import { formatMonthLabel } from "@/lib/time";
-import { accentInk } from "@/lib/color";
-import { EmptyState } from "./empty-state";
-import { Hero, NeedsYou, PlayRow } from "./schedule";
+import { coverSrc } from "@/lib/covers";
+import { Landing } from "./landing";
+import { Hero, PlayRow } from "./schedule";
+import { ScheduleBoard } from "./schedule-board";
+import { Icon } from "./ui";
 
 export function HomeView() {
   const store = useStore();
   const { state } = store;
+  const params = useSearchParams();
+  const router = useRouter();
+  const schedule = params.get("view") === "schedule";
   const sessions = upcomingSessions(state);
   const [cursor, setCursor] = useState(0);
-  const stats = groupStats(state.sessions.filter((s) => memberCampaigns(state).some((c) => c.id === s.cid)));
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -35,87 +38,86 @@ export function HomeView() {
     return () => window.removeEventListener("keydown", onKey);
   }, [sessions, cursor, state.campaigns, state.me.id, store]);
 
+  if (!state.me.id) return <Landing />;
+
   const mine = memberCampaigns(state);
   const next = sessions[0];
-  const hidden = mine.filter((c) => state.hiddenCids.includes(c.id));
-
-  const groups: { label: string; items: typeof sessions }[] = [];
-  for (const session of sessions) {
-    const label = formatMonthLabel(session.startsAt, session.tz);
-    const last = groups[groups.length - 1];
-    if (!last || last.label !== label) groups.push({ label, items: [session] });
-    else last.items.push(session);
-  }
+  const rest = sessions.slice(1);
+  const poll = state.polls.find((p) => p.status === "open" && mine.some((c) => c.id === p.cid));
+  const today = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: state.me.tz || "America/Los_Angeles" }).format(new Date());
+  const staff = mine.some((c) => isStaff(state, c.id));
+  const setView = (next: "next" | "schedule") => {
+    const query = new URLSearchParams(params.toString());
+    if (next === "schedule") query.set("view", "schedule");
+    else query.delete("view");
+    const text = query.toString();
+    router.replace(text ? `/?${text}` : "/", { scroll: false });
+  };
 
   return (
     <>
-      <div className="cfilter mobile-only">
-        {mine.map((c) => {
-          const on = !state.hiddenCids.includes(c.id);
-          return (
-            <button key={c.id} style={{ ["--c" as string]: c.color, ["--accent" as string]: accentInk(c.color) }} aria-pressed={on} onClick={() => store.toggleHidden(c.id)}>
-              {c.name}
-            </button>
-          );
-        })}
+      <div className="ptitle">
+        <div>
+          <div className="eyebrow">{schedule ? `Next 3 months · ${mine.length} table${mine.length === 1 ? "" : "s"}` : today}</div>
+          <h1 className="lt">Play dates</h1>
+        </div>
+        {(staff || state.me.canCreateCampaigns) && (
+          <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New</Link>
+        )}
       </div>
-      <div className="mh">
-        <h1>Your play dates</h1>
-        {stats.streak > 1 && <span className="chip">{stats.streak}-session streak</span>}
-      </div>
-      {!state.me.id && (
-        <EmptyState title="Your table awaits" action={<Link className="b p" href="/signin">Sign in</Link>}>
-          Sign in with the email your organizer knows. We&apos;ll send a one-tap link. No password.
-        </EmptyState>
-      )}
-      {state.me.id && mine.length === 0 && (
-        <EmptyState
-          title="You're signed in"
-          action={state.me.canCreateCampaigns ? <Link className="b p" href="/campaigns/new">Create your first campaign</Link> : undefined}
-        >
-          Ask your organizer for an invite link. You&apos;ll only see the tables you&apos;re on.
-        </EmptyState>
-      )}
-      {next && <Hero session={next} />}
-      <NeedsYou />
-      {sessions.length > 0 && (
-        <div className="pstrip" aria-label="Upcoming play dates">
-          {sessions.slice(0, 10).map((session, i) => {
-            const campaign = state.campaigns.find((c) => c.id === session.cid);
-            const when = new Date(session.startsAt);
-            const mon = when.toLocaleString("en-US", { month: "short", timeZone: session.tz });
-            const day = new Intl.DateTimeFormat("en-US", { day: "numeric", timeZone: session.tz }).format(when);
-            const dow = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: session.tz }).format(when);
-            return (
-              <a key={session.id} href={`#${session.id}`} className={i === cursor ? "on" : ""} style={{ ["--c" as string]: campaign?.color }}>
-                {dow}<b>{day}</b>{mon}
-              </a>
-            );
-          })}
+      <nav className="vseg" aria-label="View">
+        <button type="button" className={schedule ? "" : "on"} aria-current={schedule ? undefined : "page"} onClick={() => setView("next")}>Up next</button>
+        <button type="button" className={schedule ? "on" : ""} aria-current={schedule ? "page" : undefined} onClick={() => setView("schedule")}>Schedule</button>
+      </nav>
+      {schedule ? <ScheduleBoard /> : (
+      <>
+      {mine.length === 0 && (
+        <div className="card ph-poll">
+          <h2>You&apos;re signed in</h2>
+          <p className="note">Ask your organizer for an invite link. You&apos;ll only see the tables you&apos;re on.</p>
+          {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />Create your first campaign</Link>}
         </div>
       )}
-      {sessions.length === 0 && mine.length > 0 && (
-        <div className="card">
-          <h2>No play dates yet</h2>
-          <p>When an organizer sets the cadence, the nights show up here. Days you don&apos;t play are never shown.</p>
+      <div className="grid">
+        <div>
+          {next && <Hero session={next} />}
+          {sessions.length === 0 && mine.length > 0 && (
+            <div className="card ph-poll"><h3>No play dates yet</h3><p className="note">When an organizer sets the cadence, the nights show up here.</p></div>
+          )}
+          {rest.length > 0 && (
+            <>
+              <div className="sec-h"><h2>Coming up</h2><span className="note">Everyone&apos;s in unless marked out</span></div>
+              <div className="card list">
+                {rest.map((session, i) => <PlayRow key={session.id} session={session} current={i + 1 === cursor} />)}
+              </div>
+            </>
+          )}
         </div>
-      )}
-      {groups.map((group) => (
-        <section key={group.label}>
-          <h2 className="mhd"><span>{group.label}</span><em>{group.items.length} play date{group.items.length === 1 ? "" : "s"}</em></h2>
-          {group.items.map((session) => <PlayRow key={session.id} session={session} />)}
-        </section>
-      ))}
-      {state.me.id && (
-        <>
-          <p className="tz" style={{ textAlign: "center", marginTop: 18 }}>
-            Only days you play are shown.
-            {hidden.length > 0 && ` ${hidden.map((c) => c.name).join(", ")} hidden (switched off).`}
-          </p>
-          <p className="tz" style={{ textAlign: "center" }}>
-            Showing {visibleCampaigns(state).length} of {mine.length} campaigns.
-          </p>
-        </>
+        <aside className="side">
+          {poll && (
+            <div className="card" style={{ padding: 24 }}>
+              <div className="eyebrow">Open poll</div>
+              <h3 style={{ fontSize: 20, lineHeight: "26px", margin: "8px 0" }}>{poll.title}</h3>
+              <p className="note" style={{ margin: "0 0 16px" }}>{Object.keys(poll.votes).length} voted{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "long", timeZone: state.me.tz }).format(new Date(poll.closesAt))}` : ""}</p>
+              <Link className="btn sec sm" href={`/polls/${poll.id}`}>Vote <Icon name="arrow" className="ic sm" /></Link>
+            </div>
+          )}
+          <div className="card" style={{ padding: 24, marginTop: poll ? 16 : 0 }}>
+            <div className="eyebrow">Your campaigns</div>
+            {mine.map((c) => {
+              const member = (state.members[c.id] || []).find((m) => m.id === state.me.id);
+              const nights = state.sessions.filter((s) => s.cid === c.id && s.status !== "cancelled").length;
+              return (
+                <Link key={c.id} href={`/campaigns/${c.id}`} className="rail-link">
+                  <span className="thumb"><img className="art" src={coverSrc(c.cover.src, c.id)} alt="" /></span>
+                  <span><b style={{ font: "500 16px var(--serif)" }}>{c.name}</b><br /><span className="note">{member?.role === "organizer" ? "GM" : "Player"} · {nights} sessions</span></span>
+                </Link>
+              );
+            })}
+          </div>
+        </aside>
+      </div>
+      </>
       )}
     </>
   );

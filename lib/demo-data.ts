@@ -25,7 +25,7 @@ export const USERS: User[] = [
   { id: "kai", email: "kai@example.com", displayName: "Kai", tz: TZ, calToken: "demo-kai", canCreateCampaigns: false },
   { id: "giada", email: "giada@example.com", displayName: "Giada", tz: TZ, calToken: "demo-giada", canCreateCampaigns: false },
   { id: "lizbeth", email: "lizbeth@example.com", displayName: "Lizbeth", tz: TZ, calToken: "demo-lizbeth", canCreateCampaigns: false },
-  { id: "newcomer", email: "new@example.com", displayName: "Newcomer", tz: TZ, calToken: "demo-new", canCreateCampaigns: false },
+  { id: "newcomer", email: "new@example.com", displayName: "New", tz: TZ, calToken: "demo-new", canCreateCampaigns: false },
 ];
 
 const HUES: Record<string, number> = { seth: 18, amy: 350, ben: 262, sam: 200, kai: 145, giada: 28, lizbeth: 320, newcomer: 210 };

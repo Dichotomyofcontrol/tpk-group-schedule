@@ -1,39 +1,42 @@
 import type { Metadata, Viewport } from "next";
-import { Newsreader, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import { Suspense } from "react";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const sans = Source_Sans_3({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-sans",
+const fraunces = localFont({
+  src: [
+    { path: "./fonts/Fraunces-Variable.woff2", style: "normal", weight: "100 900" },
+    { path: "./fonts/Fraunces-Italic-Variable.woff2", style: "italic", weight: "100 900" },
+  ],
+  variable: "--font-fraunces",
   display: "swap",
 });
-const display = Newsreader({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-display",
+
+const inter = localFont({
+  src: "./fonts/Inter-Variable.woff2",
+  variable: "--font-inter",
+  weight: "100 900",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Six in the TPK",
-  description: "Play dates for a D&D group. Only the nights you play.",
+  description: "Play dates, campaign lore, and recaps for your table.",
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f4efe4",
+  viewportFit: "cover",
+  themeColor: "#F3EDE1",
 };
 
-const themeBoot = `try{var t=localStorage.getItem('tpk-theme');if(t==='system'){t='light';localStorage.setItem('tpk-theme','light');}document.documentElement.dataset.theme=t==='dark'?'dark':'light';}catch(e){}`;
+const themeBoot = `try{var t=localStorage.getItem('tpk-theme');if(t==='system'){t='light';localStorage.setItem('tpk-theme','light');}document.documentElement.dataset.theme=(t==='dark'||t==='night')?'night':'cream';}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${fraunces.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>

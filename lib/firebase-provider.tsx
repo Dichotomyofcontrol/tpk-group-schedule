@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   sendSignInLinkToEmail,
   signInWithEmailLink,
+  signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
 import {
@@ -22,6 +23,7 @@ import {
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebase } from "./firebase-client";
 import { magicLinkContinueUrl } from "./magic-link";
+import { applyTheme, readStoredTheme } from "./theme";
 import { nestedRecapPath, validatePdf } from "./recap";
 import {
   acceptInvite as acceptInviteModel,
@@ -45,7 +47,6 @@ import {
   transferOrganizer,
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
-import { applyThemeChoice, readThemeChoice, writeThemeChoice, type ThemeChoice } from "./theme";
 import { omitUndefined } from "./omit";
 import type { AppState, Attendance, AttendanceState, Campaign, Invite, Member, Poll, Session, SessionFile, Toast, User } from "./types";
 
@@ -118,7 +119,7 @@ function attendanceMap(list: Attendance[]): Record<string, Attendance> {
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [theme, setThemeState] = useState<ThemeChoice>(() => (typeof window === "undefined" ? "light" : readThemeChoice()));
+  const [theme, setThemeState] = useState<"light" | "dark" | "system">("light");
   const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
   const [online, setOnline] = useState(true);
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
@@ -133,13 +134,12 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    setThemeState(readThemeChoice());
+    setThemeState(readStoredTheme());
     document.body.dataset.ready = "1";
   }, []);
 
   useEffect(() => {
-    applyThemeChoice(theme);
-    setResolved(theme);
+    setResolved(applyTheme(theme));
   }, [theme]);
 
   useEffect(() => {
@@ -244,9 +244,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = useCallback((next: "light" | "dark" | "system") => {
-    const choice: ThemeChoice = next === "dark" ? "dark" : "light";
-    setThemeState(choice);
-    writeThemeChoice(choice);
+    setThemeState(next);
+    window.localStorage.setItem("tpk-theme", next);
   }, []);
 
   const signedOut: StoreApi = useMemo(() => ({
@@ -291,6 +290,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     nudge: () => undefined,
     createInvite: () => null,
     acceptInvite: () => false,
+    signOut: async () => undefined,
     sendMagicLink: async (email: string, inviteToken?: string) => {
       if (!firebaseConfigured()) {
         flash("Firebase isn't configured on this deploy yet.", "err");
@@ -311,10 +311,6 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       await signInWithEmailLink(auth, stored, href);
       window.localStorage.setItem("tpk-email", stored);
       return "ok";
-    },
-    signOut: async () => {
-      const { signOut } = await import("firebase/auth");
-      await signOut(getFirebase().auth);
     },
     signedIn: false,
   }), [online, toasts, theme, resolvedTheme, setTheme, flash]);
@@ -564,6 +560,10 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         return true;
       },
       sendMagicLink: signedOut.sendMagicLink,
+      finishMagicLink: signedOut.finishMagicLink,
+      signOut: async () => {
+        await firebaseSignOut(getFirebase().auth);
+      },
     };
   }, [state, authUser, signedOut, flash, persistSession]);
 

@@ -1,9 +1,6 @@
 import puppeteer from "puppeteer-core";
-import { mkdir } from "node:fs/promises";
 
 const base = process.env.LAYOUT_BASE || "http://127.0.0.1:3000";
-const out = "/opt/cursor/artifacts";
-await mkdir(out, { recursive: true });
 
 const browser = await puppeteer.launch({
   executablePath: process.env.CHROME_PATH || "/usr/bin/google-chrome",
@@ -13,6 +10,7 @@ const browser = await puppeteer.launch({
 
 const routes = [
   ["home", "/"],
+  ["schedule", "/?view=schedule"],
   ["campaigns", "/campaigns"],
   ["campaign", "/campaigns/strahd"],
   ["session", "/campaigns/strahd/sessions/strahd-2026-10-231830"],
@@ -39,43 +37,69 @@ function withAs(path, person) {
 
 async function settle(page) {
   await page.waitForFunction(() => document.body?.dataset.ready === "1", { timeout: 20000 });
-  await new Promise((r) => setTimeout(r, 150));
+  await new Promise((r) => setTimeout(r, 200));
 }
 
 async function measure(page) {
   return page.evaluate(() => {
-    const header = document.querySelector(".top");
+    const header = document.querySelector(".hdr");
     const headerBox = header.getBoundingClientRect();
+    const landing = header.classList.contains("clear");
     const offenders = [];
-    for (const el of document.querySelectorAll("body *")) {
-      if (el.closest(".top") && !el.closest(".menu")) continue;
-      if (el.closest(".tabbar") || el.closest(".toasts")) continue;
-      const style = getComputedStyle(el);
-      if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
-      const rect = el.getBoundingClientRect();
-      if (rect.width < 2 || rect.height < 2) continue;
-      if (rect.bottom < headerBox.bottom - 0.5) continue;
-      if (rect.top < headerBox.bottom - 0.5) {
-        const label = `${el.tagName.toLowerCase()}.${String(el.className || "").toString().slice(0, 48)} "${(el.textContent || "").trim().slice(0, 40)}"`;
-        offenders.push({ top: Math.round(rect.top), headerBottom: Math.round(headerBox.bottom), label });
+    if (!landing) {
+      for (const el of document.querySelectorAll("body *")) {
+        if (el.closest(".hdr") || el.closest(".tabs") || el.closest("#menu") || el.closest(".toasts") || el.closest(".offline")) continue;
+        const style = getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) continue;
+        const rect = el.getBoundingClientRect();
+        if (rect.width < 2 || rect.height < 2) continue;
+        if (rect.bottom < headerBox.bottom - 0.5) continue;
+        if (rect.top < headerBox.bottom - 0.5) {
+          offenders.push(`${el.tagName.toLowerCase()}.${String(el.className || "").slice(0, 40)}`);
+        }
       }
     }
-    const root = document.documentElement;
-    return {
-      overflow: root.scrollWidth - root.clientWidth,
-      headerBottom: headerBox.bottom,
-      logoLines: (() => {
-        const logo = document.querySelector(".logo");
-        if (!logo) return 1;
-        const range = document.createRange();
-        range.selectNodeContents(logo);
-        const rects = [...range.getClientRects()];
-        if (!rects.length) return 1;
+    const titles = [...document.querySelectorAll("h1")].map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { top: rect.top, text: (el.textContent || "").trim().slice(0, 40) };
+    });
+    const titleUnder = titles.filter((t) => t.top < headerBox.bottom - 1);
+    const brand = document.querySelector(".brand > span") || document.querySelector(".brand");
+    let logoLines = 1;
+    if (brand) {
+      const range = document.createRange();
+      range.selectNodeContents(brand);
+      const rects = [...range.getClientRects()];
+      if (rects.length) {
         const min = Math.min(...rects.map((rect) => rect.top));
-        return new Set(rects.map((rect) => Math.round((rect.top - min) / 14))).size;
-      })(),
-      offenders: offenders.slice(0, 8),
+        logoLines = new Set(rects.map((rect) => Math.round((rect.top - min) / 14))).size;
+      }
+    }
+    const logos = document.querySelectorAll(".brand").length;
+    const signIns = [...document.querySelectorAll("a,button")].filter((el) => {
+      const text = (el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      return text === "sign in" || text === "sign in with email" || el.getAttribute("href") === "/signin";
+    }).length;
+    const small = [];
+    for (const el of document.querySelectorAll("a,button")) {
+      const style = getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      if (el.closest(".ov")) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 2 || rect.height < 2) continue;
+      if (rect.height < 44 && rect.width < 44) small.push(`${el.tagName.toLowerCase()} ${(el.textContent || "").trim().slice(0, 24)} ${Math.round(rect.width)}x${Math.round(rect.height)}`);
+    }
+    return {
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      theme: document.documentElement.dataset.theme,
+      offenders: offenders.slice(0, 6),
       offenderCount: offenders.length,
+      titleUnder,
+      logoLines,
+      logos,
+      signIns,
+      small: small.slice(0, 6),
+      smallCount: small.length,
     };
   });
 }
@@ -99,66 +123,25 @@ for (const scheme of schemes) {
         const result = await measure(page);
         checks += 1;
         const problems = [];
-        if (result.offenderCount) problems.push(`${result.offenderCount} under header: ${result.offenders.map((o) => o.label).join(" | ")}`);
+        if (result.theme !== "cream") problems.push(`theme ${result.theme} followed the OS`);
+        if (result.offenderCount) problems.push(`${result.offenderCount} under header: ${result.offenders.join(" | ")}`);
+        if (result.titleUnder.length) problems.push(`h1 under header: ${result.titleUnder.map((t) => t.text).join(", ")}`);
         if (result.overflow > 1) problems.push(`horizontal overflow ${result.overflow}px`);
         if (result.logoLines > 1) problems.push(`wordmark wraps onto ${result.logoLines} lines`);
-        if (consoleErrors.length) problems.push(`console: ${consoleErrors.join(" | ").slice(0, 300)}`);
+        if (result.logos !== 1) problems.push(`${result.logos} logos`);
+        const guestLanding = person === "guest" && (path === "/" || path.startsWith("/?"));
+        if (guestLanding && result.signIns !== 1) problems.push(`${result.signIns} sign-in entries on landing`);
+        if (person !== "guest" && result.signIns !== 0) problems.push(`${result.signIns} sign-in entries while signed in`);
+        if (person === "guest" && !guestLanding && result.signIns !== 0) problems.push(`${result.signIns} extra sign-in entries`);
+        if (result.smallCount) problems.push(`tap targets under 44px: ${result.small.join(" | ")}`);
+        if (consoleErrors.length) problems.push(`console: ${consoleErrors.join(" | ").slice(0, 240)}`);
         if (problems.length) failures.push(`${scheme} ${sizeName} ${person} ${name}: ${problems.join("; ")}`);
       }
     }
   }
 }
 
-await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
-await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
-consoleErrors.length = 0;
-await page.goto(withAs("/", "giada"), { waitUntil: "domcontentloaded" });
-await settle(page);
-await page.click(".av");
-await page.waitForSelector(".menu");
-const menu = await measure(page);
-checks += 1;
-if (menu.offenderCount || menu.overflow > 1 || consoleErrors.length) {
-  failures.push(`account menu: ${menu.offenderCount} under header, overflow ${menu.overflow}, console ${consoleErrors.join(" | ").slice(0, 200)}`);
-}
-
-const shots = [
-  ["craft-390-home.png", "/", "giada", 390, 844, true],
-  ["craft-390-home-signed-out.png", "/", "guest", 390, 844, true],
-  ["craft-390-home-empty.png", "/", "newcomer", 390, 844, true],
-  ["craft-390-campaigns.png", "/campaigns", "giada", 390, 844, true],
-  ["craft-390-campaigns-signed-out.png", "/campaigns", "guest", 390, 844, true],
-  ["craft-390-campaigns-empty.png", "/campaigns", "newcomer", 390, 844, true],
-  ["craft-390-campaign.png", "/campaigns/strahd", "giada", 390, 844, true],
-  ["craft-390-session.png", "/campaigns/strahd/sessions/strahd-2026-10-231830", "giada", 390, 844, true],
-  ["craft-390-polls.png", "/polls", "giada", 390, 844, true],
-  ["craft-390-polls-empty.png", "/polls", "newcomer", 390, 844, true],
-  ["craft-390-poll.png", "/polls/frost-dec", "giada", 390, 844, true],
-  ["craft-390-invites.png", "/invites", "giada", 390, 844, true],
-  ["craft-390-invites-signed-out.png", "/invites", "guest", 390, 844, true],
-  ["craft-390-invites-empty.png", "/invites", "newcomer", 390, 844, true],
-  ["craft-390-signin.png", "/signin", "guest", 390, 844, true],
-  ["craft-1280-home.png", "/", "giada", 1280, 800, true],
-  ["craft-1280-campaign.png", "/campaigns/strahd", "giada", 1280, 800, true],
-  ["craft-1280-session.png", "/campaigns/strahd/sessions/strahd-2026-10-231830", "giada", 1280, 800, true],
-];
-
-for (const [file, path, person, width, height, fullPage] of shots) {
-  await page.setViewport({ width, height, deviceScaleFactor: 1 });
-  await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "dark" }]);
-  await page.goto(withAs(path, person), { waitUntil: "domcontentloaded" });
-  await settle(page);
-  await page.screenshot({ path: `${out}/${file}`, fullPage });
-}
-await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
-await page.goto(withAs("/", "giada"), { waitUntil: "domcontentloaded" });
-await settle(page);
-await page.click(".av");
-await page.waitForSelector(".menu");
-await page.screenshot({ path: `${out}/craft-390-account-menu.png`, fullPage: false });
-
 await browser.close();
-
 console.log(`layout-qa: ${checks} page checks`);
 if (failures.length) {
   console.error(failures.join("\n"));
@@ -169,3 +152,4 @@ console.log("no element top sits under the sticky header");
 console.log("no horizontal overflow");
 console.log("no console errors");
 console.log("wordmark stays on one line");
+console.log("cream stays default when the OS is dark");

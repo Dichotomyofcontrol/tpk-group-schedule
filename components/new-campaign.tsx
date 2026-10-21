@@ -19,7 +19,7 @@ export function NewCampaign() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [color, setColor] = useState("#ef5350");
-  const [icon, setIcon] = useState("🎲");
+  const [icon, setIcon] = useState("d20");
   const [location, setLocation] = useState("TPK Brewing");
   const [tz, setTz] = useState("America/Los_Angeles");
   const [requireRsvps, setRequire] = useState(false);
