@@ -1,20 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
-import { accentInk } from "@/lib/color";
+import { Avatar, Brand, Icon, type IconName } from "./ui";
 
-export function Shell({ children, bare = false }: { children: React.ReactNode; bare?: boolean }) {
+const TABS: { id: string; href: string; label: string; icon: IconName }[] = [
+  { id: "home", href: "/", label: "Play dates", icon: "dates" },
+  { id: "campaigns", href: "/campaigns", label: "Campaigns", icon: "camp" },
+  { id: "polls", href: "/polls", label: "Polls", icon: "polls" },
+  { id: "invites", href: "/invites", label: "Invites", icon: "inv" },
+];
+
+export function Shell({ children }: { children: React.ReactNode }) {
   const store = useStore();
   const { state } = store;
   const path = usePathname();
-  const router = useRouter();
   const params = useSearchParams();
   const [menu, setMenu] = useState(false);
   const [help, setHelp] = useState(false);
+  const [panel, setPanel] = useState<"profile" | "calendar" | "mail" | null>(null);
+  const [origin, setOrigin] = useState("");
+  const signedIn = Boolean(state.me.id);
+  const landing = !signedIn && path === "/";
 
   useLayoutEffect(() => {
     const as = params.get("as");
@@ -24,11 +34,15 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
   }, [params, store, state.me.id]);
 
   useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const tag = (event.target as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (event.key === "?") setHelp(true);
-      if (event.key === "Escape") setHelp(false);
+      if (event.key === "Escape") { setHelp(false); setMenu(false); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -36,119 +50,106 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
 
   const mine = memberCampaigns(state);
   const openPolls = state.polls.filter((p) => p.status === "open" && mine.some((c) => c.id === p.cid)).length;
-  const invites = state.invites.filter((i) => i.status === "pending" && (!i.email || i.email === state.me.email) && !mine.some((c) => c.id === i.cid)).length;
   const tab = path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") ? "polls" : path.startsWith("/invite") ? "invites" : "home";
+  const campaignHero = /^\/campaigns\/[^/]+$/.test(path);
+  const bare = path === "/signin" || path.startsWith("/auth/");
+  const feed = state.me.calToken ? `${origin}/api/cal/${state.me.calToken}.ics?hide=${state.hiddenCids.join(",")}` : "";
+  const webcal = feed.replace(/^https?:/, "webcal:");
+  const night = store.resolvedTheme === "dark";
 
   return (
     <>
       {!store.online && <div className="offline">You&apos;re offline. Showing your last-synced schedule.</div>}
-      <header className="top">
-        <Link className="logo" href="/"><i />Six in the TPK</Link>
-        {store.mode === "demo" && state.me.id && <span className="sample">Sample table</span>}
-        <span className="sp" />
-        {!bare && state.me.id && (
+      <header className={landing ? "hdr clear" : "hdr"}>
+        <Brand />
+        {signedIn && !bare && (
           <>
-            <Link className="b hide-m" href="/polls">Polls{openPolls ? <b className="count">{openPolls}</b> : ""}</Link>
-            <button className="b hide-m" onClick={() => router.push("/invites")}>Subscribe</button>
-          </>
-        )}
-        {state.me.id ? (
-          <>
-            <span className="who hide-m">{state.me.displayName}</span>
-            <button className="av" aria-label={`Account menu for ${state.me.displayName}`} aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
-              {state.me.displayName.slice(0, 1)}
+            <span className="sp" />
+            <nav className="dnav" aria-label="Primary">
+              {TABS.map((item) => (
+                <Link key={item.id} href={item.href} className={tab === item.id ? "on" : ""}>
+                  <Icon name={item.icon} />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <button className="acct" aria-label={`Account menu: ${state.me.displayName}`} aria-expanded={menu} onClick={() => { setMenu((v) => !v); setPanel(null); }}>
+              <Avatar name={state.me.displayName} id={state.me.id} />
+              <Icon name="chev" className="ic ch" />
             </button>
           </>
-        ) : (
-          <Link className="b p" href="/signin">Sign in</Link>
-        )}
-        {menu && (
-          <div className="menu" role="menu">
-            <div style={{ padding: "6px 10px 8px" }}>
-              <b>{state.me.displayName}</b>
-              <span className="hint">{state.me.email}</span>
-            </div>
-            {store.mode === "demo" && state.directory.map((person) => (
-              <button key={person.id} onClick={() => { store.setPersona(person.id); setMenu(false); }}>
-                View as {person.displayName}{person.id === state.me.id ? " · now" : ""}
-              </button>
-            ))}
-            <button onClick={() => { store.setTheme(store.resolvedTheme === "dark" ? "light" : "dark"); setMenu(false); }}>
-              {store.resolvedTheme === "dark" ? "Light mode" : "Tavern night"}
-            </button>
-            <button onClick={() => { setHelp(true); setMenu(false); }}>Keyboard shortcuts</button>
-            <button onClick={() => { void store.signOut(); setMenu(false); }}>Sign out</button>
-            {store.mode === "demo" && <button onClick={() => { store.resetDemo(); setMenu(false); }}>Reset sample table</button>}
-          </div>
         )}
       </header>
-      {bare ? (
-        <main>{children}</main>
-      ) : (
-        <div className={state.me.id ? "shell" : "shell solo"}>
-          {state.me.id && <aside className="left">
-            {state.me.canCreateCampaigns ? (
-              <Link className="b p" style={{ width: "100%" }} href="/campaigns/new">+ New campaign</Link>
-            ) : (
-              <p className="fine">New campaigns are limited to the organizer list. Ask Seth for an invite.</p>
+      {landing || bare ? children : <main className={campaignHero ? "cm" : ""}>{children}</main>}
+      {signedIn && !bare && (
+        <nav className="tabs" aria-label="Primary">
+          {TABS.map((item) => (
+            <Link key={item.id} href={item.href} className={tab === item.id ? "on" : ""} aria-current={tab === item.id ? "page" : undefined}>
+              <Icon name={item.icon} />
+              {item.label}
+              {item.id === "polls" && openPolls > 0 && <span className="badge">{openPolls}</span>}
+            </Link>
+          ))}
+        </nav>
+      )}
+      {menu && signedIn && (
+        <div id="menu">
+          <button className="scrim" aria-label="Close" onClick={() => setMenu(false)} />
+          <div className="pop" role="menu">
+            <div className="me">
+              <Avatar name={state.me.displayName} id={state.me.id} className="" />
+              <div>
+                <b>{state.me.displayName}</b>
+                <span>{state.me.email}</span>
+              </div>
+            </div>
+            {store.mode === "demo" && (
+              <div className="panel">
+                <label htmlFor="persona">View the sample as</label>
+                <select id="persona" className="inp" value={state.me.id || "guest"} onChange={(e) => store.setPersona(e.target.value)}>
+                  <option value="guest">Signed out</option>
+                  {state.directory.map((person) => <option key={person.id} value={person.id}>{person.displayName}</option>)}
+                </select>
+              </div>
             )}
-            <h6>Your tables</h6>
-            <div>
-              {mine.map((c) => {
-                const on = !state.hiddenCids.includes(c.id);
-                return (
-                  <div key={c.id} className="camp-row" style={{ ["--c" as string]: c.color, ["--accent" as string]: accentInk(c.color) }}>
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      aria-label={`Show ${c.name}`}
-                      onChange={() => store.toggleHidden(c.id)}
-                    />
-                    <Link href={`/campaigns/${c.id}`} style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}>
-                      <span className="sw" />
-                      <span className="name">{c.name}</span>
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-            <h6>Calendar</h6>
-            <Link className="b" style={{ width: "100%" }} href="/invites">Subscribe (webcal)</Link>
-            <p className="fine">Only play dates go to your calendar, for the campaigns you have switched on.</p>
-            <h6>Invites</h6>
-            <div>
-              {state.invites.filter((i) => i.status === "pending" && (!i.email || i.email === state.me.email)).map((invite) => {
-                const campaign = state.campaigns.find((c) => c.id === invite.cid);
-                if (!campaign || mine.some((c) => c.id === campaign.id)) return null;
-                return (
-                  <Link key={invite.token} href={`/invite/${invite.token}`} className="camp-row" style={{ ["--c" as string]: "#9aa1a9" }}>
-                    <span className="sw" />
-                    <span className="name">{campaign.name}</span>
-                    <span className="n">Accept</span>
-                  </Link>
-                );
-              })}
-              {invites === 0 && <p className="fine">No open invites.</p>}
-            </div>
-          </aside>}
-          <div className="main">{children}</div>
+            <hr className="hair" />
+            <button className="item" onClick={() => setPanel(panel === "profile" ? null : "profile")}><Icon name="shield" />Profile &amp; characters</button>
+            {panel === "profile" && (
+              <div className="panel">
+                {mine.map((c) => {
+                  const member = (state.members[c.id] || []).find((m) => m.id === state.me.id);
+                  return <div key={c.id}><b>{member?.characterName || state.me.displayName}</b><div className="note">{c.name}{member?.role === "organizer" ? " · GM" : ""}</div></div>;
+                })}
+                {mine.length === 0 && <p className="note">You&apos;re not at a table yet.</p>}
+              </div>
+            )}
+            <button className="item" onClick={() => setPanel(panel === "calendar" ? null : "calendar")}><Icon name="link" />Calendar subscription</button>
+            {panel === "calendar" && (
+              <div className="panel">
+                <p className="note">Only play dates, for the campaigns you haven&apos;t hidden.</p>
+                <a className="btn sec sm" href={webcal}>Apple / Outlook</a>
+                <a className="btn sec sm" href={`https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcal)}`}>Google Calendar</a>
+                <button className="btn ghost sm" onClick={() => void navigator.clipboard.writeText(webcal || feed)}>Copy link</button>
+              </div>
+            )}
+            <button className="item" onClick={() => setPanel(panel === "mail" ? null : "mail")}><Icon name="inv" />Notification emails</button>
+            {panel === "mail" && <div className="panel"><p className="note">Session reminders go to {state.me.email || "the email you signed in with"}.</p></div>}
+            <button className="item" role="menuitemcheckbox" aria-checked={night} onClick={() => store.setTheme(night ? "light" : "dark")}>
+              <Icon name="moon" />Night theme<span className="tog" />
+            </button>
+            <hr className="hair" />
+            <button className="item out" onClick={() => { setMenu(false); void store.signOut(); }}>Sign out</button>
+          </div>
         </div>
       )}
-      <nav className="tabbar" aria-label="Primary">
-        <Link href="/" className={tab === "home" ? "on" : ""}><span aria-hidden>🎲</span>Play dates</Link>
-        <Link href="/campaigns" className={tab === "campaigns" ? "on" : ""}><span aria-hidden>🛡</span>Campaigns</Link>
-        <Link href="/polls" className={tab === "polls" ? "on" : ""}><span aria-hidden>🗳</span>Polls</Link>
-        <Link href="/invites" className={tab === "invites" ? "on" : ""}><span aria-hidden>✉</span>Invites</Link>
-      </nav>
       {help && (
-        <div className="toasts" style={{ bottom: "auto", top: 72 }}>
+        <div className="toasts" style={{ bottom: "auto", top: 80 }}>
           <div className="card help" role="dialog" aria-label="Keyboard shortcuts">
             <b>Shortcuts</b>
             <p><kbd>j</kbd> <kbd>k</kbd> move through play dates</p>
             <p><kbd>c</kbd> can&apos;t make it, or come back</p>
-            <p><kbd>y</kbd> <kbd>n</kbd> <kbd>m</kbd> when a session asks for RSVPs</p>
             <p><kbd>?</kbd> this card · <kbd>esc</kbd> close</p>
-            <button className="b" onClick={() => setHelp(false)}>Close</button>
+            <button className="btn sec sm" onClick={() => setHelp(false)}>Close</button>
           </div>
         </div>
       )}
@@ -156,10 +157,10 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
         {store.toasts.map((t) => (
           <div key={t.id} className={`toast${t.tone === "err" ? " err" : ""}`}>
             <span>{t.text}</span>
-            <button className="b" onClick={() => store.dismissToast(t.id)}>OK</button>
+            <button className="btn sec sm" onClick={() => store.dismissToast(t.id)}>OK</button>
           </div>
         ))}
       </div>
-      </>
+    </>
   );
 }

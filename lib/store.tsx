@@ -20,7 +20,6 @@ export type StoreApi = {
   mode: "demo" | "live";
   online: boolean;
   toasts: Toast[];
-  /** Night is opt-in. "system" is treated as daylight. */
   theme: "light" | "dark" | "system";
   resolvedTheme: "light" | "dark";
   setTheme: (theme: "light" | "dark" | "system") => void;

@@ -1,24 +1,20 @@
-/** Daylight is the default. Night is only on when someone chose it. */
-export type ThemeChoice = "light" | "dark";
+export type ThemeChoice = "light" | "dark" | "system";
 
-export function readThemeChoice(): ThemeChoice {
+/** Cream is the default. Night is only an explicit stored choice. "system" is rewritten to light. */
+export function readStoredTheme(): ThemeChoice {
   try {
     const saved = window.localStorage.getItem("tpk-theme");
+    if (saved === "dark" || saved === "night") return "dark";
     if (saved === "system") window.localStorage.setItem("tpk-theme", "light");
-    return saved === "dark" ? "dark" : "light";
+    return "light";
   } catch {
     return "light";
   }
 }
 
-export function writeThemeChoice(theme: ThemeChoice) {
-  try {
-    window.localStorage.setItem("tpk-theme", theme);
-  } catch { /* private mode */ }
-}
-
-export function applyThemeChoice(theme: ThemeChoice) {
-  document.documentElement.dataset.theme = theme;
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#1c1814" : "#f4efe4");
+export function applyTheme(theme: ThemeChoice): "light" | "dark" {
+  const night = theme === "dark";
+  document.documentElement.dataset.theme = night ? "night" : "cream";
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", night ? "#0F1218" : "#F3EDE1");
+  return night ? "dark" : "light";
 }

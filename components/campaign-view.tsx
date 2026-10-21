@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { isOrganizer, isStaff, membersOf, pastSessions, upcomingSessions } from "@/lib/model";
+import { coverSrc } from "@/lib/covers";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
+import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
+import { formatDayHeading } from "@/lib/time";
 import { groupStats } from "@/lib/stats";
 import { weekdayName } from "@/lib/time";
 import type { Cadence, Member, Session, TableCharacter } from "@/lib/types";
 import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
-import { coverArt } from "@/lib/covers";
-import { EmptyState } from "./empty-state";
 import { PlayRow } from "./schedule";
+import { hueClass, Icon } from "./ui";
 
 export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: boolean }) {
   const store = useStore();
@@ -20,70 +22,66 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   const member = (store.state.members[cid] || []).find((m) => m.id === store.state.me.id);
   if (!campaign || !member) {
     return (
-      <>
-        <div className="mh"><h1>Campaign</h1></div>
-        <EmptyState
-          title={store.state.me.id ? "You're not at this table" : "Sign in to open this table"}
-          action={store.state.me.id ? <Link className="b" href="/campaigns">Your campaigns</Link> : <Link className="b p" href="/signin">Sign in</Link>}
-        >
-          {store.state.me.id ? "Campaigns only show up after an invite. If you have a link, open that." : "Use the email your organizer knows. The table opens after you're on the roster."}
-        </EmptyState>
-      </>
+      <div className="card">
+        <h1>You&apos;re not at this table</h1>
+        <p>Campaigns only show up after an invite. If you have a link, open that.</p>
+        <Link className="b" href="/">Back to play dates</Link>
+      </div>
     );
   }
   const upcoming = upcomingSessions(store.state, cid);
   const past = pastSessions(store.state, cid);
-  const stats = groupStats(store.state.sessions.filter((s) => (store.state.members[s.cid] || []).some((m) => m.id === store.state.me.id)));
+  const stats = groupStats(store.state.sessions.filter((s) => s.cid === cid));
   const cadence = campaign.cadence;
   const staff = isStaff(store.state, cid);
-  const organizer = isOrganizer(store.state, cid);
+  const members = membersOf(store.state, cid);
+  const [tab, setTab] = useState<"recaps" | "characters" | "lore">("recaps");
+  const next = upcoming[0];
+  const nextWhen = next ? formatDayHeading(next.startsAt, next.tz) : null;
   return (
     <>
-      {welcome && <div className="todo"><b>You&apos;re in.</b> Add the nights to your calendar whenever you like.</div>}
-      <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})` }}>
-        <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
-        <div className="tx">
-          <small>
-            Organized by {organizerName(store.state.members[cid])}
-            {cadence ? ` · Every ${cadence.interval === 2 ? "other " : cadence.interval > 2 ? `${cadence.interval} ` : ""}${weekdayName(cadence.weekday)} ${prettyTime(cadence.startTime)}` : ""}
-            {campaign.defaultLocation ? ` · ${campaign.defaultLocation}` : ""}
-          </small>
-          <h1>{campaign.icon} {campaign.name}</h1>
+      {welcome && <div className="card" style={{ padding: 16, margin: "16px 0" }}><b>You&apos;re in.</b> <span className="note">Add the nights to your calendar whenever you like.</span></div>}
+      <section className="chero">
+        <img className="art" src={coverSrc(campaign.cover.src, campaign.id)} alt="" />
+        <div className="chin">
+          <div className="eyebrow">Campaign · GM {organizerName(store.state.members[cid])}</div>
+          <h1>{campaign.name}</h1>
+          <p>{campaign.previouslyOn || `${campaign.system || "A tabletop campaign"}${campaign.defaultLocation ? ` at ${campaign.defaultLocation}` : ""}.`}</p>
+          <div className="stats">
+            <span><b>{stats.played || past.filter((s) => s.status !== "cancelled").length}</b>sessions</span>
+            <span><b>{campaign.characters?.length || members.length}</b>heroes</span>
+            <span><b>{nextWhen ? `${nextWhen.dow} ${nextWhen.day}` : "—"}</b>next up</span>
+          </div>
         </div>
       </section>
-      <div className="two">
+      <nav className="seg" aria-label="Campaign sections">
+        {(["recaps", "characters", "lore"] as const).map((id) => (
+          <button key={id} className={tab === id ? "on" : ""} aria-pressed={tab === id} onClick={() => setTab(id)}>{id[0].toUpperCase() + id.slice(1)}</button>
+        ))}
+      </nav>
+      <div className="cg">
         <div>
-          <div className="card ann">
-            <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
-              <b>Two years at this table</b>
-              <span className="tz" style={{ marginLeft: "auto" }}>since {store.state.groupStartedOn.slice(0, 7)} · all your campaigns together</span>
-            </div>
-            <div className="hist" style={{ marginTop: 12 }}>
-              <div><b>{stats.played}</b><small>sessions</small></div>
-              <div><b>{stats.hours}</b><small>hours played</small></div>
-              <div><b>{stats.streak}</b><small>streak</small></div>
-              <div><b>{campaign.partyLevel ? `Lv ${campaign.partyLevel}` : "—"}</b><small>party level</small></div>
-            </div>
-            <div className="dots" style={{ ["--c" as string]: campaign.color }}>
-              {stats.dots.map((dot) => <i key={dot.id} className={dot.played ? "" : "miss"} title={dot.played ? "Played" : "Skipped"} />)}
-            </div>
-            <p className="tz" style={{ marginTop: 8 }}>Every square is a game night. Grey ones were skipped.</p>
-          </div>
-          <div className="mh">
-            <h2 style={{ margin: 0 }}>Play dates</h2>
-            {staff && <CadenceButton cid={cid} />}
-          </div>
-          {upcoming.map((session) => <PlayRow key={session.id} session={session} manage />)}
-          {upcoming.length === 0 && <div className="card">No upcoming play dates. {staff ? "Set the cadence and the nights fill in." : "The organizer hasn't set the next nights yet."}</div>}
-          <RecapHistory cid={cid} past={past} />
-          {staff && (
-            <Previously cid={cid} value={campaign.previouslyOn || ""} />
+          {tab === "recaps" && <RecapHistory cid={cid} past={past} staff={staff} />}
+          {tab === "characters" && <CharacterGrid cid={cid} />}
+          {tab === "lore" && (
+            <>
+              <Previously cid={cid} value={campaign.previouslyOn || ""} />
+              <div className="card" style={{ padding: 24, marginTop: 16 }}>
+                <div className="eyebrow">At the table</div>
+                <p>{cadence ? `Every ${cadence.interval === 2 ? "other " : cadence.interval > 2 ? `${cadence.interval} weeks on ` : ""}${weekdayName(cadence.weekday)} at ${prettyTime(cadence.startTime)}.` : "No regular night yet."}</p>
+                <p className="note">{campaign.defaultLocation} · {campaign.tz}</p>
+                {campaign.partyLevel ? <p className="note">Party level {campaign.partyLevel}. {stats.hours} hours at this table.</p> : null}
+              </div>
+              <CalendarCard cid={cid} />
+            </>
           )}
+          <div className="sec-h" style={{ marginTop: 40 }}><h2>Coming up</h2>{staff && <CadenceButton cid={cid} />}</div>
+          <div className="card list">
+            {upcoming.map((session) => <PlayRow key={session.id} session={session} manage />)}
+            {upcoming.length === 0 && <p className="note" style={{ padding: 20 }}>{staff ? "Set the cadence and the nights fill in." : "The organizer hasn't set the next nights yet."}</p>}
+          </div>
         </div>
-        <div>
-          <CalendarCard cid={cid} />
-          <PartyCard cid={cid} />
-        </div>
+        <div><PartyCard cid={cid} /></div>
       </div>
     </>
   );
@@ -177,36 +175,83 @@ function CadenceButton({ cid }: { cid: string }) {
   );
 }
 
-function RecapHistory({ cid, past }: { cid: string; past: Session[] }) {
+function RecapHistory({ cid, past, staff }: { cid: string; past: Session[]; staff: boolean }) {
   const recaps = past.filter((session) => hasRecap(session));
-  const unwritten = past.filter((session) => session.status !== "cancelled" && !hasRecap(session)).slice(0, 4);
+  const latest = recaps[0];
+  const older = recaps.slice(1);
+  const unwritten = past.filter((session) => session.status !== "cancelled" && !hasRecap(session))[0];
   return (
-    <div className="card">
-      <b>Recaps · {recaps.length}</b>
-      <p className="tz">Notes and PDFs from nights already played. {past.filter((session) => session.status !== "cancelled").length} sessions on the books.</p>
-      <div className="recap-list">
-        {recaps.map((session) => (
-          <Link key={session.id} href={`/campaigns/${cid}/sessions/${session.id}`}>
-            <span className="tz">{session.occurrenceKey}</span>
-            <span>
-              <h3>{session.title}</h3>
-              <p>{excerpt(recapPlain(session), 140) || "PDF recap"}</p>
-            </span>
-            {session.pdfName ? <span className="chip">PDF</span> : <span />}
-          </Link>
-        ))}
-        {recaps.length === 0 && <p>No recaps yet.</p>}
-        {unwritten.map((session) => (
-          <Link key={session.id} href={`/campaigns/${cid}/sessions/${session.id}`}>
-            <span className="tz">{session.occurrenceKey}</span>
-            <span>
-              <h3>{session.title}</h3>
-              <p className="tz">No recap yet</p>
-            </span>
-            <span />
-          </Link>
-        ))}
+    <>
+      <div className="sec-h">
+        <h2>Latest recap</h2>
+        {staff && <Link className="btn ghost sm" href={unwritten ? `/campaigns/${cid}/sessions/${unwritten.id}` : `/campaigns/${cid}`}><Icon name="plus" className="ic sm" />Add</Link>}
       </div>
+      {latest ? <RecapCard cid={cid} session={latest} featured /> : <div className="card" style={{ padding: 24 }}><p className="note">No recap yet.{staff ? " Write one from the latest night." : ""}</p></div>}
+      {(older.length > 0) && (
+        <div className="card list older" style={{ marginTop: 16 }}>
+          {older.map((session) => (
+            <Link key={session.id} className="row" href={`/campaigns/${cid}/sessions/${session.id}`}>
+              <span className="sn">{sessionNumber(session.title)}</span>
+              <div className="t"><b>{session.title}</b><span>{session.occurrenceKey}{session.pdfName ? " · PDF" : ""}</span></div>
+            </Link>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function sessionNumber(title: string): string {
+  const match = title.match(/(\d+)/);
+  return match ? match[1] : "·";
+}
+
+function RecapCard({ cid, session, featured = false }: { cid: string; session: Session; featured?: boolean }) {
+  const html = session.recapHtml || "";
+  const text = recapPlain(session);
+  return (
+    <article className="card recap">
+      {featured && <span className="ribbon gold" />}
+      <div className="eyebrow">Session {sessionNumber(session.title)} · {session.occurrenceKey}</div>
+      <h3><Link href={`/campaigns/${cid}/sessions/${session.id}`}>{session.title}</Link></h3>
+      <div className="by">{excerpt(text, 80) ? "From the table" : "PDF recap"}</div>
+      <div className="body">
+        {html ? <div className="reader" dangerouslySetInnerHTML={{ __html: sanitizeRecapHtml(html) }} /> : <p>{excerpt(text, 420) || "The notes for this night are attached as a PDF."}</p>}
+      </div>
+      {(session.pdfName || session.pdfPath) && (
+        <div className="pdf">
+          <span className="pi">PDF</span>
+          <div><b>{session.pdfName || "Session notes.pdf"}</b><span className="note">{session.pdfPath}</span></div>
+          <Link className="btn sec sm" href={`/campaigns/${cid}/sessions/${session.id}`} aria-label="Open recap"><Icon name="down" className="ic sm" /></Link>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function CharacterGrid({ cid }: { cid: string }) {
+  const { state } = useStore();
+  const campaign = state.campaigns.find((c) => c.id === cid);
+  const members = membersOf(state, cid);
+  const characters = campaign?.characters?.length
+    ? campaign.characters.map((character) => ({
+        key: character.name,
+        name: character.name,
+        line: [character.charClass, character.subclass, character.level ? `level ${character.level}` : ""].filter(Boolean).join(" · ") || "No class on file",
+      }))
+    : members.map((m) => ({
+        key: m.id,
+        name: m.characterName || m.displayName,
+        line: `${m.role === "organizer" ? "GM" : "Player"} · ${m.displayName}`,
+      }));
+  return (
+    <div className="chars">
+      {characters.map((character) => (
+        <div key={character.key} className="card chr">
+          <span className={`por ${hueClass(character.key)}`}>{character.name.slice(0, 1)}</span>
+          <div><b>{character.name}</b><br /><span>{character.line}</span></div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -371,7 +416,7 @@ function CharacterRoster({ characters }: { characters: TableCharacter[] }) {
 
 function Toggle({ on, title, detail, onClick }: { on: boolean; title: string; detail: string; onClick: () => void }) {
   return (
-    <div className="tog">
+    <div className="pref">
       <span><b>{title}</b><br /><span className="tz">{detail}</span></span>
       <button className="switch" role="switch" aria-checked={on} aria-label={title} onClick={onClick}><i /></button>
     </div>
