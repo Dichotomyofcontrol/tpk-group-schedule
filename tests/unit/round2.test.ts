@@ -24,3 +24,14 @@ test("countPdfPages reads page objects", async () => {
   assert.equal(await countPdfPages(pdf), 2);
   assert.equal(await countPdfPages(new Blob(["nothing"])), undefined);
 });
+
+test("untitled sessions read as Session N, never the campaign name twice", async () => {
+  const { sessionTitle, ownTitle } = await import("../../lib/model");
+  const c = { id: "c", name: "ZZ Camp" };
+  const s = (id: string, at: string, title = "") => ({ id, cid: "c", startsAt: at, status: "scheduled", title });
+  const state = { campaigns: [c], sessions: [s("a", "2026-01-01", "ZZ Camp"), s("b", "2026-01-08"), s("x", "2026-01-15", "The Heist")] } as never;
+  assert.equal(sessionTitle(state, (state as { sessions: never[] }).sessions[0]), "Session 1");
+  assert.equal(sessionTitle(state, (state as { sessions: never[] }).sessions[1]), "Session 2");
+  assert.equal(sessionTitle(state, (state as { sessions: never[] }).sessions[2]), "The Heist");
+  assert.equal(ownTitle({ title: "zz camp" }, "ZZ Camp"), "");
+});

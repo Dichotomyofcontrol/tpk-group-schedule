@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions } from "@/lib/model";
+import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions , sessionTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, weekdayName } from "@/lib/time";
@@ -99,7 +99,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
                   <Link key={s.id} className="srow rrow" href={sessionHref(s)}>
                     <span className="st">
                       <span className="cn">{`${when.dow[0]}${when.dow.slice(1).toLowerCase()} ${when.mon[0]}${when.mon.slice(1).toLowerCase()} ${when.day}`}</span>
-                      <b>{s.title}</b>
+                      <b>{sessionTitle(store.state, s)}</b>
                       {text && <span className="note">{text}</span>}
                     </span>
                     {sessionFiles(s).length > 0 && <span className="ficon sm" aria-label="Has a PDF">PDF</span>}

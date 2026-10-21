@@ -91,7 +91,7 @@ function sessionFrom(id: string, cid: string, data: DocumentData): Session {
     startsAt: data.startsAt,
     endsAt: data.endsAt,
     tz: data.tz || "America/Los_Angeles",
-    title: data.title || "Session",
+    title: typeof data.title === "string" ? data.title : "",
     location: data.location || "",
     status: data.status === "cancelled" ? "cancelled" : "scheduled",
     exception: data.exception ?? null,

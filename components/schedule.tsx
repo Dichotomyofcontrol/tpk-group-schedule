@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, isStaff, membersOf } from "@/lib/model";
+import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, formatTime, relativeWhen } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
@@ -36,7 +36,7 @@ export function SessionRow({ session, showCampaign = false }: { session: Session
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
         {showCampaign && <span className="cn"><i className="dot" style={{ background: campaign.color }} />{campaign.name}</span>}
-        <b>{session.title}</b>
+        <b>{sessionTitle(store.state, session)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
       </span>
       <span className={count.warn ? "status warn" : "status"}>{count.text}</span>
@@ -97,12 +97,12 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
   const time = formatTime(new Date(session.startsAt), session.tz);
   return (
     <article className="card hero">
-      <Link href={sessionHref(session)} className="hero-cover" aria-label={`Open ${session.title}`}>
+      <Link href={sessionHref(session)} className="hero-cover" aria-label={`Open ${sessionTitle(store.state, session)}`}>
         <CampaignCover campaign={campaign} />
       </Link>
       <div className="hb">
         <div className="eyebrow ver">Up next · {soon}</div>
-        <h2><Link href={sessionHref(session)}>{session.title}</Link></h2>
+        <h2><Link href={sessionHref(session)}>{sessionTitle(store.state, session)}</Link></h2>
         <p className="hmeta">{[showCampaign ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time, session.location].filter(Boolean).join(" · ")}</p>
         <PartyChips session={session} />
         <RsvpControl session={session} />
