@@ -7,6 +7,7 @@ function pub(name: string, legacy: string): string {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  devIndicators: false,
   eslint: { ignoreDuringBuilds: true },
   // The current Vercel project already has FIREBASE_* (no NEXT_PUBLIC_ prefix).
   // Map them so a later live cutover can reuse those values. Demo mode never initializes Firebase.

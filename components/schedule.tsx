@@ -172,16 +172,16 @@ export function Hero({ session }: { session: Session }) {
       <div className="tx">
         <div className="kick">Next session · {relativeWhen(session.startsAt, store.state.me.tz).toLowerCase()}</div>
         <h2>{campaign.name}</h2>
-        <div>{session.title}</div>
-        <p className="big" style={{ margin: "10px 0 0" }}>{when}</p>
-        <div className="tz">{zoneLong(session.tz)} · shown in your time zone</div>
-        <p style={{ margin: "8px 0 0", fontSize: 14 }}>
+        <p className="hero-session">{session.title}</p>
+        <p className="big hero-when">{when}</p>
+        <p className="tz hero-zone">{zoneLong(session.tz)} · shown in your time zone</p>
+        <p className="hero-place">
           {session.location}
           {snack ? ` · Snacks: ${snack}` : ""}
         </p>
-        <div style={{ margin: "10px 0" }}>
+        <div className="hero-party">
           <Stack members={members} grey={grey} color={campaign.color} />
-          <div className="hc" style={{ marginTop: 6 }}>{headcountLabel(campaign, session, members)}</div>
+          <div className="hc">{headcountLabel(campaign, session, members)}</div>
         </div>
         {campaign.previouslyOn && (
           <Link className="prev" href={campaign.previouslyOnSessionId ? `/campaigns/${campaign.id}/sessions/${campaign.previouslyOnSessionId}` : `/campaigns/${campaign.id}`}>
@@ -189,7 +189,7 @@ export function Hero({ session }: { session: Session }) {
             <cite>Previously on {campaign.name}</cite>
           </Link>
         )}
-        <div className="actions" style={{ marginTop: 10 }}>
+        <div className="actions">
           {mine === "out" ? (
             <button className="b" onClick={() => store.mark(session.id, store.state.me.id, "in")}>I&apos;m back in</button>
           ) : (
