@@ -116,6 +116,15 @@ function attendanceMap(list: Attendance[]): Record<string, Attendance> {
   return out;
 }
 
+/** API routes verify a Firebase ID token, so every call carries the signed-in user's bearer. */
+async function authedFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const user = getFirebase().auth.currentUser;
+  const token = user ? await user.getIdToken().catch(() => "") : "";
+  const headers = new Headers(init.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+}
+
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -180,8 +189,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       if (!snap.exists()) {
         await setDoc(userRef, { email: me.email, displayName: me.displayName, tz: me.tz, hiddenCids: ["special"] });
       }
-      const idToken = await authUser.getIdToken().catch(() => "");
-      await fetch("/api/auth/link", { method: "POST", headers: idToken ? { Authorization: `Bearer ${idToken}` } : {} }).catch(() => undefined);
+      await authedFetch("/api/auth/link", { method: "POST" }).catch(() => undefined);
     });
 
     const unsubs: Array<() => void> = [];
@@ -463,7 +471,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         }
       },
       transfer: (cid, uid) => {
-        void fetch(`/api/campaigns/${cid}/transfer`, { method: "POST", body: JSON.stringify({ uid }) });
+        void authedFetch(`/api/campaigns/${cid}/transfer`, { method: "POST", body: JSON.stringify({ uid }) });
         applyLocal((s) => transferOrganizer(s, cid, uid));
       },
       removeMember: (cid, memberId) => {
@@ -539,7 +547,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           return null;
         }
         const invite = result.invites[result.invites.length - 1];
-        void fetch("/api/invites", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cid, role, email }) })
+        void authedFetch("/api/invites", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cid, role, email }) })
           .then(async (res) => {
             if (!res.ok) throw new Error(await res.text());
             const body = await res.json() as { token?: string };
@@ -552,7 +560,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       },
       acceptInvite: (token, person) => {
         const me = person ?? { id: authUser.uid, email: authUser.email || "", displayName: state.me.displayName };
-        void fetch(`/api/invites/${token}/accept`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(me) })
+        void authedFetch(`/api/invites/${token}/accept`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(me) })
           .then(async (res) => {
             if (!res.ok) flash("Couldn't accept that invite.", "err");
           });
