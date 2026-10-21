@@ -81,6 +81,7 @@ page('signin.html','Sign in · Six in the TPK',si,S_CSS,f'<header class="hdr">{B
 
 # ---------- PLAY DATES ----------
 D_CSS='''
+.vseg{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(160,130,90,.12);width:fit-content;margin:0 0 16px}.vseg a{height:44px;min-width:44px;padding:0 18px;display:flex;align-items:center;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink2)}.vseg a.on{background:var(--paper);color:var(--ink);box-shadow:var(--sh)}
 .next{overflow:hidden;margin-bottom:32px}
 .next .cover{height:168px}
 .next .ctop{position:absolute;left:20px;right:72px;bottom:16px;z-index:2;color:#FBF8F2}
@@ -127,6 +128,7 @@ rows=[(30,'Fri','Oct','Session 15 · The Drowned Crown','7:00 PM · Seth\'s plac
 (13,'Fri','Nov','Session 16 · The Drowned Crown','7:00 PM · Seth\'s place',5,(),'tide','ship','All 6 in')]
 rh=''.join(f'<a class="row" href="#"><div class="dt"><span class="dw">{w}</span><span class="dn">{d}</span><span class="dm">{m}</span></div><div class="t"><b>{t}</b><span>{s}</span><div style="margin-top:8px;display:flex;gap:12px;align-items:center">{stack(o)}<span class="status{" warn" if o else ""}">{st}</span></div></div><div class="thumb">{cover(sd,P[p],f,"art")}</div></a>' for d,w,m,t,s,sd,o,p,f,st in rows)
 pd=f'''<main><div class="ptitle"><div><div class="eyebrow">Tuesday, October 20</div><h1 class="lt">Play dates</h1></div><a class="btn sec sm" href="#">{ic("plus","ic sm")}New</a></div>
+<nav class="vseg" aria-label="View"><a class="on" href="playdates.html" aria-current="page">Up next</a><a href="schedule.html">Schedule</a></nav>
 <div class="grid"><div>
 <article class="card next"><span class="ribbon"></span><div class="cover">{cover(7,P["emb"],"tower")}<div class="ctop"><div class="eyebrow">Up next · in 3 days</div><h2>Ashes of Emberfall</h2></div></div>
 <div class="nb"><div class="when"><div class="dt"><span class="dw">Fri</span><span class="dn">23</span><span class="dm">Oct</span></div><span class="vr"></span><div class="meta"><div>{ic("clock")}7:30 – 11:00 PM</div><div>{ic("pin")}Discord · #emberfall-table</div><div>{ic("quill")}Session 6 — The Cinder Vault</div></div></div>
@@ -261,3 +263,113 @@ iv=f'''<main><div class="ptitle"><div><div class="eyebrow">1 waiting for you</di
 <div class="lnk">{ic("link","ic sm")}<code>sixinthetpk.com/i/emberfall-7Kq2</code><button class="btn sec sm">Copy</button></div></div></section></div></main>{tabs("inv")}'''
 page('invites.html','Invites · Six in the TPK',iv,IV_CSS,HD("inv"))
 page('invites-night.html','Invites · Six in the TPK',iv,IV_CSS,HD("inv"),'night')
+
+# ---------- SCHEDULE (multi-campaign, multi-month) ----------
+import datetime as _dt, calendar as _cal
+CAMPS={'emb':('Ashes of Emberfall','#B4542C',7,'emb','tower','GM'),'tide':('The Drowned Crown','#3D6F74',3,'tide','ship','Player'),'wood':('Wildwood Oath','#5E7040',11,'wood','tree','Player')}
+EV=[]
+d=_dt.date(2026,10,23); n=6
+while d<=_dt.date(2027,1,22):
+    if d!=_dt.date(2027,1,1): EV.append((d,'emb',f'Session {n}','7:30 PM · Discord')); n+=1
+    d+=_dt.timedelta(14)
+d=_dt.date(2026,10,30); n=15
+while d<=_dt.date(2027,1,22):
+    if d!=_dt.date(2026,12,25): EV.append((d,'tide',f'Session {n}',"7:00 PM · Seth's place")); n+=1
+    d+=_dt.timedelta(14)
+for dd,nn in [((2026,11,1),9),((2026,12,6),10),((2027,1,3),11)]: EV.append((_dt.date(*dd),'wood',f'Session {nn}','2:00 PM · Ana\'s table'))
+EV.append((_dt.date(2026,11,7),'emb','Arc two kickoff?','Poll open · 5 of 6 voted · closes Sun','poll'))
+EV.sort(key=lambda e:e[0])
+OUT={_dt.date(2026,11,20),_dt.date(2026,12,11)}
+SC_CSS=D_CSS+'''
+.vseg{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(160,130,90,.12);width:fit-content;margin:0 0 16px}
+.vseg a{height:44px;min-width:44px;padding:0 18px;display:flex;align-items:center;border-radius:999px;font-size:14px;font-weight:500;color:var(--ink2)}
+.vseg a.on{background:var(--paper);color:var(--ink);box-shadow:var(--sh)}
+.chips{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px 8px;padding:4px 20px 12px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.chips::-webkit-scrollbar{display:none}
+.chip{scroll-snap-align:start;flex:none;display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 16px 0 6px;border-radius:999px;background:var(--paper);border:.5px solid var(--rule2);font-size:14px;font-weight:500;color:var(--ink2);box-shadow:var(--sh)}
+.chip.all{padding:0 18px}
+.chip.on{background:var(--ink);color:var(--onbtn,var(--paper));border-color:var(--ink)}
+.chip .tn{width:32px;height:32px;border-radius:50%;overflow:hidden;position:relative;box-shadow:0 0 0 2px var(--cc)}
+.chip .tn svg{position:absolute;inset:0;width:100%;height:100%}
+.month{margin-top:24px}
+.mh{position:sticky;top:calc(56px + var(--safe-t));z-index:5;display:flex;align-items:baseline;gap:12px;padding:12px 0 12px;background:linear-gradient(var(--bg) 80%,transparent);scroll-margin-top:72px}
+.mh h2{font-size:30px;line-height:36px;font-weight:400;letter-spacing:-.02em}
+.mh h2 em{font-style:italic;color:var(--ink3);font-size:20px;margin-left:4px}
+.mh .note{margin-left:auto}
+.ev{display:flex;gap:16px;align-items:center;padding:14px 16px 14px 20px;min-height:84px;position:relative;overflow:hidden;scroll-margin-top:140px}
+.ev::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cc)}
+.evs{display:grid;gap:8px}
+.ev .t{flex:1;min-width:0}
+.ev .t b{display:block;font:500 17px/22px var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .cn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--cc);margin-bottom:2px;letter-spacing:.01em}
+.ev .meta{font-size:13px;color:var(--ink3)}
+.ev .thumb{width:48px;height:48px;border-radius:10px}
+.you{font:600 11px/16px var(--ui);letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;white-space:nowrap;background:rgba(78,107,79,.10);color:var(--moss)}
+.you.out{background:rgba(158,47,31,.08);color:var(--ver)}
+.you.tent{background:transparent;border:1px dashed var(--rule2);color:var(--ink3)}
+.ev.poll{background:transparent;box-shadow:none;border:1.5px dashed var(--rule2)}
+.ev.poll::before{background:repeating-linear-gradient(var(--cc) 0 6px,transparent 6px 10px)}
+.ev.poll .dt .dn{color:var(--ink3)}
+.ev.isout .dt .dn,.ev.isout .t b{color:var(--ink3)}
+.ev.isout .t b{text-decoration:line-through;text-decoration-color:var(--ver);text-decoration-thickness:1.5px}
+:root[data-theme=night] .ev .cn{filter:brightness(1.6) saturate(.9)}
+.ev .rt{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.ov{display:none}
+@media(min-width:900px){
+ .mh{top:68px}.chips{margin:0 0 8px;padding:4px 0 12px;-webkit-mask-image:none;flex-wrap:wrap}
+ .sgrid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px;align-items:start}
+ .ov{display:block;position:sticky;top:92px;margin-top:4px}
+ .mo{padding:16px 16px 12px}
+ .mos{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
+ .mg h4{margin:0 0 6px;font:500 15px/20px var(--serif);display:flex;justify-content:space-between}.mg h4 span{font:500 11px var(--ui);color:var(--ink3);letter-spacing:.06em}
+ .mg .g{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center}
+ .mg .wd{font:600 9px/14px var(--ui);color:var(--ink3);letter-spacing:.06em}
+ .mg .c{position:relative;height:22px;font:500 11px/17px var(--ui);color:var(--ink2);border-radius:6px;font-variant-numeric:tabular-nums}
+ .mg a.c{color:var(--ink);font-weight:700}
+ .mg a.c:hover{background:var(--paper2)}
+ .mg .c.today{box-shadow:inset 0 0 0 1.5px var(--ink)}
+ .mg .c.past{color:var(--rule2)}
+ .mg .k{position:absolute;left:50%;bottom:1px;transform:translateX(-50%);display:flex;gap:2px}
+ .mg .k i{width:10px;height:3px;border-radius:2px;background:var(--cc)}
+ .mg .k i.p{background:repeating-linear-gradient(90deg,var(--cc) 0 3px,transparent 3px 5px)}
+ .mg .k i.o{opacity:.35}
+ .leg{display:grid;gap:6px;margin-top:12px;padding-top:12px;border-top:.5px solid var(--rule2);font-size:12.5px;color:var(--ink2)}
+ .leg span{display:flex;align-items:center;gap:8px}.leg i{width:14px;height:3px;border-radius:2px;background:var(--cc)}
+}
+'''
+def thumbsvg(k):
+    nm,cc,sd,pal,ft,_=CAMPS[k]; return cover(sd,P[pal],ft)
+chips='<div class="chips" role="tablist" aria-label="Filter by campaign"><a class="chip all on" role="tab" aria-selected="true" href="#">All</a>'+''.join(f'<a class="chip" role="tab" href="#" style="--cc:{v[1]}"><span class="tn">{thumbsvg(k)}</span>{v[0]}</a>' for k,v in CAMPS.items())+'</div>'
+TODAY=_dt.date(2026,10,20)
+months={}
+for e in EV: months.setdefault((e[0].year,e[0].month),[]).append(e)
+lst=''
+for (y,m),evs in months.items():
+    cnt=len([e for e in evs if len(e)==4])
+    lst+=f'<section class="month" id="m-{y}-{m}"><div class="mh"><h2>{_cal.month_name[m]}<em>{y}</em></h2><span class="note">{cnt} session{"s" if cnt!=1 else ""}</span></div><div class="evs">'
+    for e in evs:
+        d,k,t,meta=e[:4]; poll=len(e)>4; nm,cc,*_=CAMPS[k]; out=d in OUT
+        you='<span class="you tent">Tentative</span>' if poll else ('<span class="you out">You\'re out</span>' if out else '<span class="you">You\'re in</span>')
+        cls='card ev'+(' poll' if poll else '')+(' isout' if out else '')
+        lst+=f'<a class="{cls}" id="d-{d.isoformat()}" href="#" style="--cc:{cc}"><div class="dt"><span class="dw">{d.strftime("%a")}</span><span class="dn">{d.day}</span></div><div class="t"><span class="cn">{nm}</span><b>{t}</b><span class="meta">{meta}</span></div><div class="rt">{"" if poll else "<span class=thumb style=width:40px;height:40px;border-radius:10px>"+thumbsvg(k)+"</span>"}{you}</div></a>'
+    lst+='</div></section>'
+ovh=''
+for (y,m) in [(2026,10),(2026,11),(2026,12),(2027,1)]:
+    first,nd=_cal.monthrange(y,m); evd={}
+    for e in EV:
+        if (e[0].year,e[0].month)==(y,m): evd.setdefault(e[0].day,[]).append(e)
+    cells=''.join(f'<span class="wd">{w}</span>' for w in 'MTWTFSS')+'<span></span>'*first
+    for day in range(1,nd+1):
+        dd=_dt.date(y,m,day); cl='c'+(' today' if dd==TODAY else '')+(' past' if dd<TODAY else '')
+        if day in evd:
+            ks=''.join(f'<i class="{"p" if len(e)>4 else ("o" if e[0] in OUT else "")}" style="--cc:{CAMPS[e[1]][1]}"></i>' for e in evd[day])
+            cells+=f'<a class="{cl}" href="#d-{dd.isoformat()}" aria-label="{dd.strftime("%b %-d")}: {", ".join(CAMPS[e[1]][0] for e in evd[day])}">{day}<span class="k">{ks}</span></a>'
+        else: cells+=f'<span class="{cl}">{day}</span>'
+    ovh+=f'<div class="mg"><h4><a href="#m-{y}-{m}">{_cal.month_abbr[m]}</a><span>{len([1 for e in EV if (e[0].year,e[0].month)==(y,m) and len(e)==4])}</span></h4><div class="g">{cells}</div></div>'
+leg='<div class="leg">'+''.join(f'<span style="--cc:{v[1]}"><i></i>{v[0]}<em style="margin-left:auto;font-style:normal;color:var(--ink3)">{v[5]}</em></span>' for v in CAMPS.values())+'<span style="--cc:var(--ink3)"><i style="background:repeating-linear-gradient(90deg,var(--ink3) 0 3px,transparent 3px 5px)"></i>Poll date (tentative)</span></div>'
+sc=f'''<main><div class="ptitle"><div><div class="eyebrow">Next 3 months · 3 tables</div><h1 class="lt">Play dates</h1></div><a class="btn sec sm" href="#">{ic("plus","ic sm")}New</a></div>
+<nav class="vseg" aria-label="View"><a href="playdates.html">Up next</a><a class="on" href="schedule.html" aria-current="page">Schedule</a></nav>
+<div class="sgrid"><div>{chips}{lst}<p class="note" style="text-align:center;margin:32px 0 0">Sessions repeat every other Friday for Emberfall and The Drowned Crown, and the first Sunday of the month for Wildwood Oath. Subscribe in the account menu to get them in your calendar.</p></div>
+<aside class="ov card mo" aria-label="Month overview"><div class="mos">{ovh}</div>{leg}</aside></div></main>{tabs("dates")}'''
+page('schedule.html','Schedule · Play dates · Six in the TPK',sc,SC_CSS,HD("dates"))
+page('schedule-night.html','Schedule · Play dates · Six in the TPK',sc,SC_CSS,HD("dates"),'night')
