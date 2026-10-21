@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   isSignInWithEmailLink,
   onAuthStateChanged,
-  sendSignInLinkToEmail,
   signInWithEmailLink,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
@@ -22,7 +21,6 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebase } from "./firebase-client";
-import { magicLinkContinueUrl } from "./magic-link";
 import { applyTheme, readStoredTheme } from "./theme";
 import { nestedRecapPath, validatePdf } from "./recap";
 import {
@@ -305,9 +303,15 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         flash("Firebase isn't configured on this deploy yet.", "err");
         return;
       }
-      const { auth } = getFirebase();
-      const url = magicLinkContinueUrl(window.location.origin, inviteToken);
-      await sendSignInLinkToEmail(auth, email, { url, handleCodeInApp: true });
+      const res = await fetch("/api/auth/send-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, invite: inviteToken }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(data.error || "Couldn't send the sign-in link. Try again.");
+      }
       window.localStorage.setItem("tpk-email", email);
     },
     finishMagicLink: async (email?: string) => {
