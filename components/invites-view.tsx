@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { canInvite, isOrganizer, memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import type { Invite } from "@/lib/types";
+import Link from "next/link";
+import { EmptyState } from "./empty-state";
 
 export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   const store = useStore();
@@ -19,6 +21,29 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   useEffect(() => setOrigin(window.location.origin), []);
   const feed = `${origin}/api/cal/${state.me.calToken}.ics?hide=${state.hiddenCids.join(",")}`;
   const webcal = feed.replace(/^https?:/, "webcal:");
+  if (!state.me.id) {
+    return (
+      <>
+        <div className="mh"><h1>Invites</h1></div>
+        <EmptyState title="Sign in to manage invites" action={<Link className="b p" href="/signin">Sign in</Link>}>
+          Calendar subscriptions and invite links stay with your account.
+        </EmptyState>
+      </>
+    );
+  }
+  if (mine.length === 0) {
+    return (
+      <>
+        <div className="mh"><h1>Invites</h1></div>
+        <EmptyState
+          title="You're not on a table yet"
+          action={state.me.canCreateCampaigns ? <Link className="b p" href="/campaigns/new">New campaign</Link> : undefined}
+        >
+          Ask your organizer for an invite link. Subscriptions and new invites show up once you have a table.
+        </EmptyState>
+      </>
+    );
+  }
   return (
     <>
       <div className="mh"><h1>Invites & calendar</h1></div>
@@ -96,7 +121,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
 function InviteList() {
   const { state } = useStore();
   const rows = state.invites.filter((i) => i.status === "pending" && (i.createdBy === state.me.id || !i.email || i.email === state.me.email));
-  if (!rows.length) return <p className="tz">No open invites.</p>;
+  if (!rows.length) return <p className="tz">No open invites. Copy a link above when you want to add someone.</p>;
   return (
     <ul>
       {rows.map((invite) => {

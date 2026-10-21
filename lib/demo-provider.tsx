@@ -25,7 +25,18 @@ import {
   transferOrganizer,
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
-import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Session, Toast } from "./types";
+import { magicLinkContinueUrl } from "./magic-link";
+import { applyThemeChoice, readThemeChoice, writeThemeChoice, type ThemeChoice } from "./theme";
+import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Session, Toast, User } from "./types";
+
+const GUEST: User = {
+  id: "",
+  email: "",
+  displayName: "",
+  tz: "America/Los_Angeles",
+  calToken: "",
+  canCreateCampaigns: false,
+};
 
 const STORAGE = "tpk-playdates-v1";
 
@@ -36,7 +47,7 @@ function isState(value: unknown): value is AppState {
 export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(() => buildDemo("giada"));
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [theme, setThemeState] = useState<"light" | "dark" | "system">("system");
+  const [theme, setThemeState] = useState<ThemeChoice>(() => (typeof window === "undefined" ? "light" : readThemeChoice()));
   const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
   const [online, setOnline] = useState(true);
   const toastId = useRef(1);
@@ -61,9 +72,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, [flash]);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("tpk-theme");
-    if (savedTheme === "light" || savedTheme === "dark" || savedTheme === "system") setThemeState(savedTheme);
+    setThemeState(readThemeChoice());
     const params = new URLSearchParams(window.location.search);
+    if (params.get("demoLink") === "1") return;
     if (!params.get("as")) {
       try {
         const raw = window.localStorage.getItem(STORAGE);
@@ -79,15 +90,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, [state]);
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const apply = () => {
-      const dark = theme === "dark" || (theme === "system" && media.matches);
-      document.documentElement.dataset.theme = dark ? "dark" : "light";
-      setResolved(dark ? "dark" : "light");
-    };
-    apply();
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
+    applyThemeChoice(theme);
+    setResolved(theme);
   }, [theme]);
 
   useEffect(() => {
@@ -103,8 +107,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = useCallback((next: "light" | "dark" | "system") => {
-    setThemeState(next);
-    window.localStorage.setItem("tpk-theme", next);
+    const choice: ThemeChoice = next === "dark" ? "dark" : "light";
+    setThemeState(choice);
+    writeThemeChoice(choice);
   }, []);
 
   const api = useMemo<StoreApi>(() => {
@@ -122,9 +127,16 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       dismissToast: (id) => setToasts((list) => list.filter((t) => t.id !== id)),
       flash,
       setPersona: (id) => {
+        if (id === "guest") {
+          if (stateRef.current.me.id) {
+            setState({ ...stateRef.current, me: { ...GUEST, tz: stateRef.current.me.tz || GUEST.tz } });
+          }
+          document.body.dataset.persona = "guest";
+          return;
+        }
         const person = stateRef.current.directory.find((u) => u.id === id);
         if (!person || person.id === stateRef.current.me.id) {
-          document.body.dataset.persona = stateRef.current.me.id;
+          document.body.dataset.persona = stateRef.current.me.id || "guest";
           return;
         }
         setState({ ...stateRef.current, me: person });
@@ -236,11 +248,38 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         setState(result);
         return true;
       },
-      sendMagicLink: async (email) => {
-        window.sessionStorage.setItem("tpk-magic-email", email);
-        flash(`Preview link ready for ${email}. On the live site this is a real email.`);
+      sendMagicLink: async (email, inviteToken) => {
+        const trimmed = email.trim();
+        window.sessionStorage.setItem("tpk-magic-email", trimmed);
+        const url = new URL(magicLinkContinueUrl(window.location.origin, inviteToken));
+        url.searchParams.set("demoLink", "1");
+        window.location.assign(url.toString());
       },
-      signedIn: true,
+      finishMagicLink: async (email) => {
+        const params = new URLSearchParams(window.location.search);
+        const pending = window.sessionStorage.getItem("tpk-magic-email");
+        if (params.get("demoLink") !== "1" && !email && !pending) return "not-link";
+        const stored = (email || pending || "").trim();
+        if (!stored) return "need-email";
+        const person = stateRef.current.directory.find((user) => user.email.toLowerCase() === stored.toLowerCase());
+        const me: User = person ?? {
+          id: `mail-${stored.toLowerCase()}`,
+          email: stored,
+          displayName: stored.split("@")[0] || "Player",
+          tz: stateRef.current.me.tz || "America/Los_Angeles",
+          calToken: "demo",
+          canCreateCampaigns: false,
+        };
+        setState({ ...stateRef.current, me });
+        window.sessionStorage.removeItem("tpk-magic-email");
+        document.body.dataset.persona = me.id;
+        return "ok";
+      },
+      signOut: async () => {
+        setState({ ...stateRef.current, me: { ...GUEST, tz: stateRef.current.me.tz || GUEST.tz } });
+        document.body.dataset.persona = "guest";
+      },
+      signedIn: Boolean(state.me.id),
     };
   }, [state, online, toasts, theme, resolvedTheme, setTheme, flash, commit, pdfRev]);
 

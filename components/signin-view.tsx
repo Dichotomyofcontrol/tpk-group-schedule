@@ -27,9 +27,8 @@ export function SignInView() {
         </form>
         {sent && <p>Check {email}. The link brings you back to your play dates.</p>}
         {store.mode === "demo" && (
-          <p className="tz">This preview is a sample table, so the link opens here. On the live site, turn on Firebase email-link sign-in and add this domain to Authorized domains.</p>
+          <p className="tz">This preview is a sample table, so the link opens on this domain and signs you in here. On www.sixinthetpk.com the same button emails a Firebase link back to that site.</p>
         )}
-        {store.mode === "demo" && <Link className="b" href="/">Continue in the sample table</Link>}
       </div>
     </div>
   );

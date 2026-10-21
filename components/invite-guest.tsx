@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { upcomingSessions } from "@/lib/model";
+import { coverArt } from "@/lib/covers";
 import { useStore } from "@/lib/store";
 import { formatDayHeading } from "@/lib/time";
 
@@ -32,7 +33,7 @@ export function InviteGuest({ token }: { token: string }) {
   void next;
   return (
     <div>
-      <div className="inv" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})` }}>
+      <div className="inv" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})` }}>
         <div className="art">
           <small style={{ fontWeight: 700, letterSpacing: "0.08em" }}>{invite.createdByName.toUpperCase()} INVITED YOU TO</small>
           <h2>{campaign.name}</h2>

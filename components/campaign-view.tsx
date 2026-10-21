@@ -10,6 +10,8 @@ import { weekdayName } from "@/lib/time";
 import type { Cadence, Member, Session, TableCharacter } from "@/lib/types";
 import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
+import { coverArt } from "@/lib/covers";
+import { EmptyState } from "./empty-state";
 import { PlayRow } from "./schedule";
 
 export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: boolean }) {
@@ -18,11 +20,15 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   const member = (store.state.members[cid] || []).find((m) => m.id === store.state.me.id);
   if (!campaign || !member) {
     return (
-      <div className="card">
-        <h1>You&apos;re not at this table</h1>
-        <p>Campaigns only show up after an invite. If you have a link, open that.</p>
-        <Link className="b" href="/">Back to play dates</Link>
-      </div>
+      <>
+        <div className="mh"><h1>Campaign</h1></div>
+        <EmptyState
+          title={store.state.me.id ? "You're not at this table" : "Sign in to open this table"}
+          action={store.state.me.id ? <Link className="b" href="/campaigns">Your campaigns</Link> : <Link className="b p" href="/signin">Sign in</Link>}
+        >
+          {store.state.me.id ? "Campaigns only show up after an invite. If you have a link, open that." : "Use the email your organizer knows. The table opens after you're on the roster."}
+        </EmptyState>
+      </>
     );
   }
   const upcoming = upcomingSessions(store.state, cid);
@@ -34,7 +40,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   return (
     <>
       {welcome && <div className="todo"><b>You&apos;re in.</b> Add the nights to your calendar whenever you like.</div>}
-      <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${campaign.cover.src})` }}>
+      <section className="banner" style={{ ["--c" as string]: campaign.color, ["--img" as string]: `url(${coverArt(campaign.cover.src)})` }}>
         <div className="art" role="img" aria-label={campaign.cover.credit || campaign.name} />
         <div className="tx">
           <small>

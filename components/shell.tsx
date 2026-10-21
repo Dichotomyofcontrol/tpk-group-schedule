@@ -44,18 +44,23 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
       {!store.online && <div className="offline">You&apos;re offline. Showing your last-synced schedule.</div>}
       <header className="top">
         <Link className="logo" href="/"><i />Six in the TPK</Link>
-        {store.mode === "demo" && <span className="sample">Sample table</span>}
+        {store.mode === "demo" && state.me.id && <span className="sample">Sample table</span>}
         <span className="sp" />
-        {!bare && (
+        {!bare && state.me.id && (
           <>
-            <Link className="b hide-m" href="/polls">Polls{openPolls ? ` · ${openPolls}` : ""}</Link>
-            <button className="b hide-m" onClick={() => router.push("/invites")}>Subscribe to calendar</button>
+            <Link className="b hide-m" href="/polls">Polls{openPolls ? <b className="count">{openPolls}</b> : ""}</Link>
+            <button className="b hide-m" onClick={() => router.push("/invites")}>Subscribe</button>
           </>
         )}
-        {state.me.id && (
-          <button className="av" aria-label={`Account menu for ${state.me.displayName}`} onClick={() => setMenu((v) => !v)}>
-            {state.me.displayName.slice(0, 1)}
-          </button>
+        {state.me.id ? (
+          <>
+            <span className="who hide-m">{state.me.displayName}</span>
+            <button className="av" aria-label={`Account menu for ${state.me.displayName}`} aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
+              {state.me.displayName.slice(0, 1)}
+            </button>
+          </>
+        ) : (
+          <Link className="b p" href="/signin">Sign in</Link>
         )}
         {menu && (
           <div className="menu" role="menu">
@@ -72,7 +77,7 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
               {store.resolvedTheme === "dark" ? "Light mode" : "Tavern night"}
             </button>
             <button onClick={() => { setHelp(true); setMenu(false); }}>Keyboard shortcuts</button>
-            <Link href="/signin" onClick={() => setMenu(false)}>Sign-in link</Link>
+            <button onClick={() => { void store.signOut(); setMenu(false); }}>Sign out</button>
             {store.mode === "demo" && <button onClick={() => { store.resetDemo(); setMenu(false); }}>Reset sample table</button>}
           </div>
         )}
@@ -80,14 +85,14 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
       {bare ? (
         <main>{children}</main>
       ) : (
-        <div className="shell">
-          <aside className="left">
+        <div className={state.me.id ? "shell" : "shell solo"}>
+          {state.me.id && <aside className="left">
             {state.me.canCreateCampaigns ? (
               <Link className="b p" style={{ width: "100%" }} href="/campaigns/new">+ New campaign</Link>
             ) : (
               <p className="fine">New campaigns are limited to the organizer list. Ask Seth for an invite.</p>
             )}
-            <h6>Show campaigns</h6>
+            <h6>Your tables</h6>
             <div>
               {mine.map((c) => {
                 const on = !state.hiddenCids.includes(c.id);
@@ -125,7 +130,7 @@ export function Shell({ children, bare = false }: { children: React.ReactNode; b
               })}
               {invites === 0 && <p className="fine">No open invites.</p>}
             </div>
-          </aside>
+          </aside>}
           <div className="main">{children}</div>
         </div>
       )}

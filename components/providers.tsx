@@ -3,16 +3,23 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { DemoProvider } from "@/lib/demo-provider";
 
-export function Providers({ children }: { children: ReactNode }) {
-  const live = process.env.NEXT_PUBLIC_DATA_MODE === "live";
+export function Providers({ children, allowFixture = false }: { children: ReactNode; allowFixture?: boolean }) {
+  const builtLive = process.env.NEXT_PUBLIC_DATA_MODE === "live";
+  const [choice, setChoice] = useState<"demo" | "live">(builtLive ? "live" : "demo");
   const [Live, setLive] = useState<ComponentType<{ children: ReactNode }> | null>(null);
   useEffect(() => {
-    if (!live) return;
+    if (!builtLive) return;
+    const requested = new URLSearchParams(window.location.search).get("as");
+    if (allowFixture && requested) window.sessionStorage.setItem("tpk-fixture", requested);
+    const fixture = allowFixture && (requested || window.sessionStorage.getItem("tpk-fixture"));
+    if (fixture) {
+      setChoice("demo");
+      return;
+    }
+    setChoice("live");
     void import("@/lib/firebase-provider").then((mod) => setLive(() => mod.FirebaseProvider));
-  }, [live]);
-  if (live) {
-    if (!Live) return null;
-    return <Live>{children}</Live>;
-  }
-  return <DemoProvider>{children}</DemoProvider>;
+  }, [builtLive, allowFixture]);
+  if (!builtLive || choice === "demo") return <DemoProvider>{children}</DemoProvider>;
+  if (!Live) return null;
+  return <Live>{children}</Live>;
 }

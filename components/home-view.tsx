@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { groupStats } from "@/lib/stats";
 import { formatMonthLabel } from "@/lib/time";
 import { accentInk } from "@/lib/color";
+import { EmptyState } from "./empty-state";
 import { Hero, NeedsYou, PlayRow } from "./schedule";
 
 export function HomeView() {
@@ -62,12 +63,18 @@ export function HomeView() {
         <h1>Your play dates</h1>
         {stats.streak > 1 && <span className="chip">{stats.streak}-session streak</span>}
       </div>
-      {mine.length === 0 && (
-        <div className="card">
-          <h2>Your table awaits</h2>
-          <p>Ask your Organizer for an invite link.</p>
-          {state.me.canCreateCampaigns && <Link className="b p" href="/campaigns/new">Create your first campaign</Link>}
-        </div>
+      {!state.me.id && (
+        <EmptyState title="Your table awaits" action={<Link className="b p" href="/signin">Sign in</Link>}>
+          Sign in with the email your organizer knows. We&apos;ll send a one-tap link. No password.
+        </EmptyState>
+      )}
+      {state.me.id && mine.length === 0 && (
+        <EmptyState
+          title="You're signed in"
+          action={state.me.canCreateCampaigns ? <Link className="b p" href="/campaigns/new">Create your first campaign</Link> : undefined}
+        >
+          Ask your organizer for an invite link. You&apos;ll only see the tables you&apos;re on.
+        </EmptyState>
       )}
       {next && <Hero session={next} />}
       <NeedsYou />
@@ -95,17 +102,21 @@ export function HomeView() {
       )}
       {groups.map((group) => (
         <section key={group.label}>
-          <div className="mhd">{group.label} · {group.items.length} play date{group.items.length === 1 ? "" : "s"}</div>
+          <h2 className="mhd"><span>{group.label}</span><em>{group.items.length} play date{group.items.length === 1 ? "" : "s"}</em></h2>
           {group.items.map((session) => <PlayRow key={session.id} session={session} />)}
         </section>
       ))}
-      <p className="tz" style={{ textAlign: "center", marginTop: 18 }}>
-        Only days you play are shown.
-        {hidden.length > 0 && ` ${hidden.map((c) => c.name).join(", ")} hidden (switched off).`}
-      </p>
-      <p className="tz" style={{ textAlign: "center" }}>
-        Showing {visibleCampaigns(state).length} of {mine.length} campaigns.
-      </p>
+      {state.me.id && (
+        <>
+          <p className="tz" style={{ textAlign: "center", marginTop: 18 }}>
+            Only days you play are shown.
+            {hidden.length > 0 && ` ${hidden.map((c) => c.name).join(", ")} hidden (switched off).`}
+          </p>
+          <p className="tz" style={{ textAlign: "center" }}>
+            Showing {visibleCampaigns(state).length} of {mine.length} campaigns.
+          </p>
+        </>
+      )}
     </>
   );
 }

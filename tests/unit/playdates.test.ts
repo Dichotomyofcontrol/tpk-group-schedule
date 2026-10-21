@@ -10,6 +10,8 @@ import { sampleLegacyExport } from "../../lib/legacy-fixture.ts";
 import { formatDryRun, planMigration } from "../../lib/migrate.ts";
 import { containsUndefined } from "../../lib/omit.ts";
 import { applyCadence, lockPoll, saveRecap, skipSession, upcomingSessions } from "../../lib/model.ts";
+import { magicLinkContinueUrl } from "../../lib/magic-link.ts";
+import { coverArt } from "../../lib/covers.ts";
 import { markdownToHtml } from "../../lib/recap.ts";
 import { cadenceDates } from "../../lib/recurrence.ts";
 import { dueReminder } from "../../lib/reminders.ts";
@@ -342,4 +344,17 @@ test("saving the latest recap refreshes Previously on and leaves older nights al
   assert.equal(edited.campaigns.find((campaign) => campaign.id === "strahd")?.previouslyOnSessionId, latest.id);
   assert.equal(edited.sessions.find((session) => session.id === latest.id)?.exception, latest.exception);
   assert.match(markdownToHtml("## Title\n\nThe gem **stayed**."), /<h2>Title<\/h2><p>The gem <strong>stayed<\/strong>\.<\/p>/);
+});
+
+test("email-link continue URL stays on the site that sent it", () => {
+  assert.equal(magicLinkContinueUrl("https://www.sixinthetpk.com"), "https://www.sixinthetpk.com/auth/finish");
+  assert.equal(
+    magicLinkContinueUrl("https://preview.example.vercel.app", "invite-token"),
+    "https://preview.example.vercel.app/auth/finish?invite=invite-token",
+  );
+});
+
+test("old cover paths paint as the generated plates", () => {
+  assert.equal(coverArt("/covers/abbey.svg"), "/covers/abbey.jpg");
+  assert.equal(coverArt(undefined), "/covers/tavern.jpg");
 });
