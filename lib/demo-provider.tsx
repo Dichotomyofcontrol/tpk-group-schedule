@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildDemo } from "./demo-data";
-import { nestedRecapPath, validatePdf } from "./recap";
+import { countPdfPages, nestedRecapPath, validatePdf } from "./recap";
 import {
   acceptInvite,
   addPoll,
@@ -21,6 +21,11 @@ import {
   setCampaignPatch,
   setMember,
   skipSession,
+  addSessionFile,
+  removeSessionFile,
+  replaceSessionFile,
+  deleteCampaignLocal,
+  leaveCampaign,
   toggleVote,
   transferOrganizer,
 } from "./model";
@@ -157,33 +162,74 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       move: (sessionId, ymd, hm, location) => apply((s) => moveSession(s, sessionId, ymd, hm, location)),
       editSession: (sessionId, patch) => apply((s) => editSession(s, sessionId, patch)),
       saveRecap: (sessionId, patch) => apply((s) => saveRecap(s, sessionId, patch)),
-      attachPdf: async (sessionId, file) => {
+      attachPdf: async (sessionId, file, onProgress) => {
         const problem = validatePdf(file);
-        if (problem) {
-          flash(problem, "err");
-          return;
-        }
+        if (problem) return problem;
         const session = stateRef.current.sessions.find((item) => item.id === sessionId);
-        if (!session) return;
-        const previous = pdfBlobs.current.get(sessionId);
-        if (previous) URL.revokeObjectURL(previous);
-        pdfBlobs.current.set(sessionId, URL.createObjectURL(file));
+        if (!session) return "That session is gone.";
+        for (const f of [0.35, 0.7, 1]) { onProgress?.(f); await new Promise((r) => setTimeout(r, 120)); }
+        const path = nestedRecapPath(session.cid, session.id, `${Date.now()}-${file.name}`);
+        pdfBlobs.current.set(path, URL.createObjectURL(file));
         setPdfRev((value) => value + 1);
-        apply((s) => saveRecap(s, sessionId, {
-          pdfPath: nestedRecapPath(session.cid, session.id, file.name),
-          pdfName: file.name,
-          pdfUrl: null,
-        }));
-        flash("PDF attached for this preview. On the live site it stays in Storage for the campaign.");
+        const pages = await countPdfPages(file);
+        apply((s) => addSessionFile(s, sessionId, { path, name: file.name, size: file.size, pages }));
+        return null;
       },
-      clearPdf: (sessionId) => {
-        const previous = pdfBlobs.current.get(sessionId);
-        if (previous) URL.revokeObjectURL(previous);
-        pdfBlobs.current.delete(sessionId);
+      replacePdf: async (sessionId, oldPath, file, onProgress) => {
+        const problem = validatePdf(file);
+        if (problem) return problem;
+        const session = stateRef.current.sessions.find((item) => item.id === sessionId);
+        if (!session) return "That session is gone.";
+        for (const f of [0.5, 1]) { onProgress?.(f); await new Promise((r) => setTimeout(r, 120)); }
+        const path = nestedRecapPath(session.cid, session.id, `${Date.now()}-${file.name}`);
+        pdfBlobs.current.set(path, URL.createObjectURL(file));
         setPdfRev((value) => value + 1);
-        apply((s) => saveRecap(s, sessionId, { pdfPath: null }));
+        const pages = await countPdfPages(file);
+        apply((s) => replaceSessionFile(s, sessionId, oldPath, { path, name: file.name, size: file.size, pages }));
+        return null;
       },
-      pdfPreviewUrl: (sessionId) => pdfBlobs.current.get(sessionId) ?? null,
+      removePdf: async (sessionId, path) => {
+        const url = pdfBlobs.current.get(path);
+        if (url) URL.revokeObjectURL(url);
+        pdfBlobs.current.delete(path);
+        apply((s) => removeSessionFile(s, sessionId, path));
+      },
+      fileUrl: async (sessionId, path) => {
+        const memory = pdfBlobs.current.get(path);
+        if (memory) return memory;
+        const session = stateRef.current.sessions.find((item) => item.id === sessionId);
+        if (session?.pdfUrl?.startsWith("/samples/")) return session.pdfUrl;
+        if (path.startsWith("/samples/")) return path;
+        return "/samples/wizard-of-wines.pdf";
+      },
+      coverUrl: async (path) => pdfBlobs.current.get(path) ?? null,
+      uploadCover: async (cid, image) => {
+        const path = `campaigns/${cid}/cover-${Date.now()}.jpg`;
+        pdfBlobs.current.set(path, URL.createObjectURL(image));
+        apply((s) => setCampaignPatch(s, cid, { cover: { src: "", path, focalX: 0.5, focalY: 0.5 } }));
+        return true;
+      },
+      removeCover: (cid) => apply((s) => setCampaignPatch(s, cid, { cover: { src: "", path: null, focalX: 0.5, focalY: 0.5 } })),
+      archiveCampaign: (cid, archived) => apply((s) => setCampaignPatch(s, cid, { status: archived ? "archived" : "active" })),
+      deleteCampaign: async (cid) => {
+        apply((s) => deleteCampaignLocal(s, cid));
+        return true;
+      },
+      leaveCampaign: async (cid) => {
+        const result = leaveCampaign(stateRef.current, cid);
+        if ("error" in result) { flash(result.error, "err"); return false; }
+        setState(result);
+        return true;
+      },
+      patchMe: (cid, patch) => apply((s) => setMember(s, cid, s.me.id, patch)),
+      setDisplayName: async (name) => {
+        const clean = name.trim().slice(0, 40);
+        if (!clean) return;
+        const cur = stateRef.current;
+        const members: AppState["members"] = {};
+        for (const [cid, list] of Object.entries(cur.members)) members[cid] = list.map((m) => (m.id === cur.me.id ? { ...m, displayName: clean } : m));
+        setState({ ...cur, me: { ...cur.me, displayName: clean, nameSet: true }, members });
+      },
       saveCadence: (cid, cadence: Cadence | null) => apply((s) => applyCadence(s, cid, cadence)),
       patchCampaign: (cid, patch: Partial<Campaign>) => apply((s) => setCampaignPatch(s, cid, patch)),
       patchMember: (cid, memberId, patch: Partial<Member>) => apply((s) => setMember(s, cid, memberId, patch)),
@@ -205,7 +251,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         if ("error" in result) flash(result.error, "err");
         else {
           setState(result);
-          flash("Locked in. It's a real play date now.");
+          flash("Locked in. It's a real session now.");
         }
       },
       addPoll: (cid, title, options: Poll["options"]) => {
@@ -256,7 +302,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         const me = person ?? {
           id: `mail-${stored.toLowerCase()}`,
           email: stored,
-          displayName: stored.split("@")[0] || "Player",
+          displayName: "",
+          nameSet: false,
           tz: stateRef.current.me.tz || "America/Los_Angeles",
           calToken: "demo",
           canCreateCampaigns: false,

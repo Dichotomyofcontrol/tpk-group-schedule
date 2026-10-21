@@ -6,7 +6,7 @@ import { isStaff, membersOf, rankedOptions } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
-import { Avatar, Icon } from "./ui";
+import { Avatar, Icon, BackBar } from "./ui";
 
 export function PollList() {
   const store = useStore();
@@ -106,12 +106,12 @@ function PollCard({ poll }: { poll: Poll }) {
 export function PollView({ pollId }: { pollId: string }) {
   const store = useStore();
   const poll = store.state.polls.find((p) => p.id === pollId);
-  if (!poll) return <div className="card" style={{ padding: 24 }}><h1 className="lt">Polls</h1><p>That poll isn&apos;t on your table.</p></div>;
+  if (!poll) return <><BackBar href="/polls" label="Polls" /><div className="card empty-card"><h1 className="lt">That poll is gone</h1><p className="note">It isn&apos;t on any of your tables.</p></div></>;
   const member = (store.state.members[poll.cid] || []).find((m) => m.id === store.state.me.id);
-  if (!member) return <div className="card" style={{ padding: 24 }}><h1 className="lt">Polls</h1><p>You can vote after you&apos;re invited.</p></div>;
+  if (!member) return <><BackBar href="/polls" label="Polls" /><div className="card empty-card"><h1 className="lt">Not your table yet</h1><p className="note">You can vote after you&apos;re invited.</p></div></>;
   return (
     <>
-      <p className="note"><Link href="/polls">All polls</Link></p>
+      <BackBar href="/polls" label="Polls" />
       <PollCard poll={poll} />
     </>
   );

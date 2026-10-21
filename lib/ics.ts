@@ -31,7 +31,7 @@ export function buildIcs(name: string, events: IcsEvent[], now = new Date()): st
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Six in the TPK//Play Dates//EN",
+    "PRODID:-//Six in the TPK//Sessions//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${esc(name)}`,

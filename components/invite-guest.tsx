@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { coverSrc } from "@/lib/covers";
 import { useStore } from "@/lib/store";
 import { formatDayHeading } from "@/lib/time";
-import { Icon } from "./ui";
+import { Icon, CampaignCover } from "./ui";
 
 export function InviteGuest({ token }: { token: string }) {
   const store = useStore();
@@ -30,7 +29,7 @@ export function InviteGuest({ token }: { token: string }) {
     <article className="card inv">
       <span className="ribbon" />
       <div className="cover">
-        <img className="art" src={coverSrc(campaign.cover.src, campaign.id)} alt="" />
+        <CampaignCover campaign={campaign} />
         <div className="ctop">
           <div className="eyebrow">{invite.createdByName} invited you</div>
           <h3>{campaign.name}</h3>

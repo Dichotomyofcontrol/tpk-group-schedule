@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { canInvite, isOrganizer, isStaff, memberCampaigns, membersOf } from "@/lib/model";
-import { coverSrc } from "@/lib/covers";
 import { useStore } from "@/lib/store";
 import type { Invite } from "@/lib/types";
-import { Avatar, Icon } from "./ui";
+import { Avatar, Icon, CampaignCover } from "./ui";
 
 export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   const store = useStore();
@@ -27,7 +26,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
     <>
       <div className="ptitle">
         <div>
-          <div className="eyebrow">{incoming.length} waiting for you</div>
+          {incoming.length > 0 && <div className="eyebrow">{incoming.length} waiting for you</div>}
           <h1 className="lt">Invites</h1>
         </div>
       </div>
@@ -46,7 +45,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                 <article key={invite.token} className="card inv">
                   <span className="ribbon" />
                   <div className="cover">
-                    <img className="art" src={coverSrc(table.cover.src, table.id)} alt="" />
+                    <CampaignCover campaign={table} />
                     <div className="ctop">
                       <div className="eyebrow">{invite.createdByName} invited you</div>
                       <h3>{table.name}</h3>

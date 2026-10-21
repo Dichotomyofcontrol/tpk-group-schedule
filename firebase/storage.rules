@@ -25,6 +25,20 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
     }
 
+    function isOrganizer(cid) {
+      return isMember(cid)
+        && firestore.get(/databases/(default)/documents/campaigns/$(cid)/members/$(request.auth.uid)).data.role == 'organizer';
+    }
+
+    // Campaign covers. Members can see them; only the organizer uploads or removes.
+    match /campaigns/{cid}/{file} {
+      allow read: if isMember(cid);
+      allow create, update: if isOrganizer(cid)
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if isOrganizer(cid);
+    }
+
     // New recap uploads. Three segments so this does not overlap the legacy rule.
     match /recaps/{cid}/{sid}/{file} {
       allow read: if isMember(cid);

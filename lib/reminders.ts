@@ -19,7 +19,7 @@ export function dueReminder(session: Session, now = new Date()): ReminderKind | 
 }
 
 export function reminderRecipients(campaign: Campaign, session: Session, members: Member[]): Member[] {
-  return members.filter((m) => m.email && attendanceState(campaign, session, m.id) !== "out");
+  return members.filter((m) => m.email && !m.remindersOff && attendanceState(campaign, session, m.id) !== "out");
 }
 
 export function reminderSubject(campaign: Campaign, session: Session, kind: ReminderKind): string {
@@ -38,7 +38,6 @@ export function reminderText(campaign: Campaign, session: Session, members: Memb
     session.location,
     out.length ? `Out: ${out.join(", ")}` : "Nobody has marked themselves out.",
     campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "",
-    session.snackUid ? `Snacks are on the rotation — check the play date.` : "",
     "Open Six in the TPK if you can't make it.",
   ];
   return lines.filter(Boolean).join("\n");

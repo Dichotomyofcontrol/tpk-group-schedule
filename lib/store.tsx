@@ -33,12 +33,24 @@ export type StoreApi = {
   cancel: (sessionId: string) => void;
   restore: (sessionId: string) => void;
   move: (sessionId: string, ymd: string, hm: string, location?: string) => void;
-  editSession: (sessionId: string, patch: Partial<Pick<Session, "title" | "location" | "notes" | "requireRsvps" | "snackUid">>) => void;
+  editSession: (sessionId: string, patch: Partial<Pick<Session, "title" | "location" | "notes" | "requireRsvps">>) => void;
   saveRecap: (sessionId: string, patch: RecapPatch) => void;
-  attachPdf: (sessionId: string, file: File) => Promise<void>;
-  clearPdf: (sessionId: string) => void;
-  /** In-memory preview for a PDF attached during this browser tab. Not persisted. */
-  pdfPreviewUrl: (sessionId: string) => string | null;
+  /** Uploads a PDF and adds it to the night. Resolves to an error message, or null on success. */
+  attachPdf: (sessionId: string, file: File, onProgress?: (fraction: number) => void) => Promise<string | null>;
+  replacePdf: (sessionId: string, oldPath: string, file: File, onProgress?: (fraction: number) => void) => Promise<string | null>;
+  removePdf: (sessionId: string, path: string) => Promise<void>;
+  /** A short-lived URL for one recap file (a signed URL on the live site). */
+  fileUrl: (sessionId: string, path: string, download?: boolean) => Promise<string | null>;
+  /** Object URL for a campaign cover in Storage. */
+  coverUrl: (path: string) => Promise<string | null>;
+  uploadCover: (cid: string, image: Blob) => Promise<boolean>;
+  removeCover: (cid: string) => void;
+  archiveCampaign: (cid: string, archived: boolean) => void;
+  deleteCampaign: (cid: string) => Promise<boolean>;
+  leaveCampaign: (cid: string) => Promise<boolean>;
+  /** Your own row at one table: character name and reminder emails. */
+  patchMe: (cid: string, patch: { characterName?: string; remindersOff?: boolean }) => void;
+  setDisplayName: (name: string) => Promise<void>;
   saveCadence: (cid: string, cadence: Cadence | null) => void;
   patchCampaign: (cid: string, patch: Partial<Campaign>) => void;
   patchMember: (cid: string, memberId: string, patch: Partial<Member>) => void;

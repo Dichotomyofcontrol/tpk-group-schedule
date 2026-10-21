@@ -16,6 +16,10 @@ export type TableCharacter = {
 export type SessionFile = {
   path: string;
   name: string;
+  /** Bytes, when known (new uploads). */
+  size?: number;
+  /** Page count, when known (new uploads). */
+  pages?: number;
 };
 
 export type Member = {
@@ -33,6 +37,8 @@ export type Member = {
   /** Reserved for a future Discord bot. Unused in v1. */
   discordUserId?: string;
   pending?: boolean;
+  /** True when this player turned off reminder emails for this campaign. */
+  remindersOff?: boolean;
 };
 
 export type Cadence = {
@@ -60,7 +66,8 @@ export type Campaign = {
   slug: string;
   color: string;
   icon: string;
-  cover: { src: string; focalX: number; focalY: number; credit?: string };
+  /** `path` is an organizer-uploaded image in Storage (campaigns/{cid}/cover-*.jpg). Without it the parchment default shows. */
+  cover: { src: string; focalX: number; focalY: number; credit?: string; path?: string | null };
   system?: string;
   defaultLocation: string;
   tz: string;
@@ -70,7 +77,8 @@ export type Campaign = {
   /** Off by default: everyone is assumed in until they tap Can't make it. */
   requireRsvps: boolean;
   cadence: Cadence | null;
-  rotation: { enabled: boolean; order: string[]; nextIndex: number };
+  /** Legacy field from the snack rotation, which was removed. Ignored. */
+  rotation?: { enabled: boolean; order: string[]; nextIndex: number };
   previouslyOn?: string;
   /** Session the Previously on line was taken from. */
   previouslyOnSessionId?: string;
@@ -112,7 +120,7 @@ export type Session = {
   exception?: "skip" | "move" | "cancel" | "edit" | null;
   /** Null inherits the campaign setting. */
   requireRsvps: boolean | null;
-  snackUid?: string | null;
+
   notes?: string;
   /** ICS SEQUENCE. Bumped whenever the time or status changes. */
   seq: number;
@@ -122,6 +130,8 @@ export type Session = {
   /** Firebase Storage object path, e.g. recaps/{file} or recaps/{cid}/{sid}/{file}. */
   pdfPath?: string;
   pdfName?: string;
+  pdfSize?: number;
+  pdfPages?: number;
   /**
    * Display URL for a same-origin sample, or the legacy `/recaps/...` path.
    * Never a Firebase download-token URL. Live preview reads `pdfPath` with the Storage SDK.
@@ -180,6 +190,8 @@ export type User = {
   tz: string;
   calToken: string;
   canCreateCampaigns: boolean;
+  /** False until the player has chosen a display name. */
+  nameSet?: boolean;
 };
 
 export type AppState = {

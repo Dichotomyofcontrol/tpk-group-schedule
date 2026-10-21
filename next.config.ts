@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   devIndicators: false,
+  async redirects() {
+    return [
+      { source: "/play-dates", destination: "/sessions", permanent: true },
+      { source: "/playdates", destination: "/sessions", permanent: true },
+      { source: "/schedule", destination: "/sessions", permanent: true },
+      { source: "/", has: [{ type: "query", key: "view", value: "schedule" }], destination: "/sessions", permanent: true },
+      { source: "/profile", destination: "/account", permanent: true },
+    ];
+  },
   eslint: { ignoreDuringBuilds: true },
   // The current Vercel project already has FIREBASE_* (no NEXT_PUBLIC_ prefix).
   // Map them so a later live cutover can reuse those values. Demo mode never initializes Firebase.
