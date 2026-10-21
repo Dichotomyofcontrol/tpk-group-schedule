@@ -180,7 +180,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       if (!snap.exists()) {
         await setDoc(userRef, { email: me.email, displayName: me.displayName, tz: me.tz, hiddenCids: ["special"] });
       }
-      await fetch("/api/auth/link", { method: "POST" }).catch(() => undefined);
+      const idToken = await authUser.getIdToken().catch(() => "");
+      await fetch("/api/auth/link", { method: "POST", headers: idToken ? { Authorization: `Bearer ${idToken}` } : {} }).catch(() => undefined);
     });
 
     const unsubs: Array<() => void> = [];
