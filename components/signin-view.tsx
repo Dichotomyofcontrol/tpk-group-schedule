@@ -8,6 +8,8 @@ export function SignInView() {
   const store = useStore();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   return (
     <div className="sw">
       <div className="sart">
@@ -27,12 +29,16 @@ export function SignInView() {
         ) : (
           <form className="card form" onSubmit={async (e) => {
             e.preventDefault();
-            await store.sendMagicLink(email);
-            setSent(true);
+            if (busy) return;
+            setBusy(true); setError("");
+            try { await store.sendMagicLink(email); setSent(true); }
+            catch (err) { setError(err instanceof Error ? err.message : "Couldn't send the link. Try again."); }
+            finally { setBusy(false); }
           }}>
             <label htmlFor="email">Email</label>
             <input id="email" className="inp" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-            <button className="btn pri" type="submit">Email me a sign-in link <Icon name="arrow" className="ic sm" /></button>
+            <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : <>Email me a sign-in link <Icon name="arrow" className="ic sm" /></>}</button>
+            {error && <p className="note ver" role="alert">{error}</p>}
           </form>
         )}
         <ol className="steps">

@@ -31,6 +31,9 @@ export async function POST(request: Request) {
     hit(db, `ip:${ip}`, 10, tenMin),
   ]);
   if (!emailOk || !ipOk) return OK();
+  // Each new link invalidates the previous one. A double tap would leave the first email
+  // (the one people open) dead, so send at most one link per address per minute.
+  if (!(await hit(db, `recent:${email}`, 1, 60 * 1000))) return OK();
 
   try {
     const origin = safeOrigin(request.headers.get("origin") || new URL(request.url).origin);

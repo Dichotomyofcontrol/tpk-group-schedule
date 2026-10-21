@@ -32,6 +32,7 @@ export function InviteGuest({ token }: { token: string }) {
   const [email, setEmail] = useState(invite?.email || store.state.me.email || "");
   const [name, setName] = useState(store.state.me.displayName || "");
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
   if (!local && remote === "loading") return <div className="center-narrow"><p className="note">Opening your invite…</p></div>;
   if (!invite || !campaign) {
     return (
@@ -56,9 +57,10 @@ export function InviteGuest({ token }: { token: string }) {
       </div>
       <form className="ib" onSubmit={async (e) => {
         e.preventDefault();
+        if (busy) return;
+        setBusy(true);
         window.sessionStorage.setItem("tpk-join", JSON.stringify({ email, name, token }));
-        await store.sendMagicLink(email, token);
-        setSent(true);
+        try { await store.sendMagicLink(email, token); setSent(true); } finally { setBusy(false); }
       }}>
         <p>Join as a {invite.role === "coorganizer" ? "co-organizer" : "member"}. {campaign.defaultLocation}</p>
         <div className="party">
@@ -94,7 +96,7 @@ export function InviteGuest({ token }: { token: string }) {
           <>
             <div className="field"><label htmlFor="email">Your email</label><input id="email" className="inp" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
             <div className="field"><label htmlFor="name">Name at the table</label><input id="name" className="inp" required value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <button className="btn pri" type="submit">Email me a sign-in link</button>
+            <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a sign-in link"}</button>
           </>
         )}
       </form>
