@@ -17,3 +17,10 @@ test("sessionFiles lists the legacy PDF once plus nested files", () => {
   const files = sessionFiles(s);
   assert.deepEqual(files.map((f) => f.name), ["a.pdf", "b.pdf"]);
 });
+
+test("countPdfPages reads page objects", async () => {
+  const { countPdfPages } = await import("../../lib/recap");
+  const pdf = new Blob(["%PDF-1.4 1 0 obj <</Type /Pages /Count 2>> 2 0 obj <</Type /Page>> 3 0 obj <</Type/Page>>"]);
+  assert.equal(await countPdfPages(pdf), 2);
+  assert.equal(await countPdfPages(new Blob(["nothing"])), undefined);
+});

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildDemo } from "./demo-data";
-import { nestedRecapPath, validatePdf } from "./recap";
+import { countPdfPages, nestedRecapPath, validatePdf } from "./recap";
 import {
   acceptInvite,
   addPoll,
@@ -171,7 +171,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         const path = nestedRecapPath(session.cid, session.id, `${Date.now()}-${file.name}`);
         pdfBlobs.current.set(path, URL.createObjectURL(file));
         setPdfRev((value) => value + 1);
-        apply((s) => addSessionFile(s, sessionId, { path, name: file.name, size: file.size }));
+        const pages = await countPdfPages(file);
+        apply((s) => addSessionFile(s, sessionId, { path, name: file.name, size: file.size, pages }));
         return null;
       },
       replacePdf: async (sessionId, oldPath, file, onProgress) => {
@@ -183,7 +184,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         const path = nestedRecapPath(session.cid, session.id, `${Date.now()}-${file.name}`);
         pdfBlobs.current.set(path, URL.createObjectURL(file));
         setPdfRev((value) => value + 1);
-        apply((s) => replaceSessionFile(s, sessionId, oldPath, { path, name: file.name, size: file.size }));
+        const pages = await countPdfPages(file);
+        apply((s) => replaceSessionFile(s, sessionId, oldPath, { path, name: file.name, size: file.size, pages }));
         return null;
       },
       removePdf: async (sessionId, path) => {

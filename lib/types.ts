@@ -18,6 +18,8 @@ export type SessionFile = {
   name: string;
   /** Bytes, when known (new uploads). */
   size?: number;
+  /** Page count, when known (new uploads). */
+  pages?: number;
 };
 
 export type Member = {
@@ -129,6 +131,7 @@ export type Session = {
   pdfPath?: string;
   pdfName?: string;
   pdfSize?: number;
+  pdfPages?: number;
   /**
    * Display URL for a same-origin sample, or the legacy `/recaps/...` path.
    * Never a Firebase download-token URL. Live preview reads `pdfPath` with the Storage SDK.

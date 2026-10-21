@@ -544,7 +544,7 @@ export function sessionFiles(session: Session): SessionFile[] {
   const out: SessionFile[] = [];
   const seen = new Set<string>();
   if (session.pdfPath) {
-    out.push({ path: session.pdfPath, name: session.pdfName || fileName(session.pdfPath), size: session.pdfSize });
+    out.push({ path: session.pdfPath, name: session.pdfName || fileName(session.pdfPath), size: session.pdfSize, pages: session.pdfPages });
     seen.add(session.pdfPath);
   } else if (session.pdfUrl) {
     out.push({ path: session.pdfUrl, name: session.pdfName || fileName(session.pdfUrl) });
@@ -565,7 +565,7 @@ function fileName(path: string): string {
 
 export function addSessionFile(state: AppState, sessionId: string, file: SessionFile): AppState {
   return patchSession(state, sessionId, (s) => {
-    if (!s.pdfPath && !s.pdfUrl) return { ...s, pdfPath: file.path, pdfName: file.name, pdfSize: file.size };
+    if (!s.pdfPath && !s.pdfUrl) return { ...s, pdfPath: file.path, pdfName: file.name, pdfSize: file.size, pdfPages: file.pages };
     return { ...s, extraPdfs: [...(s.extraPdfs || []).filter((f) => f.path !== file.path), file] };
   });
 }
@@ -574,9 +574,9 @@ export function removeSessionFile(state: AppState, sessionId: string, path: stri
   return patchSession(state, sessionId, (s) => {
     const next: Session = { ...s, extraPdfs: (s.extraPdfs || []).filter((f) => f.path !== path) };
     if (s.pdfPath === path || (!s.pdfPath && s.pdfUrl === path)) {
-      delete next.pdfPath; delete next.pdfName; delete next.pdfUrl; delete next.pdfSize;
+      delete next.pdfPath; delete next.pdfName; delete next.pdfUrl; delete next.pdfSize; delete next.pdfPages;
       const [first, ...rest] = next.extraPdfs || [];
-      if (first) { next.pdfPath = first.path; next.pdfName = first.name; if (first.size) next.pdfSize = first.size; next.extraPdfs = rest; }
+      if (first) { next.pdfPath = first.path; next.pdfName = first.name; if (first.size) next.pdfSize = first.size; if (first.pages) next.pdfPages = first.pages; next.extraPdfs = rest; }
     }
     return next;
   });
@@ -588,6 +588,7 @@ export function replaceSessionFile(state: AppState, sessionId: string, oldPath: 
       const next: Session = { ...s, pdfPath: file.path, pdfName: file.name };
       delete next.pdfUrl;
       if (file.size) next.pdfSize = file.size; else delete next.pdfSize;
+      if (file.pages) next.pdfPages = file.pages; else delete next.pdfPages;
       return next;
     }
     return { ...s, extraPdfs: (s.extraPdfs || []).map((f) => (f.path === oldPath ? file : f)) };

@@ -22,7 +22,7 @@ import {
 } from "firebase/firestore";
 import { firebaseConfigured, getFirebase } from "./firebase-client";
 import { applyTheme, readStoredTheme } from "./theme";
-import { nestedRecapPath, validatePdf } from "./recap";
+import { countPdfPages, nestedRecapPath, validatePdf } from "./recap";
 import {
   acceptInvite as acceptInviteModel,
   addPoll,
@@ -102,6 +102,7 @@ function sessionFrom(id: string, cid: string, data: DocumentData): Session {
     pdfPath: optionalString(data.pdfPath),
     pdfName: optionalString(data.pdfName),
     pdfSize: typeof data.pdfSize === "number" ? data.pdfSize : undefined,
+    pdfPages: typeof data.pdfPages === "number" ? data.pdfPages : undefined,
     pdfUrl: typeof data.pdfUrl === "string" && !data.pdfUrl.includes("token=") && !data.pdfUrl.startsWith("blob:")
       ? data.pdfUrl
       : undefined,
@@ -377,7 +378,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           const task = uploadBytesResumable(ref(storage, path), file, { contentType: "application/pdf" });
           task.on("state_changed", (snap) => onProgress?.(snap.totalBytes ? snap.bytesTransferred / snap.totalBytes : 0), reject, () => resolve());
         });
-        const entry = { path, name: file.name, size: file.size };
+        const entry = { path, name: file.name, size: file.size, pages: await countPdfPages(file) };
         const next = applyLocal((s) => (oldPath ? replaceSessionFile(s, sessionId, oldPath, entry) : addSessionFile(s, sessionId, entry)));
         const session = next?.sessions.find((s) => s.id === sessionId);
         if (session) await persistSession(session);

@@ -11,10 +11,12 @@ import { Icon } from "./ui";
 
 type Pending = { id: number; name: string; progress: number; error?: string };
 
-function sizeLabel(bytes?: number): string {
-  if (!bytes) return "PDF";
-  if (bytes < 1024 * 1024) return `PDF · ${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `PDF · ${(bytes / 1048576).toFixed(1)} MB`;
+/** "12 pages · 2.4 MB", either part only when known, or "" when nothing is. The icon already says PDF. */
+function fileMeta(file: { size?: number; pages?: number }): string {
+  const parts: string[] = [];
+  if (file.pages) parts.push(`${file.pages} ${file.pages === 1 ? "page" : "pages"}`);
+  if (file.size) parts.push(file.size < 1024 * 1024 ? `${Math.max(1, Math.round(file.size / 1024))} KB` : `${(file.size / 1048576).toFixed(1)} MB`);
+  return parts.join(" · ");
 }
 
 /** Recap text, then one clean row per PDF, then a single Add a PDF. */
@@ -165,7 +167,7 @@ function FileRow({ session, file, staff, onReplace }: { session: Session; file: 
       <span className="ficon">PDF</span>
       <div className="fm">
         <b>{file.name}</b>
-        {error ? <span className="note ver" role="alert">{error}</span> : <span className="note">{sizeLabel(file.size)}</span>}
+        {error ? <span className="note ver" role="alert">{error}</span> : fileMeta(file) ? <span className="note">{fileMeta(file)}</span> : null}
       </div>
       <button className="btn sec sm fopen" type="button" onClick={() => void open(false)} disabled={busy}>
         <Icon name="ext" className="ic sm" />{busy ? "Opening…" : "Open"}

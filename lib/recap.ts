@@ -145,3 +145,17 @@ export function validatePdf(file: { name: string; size: number; type: string }):
   if (file.size > PDF_MAX_BYTES) return `Too big (${Math.round(file.size / 1048576)} MB). PDFs can be up to 25 MB.`;
   return null;
 }
+
+/** Best-effort page count from the PDF bytes. Returns undefined when unsure. */
+export async function countPdfPages(file: Blob): Promise<number | undefined> {
+  try {
+    const text = new TextDecoder("latin1").decode(await file.arrayBuffer());
+    const pages = text.match(/\/Type\s*\/Page(?![a-zA-Z])/g)?.length || 0;
+    if (pages > 0) return pages;
+    const counts = [...text.matchAll(/\/Count\s+(\d+)/g)].map((x) => Number(x[1]));
+    const max = counts.length ? Math.max(...counts) : 0;
+    return max > 0 ? max : undefined;
+  } catch {
+    return undefined;
+  }
+}
