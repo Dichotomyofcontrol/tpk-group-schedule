@@ -18,11 +18,19 @@ export async function POST(request: Request, context: { params: Promise<{ token:
   if (invite.email && String(invite.email).toLowerCase() !== auth.email.toLowerCase()) {
     return Response.json({ error: "This invite was sent to a different email." }, { status: 403 });
   }
+  // Use the person's chosen display name (request, else their user doc). Never the email prefix;
+  // when there's no name yet the app prompts for one and fills it in everywhere.
+  const body = await request.json().catch(() => ({})) as { displayName?: unknown };
+  const user = (await db.collection("users").doc(auth.uid).get()).data() || {};
+  const prefix = auth.email.split("@")[0].toLowerCase();
+  const pick = (v: unknown) => (typeof v === "string" && v.trim() && v.trim().toLowerCase() !== prefix ? v.trim().slice(0, 40) : "");
+  const displayName = pick(body.displayName) || (user.nameSet ? pick(user.displayName) : "");
   const memberRef = db.collection("campaigns").doc(invite.cid).collection("members").doc(auth.uid);
+  const existed = (await memberRef.get()).exists;
   await memberRef.set({
     uid: auth.uid,
     email: auth.email,
-    displayName: auth.email.split("@")[0],
+    ...(displayName ? { displayName } : existed ? {} : { displayName: "" }),
     role: invite.role === "coorganizer" ? "coorganizer" : "member",
     tags: [],
     joinedAt: new Date().toISOString(),
