@@ -40,3 +40,10 @@ export async function verifyBearer(request: Request): Promise<{ uid: string; ema
     return null;
   }
 }
+
+export function adminBucket() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getStorage } = require("firebase-admin/storage") as typeof import("firebase-admin/storage");
+  const name = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || "";
+  return getStorage(adminApp()).bucket(name || undefined);
+}

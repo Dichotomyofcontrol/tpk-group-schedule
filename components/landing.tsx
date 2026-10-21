@@ -11,7 +11,7 @@ export function Landing() {
         <div className="hin">
           <div className="eyebrow">For tabletop groups</div>
           <h1>Every session, <em>every saga,</em> in one place.</h1>
-          <p className="lead">Six in the TPK keeps your party&apos;s play dates, campaign lore and recaps together. Everyone&apos;s in by default; you just say when you can&apos;t make it.</p>
+          <p className="lead">Six in the TPK keeps your party&apos;s sessions, RSVPs and recaps together. Everyone&apos;s in by default; you just say when you can&apos;t make it.</p>
           <Link className="btn pri" href="/signin"><Icon name="mail" className="ic sm" />Sign in with email</Link>
           <div className="note">No password. Invite-only — your GM adds you.</div>
         </div>
@@ -22,7 +22,7 @@ export function Landing() {
         <div className="fg">
           <article className="card fc">
             <span className="fi"><Icon name="dates" /></span>
-            <h3>Play dates that assume yes</h3>
+            <h3>Sessions that assume yes</h3>
             <p>The whole party is counted in. Mark yourself out in one tap and the GM sees it instantly.</p>
             <div className="vig">
               <div className="dt"><span className="dw">Thu</span><span className="dn">23</span></div>
@@ -32,7 +32,7 @@ export function Landing() {
           <article className="card fc">
             <span className="fi"><Icon name="camp" /></span>
             <h3>Campaigns with a cover</h3>
-            <p>Characters, lore and recaps — typed or as a PDF — live with the story they belong to.</p>
+            <p>Players, the usual night and recaps — typed or as a PDF — live with the story they belong to.</p>
             <div className="mini">
               <img className="art" src="/brand/cover-drowned-crown.svg" alt="" />
               <b>The Drowned Crown</b>

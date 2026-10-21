@@ -18,14 +18,14 @@ const ARGYN_HTML = [
 ].join("");
 
 export const USERS: User[] = [
-  { id: "seth", email: "sthomas131@gmail.com", displayName: "Seth", tz: TZ, calToken: "demo-seth", canCreateCampaigns: true },
-  { id: "amy", email: "amy@example.com", displayName: "Amy", tz: TZ, calToken: "demo-amy", canCreateCampaigns: false },
-  { id: "ben", email: "ben@example.com", displayName: "Ben", tz: TZ, calToken: "demo-ben", canCreateCampaigns: false },
-  { id: "sam", email: "sam@example.com", displayName: "Sam", tz: TZ, calToken: "demo-sam", canCreateCampaigns: false },
-  { id: "kai", email: "kai@example.com", displayName: "Kai", tz: TZ, calToken: "demo-kai", canCreateCampaigns: false },
-  { id: "giada", email: "giada@example.com", displayName: "Giada", tz: TZ, calToken: "demo-giada", canCreateCampaigns: false },
-  { id: "lizbeth", email: "lizbeth@example.com", displayName: "Lizbeth", tz: TZ, calToken: "demo-lizbeth", canCreateCampaigns: false },
-  { id: "newcomer", email: "new@example.com", displayName: "New", tz: TZ, calToken: "demo-new", canCreateCampaigns: false },
+  { id: "seth", email: "sthomas131@gmail.com", displayName: "Seth", tz: TZ, calToken: "demo-seth", canCreateCampaigns: true, nameSet: true },
+  { id: "amy", email: "amy@example.com", displayName: "Amy", tz: TZ, calToken: "demo-amy", canCreateCampaigns: false, nameSet: true },
+  { id: "ben", email: "ben@example.com", displayName: "Ben", tz: TZ, calToken: "demo-ben", canCreateCampaigns: false, nameSet: true },
+  { id: "sam", email: "sam@example.com", displayName: "Sam", tz: TZ, calToken: "demo-sam", canCreateCampaigns: false, nameSet: true },
+  { id: "kai", email: "kai@example.com", displayName: "Kai", tz: TZ, calToken: "demo-kai", canCreateCampaigns: false, nameSet: true },
+  { id: "giada", email: "giada@example.com", displayName: "Giada", tz: TZ, calToken: "demo-giada", canCreateCampaigns: false, nameSet: true },
+  { id: "lizbeth", email: "lizbeth@example.com", displayName: "Lizbeth", tz: TZ, calToken: "demo-lizbeth", canCreateCampaigns: false, nameSet: true },
+  { id: "newcomer", email: "new@example.com", displayName: "New", tz: TZ, calToken: "demo-new", canCreateCampaigns: false, nameSet: true },
 ];
 
 const HUES: Record<string, number> = { seth: 18, amy: 350, ben: 262, sam: 200, kai: 145, giada: 28, lizbeth: 320, newcomer: 210 };
@@ -80,7 +80,6 @@ export const CAMPAIGNS: Campaign[] = [
       horizonMonths: 4,
       location: "TPK Brewing, back table",
     },
-    rotation: { enabled: true, order: ["ben", "kai", "giada", "sam", "amy", "seth"], nextIndex: 0 },
     discord: null,
     roster: ["Aralyth", "Vloskev", "Ichabod", "Lysander", "Lizbeth", "Giada"],
     characters: [
@@ -121,7 +120,6 @@ export const CAMPAIGNS: Campaign[] = [
       horizonMonths: 2,
       location: "TPK Brewing",
     },
-    rotation: { enabled: true, order: ["lizbeth", "amy", "seth"], nextIndex: 0 },
     discord: null,
     roster: ["Ryn", "Oli", "Cooter", "Rosie", "Gordo"],
     characters: [
@@ -149,7 +147,6 @@ export const CAMPAIGNS: Campaign[] = [
     requireRsvps: false,
     partyLevel: 3,
     cadence: null,
-    rotation: { enabled: false, order: [], nextIndex: 0 },
     discord: null,
   },
   {
@@ -170,7 +167,6 @@ export const CAMPAIGNS: Campaign[] = [
     seatLimit: 6,
     partyLevel: 5,
     cadence: null,
-    rotation: { enabled: false, order: [], nextIndex: 0 },
     discord: null,
   },
   {
@@ -190,7 +186,6 @@ export const CAMPAIGNS: Campaign[] = [
     requireRsvps: false,
     partyLevel: 6,
     cadence: null,
-    rotation: { enabled: false, order: [], nextIndex: 0 },
     discord: null,
   },
   {
@@ -208,7 +203,6 @@ export const CAMPAIGNS: Campaign[] = [
     allowMemberInvites: true,
     requireRsvps: true,
     cadence: null,
-    rotation: { enabled: false, order: [], nextIndex: 0 },
     discord: null,
   },
 ];
@@ -272,7 +266,6 @@ function makeSession(input: {
   seriesId?: string | null;
   status?: Session["status"];
   exception?: Session["exception"];
-  snackUid?: string | null;
   attendance?: Attendance[];
   recapText?: string;
   recapHtml?: string;
@@ -298,7 +291,6 @@ function makeSession(input: {
     status: input.status ?? "scheduled",
     exception: input.exception ?? null,
     requireRsvps: input.requireRsvps ?? null,
-    snackUid: input.snackUid ?? null,
     seq: input.exception ? 2 : 0,
     attendance: input.attendance ?? [],
     recapText: input.recapText,
@@ -339,7 +331,6 @@ function buildSessions(): Session[] {
     "2025-06-06",
     "2027-02-01",
   );
-  const snacks = ["ben", "kai", "giada", "sam", "amy", "seth"];
   let afterFifteen = 16;
   strahdDates.forEach((ymd, i) => {
     const cancelled = ymd === "2026-08-14" || ymd === "2025-12-26";
@@ -354,7 +345,6 @@ function buildSessions(): Session[] {
       seriesId: "strahd-series",
       status: cancelled ? "cancelled" : "scheduled",
       exception: cancelled ? "skip" : ymd === "2026-11-20" ? "edit" : null,
-      snackUid: snacks[i % snacks.length],
       attendance: ymd === "2026-10-23" ? [out("kai")] : [],
       recapText: ymd === "2026-10-09"
         ? "The Wizard of Wines — recap by Lizbeth. The vineyard burned, and the gem stayed with Ichabod."
@@ -383,7 +373,6 @@ function buildSessions(): Session[] {
       title: upcoming ? "Session 13" : `Icewind session`,
       location: "TPK Brewing",
       seriesId: "frost-series",
-      snackUid: i % 2 === 0 ? "lizbeth" : "amy",
       status: ymd === "2026-09-14" ? "cancelled" : "scheduled",
       exception: ymd === "2026-09-14" ? "skip" : null,
     }));
@@ -513,7 +502,7 @@ export function buildDemo(personaId = "giada"): AppState {
   return {
     me,
     directory: USERS,
-    campaigns: CAMPAIGNS.map((c) => ({ ...c, cadence: c.cadence ? { ...c.cadence } : null, rotation: { ...c.rotation, order: [...c.rotation.order] } })),
+    campaigns: CAMPAIGNS.map((c) => ({ ...c, cadence: c.cadence ? { ...c.cadence } : null })),
     sessions: buildSessions(),
     members: {
       strahd: STRAHD_PARTY.map((m) => ({ ...m })),

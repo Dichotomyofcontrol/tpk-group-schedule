@@ -142,6 +142,6 @@ export function validatePdf(file: { name: string; size: number; type: string }):
   const pdfName = file.name.toLowerCase().endsWith(".pdf");
   if (!pdfType || !pdfName) return "Recap files have to be PDFs.";
   if (file.size <= 0) return "That PDF is empty.";
-  if (file.size > PDF_MAX_BYTES) return "That PDF is over 25 MB.";
+  if (file.size > PDF_MAX_BYTES) return `Too big (${Math.round(file.size / 1048576)} MB). PDFs can be up to 25 MB.`;
   return null;
 }

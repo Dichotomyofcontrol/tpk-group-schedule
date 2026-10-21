@@ -18,22 +18,22 @@ export async function POST(request: Request) {
     if (!cid) continue;
     if (docSnap.id === auth.uid) continue;
     const data = docSnap.data();
-    await db.collection("campaigns").doc(cid).collection("members").doc(auth.uid).set({
-      ...data,
-      id: auth.uid,
-      uid: auth.uid,
-      email,
-      pending: false,
-    }, { merge: true });
-    if (docSnap.id === pendingId || data.pending) await docSnap.ref.delete();
-    linked += 1;
+    const mine = db.collection("campaigns").doc(cid).collection("members").doc(auth.uid);
+    const existing = await mine.get();
+    // Copy only when this uid has no membership yet; never overwrite a live one with a stale copy.
+    if (!existing.exists) {
+      await mine.set({ ...data, id: auth.uid, uid: auth.uid, email, pending: false });
+      linked += 1;
+    }
+    // The uid doc now exists, so any other doc with this email (pending, email-keyed or an old uid) is a duplicate.
+    if (docSnap.id === pendingId || data.pending || (await mine.get()).exists) await docSnap.ref.delete();
   }
   const userRef = db.collection("users").doc(auth.uid);
   const user = await userRef.get();
   let calToken = user.data()?.calToken as string | undefined;
   if (!calToken) {
     calToken = randomBytes(18).toString("base64url");
-    await userRef.set({ email, displayName: user.data()?.displayName || email.split("@")[0], calToken }, { merge: true });
+    await userRef.set({ email, displayName: user.data()?.displayName || "", calToken }, { merge: true });
     await db.collection("calTokens").doc(calToken).set({ uid: auth.uid });
   }
   const allow = await db.collection("config").doc("allowlist").get();

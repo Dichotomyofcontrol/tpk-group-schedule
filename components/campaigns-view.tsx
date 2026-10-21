@@ -1,48 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { memberCampaigns, upcomingSessions } from "@/lib/model";
-import { coverSrc } from "@/lib/covers";
+import { archivedCampaigns, isOrganizer, memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { relativeWhen } from "@/lib/time";
-import { Icon } from "./ui";
+import type { Campaign } from "@/lib/types";
+import { CampaignCover, Icon } from "./ui";
 
 export function CampaignsView() {
-  const { state } = useStore();
+  const store = useStore();
+  const { state } = store;
   const mine = memberCampaigns(state);
+  const archived = archivedCampaigns(state);
   return (
     <>
       <div className="ptitle">
-        <div>
-          <div className="eyebrow">{mine.length} {mine.length === 1 ? "table" : "tables"}</div>
-          <h1 className="lt">Campaigns</h1>
-        </div>
-        {state.me.canCreateCampaigns && <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New</Link>}
+        <h1 className="lt">Campaigns</h1>
+        {state.me.canCreateCampaigns && <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New campaign</Link>}
       </div>
       {mine.length === 0 && (
-        <div className="card ph-poll">
+        <div className="card empty-card">
           <h2>Your table awaits</h2>
-          <p className="note">{state.me.id ? "Ask your organizer for an invite link." : "Sign in from the home page to see the campaigns you're invited to."}</p>
+          <p className="note">Ask your organizer for an invite link.</p>
         </div>
       )}
       <div className="camp-grid">
-        {mine.map((campaign) => {
-          const next = upcomingSessions(state, campaign.id)[0];
-          const hidden = state.hiddenCids.includes(campaign.id);
-          return (
-            <article key={campaign.id} className="card camp-card">
-              <Link href={`/campaigns/${campaign.id}`}>
-                <div className="cover"><img className="art" src={coverSrc(campaign.cover.src, campaign.id)} alt="" /></div>
-                <div className="pad">
-                  <div className="eyebrow">{campaign.system || "Tabletop"}</div>
-                  <h2>{campaign.name}</h2>
-                  <p className="note">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()}` : "No upcoming night"}{hidden ? " · hidden from play dates" : ""}</p>
-                </div>
-              </Link>
-            </article>
-          );
-        })}
+        {mine.map((c) => <CampaignCard key={c.id} campaign={c} />)}
       </div>
+      {archived.length > 0 && (
+        <section aria-labelledby="arch-h">
+          <h2 className="mhd" id="arch-h">Archived</h2>
+          <div className="card list">
+            {archived.map((c) => (
+              <div key={c.id} className="srow arow">
+                <Link className="st" href={`/campaigns/${c.id}`}><b>{c.name}</b><span className="note">Hidden from Sessions</span></Link>
+                {isOrganizer(state, c.id) && <button className="btn sec sm" onClick={() => store.archiveCampaign(c.id, false)}>Restore</button>}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </>
+  );
+}
+
+function CampaignCard({ campaign }: { campaign: Campaign }) {
+  const { state } = useStore();
+  const now = Date.now();
+  const next = state.sessions
+    .filter((s) => s.cid === campaign.id && s.status === "scheduled" && new Date(s.endsAt).getTime() >= now)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
+  return (
+    <Link href={`/campaigns/${campaign.id}`} className="card camp-card">
+      <CampaignCover campaign={campaign} />
+      <span className="pad">
+        <h2>{campaign.name}</h2>
+        <span className="note">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()} · ${next.title}` : "No session scheduled"}</span>
+      </span>
+    </Link>
   );
 }

@@ -96,7 +96,8 @@ service cloud.firestore {
             && request.resource.data.email == resource.data.email
           || (isOrganizer(cid) && uid != request.auth.uid
             && request.resource.data.role in ['member', 'coorganizer']);
-        allow delete: if isOrganizer(cid) && uid != request.auth.uid;
+        allow delete: if (isOrganizer(cid) && uid != request.auth.uid)
+          || (isMember(cid) && request.auth.uid == uid && resource.data.role != 'organizer');
       }
 
       match /sessions/{sid} {

@@ -1,4 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { hasUploadedCover } from "@/lib/model";
+import { useStore } from "@/lib/store";
+import type { Campaign } from "@/lib/types";
 
 const PATHS: Record<string, string> = {
   dates: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M12 12.2l2.3 2.3-2.3 2.3-2.3-2.3z"/>',
@@ -20,6 +27,12 @@ const PATHS: Record<string, string> = {
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   moon: '<path d="M19.5 14.5A7.5 7.5 0 0 1 9.5 4.5a7.5 7.5 0 1 0 10 10z"/>',
   down: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  upload: '<path d="M12 16V5M7 9.5l5-5 5 5M5 20h14"/>',
+  img: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>',
+  dots: '<circle cx="6" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="18" cy="12" r="1.1"/>',
+  ext: '<path d="M14 4.5h5.5V10M19.5 4.5L11 13M17 14v5.5H4.5V7H10"/>',
+  user: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/>',
 };
 
 export type IconName = keyof typeof PATHS;
@@ -81,6 +94,77 @@ export function DateBlock({ dow, day, mon }: { dow: string; day: string; mon?: s
       <span className="dw">{dow}</span>
       <span className="dn">{day}</span>
       {mon ? <span className="dm">{mon}</span> : null}
+    </div>
+  );
+}
+
+/** A 44px back control for every screen that is not a tab. Goes back in history when we came from inside the app. */
+export function BackBar({ href, label }: { href: string; label: string }) {
+  const router = useRouter();
+  return (
+    <a
+      className="backbar"
+      href={href}
+      onClick={(event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+        event.preventDefault();
+        const internal = typeof document !== "undefined" && document.referrer.startsWith(window.location.origin) && window.history.length > 1;
+        if (internal && window.sessionStorage.getItem("tpk-nav") === "1") router.back();
+        else router.push(href);
+      }}
+    >
+      <Icon name="back" />
+      <span>{label}</span>
+    </a>
+  );
+}
+
+/** Parchment panel with a fine double rule and a line-art d20. Shown until the organizer uploads a cover. */
+export function DefaultCover({ className = "" }: { className?: string }) {
+  return (
+    <div className={`dcover ${className}`.trim()} role="img" aria-label="Default cover">
+      <svg className="dmark" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 4l24 14v28L32 60 8 46V18z" />
+        <path d="M32 18l12 21H20z" />
+        <path d="M32 4v14M56 18L44 39M8 18l12 21M20 39L8 46M44 39l12 7M20 39l12 21 12-21M32 18L8 18M32 18h24" />
+      </svg>
+    </div>
+  );
+}
+
+export function CampaignCover({ campaign, className = "" }: { campaign: Campaign; className?: string }) {
+  const store = useStore();
+  const path = campaign.cover?.path || "";
+  const inline = !path && hasUploadedCover(campaign) ? campaign.cover.src : "";
+  const [url, setUrl] = useState<string | null>(inline || null);
+  useEffect(() => {
+    let live = true;
+    if (!path) { setUrl(inline || null); return; }
+    void store.coverUrl(path).then((u) => { if (live) setUrl(u); });
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path, inline]);
+  if (!url) return <DefaultCover className={className} />;
+  return (
+    <div className={`ucover ${className}`.trim()}>
+      <img src={url} alt="" />
+    </div>
+  );
+}
+
+export function Switch({ on, label, onChange, disabled = false }: { on: boolean; label: string; onChange: (next: boolean) => void; disabled?: boolean }) {
+  return (
+    <button type="button" className={on ? "switch on" : "switch"} role="switch" aria-checked={on} aria-label={label} disabled={disabled} onClick={() => onChange(!on)}>
+      <i />
+    </button>
+  );
+}
+
+export function SettingRow({ title, detail, children }: { title: string; detail?: string; children: React.ReactNode }) {
+  return (
+    <div className="setrow">
+      <div className="st"><b>{title}</b>{detail ? <span>{detail}</span> : null}</div>
+      {children}
     </div>
   );
 }

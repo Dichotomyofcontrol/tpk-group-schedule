@@ -43,6 +43,11 @@ import {
   skipSession,
   toggleVote,
   transferOrganizer,
+  addSessionFile,
+  removeSessionFile,
+  replaceSessionFile,
+  deleteCampaignLocal,
+  leaveCampaign,
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
 import { omitUndefined } from "./omit";
@@ -89,7 +94,6 @@ function sessionFrom(id: string, cid: string, data: DocumentData): Session {
     status: data.status === "cancelled" ? "cancelled" : "scheduled",
     exception: data.exception ?? null,
     requireRsvps: data.requireRsvps ?? null,
-    snackUid: data.snackUid ?? null,
     notes: optionalString(data.notes),
     seq: data.seq ?? 0,
     recapHtml: optionalString(data.recapHtml),
@@ -97,6 +101,7 @@ function sessionFrom(id: string, cid: string, data: DocumentData): Session {
     recapMarkdown: optionalString(data.recapMarkdown),
     pdfPath: optionalString(data.pdfPath),
     pdfName: optionalString(data.pdfName),
+    pdfSize: typeof data.pdfSize === "number" ? data.pdfSize : undefined,
     pdfUrl: typeof data.pdfUrl === "string" && !data.pdfUrl.includes("token=") && !data.pdfUrl.startsWith("blob:")
       ? data.pdfUrl
       : undefined,
@@ -132,6 +137,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
   const toastId = useRef(1);
   const stateRef = useRef<AppState | null>(null);
+  const coverCache = useRef(new Map<string, string>());
   stateRef.current = state;
 
   const flash = useCallback((text: string, tone?: Toast["tone"]) => {
@@ -176,7 +182,9 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     const me: User = {
       id: authUser.uid,
       email: authUser.email || "",
-      displayName: authUser.displayName || window.localStorage.getItem("tpk-name") || authUser.email?.split("@")[0] || "Player",
+      // Never the email prefix. Until the player picks a name, the account sheet asks for one.
+      displayName: authUser.displayName || window.localStorage.getItem("tpk-name") || "",
+      nameSet: false,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Los_Angeles",
       calToken: "",
       canCreateCampaigns: false,
@@ -185,7 +193,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     const userRef = doc(db, "users", authUser.uid);
     void getDoc(userRef).then(async (snap) => {
       if (!snap.exists()) {
-        await setDoc(userRef, { email: me.email, displayName: me.displayName, tz: me.tz, hiddenCids: ["special"] });
+        await setDoc(userRef, { email: me.email, displayName: me.displayName, tz: me.tz, hiddenCids: [] });
       }
       await authedFetch("/api/auth/link", { method: "POST" }).catch(() => undefined);
     });
@@ -228,7 +236,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       setState((prev) => prev ? {
         ...prev,
         hiddenCids: data.hiddenCids || prev.hiddenCids,
-        me: { ...prev.me, calToken: data.calToken || prev.me.calToken, displayName: data.displayName || prev.me.displayName, canCreateCampaigns: !!data.canCreateCampaigns },
+        me: {
+          ...prev.me,
+          calToken: data.calToken || prev.me.calToken,
+          displayName: data.nameSet ? data.displayName : (prev.me.displayName || ""),
+          nameSet: !!data.nameSet,
+          canCreateCampaigns: !!data.canCreateCampaigns || prev.me.canCreateCampaigns,
+        },
       } : prev);
     });
     const unsubAllow = onSnapshot(doc(db, "config", "allowlist"), (snap) => {
@@ -282,9 +296,18 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     move: () => undefined,
     editSession: () => undefined,
     saveRecap: () => undefined,
-    attachPdf: async () => undefined,
-    clearPdf: () => undefined,
-    pdfPreviewUrl: () => null,
+    attachPdf: async () => "Sign in first.",
+    replacePdf: async () => "Sign in first.",
+    removePdf: async () => undefined,
+    fileUrl: async () => null,
+    coverUrl: async () => null,
+    uploadCover: async () => false,
+    removeCover: () => undefined,
+    archiveCampaign: () => undefined,
+    deleteCampaign: async () => false,
+    leaveCampaign: async () => false,
+    patchMe: () => undefined,
+    setDisplayName: async () => undefined,
     saveCadence: () => undefined,
     patchCampaign: () => undefined,
     patchMember: () => undefined,
@@ -340,6 +363,32 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       }
       setState(result);
       return result;
+    };
+    const uploadRecap = async (sessionId: string, file: File, oldPath: string | null, onProgress?: (f: number) => void): Promise<string | null> => {
+      const problem = validatePdf(file);
+      if (problem) return problem;
+      const current = stateRef.current?.sessions.find((s) => s.id === sessionId);
+      if (!current) return "That session is gone.";
+      const path = nestedRecapPath(current.cid, current.id, `${Date.now().toString(36)}-${file.name}`);
+      try {
+        const { storage } = getFirebase();
+        const { ref, uploadBytesResumable } = await import("firebase/storage");
+        await new Promise<void>((resolve, reject) => {
+          const task = uploadBytesResumable(ref(storage, path), file, { contentType: "application/pdf" });
+          task.on("state_changed", (snap) => onProgress?.(snap.totalBytes ? snap.bytesTransferred / snap.totalBytes : 0), reject, () => resolve());
+        });
+        const entry = { path, name: file.name, size: file.size };
+        const next = applyLocal((s) => (oldPath ? replaceSessionFile(s, sessionId, oldPath, entry) : addSessionFile(s, sessionId, entry)));
+        const session = next?.sessions.find((s) => s.id === sessionId);
+        if (session) await persistSession(session);
+        if (oldPath && oldPath.startsWith(`recaps/${current.cid}/${current.id}/`)) {
+          const { deleteObject } = await import("firebase/storage");
+          await deleteObject(ref(storage, oldPath)).catch(() => undefined);
+        }
+        return null;
+      } catch {
+        return "Couldn't upload that PDF. Check your connection and try again.";
+      }
     };
     return {
       ...signedOut,
@@ -402,50 +451,137 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           }, { merge: true });
         }
       },
-      attachPdf: async (sessionId, file) => {
-        const problem = validatePdf(file);
-        if (problem) {
-          flash(problem, "err");
-          return;
+      attachPdf: (sessionId, file, onProgress) => uploadRecap(sessionId, file, null, onProgress),
+      replacePdf: (sessionId, oldPath, file, onProgress) => uploadRecap(sessionId, file, oldPath, onProgress),
+      removePdf: async (sessionId, path) => {
+        const next = applyLocal((s) => removeSessionFile(s, sessionId, path));
+        const session = next?.sessions.find((s) => s.id === sessionId);
+        if (session) await persistSession(session).catch(() => flash("Couldn't remove that file.", "err"));
+        // Files this app uploaded live under recaps/{cid}/{sid}/. Legacy files stay put in Storage.
+        if (session && path.startsWith(`recaps/${session.cid}/${session.id}/`)) {
+          const { storage } = getFirebase();
+          const { ref, deleteObject } = await import("firebase/storage");
+          await deleteObject(ref(storage, path)).catch(() => undefined);
         }
-        const current = stateRef.current?.sessions.find((s) => s.id === sessionId);
-        if (!current) return;
-        const path = nestedRecapPath(current.cid, current.id, file.name);
+      },
+      fileUrl: async (sessionId, path, download = false) => {
+        const session = stateRef.current?.sessions.find((s) => s.id === sessionId);
+        if (!session) return null;
+        if (path.startsWith("/samples/") || /^https?:/.test(path)) return path;
+        try {
+          const res = await authedFetch("/api/files", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ cid: session.cid, sid: sessionId, path, download }),
+          });
+          if (res.ok) {
+            const body = await res.json() as { url?: string };
+            if (body.url) return body.url;
+          }
+        } catch { /* fall back to the SDK below */ }
         try {
           const { storage } = getFirebase();
-          const { ref, uploadBytes } = await import("firebase/storage");
-          await uploadBytes(ref(storage, path), file, { contentType: "application/pdf" });
-          const next = applyLocal((s) => saveRecap(s, sessionId, { pdfPath: path, pdfName: file.name, pdfUrl: null }));
-          const session = next?.sessions.find((s) => s.id === sessionId);
-          if (session) await persistSession(session);
-          const campaign = next?.campaigns.find((c) => c.id === current.cid);
-          if (campaign) {
-            const { db } = getFirebase();
-            await setDoc(doc(db, "campaigns", campaign.id), {
-              previouslyOn: campaign.previouslyOn ?? null,
-              previouslyOnSessionId: campaign.previouslyOnSessionId ?? null,
-            }, { merge: true });
-          }
-          flash("PDF saved for the campaign.");
+          const { getBlob, ref } = await import("firebase/storage");
+          const blob = await getBlob(ref(storage, path));
+          return URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
         } catch {
-          flash("Couldn't upload that PDF.", "err");
+          return null;
         }
       },
-      clearPdf: (sessionId) => {
-        const before = stateRef.current?.sessions.find((s) => s.id === sessionId);
-        const next = applyLocal((s) => saveRecap(s, sessionId, { pdfPath: null }));
-        const session = next?.sessions.find((s) => s.id === sessionId);
-        if (session) void persistSession(session);
-        const campaign = next?.campaigns.find((c) => c.id === before?.cid);
-        if (campaign) {
+      coverUrl: async (path) => {
+        const hit = coverCache.current.get(path);
+        if (hit) return hit;
+        try {
+          const { storage } = getFirebase();
+          const { getBlob, ref } = await import("firebase/storage");
+          const url = URL.createObjectURL(await getBlob(ref(storage, path)));
+          coverCache.current.set(path, url);
+          return url;
+        } catch {
+          return null;
+        }
+      },
+      uploadCover: async (cid, image) => {
+        const path = `campaigns/${cid}/cover-${Date.now()}.jpg`;
+        try {
+          const { storage, db } = getFirebase();
+          const { ref, uploadBytes, deleteObject } = await import("firebase/storage");
+          await uploadBytes(ref(storage, path), image, { contentType: "image/jpeg" });
+          coverCache.current.set(path, URL.createObjectURL(image));
+          const before = stateRef.current?.campaigns.find((c) => c.id === cid)?.cover?.path;
+          const cover = { src: "", path, focalX: 0.5, focalY: 0.5 };
+          applyLocal((s) => setCampaignPatch(s, cid, { cover }));
+          await setDoc(doc(db, "campaigns", cid), { cover }, { merge: true });
+          if (before && before !== path) await deleteObject(ref(storage, before)).catch(() => undefined);
+          return true;
+        } catch {
+          flash("Couldn't upload that cover.", "err");
+          return false;
+        }
+      },
+      removeCover: (cid) => {
+        const before = stateRef.current?.campaigns.find((c) => c.id === cid)?.cover?.path;
+        const cover = { src: "", path: null, focalX: 0.5, focalY: 0.5 };
+        applyLocal((s) => setCampaignPatch(s, cid, { cover }));
+        const { db, storage } = getFirebase();
+        void setDoc(doc(db, "campaigns", cid), { cover }, { merge: true });
+        if (before) void import("firebase/storage").then(({ ref, deleteObject }) => deleteObject(ref(storage, before)).catch(() => undefined));
+      },
+      archiveCampaign: (cid, archived) => {
+        const status = archived ? "archived" as const : "active" as const;
+        applyLocal((s) => setCampaignPatch(s, cid, { status }));
+        const { db } = getFirebase();
+        void setDoc(doc(db, "campaigns", cid), { status }, { merge: true })
+          .then(() => flash(archived ? "Archived. Restore it any time from Campaigns." : "Restored."))
+          .catch(() => flash("Couldn't change that.", "err"));
+      },
+      deleteCampaign: async (cid) => {
+        const res = await authedFetch(`/api/campaigns/${cid}`, { method: "DELETE" }).catch(() => null);
+        if (!res || !res.ok) {
+          flash("Couldn't delete that campaign.", "err");
+          return false;
+        }
+        applyLocal((s) => deleteCampaignLocal(s, cid));
+        return true;
+      },
+      leaveCampaign: async (cid) => {
+        const result = leaveCampaign(stateRef.current!, cid);
+        if ("error" in result) { flash(result.error, "err"); return false; }
+        try {
           const { db } = getFirebase();
-          void setDoc(doc(db, "campaigns", campaign.id), {
-            previouslyOn: campaign.previouslyOn ?? null,
-            previouslyOnSessionId: campaign.previouslyOnSessionId ?? null,
-          }, { merge: true });
+          const { deleteDoc } = await import("firebase/firestore");
+          await deleteDoc(doc(db, "campaigns", cid, "members", authUser.uid));
+          setState(result);
+          return true;
+        } catch {
+          flash("Couldn't leave that campaign.", "err");
+          return false;
         }
       },
-      pdfPreviewUrl: () => null,
+      patchMe: (cid, patch) => {
+        const next = applyLocal((s) => setMember(s, cid, authUser.uid, patch));
+        if (!next) return;
+        const { db } = getFirebase();
+        void setDoc(doc(db, "campaigns", cid, "members", authUser.uid), patch, { merge: true })
+          .catch(() => flash("Couldn't save that.", "err"));
+      },
+      setDisplayName: async (name) => {
+        const clean = name.trim().slice(0, 40);
+        if (!clean) return;
+        const cur = stateRef.current;
+        if (!cur) return;
+        const members: AppState["members"] = {};
+        for (const [cid, list] of Object.entries(cur.members)) members[cid] = list.map((m) => (m.id === authUser.uid ? { ...m, displayName: clean } : m));
+        setState({ ...cur, me: { ...cur.me, displayName: clean, nameSet: true }, members });
+        window.localStorage.setItem("tpk-name", clean);
+        const { db } = getFirebase();
+        await setDoc(doc(db, "users", authUser.uid), { displayName: clean, nameSet: true }, { merge: true });
+        for (const [cid, list] of Object.entries(cur.members)) {
+          if (list.some((m) => m.id === authUser.uid)) {
+            await setDoc(doc(db, "campaigns", cid, "members", authUser.uid), { displayName: clean }, { merge: true }).catch(() => undefined);
+          }
+        }
+      },
       saveCadence: (cid, cadence) => {
         const next = applyLocal((s) => applyCadence(s, cid, cadence));
         if (!next) return;
@@ -522,7 +658,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const { db } = getFirebase();
         if (poll) void setDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), poll);
         if (session) void persistSession(session);
-        flash("Locked in. It's a real play date now.");
+        flash("Locked in. It's a real session now.");
       },
       addPoll: (cid, title, options) => {
         const result = addPoll(stateRef.current || state, cid, title, options);

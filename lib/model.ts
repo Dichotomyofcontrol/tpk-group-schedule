@@ -2,14 +2,31 @@ import { excerpt, recapPlain, type RecapPatch } from "./recap";
 import { cadenceDates, horizonEnd, occurrenceInstant } from "./recurrence";
 import { partsInZone, weekdayIndex, ymdInZone, zonedTimeToUtc } from "./time";
 import { withAttendance } from "./attendance";
-import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Role, Session, User } from "./types";
+import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Role, Session, SessionFile, User } from "./types";
 
 export function campaignById(state: AppState, cid: string): Campaign | undefined {
   return state.campaigns.find((c) => c.id === cid);
 }
 
 export function membersOf(state: AppState, cid: string): Member[] {
-  return state.members[cid] ?? [];
+  return dedupeMembers(state.members[cid] ?? [], state.me.id);
+}
+
+/**
+ * One row per person. Migrated tables can hold two docs for the same email
+ * (an old uid and the current one). Keep the doc whose id is the signed-in uid,
+ * else the one with a uid, else the first.
+ */
+export function dedupeMembers(list: Member[], meId = ""): Member[] {
+  const byKey = new Map<string, Member>();
+  for (const m of list) {
+    const key = (m.email || "").toLowerCase() || m.uid || m.id;
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, m); continue; }
+    const score = (x: Member) => (x.id === meId ? 4 : 0) + (x.uid === x.id ? 2 : 0) + (x.pending ? -1 : 0) + (x.characterName ? 1 : 0);
+    if (score(m) > score(prev)) byKey.set(key, { ...prev, ...m, characterName: m.characterName || prev.characterName });
+  }
+  return [...byKey.values()];
 }
 
 export function myRole(state: AppState, cid: string, uid = state.me.id): Role | null {
@@ -37,6 +54,13 @@ export function canInvite(state: AppState, cid: string, role: Invite["role"], ui
 export function memberCampaigns(state: AppState, uid = state.me.id): Campaign[] {
   return state.campaigns.filter(
     (c) => c.status !== "archived" && (state.members[c.id] ?? []).some((m) => m.id === uid),
+  );
+}
+
+/** Archived tables the user is still a member of. Restorable by the organizer. */
+export function archivedCampaigns(state: AppState, uid = state.me.id): Campaign[] {
+  return state.campaigns.filter(
+    (c) => c.status === "archived" && (state.members[c.id] ?? []).some((m) => m.id === uid),
   );
 }
 
@@ -115,7 +139,7 @@ export function moveSession(state: AppState, sessionId: string, ymd: string, hm:
 export function editSession(
   state: AppState,
   sessionId: string,
-  patch: Partial<Pick<Session, "title" | "location" | "notes" | "requireRsvps" | "snackUid">>,
+  patch: Partial<Pick<Session, "title" | "location" | "notes" | "requireRsvps">>,
 ): AppState {
   return patchSession(state, sessionId, (s) => ({
     ...s,
@@ -224,16 +248,11 @@ export function applyCadence(state: AppState, cid: string, cadence: Cadence | nu
     if (key < from || !onLattice) kept.push(session);
   }
   const members = membersOf(state, cid);
-  let snack = 0;
   const created: Session[] = [];
   for (const ymd of dates) {
     if (taken.has(ymd)) continue;
     if (ymd < historyFrom) continue;
     const inst = occurrenceInstant(ymd, cadence);
-    const snackUid = campaign.rotation.enabled && campaign.rotation.order.length
-      ? campaign.rotation.order[snack % campaign.rotation.order.length]
-      : null;
-    snack += 1;
     created.push({
       id: `${cid}-${ymd}`,
       cid,
@@ -247,7 +266,6 @@ export function applyCadence(state: AppState, cid: string, cadence: Cadence | nu
       status: "scheduled",
       exception: null,
       requireRsvps: null,
-      snackUid,
       seq: 0,
       attendance: [],
     });
@@ -317,7 +335,7 @@ export function createCampaign(state: AppState, input: {
     slug: id,
     color: input.color,
     icon: input.icon || "🎲",
-    cover: { src: "/covers/tavern.svg", focalX: 0.5, focalY: 0.4, credit: "Original cover" },
+    cover: { src: "", path: null, focalX: 0.5, focalY: 0.5 },
     defaultLocation: input.location,
     tz: input.tz,
     ownerUid: state.me.id,
@@ -325,7 +343,6 @@ export function createCampaign(state: AppState, input: {
     allowMemberInvites: input.allowMemberInvites,
     requireRsvps: input.requireRsvps,
     cadence: null,
-    rotation: { enabled: false, order: [state.me.id], nextIndex: 0 },
     discord: null,
   };
   const member: Member = {
@@ -404,7 +421,7 @@ export function lockPoll(state: AppState, pollId: string, optionId: string): App
     status: "scheduled",
     exception: null,
     requireRsvps: null,
-    snackUid: null,
+
     seq: 0,
     attendance: [],
     notes: "Locked in from a date poll.",
@@ -521,9 +538,85 @@ export function displayOf(state: AppState, cid: string, uid: string): string {
   return member?.displayName ?? userById(state, uid)?.displayName ?? "Someone";
 }
 
-export function snackName(state: AppState, session: Session): string | null {
-  if (!session.snackUid) return null;
-  const member = membersOf(state, session.cid).find((m) => m.id === session.snackUid);
-  return member?.displayName ?? null;
+
+/** Every PDF attached to a night, primary first. Never repeats a path. */
+export function sessionFiles(session: Session): SessionFile[] {
+  const out: SessionFile[] = [];
+  const seen = new Set<string>();
+  if (session.pdfPath) {
+    out.push({ path: session.pdfPath, name: session.pdfName || fileName(session.pdfPath), size: session.pdfSize });
+    seen.add(session.pdfPath);
+  } else if (session.pdfUrl) {
+    out.push({ path: session.pdfUrl, name: session.pdfName || fileName(session.pdfUrl) });
+    seen.add(session.pdfUrl);
+  }
+  for (const f of session.extraPdfs || []) {
+    if (seen.has(f.path)) continue;
+    seen.add(f.path);
+    out.push({ ...f, name: f.name || fileName(f.path) });
+  }
+  return out;
 }
 
+function fileName(path: string): string {
+  const base = path.split("/").pop() || "Recap.pdf";
+  return decodeURIComponent(base).replace(/^\d{4}-\d{2}-\d{2}_/, "").replace(/_/g, " ");
+}
+
+export function addSessionFile(state: AppState, sessionId: string, file: SessionFile): AppState {
+  return patchSession(state, sessionId, (s) => {
+    if (!s.pdfPath && !s.pdfUrl) return { ...s, pdfPath: file.path, pdfName: file.name, pdfSize: file.size };
+    return { ...s, extraPdfs: [...(s.extraPdfs || []).filter((f) => f.path !== file.path), file] };
+  });
+}
+
+export function removeSessionFile(state: AppState, sessionId: string, path: string): AppState {
+  return patchSession(state, sessionId, (s) => {
+    const next: Session = { ...s, extraPdfs: (s.extraPdfs || []).filter((f) => f.path !== path) };
+    if (s.pdfPath === path || (!s.pdfPath && s.pdfUrl === path)) {
+      delete next.pdfPath; delete next.pdfName; delete next.pdfUrl; delete next.pdfSize;
+      const [first, ...rest] = next.extraPdfs || [];
+      if (first) { next.pdfPath = first.path; next.pdfName = first.name; if (first.size) next.pdfSize = first.size; next.extraPdfs = rest; }
+    }
+    return next;
+  });
+}
+
+export function replaceSessionFile(state: AppState, sessionId: string, oldPath: string, file: SessionFile): AppState {
+  return patchSession(state, sessionId, (s) => {
+    if (s.pdfPath === oldPath || (!s.pdfPath && s.pdfUrl === oldPath)) {
+      const next: Session = { ...s, pdfPath: file.path, pdfName: file.name };
+      delete next.pdfUrl;
+      if (file.size) next.pdfSize = file.size; else delete next.pdfSize;
+      return next;
+    }
+    return { ...s, extraPdfs: (s.extraPdfs || []).map((f) => (f.path === oldPath ? file : f)) };
+  });
+}
+
+export function leaveCampaign(state: AppState, cid: string): AppState | { error: string } {
+  const me = membersOf(state, cid).find((m) => m.id === state.me.id);
+  if (!me) return { error: "You're not at this table." };
+  if (me.role === "organizer") return { error: "Hand the table to someone else before you leave." };
+  return { ...state, members: { ...state.members, [cid]: (state.members[cid] || []).filter((m) => m.id !== state.me.id) } };
+}
+
+export function deleteCampaignLocal(state: AppState, cid: string): AppState {
+  const { [cid]: _gone, ...members } = state.members;
+  void _gone;
+  return {
+    ...state,
+    campaigns: state.campaigns.filter((c) => c.id !== cid),
+    sessions: state.sessions.filter((s) => s.cid !== cid),
+    polls: state.polls.filter((p) => p.cid !== cid),
+    invites: state.invites.filter((i) => i.cid !== cid),
+    members,
+  };
+}
+
+/** True when the campaign has an organizer-uploaded cover. Generated plates count as no cover. */
+export function hasUploadedCover(campaign: Campaign): boolean {
+  if (campaign.cover?.path) return true;
+  const src = campaign.cover?.src || "";
+  return src.startsWith("data:") || src.startsWith("blob:");
+}
