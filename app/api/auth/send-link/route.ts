@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 
   if (!adminConfigured() || !process.env.RESEND_API_KEY) {
     console.error("send-link: missing FIREBASE_SERVICE_ACCOUNT or RESEND_API_KEY");
-    return Response.json({ error: "Email sign-in isn't configured on this deploy." }, { status: 503 });
+    return Response.json({ error: "Email sign-in isn't configured on this deploy.", fallback: true }, { status: 503 });
   }
 
   const ip = (request.headers.get("x-forwarded-for") || "").split(",")[0]!.trim() || "unknown";
@@ -37,9 +37,14 @@ export async function POST(request: Request) {
     const continueUrl = magicLinkContinueUrl(origin, invite);
     const raw = await getAuth(adminApp()).generateSignInWithEmailLink(email, { url: continueUrl, handleCodeInApp: true });
     const sent = await sendViaResend(email, brandedSignInLink(raw, continueUrl));
-    if (!sent) console.error("send-link: Resend rejected the message");
+    if (!sent) {
+      console.error("send-link: Resend rejected the message");
+      return Response.json({ fallback: true }, { status: 502 });
+    }
   } catch (error) {
     console.error("send-link failed", error instanceof Error ? error.message : "unknown");
+    // Let the client send Firebase's standard link so sign-in never silently fails.
+    return Response.json({ fallback: true }, { status: 502 });
   }
   return OK();
 }

@@ -5,9 +5,11 @@ import {
   isSignInWithEmailLink,
   onAuthStateChanged,
   signInWithEmailLink,
+  sendSignInLinkToEmail,
   signOut as firebaseSignOut,
   type User as FirebaseUser,
 } from "firebase/auth";
+import { magicLinkContinueUrl } from "./magic-link";
 import {
   collection,
   collectionGroup,
@@ -331,10 +333,16 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, invite: inviteToken }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(data.error || "Couldn't send the sign-in link. Try again.");
+      }).catch(() => null);
+      if (!res || !res.ok) {
+        const data = res ? await res.json().catch(() => ({})) as { error?: string; fallback?: boolean } : { fallback: true };
+        if (!res || data.fallback || res.status >= 500) {
+          // Branded email unavailable: fall back to Firebase's standard sign-in email.
+          const { auth } = getFirebase();
+          await sendSignInLinkToEmail(auth, email, { url: magicLinkContinueUrl(window.location.origin, inviteToken), handleCodeInApp: true });
+        } else {
+          throw new Error(data.error || "Couldn't send the sign-in link. Try again.");
+        }
       }
       window.localStorage.setItem("tpk-email", email);
     },
