@@ -261,6 +261,20 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     };
   }, [authUser]);
 
+  // Keep my name the same on every table: if any of my member docs carries an old or
+  // missing name (for example from an invite accepted before I set one), fix it.
+  const syncedName = useRef("");
+  useEffect(() => {
+    if (!authUser || !state?.me.nameSet || !state.me.displayName) return;
+    const name = state.me.displayName;
+    const stale = Object.entries(state.members).filter(([, list]) => list.some((m) => m.id === authUser.uid && m.displayName !== name)).map(([cid]) => cid);
+    const key = `${name}|${stale.join(",")}`;
+    if (!stale.length || syncedName.current === key) return;
+    syncedName.current = key;
+    const { db } = getFirebase();
+    for (const cid of stale) void setDoc(doc(db, "campaigns", cid, "members", authUser.uid), { displayName: name }, { merge: true }).catch(() => undefined);
+  }, [authUser, state]);
+
   const persistSession = useCallback(async (session: Session) => {
     const { db } = getFirebase();
     const payload = omitUndefined({ ...session, attendance: attendanceMap(session.attendance) });
