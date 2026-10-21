@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { isStaff, sessionFiles } from "@/lib/model";
+import { isStaff, sessionFiles , sessionTitle } from "@/lib/model";
 import { hasRecap, markdownToHtml, validatePdf } from "@/lib/recap";
 import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
@@ -70,7 +70,7 @@ export function RecapSection({ session }: { session: Session }) {
       {editing && staff ? (
         <RecapEditor session={session} onSaved={() => setEditing(false)} />
       ) : html ? (
-        <div className="reader" dangerouslySetInnerHTML={{ __html: dropTitle(sanitizeRecapHtml(html), session.title) }} />
+        <div className="reader" dangerouslySetInnerHTML={{ __html: dropTitle(sanitizeRecapHtml(html), sessionTitle(store.state, session)) }} />
       ) : empty ? (
         <div className="empty">
           <p>{staff ? "Nothing yet for this night." : "No recap for this night yet."}</p>

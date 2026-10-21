@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { campaignById, isStaff, membersOf, pastSessions } from "@/lib/model";
+import { campaignById, isStaff, membersOf, pastSessions , sessionTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, formatRangePretty } from "@/lib/time";
@@ -59,7 +59,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
     <>
       <BackBar href={back.href} label={back.label} />
       <div className="eyebrow ver">{when.dow} {when.mon} {when.day}{status ? ` · ${status}` : ""}</div>
-      <h1 className="lt">{session.title}</h1>
+      <h1 className="lt">{sessionTitle(state, session)}</h1>
       <p className="meta">
         <Link className="cl" href={`/campaigns/${cid}`}><i className="dot" style={{ background: campaign.color }} />{campaign.name}</Link>
         <span className="mg"><Icon name="clock" className="ic sm" />{formatRangePretty(session.startsAt, session.endsAt, session.tz)}</span>
@@ -79,7 +79,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
             <RecapSection session={session} />
           ) : previous ? (
             <section className="card pad prev">
-              <div className="eyebrow">Previously · {previous.title}</div>
+              <div className="eyebrow">Previously · {sessionTitle(state, previous)}</div>
               <p>{excerpt(recapPlain(previous), 220) || "The recap is a PDF."}</p>
               <Link className="lnk" href={sessionHref(previous)}>Read the recap <Icon name="arrow" className="ic sm" /></Link>
             </section>

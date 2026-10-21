@@ -261,7 +261,7 @@ export function applyCadence(state: AppState, cid: string, cadence: Cadence | nu
       startsAt: inst.startsAt,
       endsAt: inst.endsAt,
       tz: cadence.tz,
-      title: campaign.name,
+      title: "",
       location: cadence.location,
       status: "scheduled",
       exception: null,
@@ -620,4 +620,19 @@ export function hasUploadedCover(campaign: Campaign): boolean {
   if (campaign.cover?.path) return true;
   const src = campaign.cover?.src || "";
   return src.startsWith("data:") || src.startsWith("blob:");
+}
+
+/** The session's own title, or "" when it has none (or only repeats the campaign name). */
+export function ownTitle(session: Pick<Session, "title">, campaignName = ""): string {
+  const t = (session.title || "").trim();
+  return t && t.toLowerCase() !== campaignName.trim().toLowerCase() && t.toLowerCase() !== "session" ? t : "";
+}
+
+/** What to call a session: its own title, else "Session N" counted within its campaign. */
+export function sessionTitle(state: AppState, session: Session): string {
+  const campaign = state.campaigns.find((c) => c.id === session.cid);
+  const own = ownTitle(session, campaign?.name);
+  if (own) return own;
+  const n = state.sessions.filter((s) => s.cid === session.cid && s.status !== "cancelled" && s.startsAt < session.startsAt).length + 1;
+  return `Session ${n}`;
 }
