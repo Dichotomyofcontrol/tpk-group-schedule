@@ -836,3 +836,23 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .osdone { text-align: left; }
 .osdone p { margin: 0 0 8px; }
 .osacts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+/* First run: Getting started + How it works */
+.gstart { padding: 20px 20px 12px; margin: 0 0 24px; }
+.gsh { display: flex; align-items: center; justify-content: space-between; margin: -8px -8px 4px 0; }
+.gsh h2 { font-size: 20px; line-height: 26px; margin: 0; }
+.gstart ol { list-style: none; margin: 0; padding: 0; }
+.gstart li + li { border-top: .5px solid var(--rule); }
+.gstart li > a, .gstart li > div { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 0; color: inherit; text-decoration: none; }
+.gsc { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--rule2); display: grid; place-items: center; }
+.gsc.done { background: var(--moss); border-color: var(--moss); color: var(--paper); }
+.gst { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gst b { font: 600 15px/20px var(--ui); }
+.gstart li.done .gst b { color: var(--ink3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.gsa { flex: none; color: var(--ink3); }
+.gshow { margin-top: 4px; }
+.eacts { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.helpl .hrow { display: flex; gap: 16px; padding: 16px 20px; align-items: flex-start; }
+.helpl .hrow + .hrow { border-top: .5px solid var(--rule); }
+.helpl .hrow .fi { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; }
+.helpl .hrow > span:last-child { display: flex; flex-direction: column; gap: 4px; }
+.helpl .hrow b { font: 500 18px/24px var(--serif); }

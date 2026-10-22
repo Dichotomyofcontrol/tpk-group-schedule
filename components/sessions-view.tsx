@@ -10,6 +10,7 @@ import type { Session } from "@/lib/types";
 import { NextHero, SessionRow, sessionHref } from "./schedule";
 import { Icon, Skeleton } from "./ui";
 import { HomeScreenHint } from "./home-hint";
+import { GettingStarted } from "./getting-started";
 
 /** Sessions: the next one as the hero, then every later one grouped by month. Filter by campaign. */
 export function SessionsView() {
@@ -82,6 +83,7 @@ export function SessionsView() {
     <>
       <div className="ptitle"><h1 className="lt">Sessions</h1></div>
       <HomeScreenHint />
+      <GettingStarted />
       {mine.length > 0 && (
         <div className="ltools">
           <div className="seg" role="group" aria-label="Which sessions">
@@ -108,7 +110,10 @@ export function SessionsView() {
         <div className="card empty-card">
           <h2>{state.me.canCreateCampaigns ? "No sessions yet" : "You're not at a table yet"}</h2>
           <p className="note">{state.me.canCreateCampaigns ? "Start a campaign and its sessions show up here." : "Ask your organizer for an invite link. You'll only see the campaigns you're in."}</p>
-          {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
+          <div className="eacts">
+            {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
+            <Link className="lnk" href="/help">How it works <Icon name="arrow" className="ic sm" /></Link>
+          </div>
         </div>
       )}
       {/* Oldest first: past, Up next, then later months. Newest first flips it; Up next always marks today. */}
