@@ -56,6 +56,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const tab = path.startsWith("/campaigns/") && path.includes("/sessions/") ? from : path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") ? "polls" : path.startsWith("/invite") ? "invites" : path.startsWith("/account") ? "" : "sessions";
   const bare = path === "/signin" || path.startsWith("/auth/");
   const night = store.resolvedTheme === "dark";
+  // Signed-out visitors on app screens get one clear way in instead of a dead end.
+  const gate = !signedIn && !!store.signedOutConfirmed && !path.startsWith("/invite/");
   const needsName = signedIn && store.mode === "live" && !state.me.nameSet && !state.me.displayName;
 
   return (
@@ -81,7 +83,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </>
         )}
       </header>
-      {landing || bare ? children : <main>{needsName ? <NamePrompt /> : children}</main>}
+      {landing || bare ? children : <main>{needsName ? <NamePrompt /> : gate ? <SignInGate /> : children}</main>}
       {signedIn && !bare && (
         <nav className="tabs" aria-label="Primary">
           {TABS.map((item) => (
@@ -151,5 +153,15 @@ function NamePrompt() {
       </div>
       <button className="btn pri" type="submit" disabled={busy || !name.trim()}>{busy ? "Saving…" : "Continue"}</button>
     </form>
+  );
+}
+
+function SignInGate() {
+  return (
+    <div className="card empty-card">
+      <h1 className="lt">Sign in to see your table</h1>
+      <p className="note">Sessions, campaigns, polls and invites show up after you sign in.</p>
+      <Link className="btn pri" href="/signin">Sign in</Link>
+    </div>
   );
 }
