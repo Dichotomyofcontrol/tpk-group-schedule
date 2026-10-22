@@ -23,7 +23,7 @@ export function PollList() {
           {open.length > 0 && <div className="eyebrow">{open.length} need{open.length === 1 ? "s" : ""} your vote</div>}
           <h1 className="lt">Polls</h1>
         </div>
-        {staff && <a className="btn sec sm" href="#new-poll"><Icon name="plus" className="ic sm" />New poll</a>}
+        {(staff || state.me.canCreateCampaigns) && <a className="btn sec sm" href="#new-poll"><Icon name="plus" className="ic sm" />New poll</a>}
       </div>
       <div className="grid">
         <div>
@@ -31,9 +31,9 @@ export function PollList() {
           {open.length === 0 && <div className="card" style={{ padding: 24, marginBottom: 24 }}><p className="note">No polls open. The usual night stays on the calendar.</p></div>}
           <div className="card ph-poll" id="new-poll">
             <span className="fi" style={{ width: 48, height: 48, borderRadius: 14, display: "inline-grid", margin: "0 auto" }}><Icon name="polls" /></span>
-            <h3>Planning a one-shot?</h3>
+            <h3>Find a date</h3>
             <p className="note" style={{ margin: "0 auto 20px", maxWidth: 300 }}>Float a few dates and let the table decide. The organizer locks the winner onto the calendar.</p>
-            {staff ? <NewPoll /> : <p className="note">An organizer starts the poll.</p>}
+            {staff || state.me.canCreateCampaigns ? <NewPoll /> : <p className="note">An organizer starts the poll.</p>}
           </div>
         </div>
         <aside className="side">
@@ -72,8 +72,8 @@ function PollCard({ poll }: { poll: Poll }) {
   return (
     <article className="card poll">
       <span className="ribbon" />
-      <div className="eyebrow">{campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
-      <h2>{poll.title}</h2>
+      <div className="eyebrow">{campaign.kind === "oneshot" ? "One-shot" : campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
+      <h2>{campaign.kind === "oneshot" ? campaign.name : poll.title}</h2>
       <p className="note" style={{ margin: 0 }}>Pick every date that works. {isStaff(store.state, poll.cid) ? "You can lock the winner." : "The organizer locks the winner."}</p>
       <div className="opts">
         {ranked.map((row, i) => {
@@ -140,29 +140,18 @@ export function PollView({ pollId }: { pollId: string }) {
   );
 }
 
-function NewPoll() {
-  const store = useStore();
-  const staffCampaigns = store.state.campaigns.filter((c) => isStaff(store.state, c.id));
-  const [cid, setCid] = useState(staffCampaigns[0]?.id ?? "");
-  const [title, setTitle] = useState("Which night works?");
-  const [rows, setRows] = useState([{ ymd: "", hm: "18:30" }, { ymd: "", hm: "18:30" }]);
-  if (!staffCampaigns.length) return null;
+type DateRow = { ymd: string; hm: string };
+
+function toOptions(rows: DateRow[], tz: string) {
+  return rows.filter((r) => r.ymd).map((r) => {
+    const start = zonedTimeToUtc(r.ymd, r.hm, tz);
+    return { id: `${r.ymd}-${r.hm}`, startsAt: start.toISOString(), endsAt: new Date(start.getTime() + 4 * 3600_000).toISOString(), tz };
+  });
+}
+
+function DateRows({ rows, setRows }: { rows: DateRow[]; setRows: (r: DateRow[]) => void }) {
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      const campaign = store.state.campaigns.find((c) => c.id === cid);
-      if (!campaign) return;
-      const options = rows.filter((r) => r.ymd).map((r) => {
-        const start = zonedTimeToUtc(r.ymd, r.hm, campaign.tz);
-        return { id: `${r.ymd}-${r.hm}`, startsAt: start.toISOString(), endsAt: new Date(start.getTime() + 4 * 3600_000).toISOString(), tz: campaign.tz };
-      });
-      store.addPoll(cid, title, options);
-    }}>
-      <div className="field">
-        <label htmlFor="poll-cid">Campaign</label>
-        <select id="poll-cid" className="inp" value={cid} onChange={(e) => setCid(e.target.value)}>{staffCampaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-      </div>
-      <div className="field"><label htmlFor="poll-q">Question</label><input id="poll-q" className="inp" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+    <>
       {rows.map((row, i) => (
         <div key={i} className="addr">
           <input className="inp" type="date" aria-label={`Date ${i + 1}`} value={row.ymd} onChange={(e) => setRows(rows.map((r, j) => j === i ? { ...r, ymd: e.target.value } : r))} />
@@ -170,7 +159,101 @@ function NewPoll() {
         </div>
       ))}
       <button type="button" className="btn sec sm" onClick={() => setRows([...rows, { ymd: "", hm: "18:30" }])}>Add another date</button>
+    </>
+  );
+}
+
+/** Two clear starts: a session for one of your campaigns, or a standalone one-shot with its own title and players. */
+function NewPoll() {
+  const store = useStore();
+  const { state } = store;
+  const staffCampaigns = state.campaigns.filter((c) => isStaff(state, c.id) && c.kind !== "oneshot" && c.status === "active");
+  const canOneShot = !!state.me.canCreateCampaigns;
+  const [kind, setKind] = useState<"session" | "oneshot">(staffCampaigns.length ? "session" : "oneshot");
+  if (!staffCampaigns.length && !canOneShot) return null;
+  return (
+    <div className="newpoll">
+      {staffCampaigns.length > 0 && canOneShot && (
+        <div className="pkind" role="radiogroup" aria-label="What are you scheduling?">
+          <button type="button" role="radio" aria-checked={kind === "session"} className={kind === "session" ? "on" : ""} onClick={() => setKind("session")}>
+            <Icon name="dates" /><span><b>Schedule a session</b><small>For one of your campaigns</small></span>
+          </button>
+          <button type="button" role="radio" aria-checked={kind === "oneshot"} className={kind === "oneshot" ? "on" : ""} onClick={() => setKind("oneshot")}>
+            <Icon name="sparkle" /><span><b>Schedule a one-shot</b><small>Standalone, with its own title and players</small></span>
+          </button>
+        </div>
+      )}
+      {kind === "session" && staffCampaigns.length > 0 ? <SessionPollForm campaigns={staffCampaigns} /> : <OneShotForm />}
+    </div>
+  );
+}
+
+function SessionPollForm({ campaigns }: { campaigns: ReturnType<typeof useStore>["state"]["campaigns"] }) {
+  const store = useStore();
+  const [cid, setCid] = useState(campaigns[0]?.id ?? "");
+  const [title, setTitle] = useState("Which night works?");
+  const [rows, setRows] = useState<DateRow[]>([{ ymd: "", hm: "18:30" }, { ymd: "", hm: "18:30" }]);
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      const campaign = store.state.campaigns.find((c) => c.id === cid);
+      if (!campaign) return;
+      store.addPoll(cid, title, toOptions(rows, campaign.tz));
+    }}>
+      <div className="field">
+        <label htmlFor="poll-cid">Campaign</label>
+        <select id="poll-cid" className="inp" value={cid} onChange={(e) => setCid(e.target.value)}>{campaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+      </div>
+      <div className="field"><label htmlFor="poll-q">Question</label><input id="poll-q" className="inp" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+      <DateRows rows={rows} setRows={setRows} />
       <button className="btn pri sm" type="submit" style={{ marginLeft: 8 }}><Icon name="plus" className="ic sm" />Start a date poll</button>
+    </form>
+  );
+}
+
+function OneShotForm() {
+  const store = useStore();
+  const tz = store.state.me.tz || "America/Los_Angeles";
+  const [title, setTitle] = useState("");
+  const [place, setPlace] = useState("");
+  const [rows, setRows] = useState<DateRow[]>([{ ymd: "", hm: "18:30" }, { ymd: "", hm: "18:30" }]);
+  const [made, setMade] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  if (made) {
+    const name = store.state.campaigns.find((c) => c.id === made)?.name || title;
+    return (
+      <div className="osdone" role="status">
+        <p><b>{name}</b> is set up with a date poll.</p>
+        <p className="note">Invite the players. Anyone with the link can join this one-shot and vote.</p>
+        <div className="osacts">
+          <button type="button" className="btn pri sm" disabled={busy} onClick={async () => {
+            setBusy(true);
+            const token = await store.createInvite(made, "member");
+            setBusy(false);
+            if (!token) return;
+            const url = `${window.location.origin}/invite/${token}`;
+            const text = `Join ${name}: ${url}`;
+            if (window.matchMedia("(pointer: coarse)").matches && typeof navigator.share === "function") {
+              try { await navigator.share({ text }); return; } catch (err) { if ((err as Error)?.name === "AbortError") return; }
+            }
+            try { await navigator.clipboard.writeText(url); store.flash("Invite link copied. Send it to your players."); } catch { store.flash("Couldn't copy the link.", "err"); }
+          }}><Icon name="link" className="ic sm" />{busy ? "Creating…" : "Invite players"}</button>
+          <Link className="btn sec sm" href={`/campaigns/${made}`}>Open the one-shot</Link>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      if (!title.trim()) { store.flash("Give the one-shot a title.", "err"); return; }
+      const id = store.createOneShot({ title: title.trim(), tz, location: place.trim(), options: toOptions(rows, tz) });
+      if (id) setMade(id);
+    }}>
+      <div className="field"><label htmlFor="os-t">Title</label><input id="os-t" className="inp" placeholder="Halloween horror night" value={title} onChange={(e) => setTitle(e.target.value)} required /></div>
+      <div className="field"><label htmlFor="os-p">Place <span className="note">optional</span></label><input id="os-p" className="inp" value={place} onChange={(e) => setPlace(e.target.value)} /></div>
+      <DateRows rows={rows} setRows={setRows} />
+      <button className="btn pri sm" type="submit" style={{ marginLeft: 8 }}><Icon name="plus" className="ic sm" />Start the one-shot poll</button>
     </form>
   );
 }

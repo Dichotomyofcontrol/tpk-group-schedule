@@ -347,6 +347,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     toggleVote: () => undefined,
     lockPoll: () => undefined,
     addPoll: () => undefined,
+    createOneShot: () => null,
     nudge: () => undefined,
     createInvite: async () => null,
     acceptInvite: () => false,
@@ -707,6 +708,28 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const poll = result.polls[result.polls.length - 1];
         const { db } = getFirebase();
         void setDoc(doc(db, "campaigns", cid, "polls", poll.id), poll);
+      },
+      createOneShot: (input) => {
+        const made = createCampaign(stateRef.current || state, { name: input.title, color: "#ce93d8", icon: "✨", tz: input.tz, location: input.location, requireRsvps: false, allowMemberInvites: true, cadence: null, kind: "oneshot" });
+        if ("error" in made) { flash(made.error, "err"); return null; }
+        const created = made.campaigns[made.campaigns.length - 1];
+        const polled = addPoll(made, created.id, "Which night works?", input.options);
+        if ("error" in polled) { flash(polled.error, "err"); return null; }
+        setState(polled);
+        const poll = polled.polls[polled.polls.length - 1];
+        const member = polled.members[created.id]?.[0];
+        const { db } = getFirebase();
+        // In order: the rules only let the organizer write the poll once their member doc exists.
+        void (async () => {
+          try {
+            await setDoc(doc(db, "campaigns", created.id), created);
+            if (member) await setDoc(doc(db, "campaigns", created.id, "members", member.id), { ...member, uid: authUser.uid });
+            await setDoc(doc(db, "campaigns", created.id, "polls", poll.id), poll);
+          } catch {
+            flash("Couldn't save the one-shot. Check your connection and try again.", "err");
+          }
+        })();
+        return created.id;
       },
       nudge: (pollId, uid) => {
         const next = applyLocal((s) => nudgePoll(s, pollId, uid));

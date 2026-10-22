@@ -322,6 +322,7 @@ export function createCampaign(state: AppState, input: {
   requireRsvps: boolean;
   allowMemberInvites: boolean;
   cadence: Cadence | null;
+  kind?: "oneshot";
 }): AppState | { error: string } {
   if (!state.me.canCreateCampaigns) return { error: "Only people on the organizer list can start a campaign." };
   const slug = input.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "campaign";
@@ -344,6 +345,7 @@ export function createCampaign(state: AppState, input: {
     requireRsvps: input.requireRsvps,
     cadence: null,
     discord: null,
+    ...(input.kind === "oneshot" ? { kind: "oneshot" as const } : {}),
   };
   const member: Member = {
     id: state.me.id,

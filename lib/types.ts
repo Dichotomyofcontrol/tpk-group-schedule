@@ -72,6 +72,8 @@ export type Campaign = {
   defaultLocation: string;
   tz: string;
   ownerUid: string;
+  /** "oneshot": a standalone one-off game with its own title and invitees. Absent on every regular campaign (and all existing data). */
+  kind?: "oneshot";
   status: "active" | "archived";
   allowMemberInvites: boolean;
   /** Off by default: everyone is assumed in until they tap Can't make it. */

@@ -822,3 +822,17 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .rhsub { margin: -8px 0 20px; }
 .tline.asc .rrow:first-child::after { background: var(--paper); }
 .tline.asc .rrow:last-child::after { background: var(--gold); }
+/* New poll: session for a campaign, or a standalone one-shot */
+.newpoll { text-align: left; }
+.pkind { display: grid; gap: 8px; margin: 0 0 20px; }
+@media (min-width: 600px) { .pkind { grid-template-columns: 1fr 1fr; } }
+.pkind button { display: flex; align-items: flex-start; gap: 12px; min-height: 64px; padding: 14px 16px; border-radius: 14px; border: .5px solid var(--rule2); background: var(--paper); color: inherit; text-align: left; cursor: pointer; }
+.pkind button .ic, .pkind button > svg { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--ink3); }
+.pkind button span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pkind button b { font: 600 15px/20px var(--ui); }
+.pkind button small { font: 400 13px/18px var(--ui); color: var(--ink3); }
+.pkind button.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.pkind button.on > svg { color: var(--ver); }
+.osdone { text-align: left; }
+.osdone p { margin: 0 0 8px; }
+.osacts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
