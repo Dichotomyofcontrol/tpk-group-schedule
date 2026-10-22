@@ -144,10 +144,11 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const coverCache = useRef(new Map<string, string>());
   stateRef.current = state;
 
-  const flash = useCallback((text: string, tone?: Toast["tone"]) => {
+  const flash = useCallback((text: string, tone?: Toast["tone"], action?: Toast["action"]) => {
     const id = toastId.current++;
-    setToasts((list) => [...list, { id, text, tone }]);
-    window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 4200);
+    setToasts((list) => [...list, { id, text, tone, action }]);
+    // A toast with Undo stays a little longer so there's time to reach it.
+    window.setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), action ? 7000 : 4200);
   }, []);
 
   useEffect(() => {

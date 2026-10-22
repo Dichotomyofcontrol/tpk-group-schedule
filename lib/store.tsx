@@ -24,7 +24,7 @@ export type StoreApi = {
   resolvedTheme: "light" | "dark";
   setTheme: (theme: "light" | "dark" | "system") => void;
   dismissToast: (id: number) => void;
-  flash: (text: string, tone?: Toast["tone"]) => void;
+  flash: (text: string, tone?: Toast["tone"], action?: Toast["action"]) => void;
   setPersona: (id: string) => void;
   resetDemo: () => void;
   toggleHidden: (cid: string) => void;
