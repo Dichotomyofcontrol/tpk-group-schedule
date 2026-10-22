@@ -63,7 +63,7 @@ export function SessionsView() {
         <section key={label} aria-label={label}>
           <h2 className="mhd">{label}</h2>
           <div className="card list">
-            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all} />)}
+            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} />)}
           </div>
         </section>
       ))}
