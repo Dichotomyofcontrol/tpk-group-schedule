@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { archivedCampaigns, isOrganizer, memberCampaigns , sessionTitle } from "@/lib/model";
+import { archivedCampaigns, isOrganizer, memberCampaigns , displayTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { relativeWhen } from "@/lib/time";
 import type { Campaign } from "@/lib/types";
@@ -57,7 +57,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
       <CampaignCover campaign={campaign} />
       <span className="pad">
         <h2>{campaign.name}</h2>
-        <span className="note">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()} · ${sessionTitle(state, next)}` : "No session scheduled"}</span>
+        <span className="note">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()}${displayTitle(next, campaign.name) !== campaign.name ? ` · ${displayTitle(next, campaign.name)}` : ""}` : "No session scheduled"}</span>
       </span>
     </Link>
   );

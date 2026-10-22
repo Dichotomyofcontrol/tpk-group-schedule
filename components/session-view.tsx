@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { campaignById, isStaff, membersOf, pastSessions , sessionTitle } from "@/lib/model";
+import { campaignById, isStaff, membersOf, pastSessions, displayTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { markRead } from "@/lib/read-marks";
 import { useStore } from "@/lib/store";
@@ -91,7 +91,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
             <RecapSection session={session} />
           ) : previous ? (
             <section className="card pad prev">
-              <div className="eyebrow">Previously · {sessionTitle(state, previous)}</div>
+              <div className="eyebrow">Previously · {displayTitle(previous, campaign.name)}</div>
               <p>{excerpt(recapPlain(previous), 220) || "The recap is a PDF."}</p>
               <Link className="lnk" href={sessionHref(previous)}>Read the recap <Icon name="arrow" className="ic sm" /></Link>
             </section>

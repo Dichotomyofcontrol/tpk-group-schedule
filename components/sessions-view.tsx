@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { memberCampaigns, pastSessions, sessionTitle } from "@/lib/model";
+import { displayTitle, memberCampaigns, pastSessions } from "@/lib/model";
 import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { formatMonthLabel } from "@/lib/time";
@@ -154,7 +154,7 @@ export function SessionsView() {
         return (
           <Link className="lasttime" href={sessionHref(last)}>
             <span className="note">Last time</span>
-            <b>{sessionTitle(state, last)}</b>
+            <b>{displayTitle(last, state.campaigns.find((c) => c.id === last.cid)?.name || "")}</b>
             <span className="lnk">Read the recap <Icon name="arrow" className="ic sm" /></span>
           </Link>
         );
