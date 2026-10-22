@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
+import type { Toast } from "@/lib/types";
 import { Avatar, Brand, Icon, type IconName } from "./ui";
 
 const TABS: { id: string; href: string; label: string; icon: IconName }[] = [
@@ -14,8 +15,25 @@ const TABS: { id: string; href: string; label: string; icon: IconName }[] = [
   { id: "invites", href: "/invites", label: "Invites", icon: "inv" },
 ];
 
+/** Keep a dismissed toast on screen for its exit spring, then drop it. Reduced motion: gone at once. */
+const TOAST_OUT_MS = 220;
+function useLeavingToasts(toasts: Toast[]) {
+  const [leaving, setLeaving] = useState<Toast[]>([]);
+  const prev = useRef<Toast[]>(toasts);
+  useEffect(() => {
+    const gone = prev.current.filter((p) => !toasts.some((t) => t.id === p.id));
+    prev.current = toasts;
+    if (!gone.length || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setLeaving((list) => [...list, ...gone]);
+    const ids = gone.map((g) => g.id);
+    window.setTimeout(() => setLeaving((list) => list.filter((t) => !ids.includes(t.id))), TOAST_OUT_MS);
+  }, [toasts]);
+  return [...toasts.map((t) => ({ t, leaving: false })), ...leaving.filter((l) => !toasts.some((t) => t.id === l.id)).map((t) => ({ t, leaving: true }))].sort((a, b) => a.t.id - b.t.id);
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const store = useStore();
+  const shown = useLeavingToasts(store.toasts);
   const { state } = store;
   const path = usePathname();
   const params = useSearchParams();
@@ -145,8 +163,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       )}
       <div className="toasts" aria-live="polite">
-        {store.toasts.map((t) => (
-          <div key={t.id} className={`toast${t.tone === "err" ? " err" : ""}`}>
+        {shown.map(({ t, leaving }) => (
+          <div key={t.id} className={`toast${t.tone === "err" ? " err" : ""}${leaving ? " out" : ""}`} aria-hidden={leaving || undefined} inert={leaving || undefined}>
             <span>{t.text}</span>
             {t.action ? (
               <button className="btn sec sm" onClick={() => { t.action?.run(); store.dismissToast(t.id); }}>{t.action.label}</button>

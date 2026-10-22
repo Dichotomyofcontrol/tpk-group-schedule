@@ -721,7 +721,10 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 /* Toasts arrive with a small spring (iOS banner feel). */
 @keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.96); } 60% { opacity: 1; transform: translateY(-2px) scale(1.005); } to { transform: none; } }
 .toast { animation: toast-in .36s cubic-bezier(.2,.9,.3,1.2) backwards; }
-@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+/* ...and leave with a quick drop-and-fade instead of vanishing. */
+@keyframes toast-out { to { opacity: 0; transform: translateY(10px) scale(.96); } }
+.toast.out { animation: toast-out .22s cubic-bezier(.4,0,1,1) forwards; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .toast, .toast.out { animation: none; } }
 
 .opt .t .lead-t.all { color: var(--moss); }
 
