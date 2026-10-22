@@ -101,6 +101,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
             {!past && session.status !== "cancelled" && (
               <AddToCalendar session={session} campaign={campaign} />
             )}
+            {session.status !== "cancelled" && <ShareNight title={`${campaign.name} · ${when.dow} ${when.mon} ${when.day}`} />}
             <NightTools session={session} />
           </aside>
         ) : null}
@@ -131,4 +132,18 @@ function MapsLink({ place }: { place: string }) {
   const q = encodeURIComponent(place);
   const href = apple ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
   return <a className="mg maplink" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}><Icon name="pin" className="ic sm" />{place}</a>;
+}
+
+/** Share this night: system share sheet on phones, copy the link elsewhere. */
+function ShareNight({ title }: { title: string }) {
+  const store = useStore();
+  return (
+    <button type="button" className="btn sec sm full" onClick={async () => {
+      const url = window.location.href.split("?")[0];
+      if (window.matchMedia("(pointer: coarse)").matches && typeof navigator.share === "function") {
+        try { await navigator.share({ title, url }); return; } catch (err) { if ((err as Error)?.name === "AbortError") return; }
+      }
+      try { await navigator.clipboard.writeText(url); store.flash("Link to this night copied."); } catch { store.flash("Couldn't copy the link.", "err"); }
+    }}><Icon name="link" className="ic sm" />Share this night</button>
+  );
 }
