@@ -35,7 +35,7 @@ export function SessionRow({ session, showCampaign = false }: { session: Session
     <Link className="srow" href={sessionHref(session)}>
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
-        {showCampaign && <span className="cn"><i className="dot" style={{ background: campaign.color }} />{campaign.name}</span>}
+        {showCampaign && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
         <b>{sessionTitle(store.state, session)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
       </span>
