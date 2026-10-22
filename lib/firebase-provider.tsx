@@ -335,7 +335,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     lockPoll: () => undefined,
     addPoll: () => undefined,
     nudge: () => undefined,
-    createInvite: () => null,
+    createInvite: async () => null,
     acceptInvite: () => false,
     signOut: async () => undefined,
     sendMagicLink: async (email: string, inviteToken?: string) => {
@@ -703,23 +703,27 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         }
         flash("Nudge saved. It emails them once reminders are connected.");
       },
-      createInvite: (cid, role, email) => {
+      createInvite: async (cid, role, email) => {
         const result = createInvite(stateRef.current || state, cid, role, email);
         if ("error" in result) {
           flash(result.error, "err");
           return null;
         }
-        const invite = result.invites[result.invites.length - 1];
-        void authedFetch("/api/invites", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cid, role, email }) })
-          .then(async (res) => {
-            if (!res.ok) throw new Error(await res.text());
-            const body = await res.json() as { token?: string };
-            if (body.token) {
-              setState((prev) => prev ? { ...prev, invites: [...prev.invites, { ...invite, token: body.token! }] } : prev);
-            }
-          })
-          .catch(() => flash("Couldn't create that invite on the server.", "err"));
-        return invite.token;
+        // The server mints the real token. Only show and copy that one; the local
+        // placeholder token never exists in Firestore and opens as "isn't open".
+        const draft = result.invites[result.invites.length - 1];
+        try {
+          const res = await authedFetch("/api/invites", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cid, role, email }) });
+          if (!res.ok) throw new Error(await res.text());
+          const body = await res.json() as { token?: string };
+          if (!body.token) throw new Error("no token");
+          const token = body.token;
+          setState((prev) => prev ? { ...prev, invites: [...prev.invites, { ...draft, token }] } : prev);
+          return token;
+        } catch {
+          flash("Couldn't create that invite. Try again.", "err");
+          return null;
+        }
       },
       acceptInvite: (token, person) => {
         const me = person ?? { id: authUser.uid, email: authUser.email || "", displayName: state.me.displayName };

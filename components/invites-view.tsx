@@ -16,6 +16,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Invite["role"]>("member");
   const [link, setLink] = useState("");
+  const [busy, setBusy] = useState(false);
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
   const campaign = mine.find((c) => c.id === cid);
@@ -92,15 +93,17 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                     </select>
                   </div>
                 )}
-                <form className="addr" onSubmit={(e) => {
+                <form className="addr" onSubmit={async (e) => {
                   e.preventDefault();
-                  const token = store.createInvite(cid, role, email || undefined);
-                  if (token && origin) setLink(`${origin}/invite/${token}`);
-                  setEmail("");
+                  if (busy) return;
+                  setBusy(true);
+                  const token = await store.createInvite(cid, role, email || undefined);
+                  setBusy(false);
+                  if (token && origin) { setLink(`${origin}/invite/${token}`); setEmail(""); }
                 }}>
                   <label className="sr" htmlFor="iv">Email</label>
                   <input id="iv" className="inp" type="email" inputMode="email" placeholder="friend@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-                  <button className="btn pri" type="submit">Invite</button>
+                  <button className="btn pri" type="submit" disabled={busy}>{busy ? "Creating…" : "Invite"}</button>
                 </form>
                 <div className="sent">
                   {sent.map((invite) => {
@@ -109,7 +112,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                     return (
                       <div key={invite.token} className="row">
                         <Avatar name={who} id={invite.token} />
-                        <div className="t"><b style={{ font: "500 16px/22px var(--ui)" }}>{who}</b><span>{invite.status}</span></div>
+                        <div className="t"><b style={{ font: "500 16px/22px var(--ui)" }}>{who}</b><span>{invite.role === "coorganizer" ? "Co-organizer" : "Player"}</span></div>
                         <span className={joined ? "pill ok" : "pill"}>{joined ? "Joined" : "Pending"}</span>
                         {!joined && <button className="btn ghost" aria-label={`Copy invite for ${who}`} style={{ width: 44, padding: 0 }} onClick={() => { const url = `${origin}/invite/${invite.token}`; void navigator.clipboard.writeText(url); store.flash("Invite link copied."); }}><Icon name="arrow" className="ic sm" /></button>}
                       </div>
@@ -119,9 +122,12 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                 <div className="lnk">
                   <Icon name="link" className="ic sm" />
                   <code>{link || (origin ? `${origin.replace(/^https?:\/\//, "")}/invite/…` : "invite link")}</code>
-                  <button className="btn sec sm" type="button" onClick={() => {
-                    if (link) { void navigator.clipboard.writeText(link); return; }
-                    const token = store.createInvite(cid, "member");
+                  <button className="btn sec sm" type="button" disabled={busy} onClick={async () => {
+                    if (link) { void navigator.clipboard.writeText(link); store.flash("Invite link copied."); return; }
+                    if (busy) return;
+                    setBusy(true);
+                    const token = await store.createInvite(cid, "member");
+                    setBusy(false);
                     if (token && origin) {
                       const url = `${origin}/invite/${token}`;
                       setLink(url);
