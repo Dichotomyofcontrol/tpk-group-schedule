@@ -8,6 +8,7 @@ import { formatMonthLabel } from "@/lib/time";
 import type { Session } from "@/lib/types";
 import { NextHero, SessionRow } from "./schedule";
 import { Skeleton } from "./ui";
+import { HomeScreenHint } from "./home-hint";
 
 /** Sessions: the next one as the hero, then every later one grouped by month. Filter by campaign. */
 export function SessionsView() {
@@ -36,6 +37,7 @@ export function SessionsView() {
   return (
     <>
       <div className="ptitle"><h1 className="lt">Sessions</h1></div>
+      <HomeScreenHint />
       {mine.length > 1 && (
         <div className="fchips" role="group" aria-label="Filter by campaign">
           <button type="button" className={all ? "fchip on" : "fchip"} aria-pressed={all} onClick={() => choose("all")}>All</button>

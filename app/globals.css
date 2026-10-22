@@ -720,3 +720,10 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 /* Party chips: character name beside the player */
 .pp .pc { margin-left: 6px; font: italic 400 14px/20px var(--serif); color: var(--ink3); }
 .pp.out .pc { text-decoration: none; }
+
+/* iPhone Add to Home Screen hint */
+.a2hs { display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 16px; margin-bottom: 16px; }
+.a2hs p { margin: 0; flex: 1; font: 400 15px/22px var(--ui); color: var(--ink2); }
+.a2hs p b { color: var(--ink); font-weight: 600; display: block; }
+.a2hs .sg { vertical-align: -2px; color: var(--ink); margin: 0 2px; }
+.a2hs .fi { flex: none; }
