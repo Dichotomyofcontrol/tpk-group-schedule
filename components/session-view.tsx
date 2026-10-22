@@ -72,7 +72,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
       <p className="meta">
         <Link className="cl" href={`/campaigns/${cid}`}><i className="dot" style={{ background: campaign.color }} />{campaign.name}</Link>
         <span className="mg"><Icon name="clock" className="ic sm" />{formatRangePretty(session.startsAt, session.endsAt, session.tz)}</span>
-        {session.location && <span className="mg"><Icon name="pin" className="ic sm" />{session.location}</span>}
+        {session.location && <MapsLink place={session.location} />}
       </p>
       <div className="sgrid">
         <div className="scol">
@@ -122,4 +122,13 @@ function AddToCalendar({ session, campaign }: { session: Session; campaign: Camp
     return <a className="btn sec sm full" href={`data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`} download={name}><Icon name="dates" className="ic sm" />Add to calendar</a>;
   }
   return <a className="btn sec sm full" href={googleEventTemplate(session, campaign)} target="_blank" rel="noopener noreferrer"><Icon name="dates" className="ic sm" />Add to calendar</a>;
+}
+
+/** The place opens in Maps: Apple Maps on Apple devices, Google Maps elsewhere. */
+function MapsLink({ place }: { place: string }) {
+  const [apple, setApple] = useState(false);
+  useEffect(() => setApple(/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)), []);
+  const q = encodeURIComponent(place);
+  const href = apple ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
+  return <a className="mg maplink" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}><Icon name="pin" className="ic sm" />{place}</a>;
 }
