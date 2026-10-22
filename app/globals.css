@@ -772,3 +772,6 @@ section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; 
 .tabs a.on .ic { animation: tab-pop .32s cubic-bezier(.3,1.4,.5,1); }
 .tabs a { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .camp-card, .tabs a.on .ic { transition: none; animation: none; } .camp-card:active { transform: none; } }
+
+/* Up next: game-on status at a glance */
+.hero .quorum { margin: 10px 0 6px; }

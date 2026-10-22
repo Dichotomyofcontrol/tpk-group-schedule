@@ -114,6 +114,7 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
   const when = formatDayHeading(session.startsAt, session.tz);
   const soon = relativeWhen(session.startsAt, store.state.me.tz).toLowerCase();
   const time = formatTime(new Date(session.startsAt), session.tz);
+  const q = quorumLine(campaign, session, membersOf(store.state, session.cid));
   return (
     <article className="card hero">
       <Link href={sessionHref(session)} className="hero-cover" aria-label={`Open ${sessionTitle(store.state, session)}`}>
@@ -123,6 +124,7 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
         <div className="eyebrow ver">{daysUntil(session.startsAt, store.state.me.tz) === 0 && <i className="live" aria-hidden="true" />}Up next · {soon}</div>
         <h2><Link href={sessionHref(session)}>{sessionTitle(store.state, session)}</Link></h2>
         <p className="hmeta">{[showCampaign ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time, session.location].filter(Boolean).join(" · ")}</p>
+        {q && <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" aria-hidden="true" />{q.text}</p>}
         <PartyChips session={session} />
         <RsvpControl session={session} />
       </div>
