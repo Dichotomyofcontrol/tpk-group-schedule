@@ -22,6 +22,10 @@ export function SessionsView() {
     if (saved) setFilter(saved);
     if (window.sessionStorage.getItem("tpk-view") === "history") setView("history");
   }, []);
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    try { setOpenMap(JSON.parse(window.sessionStorage.getItem("tpk-months") || "{}")); } catch {}
+  }, []);
   const chooseView = (v: "recent" | "history") => {
     setView(v);
     window.sessionStorage.setItem("tpk-view", v);
@@ -47,6 +51,20 @@ export function SessionsView() {
   const months = groupByMonth(rest, state.me.tz || "America/Los_Angeles");
   const all = active === "all";
   const pastMonths = history ? groupByMonth(recent, state.me.tz || "America/Los_Angeles") : [];
+
+  // Month groups fold. The nearest month and the last 14 days start open; everything else is a one-line header.
+  const isOpen = (key: string, dflt: boolean) => openMap[key] ?? dflt;
+  const toggle = (key: string, next: boolean) => {
+    setOpenMap((m) => {
+      const out = { ...m, [key]: next };
+      window.sessionStorage.setItem("tpk-months", JSON.stringify(out));
+      return out;
+    });
+  };
+  const jump = (key: string) => {
+    toggle(key, true);
+    requestAnimationFrame(() => document.getElementById("m-" + key)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
+  };
 
   return (
     <>
@@ -77,23 +95,13 @@ export function SessionsView() {
         </div>
       )}
       {history && pastMonths.map(([label, list]) => (
-        <section key={"p" + label} aria-label={label}>
-          <h2 className="mhd quiet">{label}</h2>
-          <div className="card list ledger">
-            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} ledger />)}
-          </div>
-        </section>
+        <MonthGroup key={"p" + label} id={"p-" + label} label={label} list={list} quiet open={isOpen("p-" + label, false)} onToggle={toggle} showCampaign={all && mine.length > 1} />
       ))}
       {history && !state.syncing && mine.length > 0 && recent.length === 0 && (
         <p className="note pempty">No past sessions yet. Recaps live here once you've played.</p>
       )}
       {!history && recent.length > 0 && (
-        <section aria-label="Last 14 days">
-          <h2 className="mhd quiet">Last 14 days</h2>
-          <div className="card list ledger">
-            {recent.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} ledger />)}
-          </div>
-        </section>
+        <MonthGroup id="recent" label="Last 14 days" list={recent} quiet open={isOpen("recent", true)} onToggle={toggle} showCampaign={all && mine.length > 1} />
       )}
       {!state.syncing && mine.length > 0 && !next && (
         <div className="card empty-card">
@@ -114,15 +122,43 @@ export function SessionsView() {
           </Link>
         );
       })()}
-      {months.map(([label, list]) => (
-        <section key={label} aria-label={label}>
-          <h2 className="mhd">{label}</h2>
-          <div className="card list ledger">
-            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} ledger />)}
-          </div>
-        </section>
+      {months.length > 1 && (
+        <nav className="mjump" aria-label="Jump to month">
+          {months.map(([label]) => (
+            <button key={label} type="button" onClick={() => jump("f-" + label)}>{shortMonth(label)}</button>
+          ))}
+        </nav>
+      )}
+      {months.map(([label, list], i) => (
+        <MonthGroup key={label} id={"f-" + label} label={label} list={list} open={isOpen("f-" + label, i === 0)} onToggle={toggle} showCampaign={all && mine.length > 1} />
       ))}
     </>
+  );
+}
+
+function shortMonth(label: string): string {
+  const [m, y] = label.split(" ");
+  return y ? `${m.slice(0, 3)} \u2019${y.slice(2)}` : m.slice(0, 3);
+}
+
+/** A month in the ledger: a full-width header that folds the rows away, with a count when folded. */
+function MonthGroup({ id, label, list, open, onToggle, quiet = false, showCampaign }: { id: string; label: string; list: Session[]; open: boolean; onToggle: (key: string, next: boolean) => void; quiet?: boolean; showCampaign: boolean }) {
+  const panel = "mp-" + id;
+  return (
+    <section id={"m-" + id} className={open ? "mgroup open" : "mgroup"} aria-label={label}>
+      <h2 className={quiet ? "mhd quiet" : "mhd"}>
+        <button type="button" className="mtog" aria-expanded={open} aria-controls={panel} onClick={() => onToggle(id, !open)}>
+          <span className="ml">{label}</span>
+          {!open && <span className="mc">{list.length} {list.length === 1 ? "session" : "sessions"}</span>}
+          <Icon name="chev" className="ic sm mchev" />
+        </button>
+      </h2>
+      {open && (
+        <div id={panel} className="card list ledger">
+          {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={showCampaign} ledger />)}
+        </div>
+      )}
+    </section>
   );
 }
 

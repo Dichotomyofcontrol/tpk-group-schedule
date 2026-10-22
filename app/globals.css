@@ -796,3 +796,18 @@ section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; 
 .seg button { flex: 1; min-height: 44px; border: 0; border-radius: 9px; background: transparent; font: 500 15px/20px var(--ui); color: var(--ink2); cursor: pointer; transition: background .2s, color .2s; }
 .seg button.on { background: var(--paper); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px var(--rule2); }
 .pempty { margin: 8px 4px 16px; }
+/* Folding month groups */
+.mgroup { scroll-margin-top: calc(64px + var(--safe-t)); }
+.mhd .mtog { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mhd .mtog .ml { flex: 1; min-width: 0; }
+.mhd .mtog .mc { font: 500 13px/18px var(--ui); color: var(--ink3); letter-spacing: 0; }
+.mhd .mtog .mchev { flex: none; color: var(--ink3); transition: transform .2s ease; transform: rotate(-90deg); }
+.mgroup.open .mhd .mtog .mchev { transform: none; }
+section.mgroup:not(.open) > .mhd { margin-bottom: 0; }
+section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; border-top: .5px solid var(--rule); border-radius: 0; }
+.mjump { display: flex; gap: 8px; overflow-x: auto; margin: 24px -20px 0; padding: 0 20px 2px; scrollbar-width: none; }
+.mjump::-webkit-scrollbar { display: none; }
+.mjump button { flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; border: .5px solid var(--rule2); background: transparent; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; }
+.mjump button:hover { background: var(--paper2); }
+@media (prefers-reduced-motion: reduce) { .mhd .mtog .mchev { transition: none; } }
+@media (min-width: 900px) { .mjump { margin: 24px 0 0; padding: 0; flex-wrap: wrap; } }
