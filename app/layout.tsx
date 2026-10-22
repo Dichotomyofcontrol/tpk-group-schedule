@@ -23,6 +23,9 @@ const inter = localFont({
 export const metadata: Metadata = {
   title: "Six in the TPK",
   description: "Sessions, RSVPs, and recaps for your table.",
+  metadataBase: new URL("https://www.sixinthetpk.com"),
+  openGraph: { siteName: "Six in the TPK", type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
