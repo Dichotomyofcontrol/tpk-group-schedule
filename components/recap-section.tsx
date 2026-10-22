@@ -61,9 +61,9 @@ export function RecapSection({ session }: { session: Session }) {
       {files.length > 0 && <span className="ribbon gold" aria-hidden="true" />}
       <div className="sh">
         <h2 id="recap-h">Recap</h2>
-        {staff && !empty && (
+        {staff && !empty && !editing && (
           <button className="btn ghost sm" type="button" onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
-            <Icon name="quill" className="ic sm" />{editing ? "Done" : html ? "Edit" : "Write"}
+            <Icon name="quill" className="ic sm" />{html ? "Edit" : "Write"}
           </button>
         )}
       </div>
