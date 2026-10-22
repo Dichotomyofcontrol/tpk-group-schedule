@@ -112,7 +112,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           )}
         </div>
         <aside className="cside">
-          {organizer ? <OrganizerPanel campaign={campaign} members={members} /> : <PlayerPanel campaign={campaign} me={me} members={members} />}
+          {organizer ? <OrganizerPanel campaign={campaign} members={members} me={me} /> : <PlayerPanel campaign={campaign} me={me} members={members} />}
         </aside>
       </div>
     </>
@@ -208,24 +208,36 @@ function roleName(role: Member["role"]): string {
 function MemberRow({ m, cid, manage }: { m: Member; cid: string; manage: boolean }) {
   const store = useStore();
   const [menu, setMenu] = useState(false);
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState(m.characterName || "");
   const mine = m.id === store.state.me.id;
   const primary = m.characterName && m.characterName !== m.displayName ? m.characterName : m.displayName || "Player";
   const secondary = m.characterName && m.characterName !== m.displayName ? m.displayName : "";
   return (
     <li>
       <Avatar name={m.displayName || primary} id={m.id} />
+      {naming ? (
+        <form className="mi inrow" onSubmit={(e) => { e.preventDefault(); store.patchMember(cid, m.id, { characterName: name.trim() }); setNaming(false); store.flash("Saved."); }}>
+          <label className="sr" htmlFor={`cn-${m.id}`}>Character name for {m.displayName || primary}</label>
+          <input id={`cn-${m.id}`} size={1} autoFocus value={name} maxLength={60} placeholder="Character name" onChange={(e) => setName(e.target.value)} />
+          <button className="btn pri sm" type="submit">Save</button>
+          <button className="iconbtn" type="button" aria-label="Cancel" onClick={() => { setNaming(false); setName(m.characterName || ""); }}><Icon name="x" /></button>
+        </form>
+      ) : (
       <div className="mi">
         <b>{primary}</b>
         {(secondary || mine) && <span className="note">{[secondary, mine ? "you" : ""].filter(Boolean).join(" · ")}</span>}
       </div>
-      <span className="rl">{roleName(m.role)}</span>
-      {manage && m.role !== "organizer" ? (
+      )}
+      {!naming && <span className="rl">{roleName(m.role)}</span>}
+      {naming ? null : manage && m.role !== "organizer" ? (
         <div className="mwrap">
           <button className="iconbtn" type="button" aria-label={`Manage ${m.displayName || primary}`} aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((v) => !v)}><Icon name="dots" /></button>
           {menu && (
             <>
               <button className="mscrim" type="button" aria-label="Close" onClick={() => setMenu(false)} />
               <div className="fmenu" role="menu">
+                <button role="menuitem" type="button" onClick={() => { setMenu(false); setName(m.characterName || ""); setNaming(true); }}>Character name</button>
                 <button role="menuitem" type="button" onClick={() => { setMenu(false); store.patchMember(cid, m.id, { role: m.role === "coorganizer" ? "member" : "coorganizer" }); }}>
                   {m.role === "coorganizer" ? "Make a player" : "Make co-organizer"}
                 </button>
@@ -239,7 +251,7 @@ function MemberRow({ m, cid, manage }: { m: Member; cid: string; manage: boolean
   );
 }
 
-function OrganizerPanel({ campaign, members }: { campaign: Campaign; members: Member[] }) {
+function OrganizerPanel({ campaign, members, me }: { campaign: Campaign; members: Member[]; me?: Member }) {
   const store = useStore();
   const router = useRouter();
   const [transfer, setTransfer] = useState(false);
@@ -252,6 +264,7 @@ function OrganizerPanel({ campaign, members }: { campaign: Campaign; members: Me
       <section className="card pad">
         <div className="sh"><h2>Players · {members.length}</h2><Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite</Link></div>
         <ul className="mlist">{members.map((m) => <MemberRow key={m.id} m={m} cid={campaign.id} manage />)}</ul>
+        {me && <CharacterField campaign={campaign} me={me} label="Your character name" />}
       </section>
       <section className="card pad">
         <h2 className="ph2">Table rules</h2>
@@ -328,25 +341,32 @@ function DeleteSheet({ campaign, onClose, onDeleted }: { campaign: Campaign; onC
   );
 }
 
+function CharacterField({ campaign, me, label = "Character name" }: { campaign: Campaign; me: Member; label?: string }) {
+  const store = useStore();
+  const [character, setCharacter] = useState(me.characterName || "");
+  useEffect(() => setCharacter(me.characterName || ""), [me.id, me.characterName]);
+  const dirty = character.trim() !== (me.characterName || "");
+  return (
+    <form className="fld" onSubmit={(e) => { e.preventDefault(); store.patchMe(campaign.id, { characterName: character.trim() }); store.flash("Saved."); }}>
+      <label htmlFor="ch">{label}</label>
+      <div className="inrow">
+        <input id="ch" value={character} maxLength={60} onChange={(e) => setCharacter(e.target.value)} placeholder="Who you play" />
+        {dirty && <button className="btn pri sm" type="submit">Save</button>}
+      </div>
+    </form>
+  );
+}
+
 function PlayerPanel({ campaign, me, members }: { campaign: Campaign; me: Member; members: Member[] }) {
   const store = useStore();
   const router = useRouter();
-  const [character, setCharacter] = useState(me.characterName || "");
-  useEffect(() => setCharacter(me.characterName || ""), [me.id, me.characterName]);
   const staff = me.role === "coorganizer";
   const canInvite = staff || campaign.allowMemberInvites;
-  const dirty = character.trim() !== (me.characterName || "");
   return (
     <>
       <section className="card pad">
         <h2 className="ph2">You</h2>
-        <form className="fld" onSubmit={(e) => { e.preventDefault(); store.patchMe(campaign.id, { characterName: character.trim() }); store.flash("Saved."); }}>
-          <label htmlFor="ch">Character name</label>
-          <div className="inrow">
-            <input id="ch" value={character} maxLength={60} onChange={(e) => setCharacter(e.target.value)} placeholder="Who you play" />
-            {dirty && <button className="btn pri sm" type="submit">Save</button>}
-          </div>
-        </form>
+        <CharacterField campaign={campaign} me={me} />
         <SettingRow title="Email reminders" detail="3 days and 3 hours before each session.">
           <Switch on={!me.remindersOff} label="Email reminders" onChange={(v) => store.patchMe(campaign.id, { remindersOff: !v })} />
         </SettingRow>

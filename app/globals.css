@@ -495,7 +495,7 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .mscrim { position: fixed; inset: 0; background: transparent; border: 0; z-index: 50; cursor: default; }
 .fmenu { position: absolute; right: 0; top: 46px; z-index: 51; min-width: 200px; padding: 6px; border-radius: 14px; background: var(--paper); box-shadow: var(--sh), 0 12px 32px -8px rgba(0,0,0,.25); border: .5px solid var(--rule2); display: grid; }
 .fmenu.up { top: auto; bottom: 46px; }
-.fmenu button { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; background: none; border-radius: 10px; font-size: 15px; text-align: left; color: var(--ink); cursor: pointer; }
+.fmenu button { white-space: nowrap; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; background: none; border-radius: 10px; font-size: 15px; text-align: left; color: var(--ink); cursor: pointer; }
 .fmenu button:hover { background: var(--paper2); }
 .fmenu button.ver { color: var(--ver); }
 .addfile { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 8px; padding: 0 4px; color: var(--ver); font-weight: 600; font-size: 15px; background: none; border: 0; cursor: pointer; }
@@ -535,6 +535,10 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .frow { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0 12px; }
 .inrow { display: flex; gap: 8px; }
 .inrow input { flex: 1; }
+.mi.inrow { flex-direction: row; align-items: center; gap: 6px; padding: 8px 0; }
+.mi.inrow .btn { flex: none; }
+.mi.inrow input { min-width: 0; width: auto; flex: 1 1 0; height: 44px; border-radius: 12px; border: .5px solid var(--rule2); background: var(--field); padding: 0 12px; font-size: 16px; color: var(--ink); }
+.mlist + .fld { margin-top: 16px; }
 .dform { margin-top: 16px; padding-top: 16px; border-top: .5px solid var(--rule); }
 .tform { padding: 12px; border-radius: 14px; background: var(--paper2); margin-bottom: 4px; }
 .alt { display: flex; flex-direction: column; align-items: flex-start; margin: 0 0 16px; }
@@ -582,3 +586,4 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
   .chead .hb:has(.edt) .lt { margin-right: 170px; }
   .camp-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
 }
+.cside > * { min-width: 0; }
