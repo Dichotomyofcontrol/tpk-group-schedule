@@ -298,14 +298,15 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signedOut: StoreApi = useMemo(() => ({
-    state: emptyState({
+    state: { ...emptyState({
       id: "",
       email: "",
       displayName: "",
       tz: "America/Los_Angeles",
       calToken: "",
       canCreateCampaigns: false,
-    }),
+    }), syncing: firebaseConfigured() && (!authKnown || !!authUser) },
+    // Until Firebase says who this is (or while a signed-in user's data spins up), screens show the skeleton, not "You're not at a table yet".
     mode: "live",
     online,
     toasts,
