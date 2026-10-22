@@ -112,16 +112,16 @@ export function signInEmailHtml(link: string): string {
       <tr><td class="card" align="center" style="background:${card};border:1px solid ${rule};border-radius:14px;padding:48px 40px;">
         <div class="wordmark ink" style="font-family:${serif};font-size:34px;line-height:1.1;font-weight:500;letter-spacing:-0.01em;color:${ink};">Six <i style="font-style:italic;font-weight:400;">in the</i> TPK</div>
         <div style="width:40px;height:2px;background:${vermilion};margin:18px auto 26px;line-height:2px;font-size:0;">&nbsp;</div>
-        <p class="ink" style="margin:0 0 28px;font-family:${sans};font-size:16px;line-height:1.5;color:${ink};">Here&rsquo;s your link to sign in to the table.</p>
+        <p class="ink" style="margin:0 0 28px;font-family:${sans};font-size:16px;line-height:1.5;color:${ink};">Here’s your link to sign in to the table.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
           <tr><td align="center" bgcolor="${vermilion}" style="border-radius:999px;background:${vermilion};">
             <a href="${href}" target="_blank" style="display:inline-block;padding:14px 44px;font-family:${sans};font-size:16px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:999px;">Sign in</a>
           </td></tr>
         </table>
-        <p class="muted" style="margin:28px 0 0;font-family:${sans};font-size:13px;line-height:1.55;color:${muted};">This link works once and expires soon.<br>If you didn&rsquo;t ask for it, you can ignore this email.</p>
+        <p class="muted" style="margin:28px 0 0;font-family:${sans};font-size:13px;line-height:1.55;color:${muted};">This link works once and expires soon.<br>If you didn’t ask for it, you can ignore this email.</p>
         <p class="muted fallback" style="margin:18px 0 0;font-family:${sans};font-size:12px;line-height:1.5;color:${muted};">Button not working? <a href="${href}" target="_blank" style="color:${vermilion};text-decoration:underline;">Open the sign-in link</a></p>
       </td></tr>
-      <tr><td align="center" class="muted" style="padding:22px 8px 0;font-family:${serif};font-size:12px;line-height:1.5;color:${muted};">Six in the TPK &middot; <a href="https://www.sixinthetpk.com" style="color:${muted};text-decoration:none;" class="muted">sixinthetpk.com</a></td></tr>
+      <tr><td align="center" class="muted" style="padding:22px 8px 0;font-family:${serif};font-size:12px;line-height:1.5;color:${muted};">Six in the TPK · <a href="https://www.sixinthetpk.com" style="color:${muted};text-decoration:none;" class="muted">sixinthetpk.com</a></td></tr>
     </table>
   </td></tr>
 </table>
