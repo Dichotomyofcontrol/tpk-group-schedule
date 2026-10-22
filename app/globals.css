@@ -640,3 +640,13 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 
 /* Invite form is a grid with its own gap; field margins doubled it (40px vs 16px). */
 form.ib > .field { margin: 0; }
+
+/* RSVP: the white thumb slides between "I'm in" and "Can't make it"; buttons press in. */
+.seg2 { position: relative; isolation: isolate; }
+.seg2::before { content: ""; position: absolute; z-index: -1; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 6px); border-radius: 999px; background: var(--paper); box-shadow: var(--sh); opacity: 0; transform: translateX(0) scale(.96); transition: transform .32s cubic-bezier(.3,1.3,.5,1), opacity .18s ease; }
+.seg2[data-on="in"]::before { opacity: 1; transform: translateX(0); }
+.seg2[data-on="out"]::before { opacity: 1; transform: translateX(calc(100% + 4px)); }
+.seg2[data-on] button.on { background: none; box-shadow: none; }
+.seg2 button { transition: color .2s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
+.seg2 button:active { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) { .seg2::before, .seg2 button { transition: none; } .seg2 button:active { transform: none; } }
