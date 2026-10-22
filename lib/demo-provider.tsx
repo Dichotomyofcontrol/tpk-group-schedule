@@ -262,7 +262,6 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       },
       nudge: (pollId, uid) => {
         apply((s) => nudgePoll(s, pollId, uid));
-        flash("Nudge saved. It emails them once reminders are connected.");
       },
       createInvite: async (cid, role: Invite["role"], email?) => {
         const result = createInvite(stateRef.current, cid, role, email);
