@@ -67,12 +67,12 @@ export function InviteGuest({ token }: { token: string }) {
         try { await store.sendMagicLink(email, token); setSent(true); } finally { setBusy(false); }
       }}>
         <p>Join as a {invite.role === "coorganizer" ? "co-organizer" : "member"}. {campaign.defaultLocation}</p>
-        <div className="party">
+        {dates.length > 0 && <div className="party">
           {dates.map((session) => {
             const when = formatDayHeading(session.startsAt, session.tz);
             return <span key={session.id} className="pp"><span>{when.dow} {when.day} {when.mon}</span></span>;
           })}
-        </div>
+        </div>}
         {store.mode === "live" && store.state.me.id ? (
           <div className="two">
             <button className="btn pri" type="button" onClick={async () => {
