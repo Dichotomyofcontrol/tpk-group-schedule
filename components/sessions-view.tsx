@@ -72,7 +72,7 @@ export function SessionsView() {
   };
   const jump = (key: string) => {
     toggle(key, true);
-    requestAnimationFrame(() => document.getElementById("m-" + key)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
+    requestAnimationFrame(() => document.getElementById("m-" + key.replace(/\s+/g, "-"))?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }));
   };
 
   return (
@@ -185,9 +185,10 @@ function shortMonth(label: string): string {
 
 /** A month in the ledger: a full-width header that folds the rows away, with a count when folded. */
 function MonthGroup({ id, label, list, open, onToggle, quiet = false, showCampaign }: { id: string; label: string; list: Session[]; open: boolean; onToggle: (key: string, next: boolean) => void; quiet?: boolean; showCampaign: boolean }) {
-  const panel = "mp-" + id;
+  const slug = id.replace(/\s+/g, "-");
+  const panel = "mp-" + slug;
   return (
-    <section id={"m-" + id} className={open ? "mgroup open" : "mgroup"} aria-label={label}>
+    <section id={"m-" + slug} className={open ? "mgroup open" : "mgroup"} aria-label={label}>
       <h2 className={quiet ? "mhd quiet" : "mhd"}>
         <button type="button" className="mtog" aria-expanded={open} aria-controls={panel} onClick={() => onToggle(id, !open)}>
           <span className="ml">{label}</span>
