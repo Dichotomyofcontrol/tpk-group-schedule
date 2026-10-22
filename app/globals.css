@@ -743,3 +743,7 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible, [role="rad
 .eyebrow .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ver); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ver) 50%, transparent); animation: live-pulse 2s ease-out infinite; }
 @keyframes live-pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 @media (prefers-reduced-motion: reduce) { .eyebrow .live { animation: none; } }
+
+/* Sessions: month headers stick under the header while you scroll their month (iOS list style). */
+section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; margin: 24px -8px 4px; padding: 8px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 12px; }
+@media (min-width: 900px) { section > .mhd { top: 68px; } }
