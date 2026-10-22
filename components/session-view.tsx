@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { campaignById, isStaff, membersOf, pastSessions , sessionTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { useStore } from "@/lib/store";
-import { formatDayHeading, formatRangePretty } from "@/lib/time";
+import { daysUntil, formatDayHeading, formatRangePretty, relativeWhen } from "@/lib/time";
 import { googleEventTemplate } from "@/lib/ics";
 import { RecapSection } from "./recap-section";
 import { NightTools, PartyChips, RsvpControl, sessionHref, shortCount } from "./schedule";
@@ -54,11 +54,14 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   const staff = isStaff(state, cid);
   const previous = !past ? pastSessions(state, cid).find((s) => s.startsAt < session.startsAt && hasRecap(s)) : undefined;
   const status = session.status === "cancelled" ? "Skipped" : "";
+  const myTz = state.me.tz || session.tz;
+  const soonDays = daysUntil(session.startsAt, myTz);
+  const soon = !past && !status && soonDays >= 0 && soonDays <= 6 ? relativeWhen(session.startsAt, myTz) : "";
 
   return (
     <>
       <BackBar href={back.href} label={back.label} />
-      <div className="eyebrow ver">{when.dow} {when.mon} {when.day}{status ? ` · ${status}` : ""}</div>
+      <div className="eyebrow ver">{when.dow} {when.mon} {when.day}{status ? ` · ${status}` : ""}{soon ? ` · ${soon}` : ""}</div>
       <h1 className="lt">{sessionTitle(state, session)}</h1>
       <p className="meta">
         <Link className="cl" href={`/campaigns/${cid}`}><i className="dot" style={{ background: campaign.color }} />{campaign.name}</Link>
