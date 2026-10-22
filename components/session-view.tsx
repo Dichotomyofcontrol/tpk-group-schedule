@@ -8,6 +8,7 @@ import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatRangePretty, relativeWhen } from "@/lib/time";
 import { googleEventTemplate } from "@/lib/ics";
 import { RecapSection } from "./recap-section";
+import { TableNote } from "./table-note";
 import { NightTools, PartyChips, RsvpControl, sessionHref, shortCount } from "./schedule";
 import { BackBar, Icon } from "./ui";
 
@@ -78,6 +79,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
             <PartyChips session={session} />
             <RsvpControl session={session} />
           </section>
+          {!past && session.status !== "cancelled" && <TableNote session={session} />}
           {past ? (
             <RecapSection session={session} />
           ) : previous ? (

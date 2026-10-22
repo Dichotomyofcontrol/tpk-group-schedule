@@ -631,3 +631,9 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .w30 { width: 30%; } .w40 { width: 40%; } .w50 { width: 50%; } .w60 { width: 60%; } .w70 { width: 70%; }
 @keyframes sk-shimmer { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) { .sk::after { animation: none; } }
+/* Note for the table */
+.tnote .sh { margin-bottom: 8px; }
+.tn-body { margin: 0; font: 400 17px/28px var(--serif); font-variation-settings: "opsz" 14; color: var(--ink2); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tn-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.tnote-add { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 0 20px; color: var(--ink2); font: 500 16px/22px var(--ui); text-align: left; cursor: pointer; border-style: dashed; box-shadow: none; background: transparent; border: 1px dashed var(--rule2); }
+.tnote-add:hover { color: var(--ink); border-color: var(--ink3); }
