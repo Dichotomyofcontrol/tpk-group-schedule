@@ -15,6 +15,7 @@ export function readStoredTheme(): ThemeChoice {
 export function applyTheme(theme: ThemeChoice): "light" | "dark" {
   const night = theme === "dark";
   document.documentElement.dataset.theme = night ? "night" : "cream";
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", night ? "#0F1218" : "#F3EDE1"));
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", night ? "#0F1218" : "#F3EDE1");
   return night ? "dark" : "light";
 }
