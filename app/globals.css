@@ -637,3 +637,6 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .tn-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
 .tnote-add { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 0 20px; color: var(--ink2); font: 500 16px/22px var(--ui); text-align: left; cursor: pointer; border-style: dashed; box-shadow: none; background: transparent; border: 1px dashed var(--rule2); }
 .tnote-add:hover { color: var(--ink); border-color: var(--ink3); }
+
+/* Invite form is a grid with its own gap; field margins doubled it (40px vs 16px). */
+form.ib > .field { margin: 0; }
