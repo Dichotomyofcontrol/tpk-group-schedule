@@ -121,7 +121,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {store.toasts.map((t) => (
           <div key={t.id} className={`toast${t.tone === "err" ? " err" : ""}`}>
             <span>{t.text}</span>
-            <button className="btn sec sm" onClick={() => store.dismissToast(t.id)}>OK</button>
+            {t.action ? (
+              <button className="btn sec sm" onClick={() => { t.action?.run(); store.dismissToast(t.id); }}>{t.action.label}</button>
+            ) : (
+              <button className="btn sec sm" onClick={() => store.dismissToast(t.id)}>OK</button>
+            )}
           </div>
         ))}
       </div>

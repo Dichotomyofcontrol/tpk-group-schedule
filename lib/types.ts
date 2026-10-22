@@ -209,4 +209,4 @@ export type AppState = {
   syncing?: boolean;
 };
 
-export type Toast = { id: number; text: string; tone?: "ok" | "err" };
+export type Toast = { id: number; text: string; tone?: "ok" | "err"; action?: { label: string; run: () => void } };

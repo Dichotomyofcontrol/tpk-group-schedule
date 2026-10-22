@@ -123,7 +123,7 @@ export function NightTools({ session }: { session: Session }) {
       ) : (
         <>
           <button className="btn ghost sm full" onClick={() => setMoving((v) => !v)} aria-expanded={moving}><Icon name="clock" className="ic sm" />Move this night</button>
-          <button className="btn ghost sm full" onClick={() => store.skip(session.id)}><Icon name="x" className="ic sm" />Skip this night</button>
+          <button className="btn ghost sm full" onClick={() => { const id = session.id; store.skip(id); store.flash("Night skipped. Everyone sees it's off.", "ok", { label: "Undo", run: () => store.restore(id) }); }}><Icon name="x" className="ic sm" />Skip this night</button>
         </>
       )}
       {moving && <MoveForm session={session} onDone={() => setMoving(false)} />}
