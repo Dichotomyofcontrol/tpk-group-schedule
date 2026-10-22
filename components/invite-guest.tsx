@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { formatDayHeading } from "@/lib/time";
@@ -37,7 +38,11 @@ export function InviteGuest({ token }: { token: string }) {
   if (!invite || !campaign) {
     return (
       <div className="center-narrow">
-        <div className="gate"><h1>This invite isn&apos;t open</h1><p>Ask the organizer for a fresh link.</p></div>
+        <div className="gate">
+          <h1>This invite isn&apos;t open</h1>
+          <p>Ask the organizer for a fresh link.</p>
+          <Link className="btn pri" href={store.signedIn ? "/sessions" : "/signin"}>{store.signedIn ? "Go to Sessions" : "Sign in"}</Link>
+        </div>
       </div>
     );
   }
