@@ -4,7 +4,7 @@
   --paper2: #F7F2E8;
   --ink: #1D1915;
   --ink2: #5A5047;
-  --ink3: #8C8073;
+  --ink3: #74695D;
   --rule: #E2D7C3;
   --rule2: #D3C5AC;
   --ver: #9E2F1F;
@@ -26,7 +26,7 @@
 }
 :root[data-theme="night"] {
   --bg: #0F1218; --paper: #171B24; --paper2: #1D222D;
-  --ink: #EDE6D8; --ink2: #B7AE9F; --ink3: #837B70;
+  --ink: #EDE6D8; --ink2: #B7AE9F; --ink3: #948C80;
   --rule: #262C38; --rule2: #323947;
   --ver: #E07A62; --ver2: #F09A80; --gold: #D4B06A; --moss: #8FB394;
   --glass: rgba(15,18,24,.78); --glass2: rgba(23,27,36,.84);
