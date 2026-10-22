@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
@@ -23,6 +23,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const signedIn = Boolean(state.me.id);
   const landing = !signedIn && path === "/";
   const first = useRef(true);
+  const router = useRouter();
+  const signedInRef = useRef(signedIn);
+  signedInRef.current = signedIn;
 
   useLayoutEffect(() => {
     const as = params.get("as");
@@ -38,10 +41,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, [path]);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setMenu(false); };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setMenu(false); return; }
+      // Desktop shortcuts: 1–4 jump between tabs (ignored while typing or with modifiers).
+      const t = event.target as HTMLElement | null;
+      if (!signedInRef.current || event.metaKey || event.ctrlKey || event.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
+      const i = ["1", "2", "3", "4"].indexOf(event.key);
+      if (i >= 0) { event.preventDefault(); router.push(TABS[i].href); }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [router]);
 
   const [from, setFrom] = useState("sessions");
   useEffect(() => {
@@ -69,8 +79,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <>
             <span className="sp" />
             <nav className="dnav" aria-label="Primary">
-              {TABS.map((item) => (
-                <Link key={item.id} href={item.href} className={tab === item.id ? "on" : ""} aria-current={tab === item.id ? "page" : undefined}>
+              {TABS.map((item, i) => (
+                <Link key={item.id} href={item.href} aria-keyshortcuts={String(i + 1)} title={`${item.label} (${i + 1})`} className={tab === item.id ? "on" : ""} aria-current={tab === item.id ? "page" : undefined}>
                   <Icon name={item.icon} />
                   {item.label}
                 </Link>
