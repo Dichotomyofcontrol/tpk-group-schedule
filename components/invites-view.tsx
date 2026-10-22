@@ -72,7 +72,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                 </article>
               );
             })}
-            <p className="note" style={{ textAlign: "center", margin: "24px 0 0" }}>{incoming.length ? "That's everything. New invites arrive by email too." : "Nothing waiting. New invites arrive by email too."}</p>
+            <p className="note" style={{ textAlign: "center", margin: "24px 0 0" }}>{incoming.length ? "That's everything." : "Nothing waiting. An organizer's invite link brings you here."}</p>
           </section>
           {campaign && canInvite(state, cid, "member") && (
             <section>

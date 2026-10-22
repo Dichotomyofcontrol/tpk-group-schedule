@@ -20,7 +20,7 @@ export function PollList() {
     <>
       <div className="ptitle">
         <div>
-          <div className="eyebrow">{open.length} need{open.length === 1 ? "s" : ""} your vote</div>
+          {open.length > 0 && <div className="eyebrow">{open.length} need{open.length === 1 ? "s" : ""} your vote</div>}
           <h1 className="lt">Polls</h1>
         </div>
         {staff && <a className="btn sec sm" href="#new-poll"><Icon name="plus" className="ic sm" />New poll</a>}

@@ -47,8 +47,8 @@ export function SessionsView() {
       )}
       {mine.length === 0 && (
         <div className="card empty-card">
-          <h2>You&apos;re not at a table yet</h2>
-          <p className="note">Ask your organizer for an invite link. You&apos;ll only see the campaigns you&apos;re in.</p>
+          <h2>{state.me.canCreateCampaigns ? "No sessions yet" : "You're not at a table yet"}</h2>
+          <p className="note">{state.me.canCreateCampaigns ? "Start a campaign and its sessions show up here." : "Ask your organizer for an invite link. You'll only see the campaigns you're in."}</p>
           {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
         </div>
       )}
