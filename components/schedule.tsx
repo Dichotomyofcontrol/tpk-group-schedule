@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, isStaff, membersOf, ownTitle, sessionTitle } from "@/lib/model";
+import { campaignById, displayTitle, isStaff, membersOf, ownTitle, sessionTitle } from "@/lib/model";
 import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
@@ -35,8 +35,7 @@ export function sessionHref(session: Session): string {
 
 /** List title: the session's own name with any "Session #N" numbering dropped, else the campaign name. */
 export function ledgerTitle(session: Session, campaignName: string): string {
-  const own = ownTitle(session, campaignName).replace(/^session\s*#?\s*\d+(\s*of\s*\d+)?\s*[·:\-–—]?\s*/i, "").trim();
-  return own || campaignName;
+  return displayTitle(session, campaignName);
 }
 
 /** One line in a month list: typographic date, title, time and place, headcount. */

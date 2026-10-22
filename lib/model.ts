@@ -630,6 +630,12 @@ export function ownTitle(session: Pick<Session, "title">, campaignName = ""): st
   return t && t.toLowerCase() !== campaignName.trim().toLowerCase() && t.toLowerCase() !== "session" ? t : "";
 }
 
+/** How a session is named on screen and in emails/feeds: its own subtitle with any "Session #N" numbering dropped, else the campaign name. Display only. */
+export function displayTitle(session: Pick<Session, "title">, campaignName: string): string {
+  const own = ownTitle(session, campaignName).replace(/^session\s*#?\s*\d+(\s*of\s*\d+)?\s*[·:\-–—]?\s*/i, "").trim();
+  return own || campaignName;
+}
+
 /** What to call a session: its own title, else "Session N" counted within its campaign. */
 export function sessionTitle(state: AppState, session: Session): string {
   const campaign = state.campaigns.find((c) => c.id === session.cid);

@@ -1,4 +1,4 @@
-import { ownTitle } from "./model";
+import { displayTitle } from "./model";
 import { toIcsUtc } from "./time";
 import type { Campaign, Session } from "./types";
 
@@ -41,9 +41,9 @@ export function buildIcs(name: string, events: IcsEvent[], now = new Date()): st
   ];
   for (const event of events) {
     const { session, campaign } = event;
-    const summary = event.viewerOut ? `Out · ${campaign.name}` : (ownTitle(session, campaign.name) ? `${campaign.name} — ${ownTitle(session, campaign.name)}` : campaign.name);
+    const summary = event.viewerOut ? `Out · ${campaign.name}` : (displayTitle(session, campaign.name) !== campaign.name ? `${campaign.name} — ${displayTitle(session, campaign.name)}` : campaign.name);
     const description = [
-      ownTitle(session, campaign.name),
+      displayTitle(session, campaign.name) !== campaign.name ? displayTitle(session, campaign.name) : "",
       session.location,
       campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "",
       "From Six in the TPK",
@@ -73,7 +73,7 @@ export function googleEventTemplate(session: Session, campaign: Campaign): strin
   const dates = `${toIcsUtc(session.startsAt)}/${toIcsUtc(session.endsAt)}`;
   const params = new URLSearchParams({
     action: "TEMPLATE",
-    text: (ownTitle(session, campaign.name) ? `${campaign.name} — ${ownTitle(session, campaign.name)}` : campaign.name),
+    text: (displayTitle(session, campaign.name) !== campaign.name ? `${campaign.name} — ${displayTitle(session, campaign.name)}` : campaign.name),
     dates,
     location: session.location || "",
     details: campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "Six in the TPK",

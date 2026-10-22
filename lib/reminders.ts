@@ -1,4 +1,4 @@
-import { ownTitle } from "./model";
+import { displayTitle } from "./model";
 import type { Campaign, Member, Session } from "./types";
 import { attendanceState } from "./attendance";
 import { formatRangePretty, zoneLong } from "./time";
@@ -33,7 +33,7 @@ export function reminderText(campaign: Campaign, session: Session, members: Memb
   const out = members.filter((m) => attendanceState(campaign, session, m.id) === "out").map((m) => m.displayName);
   const lines = [
     `${campaign.name}`,
-    ownTitle(session, campaign.name),
+    displayTitle(session, campaign.name) !== campaign.name ? displayTitle(session, campaign.name) : "",
     when,
     zoneLong(session.tz),
     session.location,
