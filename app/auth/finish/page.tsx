@@ -117,7 +117,7 @@ export default function Finish() {
             <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a new link"}</button>
           </form>
         )}
-        {!dead && !needEmail && <p><Link href="/signin">Send a new link</Link></p>}
+        {!dead && !needEmail && <Link className="btn sec" href="/signin">Send a new link</Link>}
       </div>
     </div>
   );
