@@ -66,6 +66,11 @@ export function PartyChips({ session }: { session: Session }) {
 }
 
 /** I'm in / Can't make it. One control for both RSVP modes. */
+/** A tiny haptic tick where the platform supports it (Android). Silent elsewhere. */
+function tick() {
+  try { navigator.vibrate?.(8); } catch { /* not supported */ }
+}
+
 export function RsvpControl({ session }: { session: Session }) {
   const store = useStore();
   const campaign = campaignById(store.state, session.cid);
@@ -76,11 +81,11 @@ export function RsvpControl({ session }: { session: Session }) {
   const past = new Date(session.endsAt).getTime() < Date.now();
   if (past || session.status === "cancelled") return null;
   return (
-    <div className="seg2" role="group" aria-label="Your RSVP">
-      <button type="button" className={mine === "in" ? "on" : ""} aria-pressed={mine === "in"} onClick={() => store.mark(session.id, me, "in")}>
+    <div className="seg2" role="group" aria-label="Your RSVP" data-on={mine === "in" || mine === "out" ? mine : undefined}>
+      <button type="button" className={mine === "in" ? "on" : ""} aria-pressed={mine === "in"} onClick={() => { tick(); store.mark(session.id, me, "in"); }}>
         <Icon name="check" className="ic sm" />I&apos;m in
       </button>
-      <button type="button" className={mine === "out" ? "on out" : ""} aria-pressed={mine === "out"} onClick={() => store.mark(session.id, me, "out")}>
+      <button type="button" className={mine === "out" ? "on out" : ""} aria-pressed={mine === "out"} onClick={() => { tick(); store.mark(session.id, me, "out"); }}>
         Can&apos;t make it
       </button>
     </div>
