@@ -31,6 +31,8 @@ export function SessionRow({ session, showCampaign = false }: { session: Session
   const when = formatDayHeading(session.startsAt, session.tz);
   const count = shortCount(campaign, session, members);
   const moved = session.exception === "move" || session.exception === "edit";
+  const meId = store.state.me.id;
+  const mineState = members.some((m) => m.id === meId) ? attendanceState(campaign, session, meId) : "in";
   return (
     <Link className="srow" href={sessionHref(session)}>
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
@@ -38,6 +40,8 @@ export function SessionRow({ session, showCampaign = false }: { session: Session
         {showCampaign && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
         <b>{sessionTitle(store.state, session)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
+        {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
+        {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}
       </span>
       <span className={count.warn ? "status warn" : "status"}>{count.text}</span>
     </Link>

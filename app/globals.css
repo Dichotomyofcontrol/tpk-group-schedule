@@ -660,3 +660,8 @@ form.ib > .field { margin: 0; }
 .opt:active:not(:disabled) { transform: scale(.985); }
 .opt.mine .chk { color: var(--onbtn); }
 @media (prefers-reduced-motion: reduce) { .opt, .opt .fill { transition: none; } .opt:active { transform: none; } }
+
+/* Sessions rows: your own RSVP when it needs attention. */
+.srow .me-rsvp { display: block; font: 600 12.5px/18px var(--ui); letter-spacing: .01em; margin-top: 2px; }
+.srow .me-rsvp.out { color: var(--ink3); }
+.srow .me-rsvp.ask { color: var(--ver); }
