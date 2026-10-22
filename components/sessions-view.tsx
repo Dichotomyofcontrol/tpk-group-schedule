@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { memberCampaigns } from "@/lib/model";
+import { memberCampaigns, pastSessions, sessionTitle } from "@/lib/model";
+import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { formatMonthLabel } from "@/lib/time";
 import type { Session } from "@/lib/types";
-import { NextHero, SessionRow } from "./schedule";
-import { Skeleton } from "./ui";
+import { NextHero, SessionRow, sessionHref } from "./schedule";
+import { Icon, Skeleton } from "./ui";
 import { HomeScreenHint } from "./home-hint";
 
 /** Sessions: the next one as the hero, then every later one grouped by month. Filter by campaign. */
@@ -63,6 +64,18 @@ export function SessionsView() {
         </div>
       )}
       {next && <NextHero session={next} showCampaign={all} />}
+      {next && (() => {
+        // Continuity: the most recent recap for the next night's campaign, if it's from the last 6 weeks.
+        const last = pastSessions(state, next.cid).find((s) => hasRecap(s));
+        if (!last || now - new Date(last.endsAt).getTime() > 42 * 86_400_000) return null;
+        return (
+          <Link className="lasttime" href={sessionHref(last)}>
+            <span className="note">Last time</span>
+            <b>{sessionTitle(state, last)}</b>
+            <span className="lnk">Read the recap <Icon name="arrow" className="ic sm" /></span>
+          </Link>
+        );
+      })()}
       {months.map(([label, list]) => (
         <section key={label} aria-label={label}>
           <h2 className="mhd">{label}</h2>
