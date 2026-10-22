@@ -70,7 +70,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
           <section className="card pad" aria-labelledby="who-h">
             <div className="sh">
               <h2 id="who-h">{past ? "Who played" : "Who\u2019s coming"}</h2>
-              <span className={count.warn ? "status warn" : "status"}>{count.text}</span>
+              {session.status !== "cancelled" && <span className={count.warn ? "status warn" : "status"}>{count.text}</span>}
             </div>
             <PartyChips session={session} />
             <RsvpControl session={session} />
