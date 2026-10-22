@@ -74,13 +74,14 @@ function PollCard({ poll }: { poll: Poll }) {
           const when = formatDayHeading(row.option.startsAt, row.option.tz);
           const picked = !!mine[row.option.id];
           const lead = i === 0 && row.yes > 0;
+          const everyone = members.length > 1 && row.yes >= members.length;
           const names = members.filter((m) => poll.votes[m.id]?.picks[row.option.id]).map((m) => m.id === store.state.me.id ? "You" : (m.displayName || m.characterName || "Player").split(" ")[0]);
           const who = names.length > 3 ? `${names.slice(0, 3).join(", ")} +${names.length - 3}` : names.join(", ");
           return (
             <button
               key={row.option.id}
               aria-pressed={picked}
-              aria-label={`${when.dow} ${when.mon} ${when.day}: ${row.yes} ${row.yes === 1 ? "vote" : "votes"}${lead ? ", leading" : ""}${names.length ? ` (${names.join(", ")})` : ""}`}
+              aria-label={`${when.dow} ${when.mon} ${when.day}: ${row.yes} ${row.yes === 1 ? "vote" : "votes"}${everyone ? ", works for everyone" : lead ? ", leading" : ""}${names.length ? ` (${names.join(", ")})` : ""}`}
               className={`opt${picked ? " mine" : ""}${i === 0 && row.yes > 0 ? " lead" : ""}`}
               disabled={poll.status !== "open"}
               onClick={() => store.toggleVote(poll.id, row.option.id)}
@@ -88,7 +89,7 @@ function PollCard({ poll }: { poll: Poll }) {
               <span className="fill" style={{ width: `${Math.round((row.yes / max) * 100)}%` }} />
               <span className="chk">{picked && <Icon name="check" />}</span>
               <span className="dt"><span className="dw">{when.dow}</span><span className="dn">{when.day}</span><span className="dm">{when.mon}</span></span>
-              <span className="t">{lead && <b className="lead-t">Leading</b>}{who && <span className="who">{who}</span>}</span>
+              <span className="t">{everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}{who && <span className="who">{who}</span>}</span>
               <span className="n">{row.yes}</span>
             </button>
           );
