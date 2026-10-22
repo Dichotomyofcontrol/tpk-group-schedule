@@ -61,7 +61,7 @@ export type StoreApi = {
   lockPoll: (pollId: string, optionId: string) => void;
   addPoll: (cid: string, title: string, options: Poll["options"]) => void;
   nudge: (pollId: string, uid: string) => void;
-  createInvite: (cid: string, role: Invite["role"], email?: string) => string | null;
+  createInvite: (cid: string, role: Invite["role"], email?: string) => Promise<string | null>;
   acceptInvite: (token: string, person?: { id: string; email: string; displayName: string; characterName?: string }) => boolean;
   sendMagicLink: (email: string, inviteToken?: string) => Promise<void>;
   /** Completes an email-link landing on /auth/finish. */
