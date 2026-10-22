@@ -20,8 +20,9 @@ export function CampaignsView() {
       </div>
       {mine.length === 0 && (
         <div className="card empty-card">
-          <h2>Your table awaits</h2>
-          <p className="note">Ask your organizer for an invite link.</p>
+          <h2>{state.me.canCreateCampaigns ? "No active campaigns" : "Your table awaits"}</h2>
+          <p className="note">{state.me.canCreateCampaigns ? (archived.length ? "Start one, or restore an archived campaign below." : "Start one and invite your players.") : "Ask your organizer for an invite link."}</p>
+          {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
         </div>
       )}
       <div className="camp-grid">
