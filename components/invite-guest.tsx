@@ -52,12 +52,11 @@ export function InviteGuest({ token }: { token: string }) {
     .slice(0, 3);
   return (
     <article className="card inv">
-      <span className="ribbon" />
       <div className="cover">
         <CampaignCover campaign={campaign} />
         <div className="ctop">
           <div className="eyebrow">{invite.createdByName} invited you</div>
-          <h3>{campaign.name}</h3>
+          <h1>{campaign.name}</h1>
         </div>
       </div>
       <form className="ib" onSubmit={async (e) => {

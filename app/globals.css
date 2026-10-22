@@ -326,7 +326,9 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .inv .cover { height: 120px; }
 .inv .ctop { position: absolute; left: 20px; right: 20px; bottom: 14px; z-index: 2; color: #FBF8F2; }
 .inv .ctop .eyebrow { color: #E9C98E; }
-.inv .ctop h3 { font-size: 24px; line-height: 28px; margin-top: 4px; color: #FBF8F2; }
+.inv .cover::after { background: linear-gradient(180deg, rgba(12,10,8,.2), rgba(12,10,8,.85) 70%); }
+.inv .ctop { text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+.inv .ctop h1, .inv .ctop h3 { font-size: 24px; line-height: 28px; margin-top: 4px; color: #FBF8F2; }
 .inv .ib { padding: 20px; display: grid; gap: 16px; }
 .inv .ib p { margin: 0; color: var(--ink2); font-size: 15px; line-height: 22px; }
 .gm { padding: 24px; }
