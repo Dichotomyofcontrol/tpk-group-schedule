@@ -24,6 +24,20 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   useEffect(() => setOrigin(window.location.origin), []);
   const campaign = mine.find((c) => c.id === cid);
   const organizer = campaign ? isOrganizer(state, cid) : false;
+  // Phones get the system share sheet (Messages, Discord…); desktops copy the link.
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => setCanShare(typeof navigator.share === "function" && window.matchMedia("(pointer: coarse)").matches), []);
+  const handOff = async (url: string) => {
+    if (canShare) {
+      try {
+        await navigator.share({ title: campaign ? `Join ${campaign.name}` : "Join my table", text: campaign ? `Pull up a chair at ${campaign.name}.` : "Pull up a chair at the table.", url });
+        return;
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") return;
+      }
+    }
+    try { await navigator.clipboard.writeText(url); store.flash("Invite link copied."); } catch { store.flash("Couldn't copy. Press and hold the link to copy it.", "err"); }
+  };
   const sent = state.invites.filter((i) => i.cid === cid && (i.createdBy === state.me.id || isStaff(state, cid)));
 
   return (
@@ -117,7 +131,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                         <Avatar name={who} id={invite.token} />
                         <div className="t"><b style={{ font: "500 16px/22px var(--ui)" }}>{who}</b><span>{invite.role === "coorganizer" ? "Co-organizer" : "Player"}</span></div>
                         <span className={joined ? "pill ok" : "pill"}>{joined ? "Joined" : "Pending"}</span>
-                        {!joined && <button className="btn ghost" aria-label={`Copy invite for ${who}`} style={{ width: 44, padding: 0 }} onClick={() => { const url = `${origin}/invite/${invite.token}`; void navigator.clipboard.writeText(url); store.flash("Invite link copied."); }}><Icon name="arrow" className="ic sm" /></button>}
+                        {!joined && <button className="btn ghost" aria-label={`${canShare ? "Share" : "Copy"} invite for ${who}`} style={{ width: 44, padding: 0 }} onClick={() => void handOff(`${origin}/invite/${invite.token}`)}><Icon name="arrow" className="ic sm" /></button>}
                       </div>
                     );
                   })}
@@ -126,7 +140,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                   <Icon name="link" className="ic sm" />
                   <code>{link || (origin ? `${origin.replace(/^https?:\/\//, "")}/invite/…` : "invite link")}</code>
                   <button className="btn sec sm" type="button" disabled={busy} onClick={async () => {
-                    if (link) { void navigator.clipboard.writeText(link); store.flash("Invite link copied."); return; }
+                    if (link) { await handOff(link); return; }
                     if (busy) return;
                     setBusy(true);
                     const token = await store.createInvite(cid, "member");
@@ -134,9 +148,9 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                     if (token && origin) {
                       const url = `${origin}/invite/${token}`;
                       setLink(url);
-                      void navigator.clipboard.writeText(url);
+                      await handOff(url);
                     }
-                  }}>Copy</button>
+                  }}>{canShare ? "Share" : "Copy"}</button>
                 </div>
               </div>
             </section>
