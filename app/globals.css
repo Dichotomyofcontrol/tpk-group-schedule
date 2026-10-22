@@ -689,3 +689,17 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .tline .rrow:last-child::before { bottom: 50%; }
 .tline .rrow::after { content: ""; position: absolute; left: 18px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--paper); border: 2px solid var(--gold); box-sizing: border-box; }
 .tline .rrow:first-child::after { background: var(--gold); }
+
+/* Party ledger: clean ledger rows */
+.ledger .lrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; min-height: 56px; }
+.ledger .lrow + .lrow, .ledger .lform + .lrow { border-top: 1px solid var(--rule); }
+.ledger .ltag { font: 700 11px/20px var(--ui); letter-spacing: .06em; text-transform: uppercase; padding: 0 8px; border-radius: 6px; border: 1px solid var(--rule2); color: var(--ink2); min-width: 44px; text-align: center; }
+.ledger .ltag.loot { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.ledger .ltag.xp { color: var(--moss); border-color: color-mix(in srgb, var(--moss) 45%, transparent); }
+.ledger .ltag.milestone { color: var(--ver); border-color: color-mix(in srgb, var(--ver) 45%, transparent); }
+.ledger .ltext { font: 400 16px/22px var(--serif); overflow-wrap: anywhere; }
+.ledger .ldate { font: 500 12.5px/18px var(--ui); color: var(--ink3); white-space: nowrap; }
+.ledger .lform { display: grid; gap: 12px; padding: 16px; }
+.ledger .lkinds { display: flex; gap: 8px; flex-wrap: wrap; }
+.ledger .lempty { padding: 16px 20px; margin: 0; }
+.ledger .lfoot { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 4px 16px; border-top: 1px solid var(--rule); }

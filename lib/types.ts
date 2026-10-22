@@ -76,6 +76,8 @@ export type Campaign = {
   allowMemberInvites: boolean;
   /** Off by default: everyone is assumed in until they tap Can't make it. */
   requireRsvps: boolean;
+  /** Loot / XP / milestones log. Organizer writes. */
+  ledger?: LedgerEntry[];
   /** Fewest players (organizer included) for the night to be on. 0/undefined = not tracked. */
   quorum?: number;
   cadence: Cadence | null;
@@ -212,3 +214,5 @@ export type AppState = {
 };
 
 export type Toast = { id: number; text: string; tone?: "ok" | "err"; action?: { label: string; run: () => void } };
+
+export type LedgerEntry = { id: string; at: string; kind: "loot" | "xp" | "milestone"; text: string };

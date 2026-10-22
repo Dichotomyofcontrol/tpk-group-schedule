@@ -12,6 +12,7 @@ import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
 import type { Cadence, Campaign, Member } from "@/lib/types";
 import { CoverEditor } from "./cover-editor";
+import { PartyLedger } from "./party-ledger";
 import { SessionRow, sessionHref } from "./schedule";
 import { Avatar, BackBar, CampaignCover, Icon, SettingRow, Switch } from "./ui";
 
@@ -121,6 +122,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           ) : (
             <div className="card pad"><p className="note">No recaps yet.</p></div>
           )}
+          <PartyLedger campaign={campaign} />
         </div>
         <aside className="cside">
           {organizer ? <OrganizerPanel campaign={campaign} members={members} me={me} /> : <PlayerPanel campaign={campaign} me={me} members={members} />}
