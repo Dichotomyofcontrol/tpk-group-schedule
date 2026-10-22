@@ -780,3 +780,7 @@ section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; 
 
 /* Up next: game-on status at a glance */
 .hero .quorum { margin: 10px 0 6px; }
+
+/* Sessions ledger: campaign name as the row title */
+.srow .st b .dot { display: inline-block; margin: 0 8px 0 0; vertical-align: 2px; flex: none; }
+.ledger .srow .st b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

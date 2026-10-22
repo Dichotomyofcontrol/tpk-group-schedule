@@ -79,8 +79,8 @@ export function SessionsView() {
       {months.map(([label, list]) => (
         <section key={label} aria-label={label}>
           <h2 className="mhd">{label}</h2>
-          <div className="card list">
-            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} />)}
+          <div className="card list ledger">
+            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} ledger />)}
           </div>
         </section>
       ))}

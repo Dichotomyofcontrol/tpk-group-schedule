@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
+import { campaignById, isStaff, membersOf, ownTitle, sessionTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
@@ -33,7 +33,7 @@ export function sessionHref(session: Session): string {
 }
 
 /** One line in a month list: typographic date, title, time and place, headcount. */
-export function SessionRow({ session, showCampaign = false }: { session: Session; showCampaign?: boolean }) {
+export function SessionRow({ session, showCampaign = false, ledger = false }: { session: Session; showCampaign?: boolean; ledger?: boolean }) {
   const store = useStore();
   const campaign = campaignById(store.state, session.cid);
   if (!campaign) return null;
@@ -47,8 +47,8 @@ export function SessionRow({ session, showCampaign = false }: { session: Session
     <Link className="srow" href={sessionHref(session)}>
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
-        {showCampaign && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
-        <b>{sessionTitle(store.state, session)}</b>
+        {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
+        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ownTitle(session, campaign.name) || campaign.name}</> : sessionTitle(store.state, session)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
         {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
         {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}
