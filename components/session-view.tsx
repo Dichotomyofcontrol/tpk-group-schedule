@@ -6,7 +6,8 @@ import { campaignById, isStaff, membersOf, pastSessions , sessionTitle } from "@
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatRangePretty, relativeWhen } from "@/lib/time";
-import { googleEventTemplate } from "@/lib/ics";
+import { buildIcs, googleEventTemplate } from "@/lib/ics";
+import type { Campaign, Session } from "@/lib/types";
 import { RecapSection } from "./recap-section";
 import { TableNote } from "./table-note";
 import { NightTools, PartyChips, RsvpControl, sessionHref, shortCount } from "./schedule";
@@ -93,7 +94,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
         {!past && (session.status !== "cancelled" || staff) ? (
           <aside className="card side-actions">
             {!past && session.status !== "cancelled" && (
-              <a className="btn sec sm full" href={googleEventTemplate(session, campaign)} target="_blank" rel="noopener noreferrer"><Icon name="dates" className="ic sm" />Add to calendar</a>
+              <AddToCalendar session={session} campaign={campaign} />
             )}
             <NightTools session={session} />
           </aside>
@@ -101,4 +102,19 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
       </div>
     </>
   );
+}
+
+/** Apple devices get a real .ics (opens straight into Calendar); everyone else gets Google Calendar. */
+function AddToCalendar({ session, campaign }: { session: Session; campaign: Campaign }) {
+  const [apple, setApple] = useState(false);
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setApple(/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && !/Chrome|Firefox|Edg/.test(ua)));
+  }, []);
+  if (apple) {
+    const ics = buildIcs(campaign.name, [{ session, campaign }]);
+    const name = `${campaign.name.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "session"}.ics`;
+    return <a className="btn sec sm full" href={`data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`} download={name}><Icon name="dates" className="ic sm" />Add to calendar</a>;
+  }
+  return <a className="btn sec sm full" href={googleEventTemplate(session, campaign)} target="_blank" rel="noopener noreferrer"><Icon name="dates" className="ic sm" />Add to calendar</a>;
 }
