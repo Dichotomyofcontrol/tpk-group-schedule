@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
 import { campaignById, isStaff, membersOf, ownTitle, sessionTitle } from "@/lib/model";
+import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
@@ -32,6 +33,12 @@ export function sessionHref(session: Session): string {
   return `/campaigns/${session.cid}/sessions/${session.id}`;
 }
 
+/** List title: the session's own name with any "Session #N" numbering dropped, else the campaign name. */
+export function ledgerTitle(session: Session, campaignName: string): string {
+  const own = ownTitle(session, campaignName).replace(/^session\s*#?\s*\d+(\s*of\s*\d+)?\s*[·:\-–—]?\s*/i, "").trim();
+  return own || campaignName;
+}
+
 /** One line in a month list: typographic date, title, time and place, headcount. */
 export function SessionRow({ session, showCampaign = false, ledger = false }: { session: Session; showCampaign?: boolean; ledger?: boolean }) {
   const store = useStore();
@@ -43,12 +50,23 @@ export function SessionRow({ session, showCampaign = false, ledger = false }: { 
   const moved = session.exception === "move" || session.exception === "edit";
   const meId = store.state.me.id;
   const mineState = members.some((m) => m.id === meId) ? attendanceState(campaign, session, meId) : "in";
+  if (ledger && new Date(session.endsAt).getTime() < Date.now()) {
+    // A night that already happened: quieter and smaller, and it says whether the recap is in.
+    const recap = hasRecap(session);
+    return (
+      <Link className="srow past" href={sessionHref(session)}>
+        <DateBlock dow={when.dow} day={when.day} />
+        <span className="st"><b>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</b></span>
+        <span className={recap ? "pst done" : "pst"}><Icon name={recap ? "doc" : "quill"} className="ic sm" />{recap ? "Recap" : isStaff(store.state, session.cid) ? "Add recap" : "No recap yet"}</span>
+      </Link>
+    );
+  }
   return (
     <Link className="srow" href={sessionHref(session)}>
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
         {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
-        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ownTitle(session, campaign.name) || campaign.name}</> : sessionTitle(store.state, session)}</b>
+        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</> : sessionTitle(store.state, session)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
         {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
         {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}

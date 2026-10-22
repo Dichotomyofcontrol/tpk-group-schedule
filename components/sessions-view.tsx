@@ -32,6 +32,11 @@ export function SessionsView() {
     .filter((s) => active === "all" || s.cid === active)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const [next, ...rest] = sessions;
+  // Nights from the last 14 days stay on the list, above what's coming, until they age out.
+  const recent = state.sessions
+    .filter((s) => ids.has(s.cid) && s.status === "scheduled" && new Date(s.endsAt).getTime() < now && new Date(s.startsAt).getTime() >= now - 14 * 86_400_000)
+    .filter((s) => active === "all" || s.cid === active)
+    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const months = groupByMonth(rest, state.me.tz || "America/Los_Angeles");
   const all = active === "all";
 
@@ -56,6 +61,14 @@ export function SessionsView() {
           <p className="note">{state.me.canCreateCampaigns ? "Start a campaign and its sessions show up here." : "Ask your organizer for an invite link. You'll only see the campaigns you're in."}</p>
           {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
         </div>
+      )}
+      {recent.length > 0 && (
+        <section aria-label="Last 14 days">
+          <h2 className="mhd quiet">Last 14 days</h2>
+          <div className="card list ledger">
+            {recent.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} ledger />)}
+          </div>
+        </section>
       )}
       {!state.syncing && mine.length > 0 && !next && (
         <div className="card empty-card">

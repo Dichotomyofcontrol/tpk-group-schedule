@@ -784,3 +784,10 @@ section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; 
 /* Sessions ledger: campaign name as the row title */
 .srow .st b .dot { display: inline-block; margin: 0 8px 0 0; vertical-align: 2px; flex: none; }
 .ledger .srow .st b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow.past { min-height: 56px; padding-top: 10px; padding-bottom: 10px; color: var(--ink3); }
+.srow.past .dt .dn { font-size: 24px; line-height: 26px; color: var(--ink3); }
+.srow.past .dt .dw { color: var(--ink3); }
+.srow.past .st b { font: 500 16px/22px var(--serif); color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow.past .pst { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 500 13px/18px var(--ui); color: var(--ink3); white-space: nowrap; }
+.srow.past .pst.done { color: var(--ink2); }
+.mhd.quiet { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: .02em; color: var(--ink3); font-family: var(--ui); }
