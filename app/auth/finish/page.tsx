@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Shell } from "@/components/shell";
 import { useStore } from "@/lib/store";
 
 export default function Finish() {
@@ -95,30 +96,32 @@ export default function Finish() {
   }, []);
 
   return (
-    <div className="center-narrow">
-      <div className="gate">
-        <h1>{dead ? "Link expired" : "Sign in"}</h1>
-        <p role="status">{message}</p>
-        {needEmail && (
-          <form onSubmit={(event) => { event.preventDefault(); void finishLive(email.trim()); }}>
-            <div className="field">
-              <label htmlFor="confirm-email">Email</label>
-              <input id="confirm-email" className="inp" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" />
-            </div>
-            <button className="btn pri" type="submit">Finish sign-in</button>
-          </form>
-        )}
-        {dead && !resent && (
-          <form onSubmit={(event) => { event.preventDefault(); void resend(); }}>
-            <div className="field">
-              <label htmlFor="resend-email">Email</label>
-              <input id="resend-email" className="inp" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" />
-            </div>
-            <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a new link"}</button>
-          </form>
-        )}
-        {!dead && !needEmail && <p><Link href="/signin">Send a new link</Link></p>}
+    <Shell>
+      <div className="center-narrow">
+        <div className="gate">
+          <h1>{dead ? "Link expired" : "Sign in"}</h1>
+          <p role="status">{message}</p>
+          {needEmail && (
+            <form onSubmit={(event) => { event.preventDefault(); void finishLive(email.trim()); }}>
+              <div className="field">
+                <label htmlFor="confirm-email">Email</label>
+                <input id="confirm-email" className="inp" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" />
+              </div>
+              <button className="btn pri" type="submit">Finish sign-in</button>
+            </form>
+          )}
+          {dead && !resent && (
+            <form onSubmit={(event) => { event.preventDefault(); void resend(); }}>
+              <div className="field">
+                <label htmlFor="resend-email">Email</label>
+                <input id="resend-email" className="inp" type="email" required autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" />
+              </div>
+              <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a new link"}</button>
+            </form>
+          )}
+          {!dead && !needEmail && <Link className="btn sec" href="/signin">Send a new link</Link>}
+        </div>
       </div>
-    </div>
+    </Shell>
   );
 }
