@@ -12,7 +12,7 @@ import { buildIcs, googleEventTemplate } from "@/lib/ics";
 import type { Campaign, Session } from "@/lib/types";
 import { RecapSection } from "./recap-section";
 import { TableNote } from "./table-note";
-import { NightTools, PartyChips, quorumLine, RsvpControl, sessionHref, shortCount } from "./schedule";
+import { ledgerTitle, NightTools, PartyChips, quorumLine, RsvpControl, sessionHref, shortCount } from "./schedule";
 import { BackBar, Icon, useMapsHref } from "./ui";
 
 export function SessionView({ cid, sid }: { cid: string; sid: string }) {
@@ -69,7 +69,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
     <>
       <BackBar href={back.href} label={back.label} />
       <div className="eyebrow ver">{when.dow} {when.mon} {when.day}{status ? ` · ${status}` : ""}{soon ? ` · ${soon}` : ""}</div>
-      <h1 className="lt">{sessionTitle(state, session)}</h1>
+      <h1 className="lt">{ledgerTitle(session, campaign.name)}</h1>
       <p className="meta">
         <Link className="cl" href={`/campaigns/${cid}`}><i className="dot" style={{ background: campaign.color }} />{campaign.name}</Link>
         <span className="mg"><Icon name="clock" className="ic sm" />{formatRangePretty(session.startsAt, session.endsAt, session.tz)}</span>
