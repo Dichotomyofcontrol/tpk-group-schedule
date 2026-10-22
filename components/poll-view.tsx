@@ -43,7 +43,13 @@ export function PollList() {
             {closed.map((poll) => (
               <div key={poll.id} style={{ marginTop: 16 }}>
                 <p style={{ font: "500 17px/24px var(--serif)", margin: "0 0 4px" }}>{poll.title}</p>
-                <span className="status">Locked</span>
+                {(() => {
+                  const opt = poll.options.find((o) => o.id === poll.chosenOptionId);
+                  if (!opt) return <span className="status">Locked</span>;
+                  const d = formatDayHeading(opt.startsAt, opt.tz);
+                  const label = <><Icon name="check" className="ic sm" />Locked · {d.dow} {d.mon} {d.day}</>;
+                  return poll.sessionId ? <Link className="status ok lockd" href={`/campaigns/${poll.cid}/sessions/${poll.sessionId}`}>{label}</Link> : <span className="status ok lockd">{label}</span>;
+                })()}
               </div>
             ))}
           </div>

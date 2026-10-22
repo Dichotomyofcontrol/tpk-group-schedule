@@ -747,3 +747,5 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible, [role="rad
 /* Sessions: month headers stick under the header while you scroll their month (iOS list style). */
 section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; margin: 24px -8px 4px; padding: 8px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 12px; }
 @media (min-width: 900px) { section > .mhd { top: 68px; } }
+
+.status.lockd { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; min-height: 32px; }
