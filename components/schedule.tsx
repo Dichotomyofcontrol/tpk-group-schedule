@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, displayTitle, isStaff, membersOf, ownTitle, sessionTitle } from "@/lib/model";
+import { campaignById, displayTitle, isStaff, membersOf } from "@/lib/model";
 import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
@@ -65,7 +65,7 @@ export function SessionRow({ session, showCampaign = false, ledger = false }: { 
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
         {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
-        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</> : sessionTitle(store.state, session)}</b>
+        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</> : displayTitle(session, campaign.name)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
         {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
         {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}

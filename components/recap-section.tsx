@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { isStaff, sessionFiles , sessionTitle } from "@/lib/model";
+import { isStaff, sessionFiles, displayTitle, sessionTitle } from "@/lib/model";
 import { hasRecap, markdownToHtml, validatePdf } from "@/lib/recap";
 import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
@@ -70,7 +70,7 @@ export function RecapSection({ session }: { session: Session }) {
       {editing && staff ? (
         <RecapEditor session={session} onSaved={() => setEditing(false)} />
       ) : html ? (
-        <div className="reader" dangerouslySetInnerHTML={{ __html: dropTitle(sanitizeRecapHtml(html), sessionTitle(store.state, session)) }} />
+        <div className="reader" dangerouslySetInnerHTML={{ __html: dropTitle(sanitizeRecapHtml(html), [displayTitle(session, store.state.campaigns.find((c) => c.id === session.cid)?.name || ""), sessionTitle(store.state, session)]) }} />
       ) : empty ? (
         <div className="empty">
           <p>{staff ? "Nothing yet for this night." : "No recap for this night yet."}</p>
@@ -197,10 +197,11 @@ function FileRow({ session, file, staff, onReplace }: { session: Session; file: 
 }
 
 /** The page already shows the session title, so drop a recap that opens by repeating it. */
-function dropTitle(html: string, title?: string): string {
-  if (!title) return html;
+function dropTitle(html: string, titles: string[]): string {
+  const names = titles.map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (!names.length) return html;
   const m = html.match(/^\s*<(h[1-4])[^>]*>([\s\S]*?)<\/\1>/i);
   if (!m) return html;
   const text = m[2].replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").trim().toLowerCase();
-  return text === title.trim().toLowerCase() ? html.slice(m[0].length) : html;
+  return names.includes(text) ? html.slice(m[0].length) : html;
 }

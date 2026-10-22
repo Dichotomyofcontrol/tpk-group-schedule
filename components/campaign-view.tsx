@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions , sessionTitle } from "@/lib/model";
+import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions, displayTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { isUnread, readingMinutes, seedReads } from "@/lib/read-marks";
 import { useStore } from "@/lib/store";
@@ -133,7 +133,7 @@ export function RecapRow({ session: s, unread = false }: { session: Session; unr
     <Link className="srow rrow" href={sessionHref(s)}>
       <span className="st">
         <span className="cn">{`${when.dow[0]}${when.dow.slice(1).toLowerCase()} ${when.mon[0]}${when.mon.slice(1).toLowerCase()} ${when.day}`}</span>
-        <b>{sessionTitle(store.state, s)}{unread && <span className="newpill">New</span>}</b>
+        <b>{displayTitle(s, store.state.campaigns.find((c) => c.id === s.cid)?.name || "")}{unread && <span className="newpill">New</span>}</b>
         {text && <span className="note">{text}</span>}
         {readingMinutes(s) > 1 && <span className="rmin">{readingMinutes(s)} min read</span>}
       </span>
