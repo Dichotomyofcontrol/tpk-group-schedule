@@ -6,6 +6,7 @@ import { campaignById, isStaff, membersOf, pastSessions , sessionTitle } from "@
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { markRead } from "@/lib/read-marks";
 import { useStore } from "@/lib/store";
+import { attendanceState, sessionRequiresRsvp } from "@/lib/attendance";
 import { daysUntil, formatDayHeading, formatRangePretty, relativeWhen } from "@/lib/time";
 import { buildIcs, googleEventTemplate } from "@/lib/ics";
 import type { Campaign, Session } from "@/lib/types";
@@ -102,6 +103,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
               <AddToCalendar session={session} campaign={campaign} />
             )}
             {session.status !== "cancelled" && <ShareNight title={`${campaign.name} · ${when.dow} ${when.mon} ${when.day}`} />}
+            {staff && session.status !== "cancelled" && <RsvpNudge session={session} campaign={campaign} label={`${when.dow} ${when.mon} ${when.day}`.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase())} />}
             <NightTools session={session} />
           </aside>
         ) : null}
@@ -142,5 +144,26 @@ function ShareNight({ title }: { title: string }) {
       }
       try { await navigator.clipboard.writeText(url); store.flash("Link to this night copied."); } catch { store.flash("Couldn't copy the link.", "err"); }
     }}><Icon name="link" className="ic sm" />Share this night</button>
+  );
+}
+
+/** Organizer only: a ready-to-send message naming who hasn't replied, with this night's link. Nothing is emailed. */
+function RsvpNudge({ session, campaign, label }: { session: Session; campaign: Campaign; label: string }) {
+  const store = useStore();
+  if (!sessionRequiresRsvp(campaign, session)) return null;
+  const quiet = membersOf(store.state, session.cid).filter((m) => m.id !== store.state.me.id && attendanceState(campaign, session, m.id) === "unset");
+  if (!quiet.length) return null;
+  const first = (m: { displayName?: string; characterName?: string }) => (m.displayName || m.characterName || "").split(" ")[0];
+  return (
+    <button type="button" className="btn sec sm full" onClick={async () => {
+      const names = quiet.map(first).filter(Boolean);
+      const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] || "Friends";
+      const url = window.location.href.split("?")[0];
+      const text = `${who}: are you in for ${campaign.name} on ${label}? Tap I'm in or Can't make it: ${url}`;
+      if (window.matchMedia("(pointer: coarse)").matches && typeof navigator.share === "function") {
+        try { await navigator.share({ text }); return; } catch (err) { if ((err as Error)?.name === "AbortError") return; }
+      }
+      try { await navigator.clipboard.writeText(text); store.flash("Nudge copied. Paste it in your group chat."); } catch { store.flash("Couldn't copy the nudge.", "err"); }
+    }}><Icon name="bell" className="ic sm" />{quiet.length === 1 ? `Nudge ${first(quiet[0]) || "them"}` : `Nudge the ${quiet.length} who haven\u2019t replied`}</button>
   );
 }
