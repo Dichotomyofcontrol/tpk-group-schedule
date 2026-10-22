@@ -7,6 +7,11 @@ export function Providers({ children, allowFixture = false }: { children: ReactN
   const builtLive = process.env.NEXT_PUBLIC_DATA_MODE === "live";
   const [choice, setChoice] = useState<"demo" | "live">(builtLive ? "live" : "demo");
   const [Live, setLive] = useState<ComponentType<{ children: ReactNode }> | null>(null);
+  // Offline: a small service worker keeps the app shell openable without a connection (production only).
+  useEffect(() => {
+    if (!builtLive || allowFixture || !("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => undefined);
+  }, [builtLive, allowFixture]);
   useEffect(() => {
     if (!builtLive) return;
     const requested = new URLSearchParams(window.location.search).get("as");
