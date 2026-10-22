@@ -681,3 +681,11 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 /* Recaps: unread marker and reading time */
 .newpill { display: inline-block; vertical-align: 2px; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ver); color: var(--onbtn); font: 700 11px/18px var(--ui); letter-spacing: .04em; text-transform: uppercase; }
 .rrow .rmin { display: block; font: 500 12.5px/18px var(--ui); color: var(--ink3); margin-top: 2px; }
+
+/* Recaps read as a story: a thin rail with a node per session (newest on top). */
+.tline .rrow { position: relative; padding-left: 44px; }
+.tline .rrow::before { content: ""; position: absolute; left: 23px; top: 0; bottom: 0; width: 1.5px; background: var(--rule2); }
+.tline .rrow:first-child::before { top: 50%; }
+.tline .rrow:last-child::before { bottom: 50%; }
+.tline .rrow::after { content: ""; position: absolute; left: 18px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--paper); border: 2px solid var(--gold); box-sizing: border-box; }
+.tline .rrow:first-child::after { background: var(--gold); }
