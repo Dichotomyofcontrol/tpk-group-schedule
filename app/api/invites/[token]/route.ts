@@ -22,7 +22,7 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
   }
   if (!adminConfigured()) return Response.json({ error: "Invite lookup needs Firebase Admin." }, { status: 503 });
   const snap = await adminDb().collection("invites").doc(token).get();
-  if (!snap.exists) return Response.json({ error: "Invite not found." }, { status: 404 });
+  if (!snap.exists) return Response.json({ token, status: "missing" });
   const data = snap.data() || {};
   const campaignSnap = await adminDb().collection("campaigns").doc(String(data.cid)).get();
   const campaign = campaignSnap.data() || {};
