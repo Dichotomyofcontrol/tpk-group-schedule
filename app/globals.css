@@ -650,3 +650,13 @@ form.ib > .field { margin: 0; }
 .seg2 button { transition: color .2s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
 .seg2 button:active { transform: scale(.96); }
 @media (prefers-reduced-motion: reduce) { .seg2::before, .seg2 button { transition: none; } .seg2 button:active { transform: none; } }
+
+/* Polls: who picked each date (Rallly-style), live bar motion, readable check in night. */
+.opt .t { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.opt .t .lead-t { font-weight: 600; color: var(--ver); letter-spacing: .02em; }
+.opt .t .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opt .fill { transition: width .45s cubic-bezier(.2,.8,.2,1); }
+.opt { transition: border-color .2s ease, box-shadow .2s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
+.opt:active:not(:disabled) { transform: scale(.985); }
+.opt.mine .chk { color: var(--onbtn); }
+@media (prefers-reduced-motion: reduce) { .opt, .opt .fill { transition: none; } .opt:active { transform: none; } }
