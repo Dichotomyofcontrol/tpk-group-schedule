@@ -225,7 +225,7 @@ main.cm { padding-top: 0; }
 .pr { font-size: 13px; margin-top: 12px; }
 .pr div { display: flex; justify-content: space-between; }
 .foot { max-width: 1120px; margin: 0 auto; padding: 40px 20px calc(48px + var(--safe-b)); display: flex; justify-content: space-between; gap: 16px; color: var(--ink3); font-size: 13px; border-top: .5px solid var(--rule2); }
-.quote { max-width: 1120px; margin: 24px auto 0; padding: 40px 20px; text-align: center; }
+.quote { max-width: 1120px; margin: 24px auto 0; padding: 40px 20px; text-align: center; justify-self: start; }
 .quote p { font: italic 400 24px/34px var(--serif); margin: 0 auto; max-width: 640px; font-variation-settings: "opsz" 72, "SOFT" 30; }
 .quote span { display: block; margin-top: 12px; }
 .sw { min-height: calc(100svh - 56px); display: grid; }
@@ -691,9 +691,9 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .tline .rrow:first-child::after { background: var(--gold); }
 
 /* Party ledger: clean ledger rows */
-.ledger .lrow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; min-height: 56px; }
+.ledger .lrow { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; min-height: 56px; }
 .ledger .lrow + .lrow, .ledger .lform + .lrow { border-top: 1px solid var(--rule); }
-.ledger .ltag { font: 700 11px/20px var(--ui); letter-spacing: .06em; text-transform: uppercase; padding: 0 8px; border-radius: 6px; border: 1px solid var(--rule2); color: var(--ink2); min-width: 44px; text-align: center; }
+.ledger .ltag { font: 700 11px/20px var(--ui); letter-spacing: .06em; text-transform: uppercase; padding: 0 8px; border-radius: 6px; border: 1px solid var(--rule2); color: var(--ink2); min-width: 44px; text-align: center; justify-self: start; }
 .ledger .ltag.loot { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
 .ledger .ltag.xp { color: var(--moss); border-color: color-mix(in srgb, var(--moss) 45%, transparent); }
 .ledger .ltag.milestone { color: var(--ver); border-color: color-mix(in srgb, var(--ver) 45%, transparent); }
