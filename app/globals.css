@@ -677,3 +677,7 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .quorum.ok { color: var(--moss); }
 .quorum.need { color: var(--ver); }
 .qsel { width: auto; min-width: 120px; height: 44px; }
+
+/* Recaps: unread marker and reading time */
+.newpill { display: inline-block; vertical-align: 2px; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--ver); color: var(--onbtn); font: 700 11px/18px var(--ui); letter-spacing: .04em; text-transform: uppercase; }
+.rrow .rmin { display: block; font: 500 12.5px/18px var(--ui); color: var(--ink3); margin-top: 2px; }
