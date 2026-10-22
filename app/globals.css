@@ -709,3 +709,8 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 /* Session place opens in Maps */
 .maplink { color: inherit; text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }
 .maplink:hover { text-decoration-color: currentColor; }
+
+/* Toasts arrive with a small spring (iOS banner feel). */
+@keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.96); } 60% { opacity: 1; transform: translateY(-2px) scale(1.005); } to { transform: none; } }
+.toast { animation: toast-in .36s cubic-bezier(.2,.9,.3,1.2) backwards; }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
