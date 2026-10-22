@@ -12,7 +12,7 @@ import type { Campaign, Session } from "@/lib/types";
 import { RecapSection } from "./recap-section";
 import { TableNote } from "./table-note";
 import { NightTools, PartyChips, quorumLine, RsvpControl, sessionHref, shortCount } from "./schedule";
-import { BackBar, Icon } from "./ui";
+import { BackBar, Icon, useMapsHref } from "./ui";
 
 export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   const store = useStore();
@@ -127,10 +127,7 @@ function AddToCalendar({ session, campaign }: { session: Session; campaign: Camp
 
 /** The place opens in Maps: Apple Maps on Apple devices, Google Maps elsewhere. */
 function MapsLink({ place }: { place: string }) {
-  const [apple, setApple] = useState(false);
-  useEffect(() => setApple(/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)), []);
-  const q = encodeURIComponent(place);
-  const href = apple ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
+  const href = useMapsHref(place);
   return <a className="mg maplink" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}><Icon name="pin" className="ic sm" />{place}</a>;
 }
 

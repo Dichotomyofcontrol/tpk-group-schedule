@@ -7,7 +7,7 @@ import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
-import { Avatar, CampaignCover, DateBlock, Icon } from "./ui";
+import { Avatar, CampaignCover, DateBlock, Icon, useMapsHref } from "./ui";
 
 export function shortCount(campaign: Campaign, session: Session, members: Member[]): { text: string; warn: boolean } {
   const h = headcount(campaign, session, members);
@@ -106,6 +106,12 @@ export function RsvpControl({ session }: { session: Session }) {
   );
 }
 
+/** The place on Up next opens in Maps; the tap area grows to 44px without moving the line. */
+function HeroPlace({ place }: { place: string }) {
+  const href = useMapsHref(place);
+  return <a className="hplace" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}>{place}</a>;
+}
+
 /** The next session, big. */
 export function NextHero({ session, showCampaign = true }: { session: Session; showCampaign?: boolean }) {
   const store = useStore();
@@ -123,7 +129,7 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
       <div className="hb">
         <div className="eyebrow ver">{daysUntil(session.startsAt, store.state.me.tz) === 0 && <i className="live" aria-hidden="true" />}Up next · {soon}</div>
         <h2><Link href={sessionHref(session)}>{sessionTitle(store.state, session)}</Link></h2>
-        <p className="hmeta">{[showCampaign ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time, session.location].filter(Boolean).join(" · ")}</p>
+        <p className="hmeta">{[showCampaign ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time].filter(Boolean).join(" · ")}{session.location && <> · <HeroPlace place={session.location} /></>}</p>
         {q && <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" aria-hidden="true" />{q.text}</p>}
         <PartyChips session={session} />
         <RsvpControl session={session} />

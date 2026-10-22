@@ -7,6 +7,14 @@ import { hasUploadedCover } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import type { Campaign } from "@/lib/types";
 
+/** Maps link for a place: Apple Maps on Apple devices, Google Maps elsewhere. */
+export function useMapsHref(place: string) {
+  const [apple, setApple] = useState(false);
+  useEffect(() => setApple(/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)), []);
+  const q = encodeURIComponent(place);
+  return apple ? `https://maps.apple.com/?q=${q}` : `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
 const PATHS: Record<string, string> = {
   dates: '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M12 12.2l2.3 2.3-2.3 2.3-2.3-2.3z"/>',
   camp: '<path d="M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z"/><path d="M12 6.5V20"/><path d="M15.5 4.8v6l1.5-1.2 1.5 1.2V4.6"/>',
