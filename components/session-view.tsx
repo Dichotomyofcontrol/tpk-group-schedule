@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { campaignById, isStaff, membersOf, pastSessions , sessionTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
+import { markRead } from "@/lib/read-marks";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatRangePretty, relativeWhen } from "@/lib/time";
 import { buildIcs, googleEventTemplate } from "@/lib/ics";
@@ -23,6 +24,9 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   useEffect(() => {
     if (window.sessionStorage.getItem("tpk-from") === "campaigns" && campaign) setBack({ href: `/campaigns/${cid}`, label: campaign.name });
   }, [cid, campaign]);
+
+  const recapped = session && hasRecap(session) ? session : null;
+  useEffect(() => { if (recapped && new Date(recapped.endsAt).getTime() < Date.now()) markRead(recapped); }, [recapped]);
 
   if (!campaign || !member) {
     return (

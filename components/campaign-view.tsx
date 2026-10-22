@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions , sessionTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
+import { isUnread, readingMinutes, seedReads } from "@/lib/read-marks";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, weekdayName } from "@/lib/time";
 import { weekdayOfYmd } from "@/lib/recurrence";
@@ -22,6 +23,15 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   const [covering, setCovering] = useState(false);
   const [editing, setEditing] = useState(false);
   const [allNights, setAllNights] = useState(false);
+  const allRecaps = pastSessions(state, cid).filter((s) => hasRecap(s));
+  const recapKey = allRecaps.map((s) => s.id + (s.recapText || "").length + (s.pdfPath || "")).join("|");
+  const [unread, setUnread] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (state.syncing || !allRecaps.length) return;
+    seedReads(allRecaps);
+    setUnread(new Set(allRecaps.filter(isUnread).map((s) => s.id)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recapKey, state.syncing]);
   if (!campaign || !me) {
     return (
       <>
@@ -99,8 +109,9 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
                   <Link key={s.id} className="srow rrow" href={sessionHref(s)}>
                     <span className="st">
                       <span className="cn">{`${when.dow[0]}${when.dow.slice(1).toLowerCase()} ${when.mon[0]}${when.mon.slice(1).toLowerCase()} ${when.day}`}</span>
-                      <b>{sessionTitle(store.state, s)}</b>
+                      <b>{sessionTitle(store.state, s)}{unread.has(s.id) && <span className="newpill">New</span>}</b>
                       {text && <span className="note">{text}</span>}
+                      {readingMinutes(s) > 1 && <span className="rmin">{readingMinutes(s)} min read</span>}
                     </span>
                     {sessionFiles(s).length > 0 && <span className="ficon sm" aria-label="Has a PDF">PDF</span>}
                   </Link>
