@@ -101,7 +101,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
             {staff && unwritten && <Link className="btn sec sm" href={sessionHref(unwritten)}><Icon name="plus" className="ic sm" />Add recap</Link>}
           </div>
           {recaps.length > 0 ? (
-            <div className="card list">
+            <div className={recaps.length > 1 ? "card list tline" : "card list"}>
               {recaps.map((s) => {
                 const when = formatDayHeading(s.startsAt, s.tz);
                 const text = excerpt(recapPlain(s), 90);
