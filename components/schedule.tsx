@@ -18,6 +18,16 @@ export function shortCount(campaign: Campaign, session: Session, members: Member
   return { text: `${h.inn} of ${h.total} in`, warn: true };
 }
 
+/** "Game's on" once the campaign's minimum is in; otherwise how many more are needed. Null when not tracked. */
+export function quorumLine(campaign: Campaign, session: Session, members: Member[]): { text: string; ok: boolean } | null {
+  const need = campaign.quorum || 0;
+  if (need < 2 || session.status === "cancelled") return null;
+  const h = headcount(campaign, session, members);
+  if (h.inn >= need) return { text: "Game\u2019s on", ok: true };
+  const more = need - h.inn;
+  return { text: `Need ${more} more to play`, ok: false };
+}
+
 export function sessionHref(session: Session): string {
   return `/campaigns/${session.cid}/sessions/${session.id}`;
 }

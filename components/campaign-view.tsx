@@ -271,6 +271,12 @@ function OrganizerPanel({ campaign, members, me }: { campaign: Campaign; members
         <SettingRow title="Ask for RSVPs" detail="Off: everyone counts as in until they say otherwise.">
           <Switch on={campaign.requireRsvps} label="Ask for RSVPs" onChange={(v) => store.patchCampaign(campaign.id, { requireRsvps: v })} />
         </SettingRow>
+        <SettingRow title="Game's on with" detail="Sessions say when enough players are in to play.">
+          <select className="inp qsel" aria-label="Fewest players to play" value={campaign.quorum || 0} onChange={(e) => store.patchCampaign(campaign.id, { quorum: Number(e.target.value) })}>
+            <option value={0}>Off</option>
+            {Array.from({ length: Math.max(8, members.length) - 1 }, (_, i) => i + 2).map((n) => <option key={n} value={n}>{n} players</option>)}
+          </select>
+        </SettingRow>
         <SettingRow title="Players can invite" detail="Anyone at the table can send an invite link.">
           <Switch on={campaign.allowMemberInvites} label="Players can invite" onChange={(v) => store.patchCampaign(campaign.id, { allowMemberInvites: v })} />
         </SettingRow>

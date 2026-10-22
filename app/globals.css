@@ -670,3 +670,10 @@ form.ib > .field { margin: 0; }
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } }
 main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 @media (prefers-reduced-motion: reduce) { main { animation: none; } }
+
+/* Quorum line on the session page */
+.quorum { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; font: 600 14px/20px var(--ui); }
+.quorum .qdot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.quorum.ok { color: var(--moss); }
+.quorum.need { color: var(--ver); }
+.qsel { width: auto; min-width: 120px; height: 44px; }

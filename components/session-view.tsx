@@ -10,7 +10,7 @@ import { buildIcs, googleEventTemplate } from "@/lib/ics";
 import type { Campaign, Session } from "@/lib/types";
 import { RecapSection } from "./recap-section";
 import { TableNote } from "./table-note";
-import { NightTools, PartyChips, RsvpControl, sessionHref, shortCount } from "./schedule";
+import { NightTools, PartyChips, quorumLine, RsvpControl, sessionHref, shortCount } from "./schedule";
 import { BackBar, Icon } from "./ui";
 
 export function SessionView({ cid, sid }: { cid: string; sid: string }) {
@@ -78,6 +78,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
               {session.status !== "cancelled" && <span className={count.warn ? "status warn" : "status"}>{count.text}</span>}
             </div>
             <PartyChips session={session} />
+            {(() => { const q = !past ? quorumLine(campaign, session, members) : null; return q ? <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" />{q.text}</p> : null; })()}
             <RsvpControl session={session} />
           </section>
           {!past && session.status !== "cancelled" && <TableNote session={session} />}
