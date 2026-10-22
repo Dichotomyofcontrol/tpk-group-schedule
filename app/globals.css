@@ -517,8 +517,8 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .iconbtn:hover { background: var(--paper2); }
 .iconpad { width: 44px; flex: none; }
 .mwrap { position: relative; flex: none; }
-.mscrim { position: fixed; inset: 0; background: transparent; border: 0; z-index: 50; cursor: default; }
-.fmenu { position: absolute; right: 0; top: 46px; z-index: 51; min-width: 200px; padding: 6px; border-radius: 14px; background: var(--paper); box-shadow: var(--sh), 0 12px 32px -8px rgba(0,0,0,.25); border: .5px solid var(--rule2); display: grid; }
+.mscrim { position: fixed; inset: 0; background: transparent; border: 0; z-index: 75; cursor: default; }
+.fmenu { position: absolute; right: 0; top: 46px; z-index: 76; min-width: 200px; padding: 6px; border-radius: 14px; background: var(--paper); box-shadow: var(--sh), 0 12px 32px -8px rgba(0,0,0,.25); border: .5px solid var(--rule2); display: grid; }
 .fmenu.up { top: auto; bottom: 46px; }
 .fmenu button { white-space: nowrap; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; background: none; border-radius: 10px; font-size: 15px; text-align: left; color: var(--ink); cursor: pointer; }
 .fmenu button:hover { background: var(--paper2); }
