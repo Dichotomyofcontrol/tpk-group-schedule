@@ -71,7 +71,7 @@ export function PartyChips({ session }: { session: Session }) {
         return (
           <span key={m.id} className={out ? "pp out" : "pp"} title={m.characterName && m.characterName !== m.displayName ? m.characterName : undefined}>
             <Avatar name={name} id={m.id} />
-            <span>{name.split(" ")[0]}</span>
+            <span>{name.split(" ")[0]}{m.characterName && m.characterName !== m.displayName && <small className="pc">{m.characterName.split(" ")[0]}</small>}</span>
           </span>
         );
       })}
