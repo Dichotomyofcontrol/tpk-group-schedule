@@ -16,11 +16,18 @@ export function SessionsView() {
   const { state } = useStore();
   const mine = memberCampaigns(state);
   const [filter, setFilter] = useState<string>("all");
+  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const flipOrder = () => {
+    const o = order === "asc" ? "desc" : "asc";
+    setOrder(o);
+    window.sessionStorage.setItem("tpk-order", o);
+  };
   const [view, setView] = useState<"recent" | "history">("recent");
   useEffect(() => {
     const saved = window.sessionStorage.getItem("tpk-filter");
     if (saved) setFilter(saved);
     if (window.sessionStorage.getItem("tpk-view") === "history") setView("history");
+    if (window.sessionStorage.getItem("tpk-order") === "desc") setOrder("desc");
   }, []);
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
   useEffect(() => {
@@ -50,6 +57,8 @@ export function SessionsView() {
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const months = groupByMonth(rest, state.me.tz || "America/Los_Angeles");
   const all = active === "all";
+  const desc = order === "desc";
+  const ord = <T,>(xs: T[]) => (desc ? [...xs].reverse() : xs);
   const pastMonths = history ? groupByMonth(recent, state.me.tz || "America/Los_Angeles") : [];
 
   // Month groups fold. The nearest month and the last 14 days start open; everything else is a one-line header.
@@ -71,9 +80,14 @@ export function SessionsView() {
       <div className="ptitle"><h1 className="lt">Sessions</h1></div>
       <HomeScreenHint />
       {mine.length > 0 && (
-        <div className="seg" role="group" aria-label="Which sessions">
-          <button type="button" className={!history ? "on" : ""} aria-pressed={!history} onClick={() => chooseView("recent")}>Upcoming</button>
-          <button type="button" className={history ? "on" : ""} aria-pressed={history} onClick={() => chooseView("history")}>All sessions</button>
+        <div className="ltools">
+          <div className="seg" role="group" aria-label="Which sessions">
+            <button type="button" className={!history ? "on" : ""} aria-pressed={!history} onClick={() => chooseView("recent")}>Upcoming</button>
+            <button type="button" className={history ? "on" : ""} aria-pressed={history} onClick={() => chooseView("history")}>All sessions</button>
+          </div>
+          <button type="button" className="sortb" onClick={flipOrder} aria-label={desc ? "Sorted newest first. Show oldest first" : "Sorted oldest first. Show newest first"}>
+            <Icon name="sort" className="ic sm" />{desc ? "Newest" : "Oldest"}<span className="wide"> first</span>
+          </button>
         </div>
       )}
       {mine.length > 1 && (
@@ -94,15 +108,30 @@ export function SessionsView() {
           {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
         </div>
       )}
-      {history && pastMonths.map(([label, list]) => (
-        <MonthGroup key={"p" + label} id={"p-" + label} label={label} list={list} quiet open={isOpen("p-" + label, false)} onToggle={toggle} showCampaign={all && mine.length > 1} />
+      {/* Oldest first: past, Up next, then later months. Newest first flips it; Up next always marks today. */}
+      {!desc && <>
+      {history && ord(pastMonths).map(([label, list]) => (
+        <MonthGroup key={"p" + label} id={"p-" + label} label={label} list={ord(list)} quiet open={isOpen("p-" + label, false)} onToggle={toggle} showCampaign={all && mine.length > 1} />
       ))}
       {history && !state.syncing && mine.length > 0 && recent.length === 0 && (
         <p className="note pempty">No past sessions yet. Recaps live here once you've played.</p>
       )}
       {!history && recent.length > 0 && (
-        <MonthGroup id="recent" label="Last 14 days" list={recent} quiet open={isOpen("recent", true)} onToggle={toggle} showCampaign={all && mine.length > 1} />
+        <MonthGroup id="recent" label="Last 14 days" list={ord(recent)} quiet open={isOpen("recent", true)} onToggle={toggle} showCampaign={all && mine.length > 1} />
       )}
+      </>}
+      {desc && <>
+      {months.length > 1 && (
+        <nav className="mjump" aria-label="Jump to month">
+          {months.map(([label]) => (
+            <button key={label} type="button" onClick={() => jump("f-" + label)}>{shortMonth(label)}</button>
+          ))}
+        </nav>
+      )}
+      {ord(months).map(([label, list]) => (
+        <MonthGroup key={label} id={"f-" + label} label={label} list={ord(list)} open={isOpen("f-" + label, label === months[0][0])} onToggle={toggle} showCampaign={all && mine.length > 1} />
+      ))}
+      </>}
       {!state.syncing && mine.length > 0 && !next && (
         <div className="card empty-card">
           <h2>No sessions coming up</h2>
@@ -122,6 +151,7 @@ export function SessionsView() {
           </Link>
         );
       })()}
+      {!desc && <>
       {months.length > 1 && (
         <nav className="mjump" aria-label="Jump to month">
           {months.map(([label]) => (
@@ -129,9 +159,21 @@ export function SessionsView() {
           ))}
         </nav>
       )}
-      {months.map(([label, list], i) => (
-        <MonthGroup key={label} id={"f-" + label} label={label} list={list} open={isOpen("f-" + label, i === 0)} onToggle={toggle} showCampaign={all && mine.length > 1} />
+      {ord(months).map(([label, list]) => (
+        <MonthGroup key={label} id={"f-" + label} label={label} list={ord(list)} open={isOpen("f-" + label, label === months[0][0])} onToggle={toggle} showCampaign={all && mine.length > 1} />
       ))}
+      </>}
+      {desc && <>
+      {history && ord(pastMonths).map(([label, list]) => (
+        <MonthGroup key={"p" + label} id={"p-" + label} label={label} list={ord(list)} quiet open={isOpen("p-" + label, false)} onToggle={toggle} showCampaign={all && mine.length > 1} />
+      ))}
+      {history && !state.syncing && mine.length > 0 && recent.length === 0 && (
+        <p className="note pempty">No past sessions yet. Recaps live here once you've played.</p>
+      )}
+      {!history && recent.length > 0 && (
+        <MonthGroup id="recent" label="Last 14 days" list={ord(recent)} quiet open={isOpen("recent", true)} onToggle={toggle} showCampaign={all && mine.length > 1} />
+      )}
+      </>}
     </>
   );
 }

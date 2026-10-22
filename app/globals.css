@@ -811,3 +811,9 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .mjump button:hover { background: var(--paper2); }
 @media (prefers-reduced-motion: reduce) { .mhd .mtog .mchev { transition: none; } }
 @media (min-width: 900px) { .mjump { margin: 24px 0 0; padding: 0; flex-wrap: wrap; } }
+/* Sort toggle beside Upcoming / All sessions */
+.ltools { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+.ltools .seg { flex: 1; margin: 0; }
+.sortb { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; white-space: nowrap; }
+.sortb:hover { background: var(--paper2); }
+@media (max-width: 420px) { .sortb .wide { display: none; } .seg button { font-size: 14.5px; } }
