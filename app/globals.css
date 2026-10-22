@@ -727,3 +727,10 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .a2hs p b { color: var(--ink); font-weight: 600; display: block; }
 .a2hs .sg { vertical-align: -2px; color: var(--ink); margin: 0 2px; }
 .a2hs .fi { flex: none; }
+
+/* Up next cover: presses in slightly, like a tappable card. */
+.hero-cover { overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.hero-cover > * { transition: transform .35s cubic-bezier(.2,.8,.2,1), filter .2s ease; }
+.hero-cover:hover > * { transform: scale(1.015); }
+.hero-cover:active > * { transform: scale(.985); filter: brightness(.96); }
+@media (prefers-reduced-motion: reduce) { .hero-cover > * { transition: none; } .hero-cover:hover > *, .hero-cover:active > * { transform: none; } }
