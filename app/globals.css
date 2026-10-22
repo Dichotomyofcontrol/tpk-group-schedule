@@ -791,3 +791,8 @@ section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; 
 .srow.past .pst { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 500 13px/18px var(--ui); color: var(--ink3); white-space: nowrap; }
 .srow.past .pst.done { color: var(--ink2); }
 .mhd.quiet { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: .02em; color: var(--ink3); font-family: var(--ui); }
+/* Upcoming / All sessions */
+.seg { display: flex; padding: 3px; margin: 0 0 16px; border-radius: 12px; background: var(--paper2); border: .5px solid var(--rule); max-width: 360px; }
+.seg button { flex: 1; min-height: 44px; border: 0; border-radius: 9px; background: transparent; font: 500 15px/20px var(--ui); color: var(--ink2); cursor: pointer; transition: background .2s, color .2s; }
+.seg button.on { background: var(--paper); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px var(--rule2); }
+.pempty { margin: 8px 4px 16px; }

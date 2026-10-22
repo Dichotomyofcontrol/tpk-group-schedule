@@ -16,10 +16,16 @@ export function SessionsView() {
   const { state } = useStore();
   const mine = memberCampaigns(state);
   const [filter, setFilter] = useState<string>("all");
+  const [view, setView] = useState<"recent" | "history">("recent");
   useEffect(() => {
     const saved = window.sessionStorage.getItem("tpk-filter");
     if (saved) setFilter(saved);
+    if (window.sessionStorage.getItem("tpk-view") === "history") setView("history");
   }, []);
+  const chooseView = (v: "recent" | "history") => {
+    setView(v);
+    window.sessionStorage.setItem("tpk-view", v);
+  };
   const choose = (id: string) => {
     setFilter(id);
     window.sessionStorage.setItem("tpk-filter", id);
@@ -32,18 +38,26 @@ export function SessionsView() {
     .filter((s) => active === "all" || s.cid === active)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const [next, ...rest] = sessions;
-  // Nights from the last 14 days stay on the list, above what's coming, until they age out.
+  // Nights from the last 14 days stay on the list, above what's coming, until they age out. "All sessions" shows every past night.
+  const history = view === "history";
   const recent = state.sessions
-    .filter((s) => ids.has(s.cid) && s.status === "scheduled" && new Date(s.endsAt).getTime() < now && new Date(s.startsAt).getTime() >= now - 14 * 86_400_000)
+    .filter((s) => ids.has(s.cid) && s.status === "scheduled" && new Date(s.endsAt).getTime() < now && (history || new Date(s.startsAt).getTime() >= now - 14 * 86_400_000))
     .filter((s) => active === "all" || s.cid === active)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const months = groupByMonth(rest, state.me.tz || "America/Los_Angeles");
   const all = active === "all";
+  const pastMonths = history ? groupByMonth(recent, state.me.tz || "America/Los_Angeles") : [];
 
   return (
     <>
       <div className="ptitle"><h1 className="lt">Sessions</h1></div>
       <HomeScreenHint />
+      {mine.length > 0 && (
+        <div className="seg" role="group" aria-label="Which sessions">
+          <button type="button" className={!history ? "on" : ""} aria-pressed={!history} onClick={() => chooseView("recent")}>Upcoming</button>
+          <button type="button" className={history ? "on" : ""} aria-pressed={history} onClick={() => chooseView("history")}>All sessions</button>
+        </div>
+      )}
       {mine.length > 1 && (
         <div className="fchips" role="group" aria-label="Filter by campaign">
           <button type="button" className={all ? "fchip on" : "fchip"} aria-pressed={all} onClick={() => choose("all")}>All</button>
@@ -62,7 +76,18 @@ export function SessionsView() {
           {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
         </div>
       )}
-      {recent.length > 0 && (
+      {history && pastMonths.map(([label, list]) => (
+        <section key={"p" + label} aria-label={label}>
+          <h2 className="mhd quiet">{label}</h2>
+          <div className="card list ledger">
+            {list.map((s) => <SessionRow key={s.id} session={s} showCampaign={all && mine.length > 1} ledger />)}
+          </div>
+        </section>
+      ))}
+      {history && !state.syncing && mine.length > 0 && recent.length === 0 && (
+        <p className="note pempty">No past sessions yet. Recaps live here once you've played.</p>
+      )}
+      {!history && recent.length > 0 && (
         <section aria-label="Last 14 days">
           <h2 className="mhd quiet">Last 14 days</h2>
           <div className="card list ledger">
