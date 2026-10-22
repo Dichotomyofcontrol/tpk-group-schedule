@@ -738,3 +738,8 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 /* Keyboard focus: one clear ring everywhere (mouse/touch unaffected). */
 a:focus-visible, button:focus-visible, [role="button"]:focus-visible, [role="radio"]:focus-visible, summary:focus-visible { outline: 2px solid var(--ver); outline-offset: 2px; border-radius: inherit; }
 .srow:focus-visible, .opt:focus-visible { outline-offset: -2px; }
+
+/* Game day: a soft pulsing dot on the Up next eyebrow. */
+.eyebrow .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ver); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ver) 50%, transparent); animation: live-pulse 2s ease-out infinite; }
+@keyframes live-pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .eyebrow .live { animation: none; } }

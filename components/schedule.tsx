@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
 import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
-import { formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
+import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
 import { Avatar, CampaignCover, DateBlock, Icon } from "./ui";
 
@@ -120,7 +120,7 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
         <CampaignCover campaign={campaign} />
       </Link>
       <div className="hb">
-        <div className="eyebrow ver">Up next · {soon}</div>
+        <div className="eyebrow ver">{daysUntil(session.startsAt, store.state.me.tz) === 0 && <i className="live" aria-hidden="true" />}Up next · {soon}</div>
         <h2><Link href={sessionHref(session)}>{sessionTitle(store.state, session)}</Link></h2>
         <p className="hmeta">{[showCampaign ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time, session.location].filter(Boolean).join(" · ")}</p>
         <PartyChips session={session} />
