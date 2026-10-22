@@ -494,7 +494,7 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 
 /* Session detail */
 .prev p { margin: 6px 0 4px; font: 400 17px/28px var(--serif); font-variation-settings: "opsz" 14; color: var(--ink2); }
-.side-actions { display: grid; gap: 4px; padding: 12px; align-content: start; }
+.side-actions { display: grid; gap: 8px; padding: 12px; align-content: start; }
 .mform { display: grid; gap: 4px; margin-top: 8px; padding: 12px; border-radius: 14px; background: var(--paper2); }
 
 /* Recap */
