@@ -1,10 +1,16 @@
-export const metadata = {
-  title: "You're invited · Six in the TPK",
-  description: "Pull up a chair at the table. See the campaign and say you're in.",
-};
-
+import type { Metadata } from "next";
+import { invitePreview } from "@/lib/invite-preview";
 import { InviteGuest } from "@/components/invite-guest";
 import { Shell } from "@/components/shell";
+
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  const p = await invitePreview(token);
+  const title = p ? `Join ${p.name} · Six in the TPK` : "You're invited · Six in the TPK";
+  const description = p ? `${p.by ? `${p.by} invited you to ${p.name}` : `You're invited to ${p.name}`}. See the sessions and say you're in.` : "Pull up a chair at the table. See the campaign and say you're in.";
+  return { title, description, openGraph: { title, description }, robots: { index: false } };
+}
+
 
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
