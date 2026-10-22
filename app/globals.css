@@ -716,3 +716,7 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
 .opt .t .lead-t.all { color: var(--moss); }
+
+/* Party chips: character name beside the player */
+.pp .pc { margin-left: 6px; font: italic 400 14px/20px var(--serif); color: var(--ink3); }
+.pp.out .pc { text-decoration: none; }
