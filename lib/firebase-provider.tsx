@@ -138,6 +138,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
   const [online, setOnline] = useState(true);
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
+  const [authKnown, setAuthKnown] = useState(false);
   const toastId = useRef(1);
   const stateRef = useRef<AppState | null>(null);
   const coverCache = useRef(new Map<string, string>());
@@ -173,7 +174,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!firebaseConfigured()) return;
     const { auth } = getFirebase();
-    return onAuthStateChanged(auth, (user) => setAuthUser(user));
+    return onAuthStateChanged(auth, (user) => { setAuthUser(user); setAuthKnown(true); });
   }, []);
 
   useEffect(() => {
@@ -372,7 +373,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       return "ok";
     },
     signedIn: false,
-  }), [online, toasts, theme, resolvedTheme, setTheme, flash]);
+    signedOutConfirmed: authKnown && !authUser,
+  }), [online, toasts, theme, resolvedTheme, setTheme, flash, authKnown, authUser]);
 
   const api = useMemo<StoreApi | null>(() => {
     if (!state || !authUser) return null;

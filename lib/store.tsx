@@ -68,6 +68,8 @@ export type StoreApi = {
   finishMagicLink: (email?: string) => Promise<"ok" | "need-email" | "not-link">;
   signOut: () => Promise<void>;
   signedIn: boolean;
+  /** True once Firebase has answered and nobody is signed in (live mode only). */
+  signedOutConfirmed?: boolean;
 };
 
 export const StoreContext = createContext<StoreApi | null>(null);
