@@ -24,7 +24,10 @@ export function SessionsView() {
   };
   const [view, setView] = useState<"recent" | "history">("recent");
   useEffect(() => {
-    const saved = window.sessionStorage.getItem("tpk-filter");
+    // ?campaign=<id> (from a campaign's "See all sessions") picks that campaign; otherwise the last choice.
+    const linked = new URLSearchParams(window.location.search).get("campaign");
+    const saved = linked || window.sessionStorage.getItem("tpk-filter");
+    if (linked) window.sessionStorage.setItem("tpk-filter", linked);
     if (saved) setFilter(saved);
     if (window.sessionStorage.getItem("tpk-view") === "history") setView("history");
     if (window.sessionStorage.getItem("tpk-order") === "desc") setOrder("desc");

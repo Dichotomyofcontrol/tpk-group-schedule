@@ -817,3 +817,8 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .sortb { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; white-space: nowrap; }
 .sortb:hover { background: var(--paper2); }
 @media (max-width: 420px) { .sortb .wide { display: none; } .seg button { font-size: 14.5px; } }
+/* Campaign page: compact lists with a way through to the rest */
+.lnk.seeall { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 4px 4px 0; color: var(--ver); font: 600 14px/20px var(--ui); text-decoration: none; }
+.rhsub { margin: -8px 0 20px; }
+.tline.asc .rrow:first-child::after { background: var(--paper); }
+.tline.asc .rrow:last-child::after { background: var(--gold); }
