@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
 import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
@@ -136,8 +136,11 @@ function MoveForm({ session, onDone }: { session: Session; onDone: () => void })
   const [ymd, setYmd] = useState(ymdInZone(new Date(session.startsAt), session.tz));
   const [hm, setHm] = useState(hmInZone(new Date(session.startsAt), session.tz));
   const [place, setPlace] = useState(session.location);
+  const ref = useRef<HTMLFormElement>(null);
+  // The form opens below the fold on a phone; bring it into view so the tap visibly does something.
+  useEffect(() => { ref.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, []);
   return (
-    <form className="mform" onSubmit={(e) => { e.preventDefault(); store.move(session.id, ymd, hm, place); onDone(); }}>
+    <form ref={ref} className="mform" onSubmit={(e) => { e.preventDefault(); store.move(session.id, ymd, hm, place); onDone(); }}>
       <div className="fld"><label htmlFor="mv-d">Date</label><input id="mv-d" type="date" required value={ymd} onChange={(e) => setYmd(e.target.value)} /></div>
       <div className="fld"><label htmlFor="mv-t">Time</label><input id="mv-t" type="time" required value={hm} onChange={(e) => setHm(e.target.value)} /></div>
       <div className="fld"><label htmlFor="mv-p">Place</label><input id="mv-p" value={place} onChange={(e) => setPlace(e.target.value)} /></div>
