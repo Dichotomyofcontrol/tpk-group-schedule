@@ -193,7 +193,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       calToken: "",
       canCreateCampaigns: false,
     };
-    setState(emptyState(me));
+    setState({ ...emptyState(me), syncing: true });
     const userRef = doc(db, "users", authUser.uid);
     void getDoc(userRef).then(async (snap) => {
       if (!snap.exists()) {
@@ -205,23 +205,33 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     const unsubs: Array<() => void> = [];
     const memberQuery = query(collectionGroup(db, "members"), where("uid", "==", authUser.uid));
     const unsubMembers = onSnapshot(memberQuery, (snap) => {
+      // (error handler below clears syncing so a rules error never leaves a skeleton up)
       const cids = snap.docs.map((d) => d.ref.parent.parent?.id).filter((id): id is string => !!id);
       for (const stop of unsubs) stop();
       unsubs.length = 0;
+      // First paint waits for each campaign doc and its sessions, so screens never flash "No sessions yet".
+      const pending = new Set(cids.flatMap((cid) => [`c:${cid}`, `s:${cid}`]));
+      const settle = (key: string) => {
+        if (!pending.delete(key) || pending.size) return;
+        setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev);
+      };
+      if (!pending.size) setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev);
       for (const cid of cids) {
         unsubs.push(onSnapshot(doc(db, "campaigns", cid), (c) => {
-          if (!c.exists()) return;
+          if (!c.exists()) { settle(`c:${cid}`); return; }
           const campaign = { ...(c.data() as Omit<Campaign, "id">), id: cid };
           setState((prev) => {
             if (!prev) return prev;
             const rest = prev.campaigns.filter((x) => x.id !== cid);
             return { ...prev, campaigns: [...rest, campaign] };
           });
-        }));
+          settle(`c:${cid}`);
+        }, () => settle(`c:${cid}`)));
         unsubs.push(onSnapshot(collection(db, "campaigns", cid, "sessions"), (ss) => {
           const sessions = ss.docs.map((d) => sessionFrom(d.id, cid, d.data()));
           setState((prev) => prev ? { ...prev, sessions: [...prev.sessions.filter((s) => s.cid !== cid), ...sessions] } : prev);
-        }));
+          settle(`s:${cid}`);
+        }, () => settle(`s:${cid}`)));
         unsubs.push(onSnapshot(collection(db, "campaigns", cid, "members"), (ms) => {
           const members = ms.docs.map((d) => ({ ...(d.data() as Omit<Member, "id">), id: d.id }));
           setState((prev) => prev ? { ...prev, members: { ...prev.members, [cid]: members } } : prev);
@@ -234,7 +244,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           setState((prev) => prev ? { ...prev, polls: [...prev.polls.filter((p) => p.cid !== cid), ...polls] } : prev);
         }));
       }
-    });
+    }, () => setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev));
     const unsubUser = onSnapshot(userRef, (snap) => {
       const data = snap.data() || {};
       setState((prev) => prev ? {

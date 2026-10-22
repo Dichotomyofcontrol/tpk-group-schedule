@@ -168,3 +168,17 @@ export function SettingRow({ title, detail, children }: { title: string; detail?
     </div>
   );
 }
+
+/** Placeholder shapes shown while the first sync is in flight. Hidden from screen readers; the live region says "Loading". */
+export function Skeleton({ rows = 3, hero = true }: { rows?: number; hero?: boolean }) {
+  return (
+    <div className="skel" role="status" aria-label="Loading your table">
+      {hero && <div className="card skel-hero" aria-hidden="true"><i className="sk sk-cover" /><div className="sk-body"><i className="sk sk-line w30" /><i className="sk sk-line w70 tall" /><i className="sk sk-line w50" /></div></div>}
+      <div className="card list" aria-hidden="true">
+        {Array.from({ length: rows }, (_, i) => (
+          <div key={i} className="skel-row"><i className="sk sk-date" /><div className="sk-body"><i className="sk sk-line w60" /><i className="sk sk-line w40" /></div></div>
+        ))}
+      </div>
+    </div>
+  );
+}
