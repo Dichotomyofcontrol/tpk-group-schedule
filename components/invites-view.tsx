@@ -12,7 +12,10 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   const mine = memberCampaigns(state);
   const incoming = state.invites.filter((i) => i.status === "pending" && (!i.email || i.email === state.me.email) && !mine.some((c) => c.id === i.cid));
   const gm = mine.filter((c) => isStaff(state, c.id));
-  const [cid, setCid] = useState(initialCampaign && gm.some((c) => c.id === initialCampaign) ? initialCampaign : gm[0]?.id ?? mine[0]?.id ?? "");
+  const pick = initialCampaign && gm.some((c) => c.id === initialCampaign) ? initialCampaign : gm[0]?.id ?? mine[0]?.id ?? "";
+  const [cid, setCid] = useState(pick);
+  // Campaigns arrive after the first render on a fresh load; pick one once they do.
+  useEffect(() => { if (!cid && pick) setCid(pick); }, [cid, pick]);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Invite["role"]>("member");
   const [link, setLink] = useState("");
@@ -73,11 +76,11 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
           </section>
           {campaign && canInvite(state, cid, "member") && (
             <section>
-              <div className="sec-h"><h2>Invite players</h2><span className="note">You&apos;re {organizer ? "GM" : "hosting"}</span></div>
+              <div className="sec-h"><h2>Invite players</h2><span className="note">{organizer ? "You run this table" : "You can invite"}</span></div>
               <div className="card gm">
                 <div className="eyebrow">{campaign.name}</div>
                 <h2>Bring someone to the table</h2>
-                <p className="note" style={{ margin: 0 }}>They&apos;ll get a one-tap email link. No account needed until they open it.</p>
+                <p className="note" style={{ margin: 0 }}>Add their email, then send them the link. It works once, for that email.</p>
                 {gm.length > 1 && (
                   <div className="field">
                     <label>Campaign</label>
@@ -119,7 +122,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
                     );
                   })}
                 </div>
-                <div className="lnk">
+                <div className="ivlink">
                   <Icon name="link" className="ic sm" />
                   <code>{link || (origin ? `${origin.replace(/^https?:\/\//, "")}/invite/…` : "invite link")}</code>
                   <button className="btn sec sm" type="button" disabled={busy} onClick={async () => {

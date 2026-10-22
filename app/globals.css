@@ -173,6 +173,7 @@ main.cm { padding-top: 0; }
 .list > * + * { border-top: .5px solid var(--rule); }
 .row .t { flex: 1; min-width: 0; }
 .row .t b { display: block; font: 500 17px/24px var(--serif); }
+.sent .row .t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row .t span { font-size: 13.5px; color: var(--ink3); }
 .thumb { width: 56px; height: 56px; border-radius: 12px; overflow: hidden; position: relative; flex: none; background: #1d2230; }
 .side { display: none; }
@@ -313,8 +314,8 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .sent .row { padding: 12px 0; min-height: 60px; }
 .pill { font: 600 11px/16px var(--ui); letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: var(--paper2); border: .5px solid var(--rule2); color: var(--ink3); white-space: nowrap; }
 .pill.ok { color: var(--moss); }
-.lnk { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 14px; background: var(--paper2); border: .5px dashed var(--rule2); margin-top: 20px; font-size: 14px; min-height: 48px; }
-.lnk code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 13px ui-monospace, Menlo, monospace; color: var(--ink2); }
+.ivlink { display: flex; gap: 12px; align-items: center; padding: 12px 16px; border-radius: 14px; background: var(--paper2); border: .5px dashed var(--rule2); margin-top: 20px; font-size: 14px; min-height: 48px; }
+.ivlink code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 13px ui-monospace, Menlo, monospace; color: var(--ink2); }
 .ivg { display: grid; gap: 32px; grid-template-columns: minmax(0, 1fr); }
 .addr { min-width: 0; }
 .field { margin: 12px 0; }
