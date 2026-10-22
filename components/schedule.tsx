@@ -5,7 +5,7 @@ import { useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
 import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
 import { useStore } from "@/lib/store";
-import { formatDayHeading, formatTime, relativeWhen } from "@/lib/time";
+import { formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
 import { Avatar, CampaignCover, DateBlock, Icon } from "./ui";
 
@@ -133,8 +133,8 @@ export function NightTools({ session }: { session: Session }) {
 
 function MoveForm({ session, onDone }: { session: Session; onDone: () => void }) {
   const store = useStore();
-  const [ymd, setYmd] = useState(session.occurrenceKey || session.startsAt.slice(0, 10));
-  const [hm, setHm] = useState("18:30");
+  const [ymd, setYmd] = useState(ymdInZone(new Date(session.startsAt), session.tz));
+  const [hm, setHm] = useState(hmInZone(new Date(session.startsAt), session.tz));
   const [place, setPlace] = useState(session.location);
   return (
     <form className="mform" onSubmit={(e) => { e.preventDefault(); store.move(session.id, ymd, hm, place); onDone(); }}>
