@@ -665,3 +665,8 @@ form.ib > .field { margin: 0; }
 .srow .me-rsvp { display: block; font: 600 12.5px/18px var(--ui); letter-spacing: .01em; margin-top: 2px; }
 .srow .me-rsvp.out { color: var(--ink3); }
 .srow .me-rsvp.ask { color: var(--ver); }
+
+/* Page enter: a short fade-rise on navigation (Things/Linear-style). Fill backwards only, so no transform lingers to trap fixed elements. */
+@keyframes page-in { from { opacity: 0; transform: translateY(6px); } }
+main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
+@media (prefers-reduced-motion: reduce) { main { animation: none; } }
