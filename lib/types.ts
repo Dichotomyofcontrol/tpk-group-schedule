@@ -76,6 +76,8 @@ export type Campaign = {
   allowMemberInvites: boolean;
   /** Off by default: everyone is assumed in until they tap Can't make it. */
   requireRsvps: boolean;
+  /** Fewest players (organizer included) for the night to be on. 0/undefined = not tracked. */
+  quorum?: number;
   cadence: Cadence | null;
   /** Legacy field from the snack rotation, which was removed. Ignored. */
   rotation?: { enabled: boolean; order: string[]; nextIndex: number };
