@@ -63,7 +63,7 @@ export function SessionsView() {
   const all = active === "all";
   const desc = order === "desc";
   const ord = <T,>(xs: T[]) => (desc ? [...xs].reverse() : xs);
-  const pastMonths = history ? groupByMonth(recent, state.me.tz || "America/Los_Angeles") : [];
+  const pastMonths = history ? groupByMonth(recent, state.me.tz || "America/Los_Angeles", true) : []; // past months always carry the year
 
   // Month groups fold. The nearest month and the last 14 days start open; everything else is a one-line header.
   const isOpen = (key: string, dflt: boolean) => openMap[key] ?? dflt;
@@ -213,12 +213,12 @@ function MonthGroup({ id, label, list, open, onToggle, quiet = false, showCampai
   );
 }
 
-function groupByMonth(list: Session[], tz: string): [string, Session[]][] {
+function groupByMonth(list: Session[], tz: string, keepYear = false): [string, Session[]][] {
   const out: [string, Session[]][] = [];
   const thisYear = new Date().getFullYear();
   for (const s of list) {
     const full = formatMonthLabel(s.startsAt, tz);
-    const label = full.endsWith(String(thisYear)) ? full.replace(` ${thisYear}`, "") : full;
+    const label = !keepYear && full.endsWith(String(thisYear)) ? full.replace(` ${thisYear}`, "") : full;
     const last = out[out.length - 1];
     if (last && last[0] === label) last[1].push(s);
     else out.push([label, [s]]);
