@@ -205,6 +205,8 @@ export type AppState = {
   hiddenCids: string[];
   /** ISO timestamp the group treats as "we started playing". */
   groupStartedOn: string;
+  /** True until the first snapshot of every campaign and its sessions has arrived (live mode). */
+  syncing?: boolean;
 };
 
 export type Toast = { id: number; text: string; tone?: "ok" | "err" };

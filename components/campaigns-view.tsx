@@ -5,7 +5,7 @@ import { archivedCampaigns, isOrganizer, memberCampaigns , sessionTitle } from "
 import { useStore } from "@/lib/store";
 import { relativeWhen } from "@/lib/time";
 import type { Campaign } from "@/lib/types";
-import { CampaignCover, Icon } from "./ui";
+import { CampaignCover, Icon, Skeleton } from "./ui";
 
 export function CampaignsView() {
   const store = useStore();
@@ -18,7 +18,8 @@ export function CampaignsView() {
         <h1 className="lt">Campaigns</h1>
         {state.me.canCreateCampaigns && <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New campaign</Link>}
       </div>
-      {mine.length === 0 && (
+      {state.syncing && <Skeleton rows={2} hero={false} />}
+      {!state.syncing && mine.length === 0 && (
         <div className="card empty-card">
           <h2>{state.me.canCreateCampaigns ? "No active campaigns" : "Your table awaits"}</h2>
           <p className="note">{state.me.canCreateCampaigns ? (archived.length ? "Start one, or restore an archived campaign below." : "Start one and invite your players.") : "Ask your organizer for an invite link."}</p>

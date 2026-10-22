@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { formatMonthLabel } from "@/lib/time";
 import type { Session } from "@/lib/types";
 import { NextHero, SessionRow } from "./schedule";
+import { Skeleton } from "./ui";
 
 /** Sessions: the next one as the hero, then every later one grouped by month. Filter by campaign. */
 export function SessionsView() {
@@ -45,14 +46,15 @@ export function SessionsView() {
           ))}
         </div>
       )}
-      {mine.length === 0 && (
+      {state.syncing && <Skeleton />}
+      {!state.syncing && mine.length === 0 && (
         <div className="card empty-card">
           <h2>{state.me.canCreateCampaigns ? "No sessions yet" : "You're not at a table yet"}</h2>
           <p className="note">{state.me.canCreateCampaigns ? "Start a campaign and its sessions show up here." : "Ask your organizer for an invite link. You'll only see the campaigns you're in."}</p>
           {state.me.canCreateCampaigns && <Link className="btn pri sm" href="/campaigns/new">Start a campaign</Link>}
         </div>
       )}
-      {mine.length > 0 && !next && (
+      {!state.syncing && mine.length > 0 && !next && (
         <div className="card empty-card">
           <h2>No sessions coming up</h2>
           <p className="note">When the organizer sets the usual night or locks a poll, sessions show up here.</p>
