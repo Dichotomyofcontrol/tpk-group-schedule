@@ -703,3 +703,5 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .ledger .lkinds { display: flex; gap: 8px; flex-wrap: wrap; }
 .ledger .lempty { padding: 16px 20px; margin: 0; }
 .ledger .lfoot { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 4px 16px; border-top: 1px solid var(--rule); }
+
+.poll .nudge { margin-top: 12px; margin-left: 8px; }

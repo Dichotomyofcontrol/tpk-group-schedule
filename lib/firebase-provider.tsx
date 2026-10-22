@@ -715,7 +715,6 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           const { db } = getFirebase();
           void setDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), { nudges: poll.nudges }, { merge: true });
         }
-        flash("Nudge saved. It emails them once reminders are connected.");
       },
       createInvite: async (cid, role, email) => {
         const result = createInvite(stateRef.current || state, cid, role, email);

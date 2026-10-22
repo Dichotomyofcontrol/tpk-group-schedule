@@ -101,9 +101,20 @@ function PollCard({ poll }: { poll: Poll }) {
       {isStaff(store.state, poll.cid) && poll.status === "open" && ranked[0] && ranked[0].yes > 0 && (
         <button className="btn pri sm" style={{ marginTop: 16 }} onClick={() => store.lockPoll(poll.id, ranked[0].option.id)}>Lock in the leader</button>
       )}
-      {isStaff(store.state, poll.cid) && quiet.map((m) => (
-        <button key={m.id} className="btn ghost sm" onClick={() => store.nudge(poll.id, m.id)}>Nudge {m.displayName}</button>
-      ))}
+      {isStaff(store.state, poll.cid) && poll.status === "open" && quiet.length > 0 && (
+        <button className="btn sec sm nudge" onClick={async () => {
+          const names = quiet.map((m) => (m.displayName || m.characterName || "").split(" ")[0]).filter(Boolean);
+          const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] || "friends";
+          const url = `${window.location.origin}/polls/${poll.id}`;
+          const text = `${who}: we're picking the next ${campaign.name} night. Tap the dates that work for you: ${url}`;
+          for (const m of quiet) store.nudge(poll.id, m.id);
+          const coarse = window.matchMedia("(pointer: coarse)").matches;
+          if (coarse && typeof navigator.share === "function") {
+            try { await navigator.share({ text }); return; } catch (err) { if ((err as Error)?.name === "AbortError") return; }
+          }
+          try { await navigator.clipboard.writeText(text); store.flash("Nudge copied. Paste it in your group chat."); } catch { store.flash("Couldn't copy the nudge.", "err"); }
+        }}>Nudge {quiet.length === 1 ? (quiet[0].displayName || "them").split(" ")[0] : `the ${quiet.length} who haven't voted`}</button>
+      )}
     </article>
   );
 }
