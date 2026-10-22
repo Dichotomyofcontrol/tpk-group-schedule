@@ -180,7 +180,8 @@ main.cm { padding-top: 0; }
 .rail-link { display: flex; gap: 12px; align-items: center; margin-top: 16px; min-height: 44px; }
 .grid { display: block; }
 #menu { position: fixed; inset: 0; z-index: 60; }
-#menu .scrim { position: absolute; inset: 0; background: rgba(29,25,21,.28); backdrop-filter: blur(2px); border: 0; width: 100%; cursor: pointer; }
+#keys { position: fixed; inset: 0; z-index: 60; }
+#keys .scrim, #menu .scrim { position: absolute; inset: 0; background: rgba(29,25,21,.28); backdrop-filter: blur(2px); border: 0; width: 100%; cursor: pointer; }
 .pop {
   position: absolute; right: 12px; top: calc(60px + var(--safe-t)); width: 288px; padding: 8px;
   border-radius: 20px; background: rgba(251,248,242,.96);
@@ -354,6 +355,13 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .toast.err { border-color: var(--ver); }
 .offline { background: var(--ink); color: var(--onbtn); text-align: center; font-size: 14px; padding: 8px 16px; }
 .help { padding: 20px; }
+.pop.kpop { left: 50%; right: auto; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100% - 32px)); padding: 20px; }
+.kpop h2 { font: 500 20px var(--serif); margin: 0 0 12px; }
+.kpop dl { margin: 0; display: grid; }
+.kpop dl div { display: flex; justify-content: space-between; align-items: center; min-height: 44px; border-top: .5px solid var(--rule); }
+.kpop dt { font-size: 15px; }
+.kpop dd { margin: 0; }
+.kpop kbd { font: 600 13px var(--ui); min-width: 28px; text-align: center; display: inline-block; border: .5px solid var(--rule2); border-radius: 6px; padding: 3px 8px; background: var(--paper2); }
 .help kbd { font: 600 12px var(--ui); border: .5px solid var(--rule2); border-radius: 6px; padding: 2px 6px; background: var(--paper2); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (prefers-reduced-motion: no-preference) {

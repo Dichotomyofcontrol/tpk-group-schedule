@@ -20,6 +20,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const params = useSearchParams();
   const [menu, setMenu] = useState(false);
+  const [keys, setKeys] = useState(false);
   const signedIn = Boolean(state.me.id);
   const landing = !signedIn && path === "/";
   const first = useRef(true);
@@ -42,12 +43,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") { setMenu(false); return; }
+      if (event.key === "Escape") { setMenu(false); setKeys(false); return; }
       // Desktop shortcuts: 1–4 jump between tabs (ignored while typing or with modifiers).
       const t = event.target as HTMLElement | null;
       if (!signedInRef.current || event.metaKey || event.ctrlKey || event.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
+      if (event.key === "?") { event.preventDefault(); setKeys((v) => !v); return; }
       const i = ["1", "2", "3", "4"].indexOf(event.key);
-      if (i >= 0) { event.preventDefault(); router.push(TABS[i].href); }
+      if (i >= 0) { event.preventDefault(); setKeys(false); router.push(TABS[i].href); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -124,6 +126,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </button>
             <hr className="hair" />
             <button className="item out" onClick={() => { setMenu(false); void store.signOut(); }}>Sign out</button>
+          </div>
+        </div>
+      )}
+      {keys && signedIn && !bare && (
+        <div id="keys">
+          <button className="scrim" aria-label="Close keyboard shortcuts" onClick={() => setKeys(false)} />
+          <div className="pop kpop" role="dialog" aria-modal="true" aria-labelledby="keys-h">
+            <h2 id="keys-h">Keyboard shortcuts</h2>
+            <dl>
+              {TABS.map((item, i) => (
+                <div key={item.id}><dt>{item.label}</dt><dd><kbd>{i + 1}</kbd></dd></div>
+              ))}
+              <div><dt>Show or hide this list</dt><dd><kbd>?</kbd></dd></div>
+              <div><dt>Close</dt><dd><kbd>Esc</kbd></dd></div>
+            </dl>
           </div>
         </div>
       )}
