@@ -755,3 +755,12 @@ section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; 
 .lasttime b { font: 500 16px/22px var(--serif); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lasttime .lnk { color: var(--ver); font: 600 14px/20px var(--ui); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .lasttime:hover { background: var(--paper2); }
+
+/* Campaign cards press in like the Up next card. */
+.camp-card { transition: transform .15s ease, box-shadow .2s ease; -webkit-tap-highlight-color: transparent; }
+.camp-card:active { transform: scale(.985); }
+/* Tab bar: the icon gives a small bounce when its tab becomes active. */
+@keyframes tab-pop { 40% { transform: scale(1.18) translateY(-1px); } 100% { transform: none; } }
+.tabs a.on .ic { animation: tab-pop .32s cubic-bezier(.3,1.4,.5,1); }
+.tabs a { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: reduce) { .camp-card, .tabs a.on .ic { transition: none; animation: none; } .camp-card:active { transform: none; } }
