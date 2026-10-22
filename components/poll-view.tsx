@@ -136,10 +136,10 @@ function NewPoll() {
       store.addPoll(cid, title, options);
     }}>
       <div className="field">
-        <label>Campaign</label>
-        <select className="inp" value={cid} onChange={(e) => setCid(e.target.value)}>{staffCampaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <label htmlFor="poll-cid">Campaign</label>
+        <select id="poll-cid" className="inp" value={cid} onChange={(e) => setCid(e.target.value)}>{staffCampaigns.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
       </div>
-      <div className="field"><label>Question</label><input className="inp" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+      <div className="field"><label htmlFor="poll-q">Question</label><input id="poll-q" className="inp" value={title} onChange={(e) => setTitle(e.target.value)} /></div>
       {rows.map((row, i) => (
         <div key={i} className="addr">
           <input className="inp" type="date" aria-label={`Date ${i + 1}`} value={row.ymd} onChange={(e) => setRows(rows.map((r, j) => j === i ? { ...r, ymd: e.target.value } : r))} />
