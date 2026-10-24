@@ -72,7 +72,7 @@ export async function createOrLink(db: Firestore, cid: string, campaignName: str
   return { sessionId: sid, linked: false };
 }
 
-export type ImportResult = { received: number; created: number; linked: number; pending: number; ignored: number; unchanged: number; flaggedCancelled: number; restored: number; errors: string[]; dryRun: boolean; resolved?: { rule: string; mode: string; campaigns: { id: string; name: string }[] }[] };
+export type ImportResult = { received: number; created: number; linked: number; pending: number; ignored: number; unchanged: number; flaggedCancelled: number; restored: number; errors: string[]; dryRun: boolean; addedFromTpk?: number; toAssign?: number; notOnTpk?: number; notOnTpkSessions?: NotOnTpk[]; resolved?: { rule: string; mode: string; campaigns: { id: string; name: string }[] }[] };
 
 export async function runImport(db: Firestore, list: IncomingBooking[], opts: { listKind: "upcoming" | "past"; dryRun: boolean; now?: Date }): Promise<ImportResult> {
   const now = opts.now ?? new Date();
@@ -110,7 +110,7 @@ export async function runImport(db: Firestore, list: IncomingBooking[], opts: { 
       const r = opts.dryRun ? null : await createOrLink(db, c.id, c.name, c.tz, { key, service, startISO, endISO }, t > now.getTime());
       if (opts.dryRun) { if (t > now.getTime()) out.created++; else out.pending++; }
       else if (r) {
-        doc = { ...doc, status: "assigned", cid: c.id, sessionId: r.sessionId, linked: r.linked, assignedBy: "rule:" + m.ruleId };
+        doc = { ...doc, status: "assigned", cid: c.id, sessionId: r.sessionId, linked: r.linked, assignedBy: "rule:" + m.ruleId, reviewed: false };
         if (r.linked) out.linked++; else out.created++;
       } else out.pending++;
     } else out.pending++;
@@ -126,7 +126,66 @@ export async function runImport(db: Firestore, list: IncomingBooking[], opts: { 
       if (!opts.dryRun) await d.ref.set({ possiblyCancelled: true, cancelledFlaggedAt: now.toISOString() }, { merge: true });
     }
   }
+  if (opts.listKind === "upcoming" && !opts.dryRun) await db.doc(CONFIG_DOC).set({ lastUpcomingAt: now.toISOString() }, { merge: true });
+  // Two-way summary: what Seth still has to look at.
+  const stored = await db.collection(BOOKINGS).where("ownerUid", "==", cfg.ownerUid).get();
+  const all = stored.docs.map((d) => d.data() as StoredBooking);
+  out.addedFromTpk = all.filter(needsReview).length;
+  out.toAssign = all.filter((b) => b.status === "pending").length;
+  if (!opts.dryRun || opts.listKind === "upcoming") {
+    const fresh = await loadConfig(db);
+    const miss = await notOnTpk(db, fresh, all, now);
+    out.notOnTpk = miss.length; out.notOnTpkSessions = miss;
+  }
   return out;
+}
+
+export type StoredBooking = PendingBooking & { reviewed?: boolean; assignedBy?: string; cancelAck?: boolean; lastSeenAt?: string; list?: string };
+/** An auto-matched booking Seth hasn't confirmed yet. Older docs with no `reviewed` field count too. */
+export const needsReview = (b: StoredBooking) => b.status === "assigned" && String(b.assignedBy || "").startsWith("rule:") && b.reviewed !== true;
+
+export type NotOnTpk = { cid: string; sid: string; campaign: string; title: string; startsAt: string; tz: string; location: string };
+export const NOT_ON_TPK_DAYS = 120;
+export const MATCH_HOURS = 4;
+export const atTpk = (loc?: string) => !loc || !loc.trim() || /tpk\s*brewing/i.test(loc);
+
+/** Upcoming sessions at TPK Brewing (or no place yet) with no live booking within ±4h in the bookings list. Only once an upcoming list has been imported. */
+export async function notOnTpk(db: Firestore, cfg: Awaited<ReturnType<typeof loadConfig>>, bookings: StoredBooking[], now = new Date()): Promise<NotOnTpk[]> {
+  const c = cfg as typeof cfg & { lastUpcomingAt?: string; notOnTpkDismissed?: Record<string, string> };
+  if (!c.ownerUid || !c.lastUpcomingAt) return [];
+  const dismissed = c.notOnTpkDismissed || {};
+  const live = bookings.filter((b) => !b.possiblyCancelled).map((b) => new Date(b.startISO).getTime());
+  const from = now.toISOString(), to = new Date(now.getTime() + NOT_ON_TPK_DAYS * 86_400_000).toISOString();
+  const camps = await db.collection("campaigns").where("ownerUid", "==", c.ownerUid).get();
+  const out: NotOnTpk[] = [];
+  for (const cd of camps.docs) {
+    const camp = cd.data() as { name?: string; status?: string; tz?: string };
+    if (camp.status === "archived") continue;
+    const ss = await cd.ref.collection("sessions").where("startsAt", ">=", from).where("startsAt", "<=", to).get();
+    for (const sd of ss.docs) {
+      const s = sd.data() as { startsAt: string; status?: string; title?: string; location?: string; tz?: string };
+      if (s.status === "cancelled" || !atTpk(s.location) || dismissed[`${cd.id}/${sd.id}`]) continue;
+      const t = new Date(s.startsAt).getTime();
+      if (live.some((bt) => Math.abs(bt - t) <= MATCH_HOURS * 3_600_000)) continue;
+      out.push({ cid: cd.id, sid: sd.id, campaign: camp.name || cd.id, title: s.title || camp.name || "Session", startsAt: s.startsAt, tz: s.tz || camp.tz || TPK_TZ, location: s.location || "" });
+    }
+  }
+  return out.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+}
+
+/** Undo an auto-add: removes the session only if the import created it and nobody has touched it; a linked night is just unlinked. */
+export async function undoAssign(db: Firestore, b: StoredBooking): Promise<{ removed: boolean; kept: boolean }> {
+  let removed = false, kept = false;
+  if (b.cid && b.sessionId && !b.linked) {
+    const ref = db.collection("campaigns").doc(b.cid).collection("sessions").doc(b.sessionId);
+    const snap = await ref.get();
+    if (snap.exists) {
+      const s = snap.data() as Record<string, unknown>;
+      const untouched = s.source === "tpk" && s.tpkKey === b.key && Object.keys((s.attendance as object) || {}).length === 0 && !s.notes && !s.recapText && !s.recap && Number(s.seq || 0) === 0;
+      if (untouched) { await ref.delete(); removed = true; } else kept = true;
+    }
+  }
+  return { removed, kept };
 }
 
 export function saveRuleFrom(rules: TpkRule[], rule: TpkRule): TpkRule[] {
