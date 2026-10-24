@@ -894,3 +894,44 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 }
 @keyframes cpup { from { transform: translateY(100%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cpick-pop { animation: none; } .cpick-btn .cpc { transition: none; } }
+
+/* Organizer-only "Manage players" text control in the players header */
+.sh .shact { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.mplayers { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; border: 0; background: none; border-radius: 6px; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 4px; white-space: nowrap; }
+.mplayers:hover { color: var(--ink); text-decoration-color: currentColor; }
+.mplayers:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.mpsheet .mlist { margin: 4px 0 16px; }
+
+/* TPK bookings to assign: one quiet line on Sessions that folds open to ledger rows */
+.tpkq { margin: 4px 0 16px; }
+.tpkq-line { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 0 4px; border: 0; border-bottom: .5px solid var(--rule); background: none; color: var(--ink2); font: 500 14.5px/20px var(--ui); text-align: left; cursor: pointer; }
+.tpkq-line:hover .tpkq-t { color: var(--ink); }
+.tpkq-n { flex: none; min-width: 22px; height: 22px; padding: 0 6px; display: inline-grid; place-items: center; border-radius: 11px; background: var(--ver); color: var(--onbtn); font: 700 12px/22px var(--ui); font-variant-numeric: tabular-nums; }
+.tpkq-t { flex: 1; min-width: 0; }
+.tpkq .mchev { flex: none; color: var(--ink3); transform: rotate(-90deg); transition: transform .2s ease; }
+.tpkq.open .mchev { transform: none; }
+.tpkq-list { margin-top: 12px; }
+.tpkr { display: flex; gap: 16px; align-items: flex-start; padding: 16px 20px; }
+.tpkr + .tpkr { border-top: .5px solid var(--rule); }
+.tpkr .dt { padding-top: 2px; }
+.tpkr-b { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tpkr-s { font: 500 18px/24px var(--serif); overflow-wrap: anywhere; }
+.tpkr-x { font-style: normal; color: var(--ver); font-weight: 600; }
+.tpkr.flagged .tpkr-s { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--ver) 55%, transparent); }
+.tpkr-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.tpkr-pick { position: relative; flex: 1 1 220px; max-width: 340px; display: flex; }
+.tpkr-pick select { appearance: none; -webkit-appearance: none; width: 100%; height: 44px; padding: 0 38px 0 14px; border-radius: 10px; border: 1px solid var(--rule2); background: var(--field); color: var(--ink); font: 500 15px/20px var(--ui); cursor: pointer; text-overflow: ellipsis; }
+.tpkr-pick select:focus-visible { outline: none; border-color: var(--ink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ink) 10%, transparent); }
+.tpkr-pick .ic { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--ink3); pointer-events: none; }
+.tpkr-go { min-width: 92px; }
+.tpkr-go:disabled { background: transparent; color: var(--ink3); border: 1px solid var(--rule2); cursor: default; box-shadow: none; }
+.tpkr-why { color: var(--ink3); }
+.tpkr-rule { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13.5px; color: var(--ink2); cursor: pointer; }
+.tpkr-rule input { width: 18px; height: 18px; accent-color: var(--ver); margin: 0; flex: none; }
+.tpkq-foot { margin: 0; padding: 12px 20px 14px; border-top: .5px solid var(--rule); }
+@media (max-width: 600px) {
+  .tpkr { padding: 14px 16px; gap: 12px; }
+  .tpkr-pick { flex-basis: 100%; max-width: none; }
+  .tpkr-go { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .tpkq .mchev { transition: none; } }
