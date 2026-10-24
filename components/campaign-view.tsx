@@ -12,7 +12,6 @@ import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
 import type { Cadence, Campaign, Member, Session } from "@/lib/types";
 import { CoverEditor } from "./cover-editor";
-import { PartyLedger } from "./party-ledger";
 import { SessionRow, sessionHref } from "./schedule";
 import { Avatar, BackBar, CampaignCover, Icon, SettingRow, Switch } from "./ui";
 
@@ -114,7 +113,6 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           ) : (
             <div className="card pad"><p className="note">No recaps yet.</p></div>
           )}
-          <PartyLedger campaign={campaign} />
         </div>
         <aside className="cside">
           {organizer ? <OrganizerPanel campaign={campaign} members={members} me={me} /> : <PlayerPanel campaign={campaign} me={me} members={members} />}
@@ -280,12 +278,13 @@ function OrganizerPanel({ campaign, members, me }: { campaign: Campaign; members
   const [transfer, setTransfer] = useState(false);
   const [to, setTo] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [managing, setManaging] = useState(false);
   const others = members.filter((m) => m.role !== "organizer");
   const archived = campaign.status === "archived";
   return (
     <>
       <section className="card pad">
-        <div className="sh"><h2>Players · {members.length}</h2><Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite</Link></div>
+        <div className="sh"><h2>Players · {members.length}</h2><div className="shact"><button type="button" className="mplayers" aria-haspopup="dialog" onClick={() => setManaging(true)}><Icon name="user" className="ic sm" />Manage players</button><Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite</Link></div></div>
         <ul className="mlist">{members.map((m) => <MemberRow key={m.id} m={m} cid={campaign.id} manage />)}</ul>
         {me && <CharacterField campaign={campaign} me={me} label="Your character name" />}
       </section>
@@ -328,8 +327,32 @@ function OrganizerPanel({ campaign, members, me }: { campaign: Campaign; members
           <button className="btn ghost sm full ver" onClick={() => setDeleting(true)}>Delete campaign…</button>
         </div>
       </section>
+      {managing && <ManagePlayersSheet campaign={campaign} members={members} onClose={() => setManaging(false)} />}
       {deleting && <DeleteSheet campaign={campaign} onClose={() => setDeleting(false)} onDeleted={() => router.push("/campaigns")} />}
     </>
+  );
+}
+
+/** Organizer-only member management: invite, roles, character names, remove. */
+function ManagePlayersSheet({ campaign, members, onClose }: { campaign: Campaign; members: Member[]; onClose: () => void }) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+  return (
+    <div className="modal" role="dialog" aria-modal="true" aria-labelledby="mp-h">
+      <button className="modal-scrim" type="button" aria-label="Close" onClick={onClose} />
+      <div className="card sheet mpsheet">
+        <div className="sh"><h2 id="mp-h">Manage players</h2><button className="iconbtn" type="button" aria-label="Close" autoFocus onClick={onClose}><Icon name="x" /></button></div>
+        <p className="note">Set character names, make someone a co-organizer, or remove a player with the ••• menu.</p>
+        <ul className="mlist">{members.map((m) => <MemberRow key={m.id} m={m} cid={campaign.id} manage />)}</ul>
+        <div className="two end">
+          <Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite players</Link>
+          <button type="button" className="btn pri sm" onClick={onClose}>Done</button>
+        </div>
+      </div>
+    </div>
   );
 }
 
