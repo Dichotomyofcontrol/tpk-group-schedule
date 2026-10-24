@@ -4,14 +4,18 @@ import { matchBooking, parseGm, weekdayInTz, type PendingBooking, type TpkRule }
 
 export const dynamic = "force-dynamic";
 
-async function context(request: Request) {
+async function context(request: Request, method: "GET" | "POST" = "POST") {
   if (!adminConfigured()) return { error: Response.json({ error: "Not configured." }, { status: 503 }) };
   const who = await verifyBearer(request);
   if (!who) return { error: Response.json({ error: "Sign in first." }, { status: 401 }) };
   const db = adminDb();
   const cfg = await loadConfig(db);
   // Organizer-only: the bookings are the owner's TPK account.
-  if (!cfg.ownerUid || who.uid !== cfg.ownerUid) return { error: Response.json({ error: "Only the organizer can assign bookings." }, { status: 403 }) };
+  if (!cfg.ownerUid || who.uid !== cfg.ownerUid) {
+    // Signed-in non-owners simply have nothing to sync: an empty list, not an error.
+    if (method === "GET") return { error: Response.json({ bookings: [], notOnTpk: [], campaigns: [] }) };
+    return { error: Response.json({ error: "Only the organizer can assign bookings." }, { status: 403 }) };
+  }
   return { db, cfg, uid: who.uid };
 }
 
@@ -41,7 +45,7 @@ async function listFor(db: FirebaseFirestore.Firestore, cfg: Awaited<ReturnType<
 }
 
 export async function GET(request: Request) {
-  const ctx = await context(request);
+  const ctx = await context(request, "GET");
   if ("error" in ctx) return ctx.error;
   return Response.json(await listFor(ctx.db, ctx.cfg));
 }

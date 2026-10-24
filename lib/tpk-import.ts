@@ -1,4 +1,5 @@
 /** TPK Brewing booking import: the Firestore side. Server only (Admin SDK). */
+import { TPK_OWNER_EMAIL } from "./tpk-rules";
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
 import {
@@ -8,7 +9,7 @@ import {
 
 export const CONFIG_DOC = "tpkImport/config";
 export const BOOKINGS = "pendingBookings";
-const DEFAULT_OWNER_EMAIL = "sthomas131@gmail.com";
+const DEFAULT_OWNER_EMAIL = TPK_OWNER_EMAIL;
 
 export type IncomingBooking = { service: string; startISO: string; durationHours?: number; location?: string; source?: string; externalKey?: string };
 

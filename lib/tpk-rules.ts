@@ -23,6 +23,9 @@ export type TpkRule = {
   note?: string;
 };
 
+/** The account whose TPK Brewing bookings are imported (Seth). */
+export const TPK_OWNER_EMAIL = "sthomas131@gmail.com";
+
 export type TpkConfig = { ownerUid?: string; ownerEmail?: string; rules: TpkRule[]; updatedAt?: string };
 
 export const DEFAULT_RULES: TpkRule[] = [
