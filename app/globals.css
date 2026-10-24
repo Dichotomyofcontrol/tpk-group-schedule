@@ -698,19 +698,6 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .tline .rrow::after { content: ""; position: absolute; left: 18px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--paper); border: 2px solid var(--gold); box-sizing: border-box; }
 .tline .rrow:first-child::after { background: var(--gold); }
 
-/* Party ledger: clean ledger rows */
-.ledger .lrow { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px 10px 16px; min-height: 56px; }
-.ledger .lrow + .lrow, .ledger .lform + .lrow { border-top: 1px solid var(--rule); }
-.ledger .ltag { font: 700 11px/20px var(--ui); letter-spacing: .06em; text-transform: uppercase; padding: 0 8px; border-radius: 6px; border: 1px solid var(--rule2); color: var(--ink2); min-width: 44px; text-align: center; justify-self: start; }
-.ledger .ltag.loot { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
-.ledger .ltag.xp { color: var(--moss); border-color: color-mix(in srgb, var(--moss) 45%, transparent); }
-.ledger .ltag.milestone { color: var(--ver); border-color: color-mix(in srgb, var(--ver) 45%, transparent); }
-.ledger .ltext { font: 400 16px/22px var(--serif); overflow-wrap: anywhere; }
-.ledger .ldate { font: 500 12.5px/18px var(--ui); color: var(--ink3); white-space: nowrap; }
-.ledger .lform { display: grid; gap: 12px; padding: 16px; }
-.ledger .lkinds { display: flex; gap: 8px; flex-wrap: wrap; }
-.ledger .lempty { padding: 16px 20px; margin: 0; }
-.ledger .lfoot { display: flex; justify-content: space-between; align-items: center; padding: 4px 8px 4px 16px; border-top: 1px solid var(--rule); }
 
 .poll .nudge { margin-top: 12px; margin-left: 8px; }
 
@@ -858,11 +845,11 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .helpl .hrow b { font: 500 18px/24px var(--serif); }
 
 /* No pill chips: campaign filter is a text control; toggles are underlined tabs. */
-.seg, .lkinds.tabs { display: flex; gap: 20px; padding: 0; margin: 0 0 16px; background: none; border: 0; border-radius: 0; box-shadow: none; max-width: none; width: auto; overflow-x: auto; scrollbar-width: none; }
-.seg button, .lkinds.tabs button { flex: none; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; font: 500 15px/20px var(--ui); color: var(--ink3); cursor: pointer; position: relative; white-space: nowrap; }
-.seg button.on, .lkinds.tabs button.on, .lkinds.tabs button[aria-checked="true"] { background: none; box-shadow: none; color: var(--ink); font-weight: 600; }
-.seg button.on::after, .lkinds.tabs button.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: 8px; height: 1.5px; background: var(--ink); }
-.seg button:focus-visible, .lkinds.tabs button:focus-visible, .mjump button:focus-visible, .cpick-btn:focus-visible, .cpick-pop button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+.seg { display: flex; gap: 20px; padding: 0; margin: 0 0 16px; background: none; border: 0; border-radius: 0; box-shadow: none; max-width: none; width: auto; overflow-x: auto; scrollbar-width: none; }
+.seg button { flex: none; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; font: 500 15px/20px var(--ui); color: var(--ink3); cursor: pointer; position: relative; white-space: nowrap; }
+.seg button.on { background: none; box-shadow: none; color: var(--ink); font-weight: 600; }
+.seg button.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: 8px; height: 1.5px; background: var(--ink); }
+.seg button:focus-visible, .mjump button:focus-visible, .cpick-btn:focus-visible, .cpick-pop button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
 .mjump { gap: 18px; }
 .mjump button { padding: 0; border: 0; border-radius: 0; background: none; color: var(--ink3); text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 5px; text-decoration-thickness: 1px; }
 .mjump button:hover { background: none; color: var(--ink); text-decoration-color: var(--ink); }
