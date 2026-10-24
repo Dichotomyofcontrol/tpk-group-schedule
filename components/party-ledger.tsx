@@ -41,8 +41,8 @@ export function PartyLedger({ campaign }: { campaign: Campaign }) {
             save([...(campaign.ledger || []), { id: Math.random().toString(36).slice(2, 10), at: new Date().toISOString(), kind, text: clean }]);
             setText(""); setAdding(false); store.flash("Added to the ledger.");
           }}>
-            <div className="lkinds" role="radiogroup" aria-label="Kind">
-              {KINDS.map((k) => <button key={k.id} type="button" role="radio" aria-checked={kind === k.id} className={kind === k.id ? "fchip on" : "fchip"} onClick={() => setKind(k.id)}>{k.label}</button>)}
+            <div className="lkinds tabs" role="radiogroup" aria-label="Kind">
+              {KINDS.map((k) => <button key={k.id} type="button" role="radio" aria-checked={kind === k.id} className={kind === k.id ? "on" : ""} onClick={() => setKind(k.id)}>{k.label}</button>)}
             </div>
             <label className="sr" htmlFor="lg-text">Entry</label>
             <input id="lg-text" className="inp" autoFocus maxLength={140} value={text} onChange={(e) => setText(e.target.value)} placeholder={kind === "xp" ? "450 XP — the bridge troll" : kind === "loot" ? "+1 longsword, 120 gp" : "Reached Barovia"} />
