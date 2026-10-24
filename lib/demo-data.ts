@@ -26,9 +26,10 @@ export const USERS: User[] = [
   { id: "giada", email: "giada@example.com", displayName: "Giada", tz: TZ, calToken: "demo-giada", canCreateCampaigns: false, nameSet: true },
   { id: "lizbeth", email: "lizbeth@example.com", displayName: "Lizbeth", tz: TZ, calToken: "demo-lizbeth", canCreateCampaigns: false, nameSet: true },
   { id: "newcomer", email: "new@example.com", displayName: "New", tz: TZ, calToken: "demo-new", canCreateCampaigns: false, nameSet: true },
+  { id: "neworg", email: "neworg@example.com", displayName: "Nova", tz: TZ, calToken: "demo-neworg", canCreateCampaigns: true, nameSet: true },
 ];
 
-const HUES: Record<string, number> = { seth: 18, amy: 350, ben: 262, sam: 200, kai: 145, giada: 28, lizbeth: 320, newcomer: 210 };
+const HUES: Record<string, number> = { seth: 18, amy: 350, ben: 262, sam: 200, kai: 145, giada: 28, lizbeth: 320, newcomer: 210, neworg: 170 };
 
 function member(id: string, role: Member["role"], extra: Partial<Member> = {}): Member {
   const user = USERS.find((u) => u.id === id)!;

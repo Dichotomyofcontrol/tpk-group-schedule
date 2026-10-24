@@ -13,7 +13,10 @@ export type CampaignInput = {
   requireRsvps: boolean;
   allowMemberInvites: boolean;
   cadence: Cadence | null;
+  kind?: "oneshot";
 };
+
+export type OneShotInput = { title: string; tz: string; location: string; options: Poll["options"] };
 
 export type StoreApi = {
   state: AppState;
@@ -60,6 +63,8 @@ export type StoreApi = {
   toggleVote: (pollId: string, optionId: string) => void;
   lockPoll: (pollId: string, optionId: string) => void;
   addPoll: (cid: string, title: string, options: Poll["options"]) => void;
+  /** A standalone one-shot: its own little table (no campaign) plus the date poll. Returns its id. */
+  createOneShot: (input: OneShotInput) => string | null;
   nudge: (pollId: string, uid: string) => void;
   createInvite: (cid: string, role: Invite["role"], email?: string) => Promise<string | null>;
   acceptInvite: (token: string, person?: { id: string; email: string; displayName: string; characterName?: string }) => boolean;

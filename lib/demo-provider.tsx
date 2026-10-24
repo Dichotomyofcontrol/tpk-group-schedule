@@ -260,9 +260,18 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         if ("error" in result) flash(result.error, "err");
         else setState(result);
       },
+      createOneShot: (input) => {
+        const made = createCampaign(stateRef.current, { name: input.title, color: "#ce93d8", icon: "✨", tz: input.tz, location: input.location, requireRsvps: false, allowMemberInvites: true, cadence: null, kind: "oneshot" });
+        if ("error" in made) { flash(made.error, "err"); return null; }
+        const id = made.campaigns[made.campaigns.length - 1].id;
+        const polled = addPoll(made, id, "Which night works?", input.options);
+        if ("error" in polled) { flash(polled.error, "err"); return null; }
+        stateRef.current = polled;
+        setState(polled);
+        return id;
+      },
       nudge: (pollId, uid) => {
         apply((s) => nudgePoll(s, pollId, uid));
-        flash("Nudge saved. It emails them once reminders are connected.");
       },
       createInvite: async (cid, role: Invite["role"], email?) => {
         const result = createInvite(stateRef.current, cid, role, email);

@@ -1,5 +1,6 @@
 import { adminConfigured, adminDb } from "@/lib/firebase-admin";
 import { buildDemo } from "@/lib/demo-data";
+import { displayTitle } from "@/lib/model";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export async function GET(_request: Request, context: { params: Promise<{ token:
     const sessions = buildDemo("giada").sessions
       .filter((session) => session.cid === demo.cid && session.status === "scheduled")
       .slice(0, 3)
-      .map((session) => ({ startsAt: session.startsAt, title: session.title, tz: session.tz }));
+      .map((session) => ({ startsAt: session.startsAt, title: displayTitle(session, campaign?.name || ""), tz: session.tz }));
     return Response.json({
       token,
       campaign: campaign && { id: campaign.id, name: campaign.name, color: campaign.color, icon: campaign.icon, cover: campaign.cover, location: campaign.defaultLocation },

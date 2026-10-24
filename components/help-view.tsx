@@ -1,0 +1,28 @@
+"use client";
+
+import { BackBar, Icon, type IconName } from "./ui";
+
+const ITEMS: { icon: IconName; title: string; body: string }[] = [
+  { icon: "dates", title: "Sessions", body: "Every game you're in, in date order. The next one is up top. Everyone counts as in unless they tap Can't make it." },
+  { icon: "camp", title: "Campaigns", body: "Each table has a usual night, a place and its players. The organizer sets it once and the sessions fill in." },
+  { icon: "polls", title: "Polls", body: "Not sure when? The organizer floats a few dates, everyone taps the ones that work, and the winner goes on the list." },
+  { icon: "inv", title: "Invites", body: "Organizers send a link. Players open it, sign in with their email, and they're at the table." },
+  { icon: "doc", title: "Recaps", body: "After a session, add what happened. Recaps stay with the night and on the campaign page." },
+];
+
+export function HelpView() {
+  return (
+    <>
+      <BackBar href="/sessions" label="Sessions" />
+      <div className="ptitle"><h1 className="lt">How it works</h1></div>
+      <div className="card list helpl">
+        {ITEMS.map((it) => (
+          <div key={it.title} className="hrow">
+            <span className="fi"><Icon name={it.icon} /></span>
+            <span><b>{it.title}</b><span className="note">{it.body}</span></span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}

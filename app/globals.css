@@ -180,7 +180,8 @@ main.cm { padding-top: 0; }
 .rail-link { display: flex; gap: 12px; align-items: center; margin-top: 16px; min-height: 44px; }
 .grid { display: block; }
 #menu { position: fixed; inset: 0; z-index: 60; }
-#menu .scrim { position: absolute; inset: 0; background: rgba(29,25,21,.28); backdrop-filter: blur(2px); border: 0; width: 100%; cursor: pointer; }
+#keys { position: fixed; inset: 0; z-index: 60; }
+#keys .scrim, #menu .scrim { position: absolute; inset: 0; background: rgba(29,25,21,.28); backdrop-filter: blur(2px); border: 0; width: 100%; cursor: pointer; }
 .pop {
   position: absolute; right: 12px; top: calc(60px + var(--safe-t)); width: 288px; padding: 8px;
   border-radius: 20px; background: rgba(251,248,242,.96);
@@ -354,6 +355,13 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .toast.err { border-color: var(--ver); }
 .offline { background: var(--ink); color: var(--onbtn); text-align: center; font-size: 14px; padding: 8px 16px; }
 .help { padding: 20px; }
+.pop.kpop { left: 50%; right: auto; top: 50%; transform: translate(-50%, -50%); width: min(340px, calc(100% - 32px)); padding: 20px; }
+.kpop h2 { font: 500 20px var(--serif); margin: 0 0 12px; }
+.kpop dl { margin: 0; display: grid; }
+.kpop dl div { display: flex; justify-content: space-between; align-items: center; min-height: 44px; border-top: .5px solid var(--rule); }
+.kpop dt { font-size: 15px; }
+.kpop dd { margin: 0; }
+.kpop kbd { font: 600 13px var(--ui); min-width: 28px; text-align: center; display: inline-block; border: .5px solid var(--rule2); border-radius: 6px; padding: 3px 8px; background: var(--paper2); }
 .help kbd { font: 600 12px var(--ui); border: .5px solid var(--rule2); border-radius: 6px; padding: 2px 6px; background: var(--paper2); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 @media (prefers-reduced-motion: no-preference) {
@@ -709,14 +717,142 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 /* Session place opens in Maps */
 .maplink { color: inherit; text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }
 .maplink:hover { text-decoration-color: currentColor; }
+.hero .hplace { color: inherit; text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 3px; display: inline-block; max-width: 100%; vertical-align: top; padding: 12px 0; margin: -12px 0; }
+.hero .hplace:hover { text-decoration-color: currentColor; }
 
 /* Toasts arrive with a small spring (iOS banner feel). */
 @keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(.96); } 60% { opacity: 1; transform: translateY(-2px) scale(1.005); } to { transform: none; } }
 .toast { animation: toast-in .36s cubic-bezier(.2,.9,.3,1.2) backwards; }
-@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+/* ...and leave with a quick drop-and-fade instead of vanishing. */
+@keyframes toast-out { to { opacity: 0; transform: translateY(10px) scale(.96); } }
+.toast.out { animation: toast-out .22s cubic-bezier(.4,0,1,1) forwards; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .toast, .toast.out { animation: none; } }
 
 .opt .t .lead-t.all { color: var(--moss); }
 
 /* Party chips: character name beside the player */
 .pp .pc { margin-left: 6px; font: italic 400 14px/20px var(--serif); color: var(--ink3); }
 .pp.out .pc { text-decoration: none; }
+
+/* iPhone Add to Home Screen hint */
+.a2hs { display: flex; align-items: center; gap: 12px; padding: 12px 8px 12px 16px; margin-bottom: 16px; }
+.a2hs p { margin: 0; flex: 1; font: 400 15px/22px var(--ui); color: var(--ink2); }
+.a2hs p b { color: var(--ink); font-weight: 600; display: block; }
+.a2hs .sg { vertical-align: -2px; color: var(--ink); margin: 0 2px; }
+.a2hs .fi { flex: none; }
+
+/* Up next cover: presses in slightly, like a tappable card. */
+.hero-cover { overflow: hidden; -webkit-tap-highlight-color: transparent; }
+.hero-cover > * { transition: transform .35s cubic-bezier(.2,.8,.2,1), filter .2s ease; }
+.hero-cover:hover > * { transform: scale(1.015); }
+.hero-cover:active > * { transform: scale(.985); filter: brightness(.96); }
+@media (prefers-reduced-motion: reduce) { .hero-cover > * { transition: none; } .hero-cover:hover > *, .hero-cover:active > * { transform: none; } }
+
+/* Keyboard focus: one clear ring everywhere (mouse/touch unaffected). */
+a:focus-visible, button:focus-visible, [role="button"]:focus-visible, [role="radio"]:focus-visible, summary:focus-visible { outline: 2px solid var(--ver); outline-offset: 2px; border-radius: inherit; }
+.srow:focus-visible, .opt:focus-visible { outline-offset: -2px; }
+
+/* Game day: a soft pulsing dot on the Up next eyebrow. */
+.eyebrow .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ver); margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ver) 50%, transparent); animation: live-pulse 2s ease-out infinite; }
+@keyframes live-pulse { 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .eyebrow .live { animation: none; } }
+
+/* Sessions: month headers stick under the header while you scroll their month (iOS list style). */
+section > .mhd { position: sticky; top: calc(56px + var(--safe-t)); z-index: 5; margin: 24px -8px 4px; padding: 8px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 12px; }
+@media (min-width: 900px) { section > .mhd { top: 68px; } }
+
+.status.lockd { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; min-height: 32px; }
+
+/* Sessions: "Last time" link under the Up next hero */
+.lasttime { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: -8px 4px 8px; padding: 0 8px; color: inherit; text-decoration: none; border-radius: 12px; }
+.lasttime b { font: 500 16px/22px var(--serif); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lasttime .lnk { color: var(--ver); font: 600 14px/20px var(--ui); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.lasttime:hover { background: var(--paper2); }
+
+/* Campaign cards press in like the Up next card. */
+.camp-card { transition: transform .15s ease, box-shadow .2s ease; -webkit-tap-highlight-color: transparent; }
+.camp-card:active { transform: scale(.985); }
+/* Tab bar: the icon gives a small bounce when its tab becomes active. */
+@keyframes tab-pop { 40% { transform: scale(1.18) translateY(-1px); } 100% { transform: none; } }
+.tabs a.on .ic { animation: tab-pop .32s cubic-bezier(.3,1.4,.5,1); }
+.tabs a { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: reduce) { .camp-card, .tabs a.on .ic { transition: none; animation: none; } .camp-card:active { transform: none; } }
+
+/* Up next: game-on status at a glance */
+.hero .quorum { margin: 10px 0 6px; }
+
+/* Sessions ledger: campaign name as the row title */
+.srow .st b .dot { display: inline-block; margin: 0 8px 0 0; vertical-align: 2px; flex: none; }
+.ledger .srow .st b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow.past { min-height: 56px; padding-top: 10px; padding-bottom: 10px; color: var(--ink3); }
+.srow.past .dt .dn { font-size: 24px; line-height: 26px; color: var(--ink3); }
+.srow.past .dt .dw { color: var(--ink3); }
+.srow.past .st b { font: 500 16px/22px var(--serif); color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.srow.past .pst { flex: none; display: inline-flex; align-items: center; gap: 6px; font: 500 13px/18px var(--ui); color: var(--ink3); white-space: nowrap; }
+.srow.past .pst.done { color: var(--ink2); }
+.mhd.quiet { font-size: 15px; line-height: 20px; font-weight: 600; letter-spacing: .02em; color: var(--ink3); font-family: var(--ui); }
+/* Upcoming / All sessions */
+.seg { display: flex; padding: 3px; margin: 0 0 16px; border-radius: 12px; background: var(--paper2); border: .5px solid var(--rule); max-width: 360px; }
+.seg button { flex: 1; min-height: 44px; border: 0; border-radius: 9px; background: transparent; font: 500 15px/20px var(--ui); color: var(--ink2); cursor: pointer; transition: background .2s, color .2s; }
+.seg button.on { background: var(--paper); color: var(--ink); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px var(--rule2); }
+.pempty { margin: 8px 4px 16px; }
+/* Folding month groups */
+.mgroup { scroll-margin-top: calc(64px + var(--safe-t)); }
+.mhd .mtog { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.mhd .mtog .ml { flex: 1; min-width: 0; }
+.mhd .mtog .mc { font: 500 13px/18px var(--ui); color: var(--ink3); letter-spacing: 0; }
+.mhd .mtog .mchev { flex: none; color: var(--ink3); transition: transform .2s ease; transform: rotate(-90deg); }
+.mgroup.open .mhd .mtog .mchev { transform: none; }
+section.mgroup:not(.open) > .mhd { margin-bottom: 0; }
+section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; border-top: .5px solid var(--rule); border-radius: 0; }
+.mjump { display: flex; gap: 8px; overflow-x: auto; margin: 24px -20px 0; padding: 0 20px 2px; scrollbar-width: none; }
+.mjump::-webkit-scrollbar { display: none; }
+.mjump button { flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; border: .5px solid var(--rule2); background: transparent; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; }
+.mjump button:hover { background: var(--paper2); }
+@media (prefers-reduced-motion: reduce) { .mhd .mtog .mchev { transition: none; } }
+@media (min-width: 900px) { .mjump { margin: 24px 0 0; padding: 0; flex-wrap: wrap; } }
+/* Sort toggle beside Upcoming / All sessions */
+.ltools { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; }
+.ltools .seg { flex: 1; margin: 0; }
+.sortb { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; white-space: nowrap; }
+.sortb:hover { background: var(--paper2); }
+@media (max-width: 420px) { .sortb .wide { display: none; } .seg button { font-size: 14.5px; } }
+/* Campaign page: compact lists with a way through to the rest */
+.lnk.seeall { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 4px 4px 0; color: var(--ver); font: 600 14px/20px var(--ui); text-decoration: none; }
+.rhsub { margin: -8px 0 20px; }
+.tline.asc .rrow:first-child::after { background: var(--paper); }
+.tline.asc .rrow:last-child::after { background: var(--gold); }
+/* New poll: session for a campaign, or a standalone one-shot */
+.newpoll { text-align: left; }
+.pkind { display: grid; gap: 8px; margin: 0 0 20px; }
+@media (min-width: 600px) { .pkind { grid-template-columns: 1fr 1fr; } }
+.pkind button { display: flex; align-items: flex-start; gap: 12px; min-height: 64px; padding: 14px 16px; border-radius: 14px; border: .5px solid var(--rule2); background: var(--paper); color: inherit; text-align: left; cursor: pointer; }
+.pkind button .ic, .pkind button > svg { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--ink3); }
+.pkind button span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pkind button b { font: 600 15px/20px var(--ui); }
+.pkind button small { font: 400 13px/18px var(--ui); color: var(--ink3); }
+.pkind button.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.pkind button.on > svg { color: var(--ver); }
+.osdone { text-align: left; }
+.osdone p { margin: 0 0 8px; }
+.osacts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+/* First run: Getting started + How it works */
+.gstart { padding: 20px 20px 12px; margin: 0 0 24px; }
+.gsh { display: flex; align-items: center; justify-content: space-between; margin: -8px -8px 4px 0; }
+.gsh h2 { font-size: 20px; line-height: 26px; margin: 0; }
+.gstart ol { list-style: none; margin: 0; padding: 0; }
+.gstart li + li { border-top: .5px solid var(--rule); }
+.gstart li > a, .gstart li > div { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 0; color: inherit; text-decoration: none; }
+.gsc { flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--rule2); display: grid; place-items: center; }
+.gsc.done { background: var(--moss); border-color: var(--moss); color: var(--paper); }
+.gst { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gst b { font: 600 15px/20px var(--ui); }
+.gstart li.done .gst b { color: var(--ink3); text-decoration: line-through; text-decoration-thickness: 1px; }
+.gsa { flex: none; color: var(--ink3); }
+.gshow { margin-top: 4px; }
+.eacts { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.helpl .hrow { display: flex; gap: 16px; padding: 16px 20px; align-items: flex-start; }
+.helpl .hrow + .hrow { border-top: .5px solid var(--rule); }
+.helpl .hrow .fi { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; }
+.helpl .hrow > span:last-child { display: flex; flex-direction: column; gap: 4px; }
+.helpl .hrow b { font: 500 18px/24px var(--serif); }

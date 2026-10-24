@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions , sessionTitle } from "@/lib/model";
+import { hasUploadedCover, isOrganizer, isStaff, membersOf, pastSessions, sessionFiles, upcomingSessions, displayTitle } from "@/lib/model";
 import { excerpt, hasRecap, recapPlain } from "@/lib/recap";
 import { isUnread, readingMinutes, seedReads } from "@/lib/read-marks";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, weekdayName } from "@/lib/time";
 import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
-import type { Cadence, Campaign, Member } from "@/lib/types";
+import type { Cadence, Campaign, Member, Session } from "@/lib/types";
 import { CoverEditor } from "./cover-editor";
 import { PartyLedger } from "./party-ledger";
 import { SessionRow, sessionHref } from "./schedule";
@@ -23,7 +23,6 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   const me = membersOf(state, cid).find((m) => m.id === state.me.id);
   const [covering, setCovering] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [allNights, setAllNights] = useState(false);
   const allRecaps = pastSessions(state, cid).filter((s) => hasRecap(s));
   const recapKey = allRecaps.map((s) => s.id + (s.recapText || "").length + (s.pdfPath || "")).join("|");
   const [unread, setUnread] = useState<Set<string>>(new Set());
@@ -50,7 +49,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   const members = membersOf(state, cid);
   const owner = members.find((m) => m.role === "organizer");
   const upcoming = upcomingSessionsAll(state, cid);
-  const shown = allNights ? upcoming : upcoming.slice(0, 3);
+  const shown = upcoming.slice(0, 1);
   const recaps = pastSessions(state, cid).filter((s) => hasRecap(s));
   const unwritten = pastSessions(state, cid).find((s) => s.status !== "cancelled" && !hasRecap(s));
   const archived = campaign.status === "archived";
@@ -91,10 +90,10 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           ) : (
             <div className="card pad"><p className="note">{organizer ? "Set the usual night in Edit details and the sessions fill in." : "No sessions scheduled yet."}</p></div>
           )}
-          {upcoming.length > 3 && (
-            <button className="lnk" type="button" onClick={() => setAllNights((v) => !v)}>
-              {allNights ? "Show fewer" : `All ${upcoming.length} sessions`} <Icon name="arrow" className="ic sm" />
-            </button>
+          {upcoming.length > 0 && (
+            <Link className="lnk seeall" href={`/sessions?campaign=${encodeURIComponent(cid)}`}>
+              See all sessions <Icon name="arrow" className="ic sm" />
+            </Link>
           )}
 
           <div className="sh secth">
@@ -102,23 +101,16 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
             {staff && unwritten && <Link className="btn sec sm" href={sessionHref(unwritten)}><Icon name="plus" className="ic sm" />Add recap</Link>}
           </div>
           {recaps.length > 0 ? (
-            <div className={recaps.length > 1 ? "card list tline" : "card list"}>
-              {recaps.map((s) => {
-                const when = formatDayHeading(s.startsAt, s.tz);
-                const text = excerpt(recapPlain(s), 90);
-                return (
-                  <Link key={s.id} className="srow rrow" href={sessionHref(s)}>
-                    <span className="st">
-                      <span className="cn">{`${when.dow[0]}${when.dow.slice(1).toLowerCase()} ${when.mon[0]}${when.mon.slice(1).toLowerCase()} ${when.day}`}</span>
-                      <b>{sessionTitle(store.state, s)}{unread.has(s.id) && <span className="newpill">New</span>}</b>
-                      {text && <span className="note">{text}</span>}
-                      {readingMinutes(s) > 1 && <span className="rmin">{readingMinutes(s)} min read</span>}
-                    </span>
-                    {sessionFiles(s).length > 0 && <span className="ficon sm" aria-label="Has a PDF">PDF</span>}
-                  </Link>
-                );
-              })}
-            </div>
+            <>
+              <div className={recaps.length > 1 ? "card list tline" : "card list"}>
+                {recaps.slice(0, 2).map((s) => <RecapRow key={s.id} session={s} unread={unread.has(s.id)} />)}
+              </div>
+              {recaps.length > 1 && (
+                <Link className="lnk seeall" href={`/campaigns/${encodeURIComponent(cid)}/recaps`}>
+                  All {recaps.length} recaps <Icon name="arrow" className="ic sm" />
+                </Link>
+              )}
+            </>
           ) : (
             <div className="card pad"><p className="note">No recaps yet.</p></div>
           )}
@@ -129,6 +121,24 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
         </aside>
       </div>
     </>
+  );
+}
+
+/** One recap in a list: date, title, a line of the text, reading time, PDF badge. */
+export function RecapRow({ session: s, unread = false }: { session: Session; unread?: boolean }) {
+  const store = useStore();
+  const when = formatDayHeading(s.startsAt, s.tz);
+  const text = excerpt(recapPlain(s), 90);
+  return (
+    <Link className="srow rrow" href={sessionHref(s)}>
+      <span className="st">
+        <span className="cn">{`${when.dow[0]}${when.dow.slice(1).toLowerCase()} ${when.mon[0]}${when.mon.slice(1).toLowerCase()} ${when.day}`}</span>
+        <b>{displayTitle(s, store.state.campaigns.find((c) => c.id === s.cid)?.name || "")}{unread && <span className="newpill">New</span>}</b>
+        {text && <span className="note">{text}</span>}
+        {readingMinutes(s) > 1 && <span className="rmin">{readingMinutes(s)} min read</span>}
+      </span>
+      {sessionFiles(s).length > 0 && <span className="ficon sm" aria-label="Has a PDF">PDF</span>}
+    </Link>
   );
 }
 

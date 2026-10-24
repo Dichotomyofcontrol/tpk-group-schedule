@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, isStaff, membersOf , sessionTitle } from "@/lib/model";
+import { campaignById, displayTitle, isStaff, membersOf } from "@/lib/model";
+import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
-import { formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
+import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
-import { Avatar, CampaignCover, DateBlock, Icon } from "./ui";
+import { Avatar, CampaignCover, DateBlock, Icon, useMapsHref } from "./ui";
 
 export function shortCount(campaign: Campaign, session: Session, members: Member[]): { text: string; warn: boolean } {
   const h = headcount(campaign, session, members);
@@ -32,8 +33,13 @@ export function sessionHref(session: Session): string {
   return `/campaigns/${session.cid}/sessions/${session.id}`;
 }
 
+/** List title: the session's own name with any "Session #N" numbering dropped, else the campaign name. */
+export function ledgerTitle(session: Session, campaignName: string): string {
+  return displayTitle(session, campaignName);
+}
+
 /** One line in a month list: typographic date, title, time and place, headcount. */
-export function SessionRow({ session, showCampaign = false }: { session: Session; showCampaign?: boolean }) {
+export function SessionRow({ session, showCampaign = false, ledger = false }: { session: Session; showCampaign?: boolean; ledger?: boolean }) {
   const store = useStore();
   const campaign = campaignById(store.state, session.cid);
   if (!campaign) return null;
@@ -43,12 +49,23 @@ export function SessionRow({ session, showCampaign = false }: { session: Session
   const moved = session.exception === "move" || session.exception === "edit";
   const meId = store.state.me.id;
   const mineState = members.some((m) => m.id === meId) ? attendanceState(campaign, session, meId) : "in";
+  if (ledger && new Date(session.endsAt).getTime() < Date.now()) {
+    // A night that already happened: quieter and smaller, and it says whether the recap is in.
+    const recap = hasRecap(session);
+    return (
+      <Link className="srow past" href={sessionHref(session)}>
+        <DateBlock dow={when.dow} day={when.day} />
+        <span className="st"><b>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</b></span>
+        <span className={recap ? "pst done" : "pst"}><Icon name={recap ? "doc" : "quill"} className="ic sm" />{recap ? "Recap" : isStaff(store.state, session.cid) ? "Add recap" : "No recap yet"}</span>
+      </Link>
+    );
+  }
   return (
     <Link className="srow" href={sessionHref(session)}>
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
-        {showCampaign && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
-        <b>{sessionTitle(store.state, session)}</b>
+        {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
+        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</> : displayTitle(session, campaign.name)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
         {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
         {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}
@@ -106,6 +123,12 @@ export function RsvpControl({ session }: { session: Session }) {
   );
 }
 
+/** The place on Up next opens in Maps; the tap area grows to 44px without moving the line. */
+function HeroPlace({ place }: { place: string }) {
+  const href = useMapsHref(place);
+  return <a className="hplace" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}>{place}</a>;
+}
+
 /** The next session, big. */
 export function NextHero({ session, showCampaign = true }: { session: Session; showCampaign?: boolean }) {
   const store = useStore();
@@ -114,15 +137,18 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
   const when = formatDayHeading(session.startsAt, session.tz);
   const soon = relativeWhen(session.startsAt, store.state.me.tz).toLowerCase();
   const time = formatTime(new Date(session.startsAt), session.tz);
+  const q = quorumLine(campaign, session, membersOf(store.state, session.cid));
+  const title = ledgerTitle(session, campaign.name);
   return (
     <article className="card hero">
-      <Link href={sessionHref(session)} className="hero-cover" aria-label={`Open ${sessionTitle(store.state, session)}`}>
+      <Link href={sessionHref(session)} className="hero-cover" aria-label={`Open ${title}`}>
         <CampaignCover campaign={campaign} />
       </Link>
       <div className="hb">
-        <div className="eyebrow ver">Up next · {soon}</div>
-        <h2><Link href={sessionHref(session)}>{sessionTitle(store.state, session)}</Link></h2>
-        <p className="hmeta">{[showCampaign ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time, session.location].filter(Boolean).join(" · ")}</p>
+        <div className="eyebrow ver">{daysUntil(session.startsAt, store.state.me.tz) === 0 && <i className="live" aria-hidden="true" />}Up next · {soon}</div>
+        <h2><Link href={sessionHref(session)}>{title}</Link></h2>
+        <p className="hmeta">{[showCampaign && title !== campaign.name ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time].filter(Boolean).join(" · ")}{session.location && <> · <HeroPlace place={session.location} /></>}</p>
+        {q && <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" aria-hidden="true" />{q.text}</p>}
         <PartyChips session={session} />
         <RsvpControl session={session} />
       </div>
