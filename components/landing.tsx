@@ -26,7 +26,7 @@ export function Landing() {
             <p>The whole party is counted in. Mark yourself out in one tap and the GM sees it instantly.</p>
             <div className="vig">
               <div className="dt"><span className="dw">Thu</span><span className="dn">23</span></div>
-              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>Session 14</b><br /><span className="status">5 of 6 in</span></div>
+              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>Curse of Strahd</b><br /><span className="status">5 of 6 in</span></div>
             </div>
           </article>
           <article className="card fc">

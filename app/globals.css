@@ -466,18 +466,18 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .srow .st, .rrow .st { min-width: 0; }
 
 /* Default and uploaded covers */
-.dcover, .ucover { position: relative; overflow: hidden; aspect-ratio: 16 / 7; width: 100%; }
-.dcover { display: grid; place-items: center; background-image: radial-gradient(420px 180px at 50% 40%, rgba(169,130,58,.10), transparent 70%), linear-gradient(180deg, var(--paper2), var(--bg)); border-bottom: .5px solid var(--rule2); }
-.dcover::before { content: ""; position: absolute; inset: 10px; border: .5px solid var(--rule2); border-radius: 10px; box-shadow: inset 0 0 0 3px var(--paper2), inset 0 0 0 3.5px var(--rule); pointer-events: none; }
-.dcover .dmark { width: 56px; height: 56px; fill: none; stroke: var(--gold); stroke-width: .9; stroke-linejoin: round; opacity: .6; }
-:root[data-theme="night"] .dcover { background-image: radial-gradient(420px 180px at 50% 40%, rgba(120,140,200,.10), transparent 70%), linear-gradient(180deg, var(--paper2), var(--bg)); }
+.dcover, .ucover { position: relative; overflow: hidden; width: 100%; }
+.ucover { aspect-ratio: 16 / 7; }
+/* No cover: a slim strip in the campaign colour (~30% of a cover's height). */
+.dcover { height: 52px; display: flex; align-items: center; justify-content: flex-end; padding: 0 8px; box-sizing: border-box; background: linear-gradient(90deg, color-mix(in srgb, var(--cc) 22%, var(--paper2)), color-mix(in srgb, var(--cc) 8%, var(--paper2))); border-bottom: .5px solid var(--rule2); }
+.dcover::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--cc); }
+.camp-card .dcover { height: 40px; }
+.dcta { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: var(--ink2); font: 500 13px/16px var(--ui); letter-spacing: .02em; cursor: pointer; border-radius: 10px; }
+.dcta:hover { color: var(--ink); background: color-mix(in srgb, var(--cc) 12%, transparent); }
+.dcta:focus-visible { outline: 2px solid var(--ink); outline-offset: -4px; }
 .ucover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* Sessions */
-.fchips { display: flex; gap: 8px; overflow-x: auto; margin: 0 -20px 20px; padding: 0 20px 4px; scrollbar-width: none; }
-.fchips::-webkit-scrollbar { display: none; }
-.fchip { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 999px; border: .5px solid var(--rule2); background: transparent; font-size: 14px; font-weight: 500; color: var(--ink2); white-space: nowrap; cursor: pointer; flex: none; }
-.fchip.on { background: var(--ink); color: var(--onbtn, var(--paper)); border-color: var(--ink); }
 .hero { padding: 0; overflow: hidden; position: relative; }
 .hero .hb { padding: 20px; position: relative; }
 .hero h2 { font-size: 28px; line-height: 34px; margin: 6px 0 4px; }
@@ -610,13 +610,13 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
   .file { flex-wrap: wrap; row-gap: 10px; }
   .file .fm { flex: 1 1 calc(100% - 52px); }
   .file .fopen { flex: 1; margin-left: 52px; }
-  .hero .dcover, .hero .ucover { aspect-ratio: 16 / 6; }
+  .hero .ucover { aspect-ratio: 16 / 6; }
 }
 @media (min-width: 900px) {
-  .fchips { margin: 0 0 24px; padding: 0; flex-wrap: wrap; overflow: visible; }
   .sgrid { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
   .cgrid { grid-template-columns: minmax(0, 1fr) 380px; }
-  .hero .dcover, .hero .ucover, .chead .dcover, .chead .ucover { aspect-ratio: 16 / 5; }
+  .hero .ucover, .chead .ucover { aspect-ratio: 16 / 5; }
+  .hero .dcover { height: 80px; padding: 0 12px; }
   .chead .hb .edt { position: absolute; right: 20px; top: 20px; margin: 0; }
   .chead .hb:has(.edt) .lt { margin-right: 170px; }
   .camp-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
@@ -856,3 +856,41 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .helpl .hrow .fi { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; }
 .helpl .hrow > span:last-child { display: flex; flex-direction: column; gap: 4px; }
 .helpl .hrow b { font: 500 18px/24px var(--serif); }
+
+/* No pill chips: campaign filter is a text control; toggles are underlined tabs. */
+.seg, .lkinds.tabs { display: flex; gap: 20px; padding: 0; margin: 0 0 16px; background: none; border: 0; border-radius: 0; box-shadow: none; max-width: none; width: auto; overflow-x: auto; scrollbar-width: none; }
+.seg button, .lkinds.tabs button { flex: none; min-height: 44px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; font: 500 15px/20px var(--ui); color: var(--ink3); cursor: pointer; position: relative; white-space: nowrap; }
+.seg button.on, .lkinds.tabs button.on, .lkinds.tabs button[aria-checked="true"] { background: none; box-shadow: none; color: var(--ink); font-weight: 600; }
+.seg button.on::after, .lkinds.tabs button.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: 8px; height: 1.5px; background: var(--ink); }
+.seg button:focus-visible, .lkinds.tabs button:focus-visible, .mjump button:focus-visible, .cpick-btn:focus-visible, .cpick-pop button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: 4px; }
+.mjump { gap: 18px; }
+.mjump button { padding: 0; border: 0; border-radius: 0; background: none; color: var(--ink3); text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 5px; text-decoration-thickness: 1px; }
+.mjump button:hover { background: none; color: var(--ink); text-decoration-color: var(--ink); }
+.seg2, .seg2::before, .seg2 button { border-radius: 10px; }
+.seg2 { border-radius: 12px; }
+.pill { border-radius: 6px; }
+.cpick { position: relative; margin: -4px 0 16px; }
+.cpick-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0; border: 0; background: none; font: 500 15px/20px var(--ui); color: var(--ink); cursor: pointer; max-width: 100%; }
+.cpick-btn .cpl { color: var(--ink3); font-weight: 400; }
+.cpick-btn .cpv { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.cpick-btn .cpc { color: var(--ink3); transition: transform .2s ease; flex: none; }
+.cpick-btn[aria-expanded="true"] .cpc { transform: rotate(180deg); }
+.cpick .dot, .cpick-pop .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.cpick-scrim { position: fixed; inset: 0; z-index: 60; background: transparent; }
+.cpick-pop { position: absolute; z-index: 61; top: calc(100% + 4px); left: 0; min-width: 260px; max-width: min(360px, calc(100vw - 40px)); max-height: 60vh; overflow-y: auto; background: var(--paper); border: .5px solid var(--rule2); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,.18); padding: 6px 0; }
+.cpick-h { display: none; }
+.cpick-pop ul { list-style: none; margin: 0; padding: 0; }
+.cpick-pop li + li button { border-top: .5px solid var(--rule); }
+.cpick-pop button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 16px; border: 0; background: none; font: 500 15px/20px var(--ui); color: var(--ink); text-align: left; cursor: pointer; }
+.cpick-pop button:hover { background: var(--paper2); }
+.cpick-pop .cpn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpick-pop .cpk { color: var(--ink); flex: none; }
+@media (max-width: 640px) {
+  .cpick-scrim { background: rgba(12,10,8,.36); }
+  .cpick-pop { position: fixed; top: auto; left: 0; right: 0; bottom: 0; min-width: 0; max-width: none; max-height: 70vh; border-radius: 16px 16px 0 0; border-width: .5px 0 0; padding: 8px 0 calc(12px + env(safe-area-inset-bottom)); animation: cpup .22s cubic-bezier(.2,.8,.2,1); }
+  .cpick-h { display: block; padding: 10px 20px 8px; font: 600 11px/16px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); }
+  .cpick-h::before { content: ""; display: block; width: 36px; height: 4px; border-radius: 2px; background: var(--rule2); margin: 0 auto 12px; }
+  .cpick-pop button { min-height: 52px; padding: 0 20px; }
+}
+@keyframes cpup { from { transform: translateY(100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cpick-pop { animation: none; } .cpick-btn .cpc { transition: none; } }

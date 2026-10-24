@@ -66,8 +66,8 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
       )}
       <section className="card hero chead">
         <div className="hero-cover">
-          <CampaignCover campaign={campaign} />
-          {organizer && <button className="btn sec sm covbtn" onClick={() => setCovering(true)}><Icon name="img" className="ic sm" />{hasUploadedCover(campaign) ? "Change cover" : "Add cover"}</button>}
+          <CampaignCover campaign={campaign} onAdd={organizer ? () => setCovering(true) : undefined} />
+          {organizer && hasUploadedCover(campaign) && <button className="btn sec sm covbtn" onClick={() => setCovering(true)}><Icon name="img" className="ic sm" />Change cover</button>}
         </div>
         <div className="hb">
           <div className="eyebrow">Campaign · {owner?.id === state.me.id ? "You run this table" : `${owner?.displayName || "The organizer"} runs this table`}</div>

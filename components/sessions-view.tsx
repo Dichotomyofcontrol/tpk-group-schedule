@@ -11,6 +11,7 @@ import { NextHero, SessionRow, sessionHref } from "./schedule";
 import { Icon, Skeleton } from "./ui";
 import { HomeScreenHint } from "./home-hint";
 import { GettingStarted } from "./getting-started";
+import { CampaignPicker } from "./campaign-picker";
 
 /** Sessions: the next one as the hero, then every later one grouped by month. Filter by campaign. */
 export function SessionsView() {
@@ -96,14 +97,7 @@ export function SessionsView() {
         </div>
       )}
       {mine.length > 1 && (
-        <div className="fchips" role="group" aria-label="Filter by campaign">
-          <button type="button" className={all ? "fchip on" : "fchip"} aria-pressed={all} onClick={() => choose("all")}>All</button>
-          {mine.map((c) => (
-            <button key={c.id} type="button" className={active === c.id ? "fchip on" : "fchip"} aria-pressed={active === c.id} onClick={() => choose(c.id)}>
-              <i className="dot" style={{ background: c.color }} />{c.name}
-            </button>
-          ))}
-        </div>
+        <CampaignPicker campaigns={mine} value={active} onChange={choose} />
       )}
       {state.syncing && <Skeleton />}
       {!state.syncing && mine.length === 0 && (
