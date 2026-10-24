@@ -881,3 +881,6 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 }
 @keyframes cpup { from { transform: translateY(100%); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .cpick-pop { animation: none; } .cpick-btn .cpc { transition: none; } }
+
+/* Campaign page: a real section gap under the header tile, matching the 32px section rhythm */
+.chead ~ .cgrid { margin-top: 32px; }
