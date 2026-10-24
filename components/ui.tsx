@@ -129,20 +129,20 @@ export function BackBar({ href, label }: { href: string; label: string }) {
   );
 }
 
-/** Parchment panel with a fine double rule and a line-art d20. Shown until the organizer uploads a cover. */
-export function DefaultCover({ className = "" }: { className?: string }) {
+/** Slim strip in the campaign colour, shown until the organizer uploads a cover. Organizers get a quiet "Add cover" link. */
+export function DefaultCover({ color = "", className = "", onAdd }: { color?: string; className?: string; onAdd?: () => void }) {
   return (
-    <div className={`dcover ${className}`.trim()} role="img" aria-label="Default cover">
-      <svg className="dmark" viewBox="0 0 64 64" aria-hidden="true">
-        <path d="M32 4l24 14v28L32 60 8 46V18z" />
-        <path d="M32 18l12 21H20z" />
-        <path d="M32 4v14M56 18L44 39M8 18l12 21M20 39L8 46M44 39l12 7M20 39l12 21 12-21M32 18L8 18M32 18h24" />
-      </svg>
+    <div className={`dcover ${className}`.trim()} style={{ "--cc": color || "var(--gold)" } as React.CSSProperties} role="img" aria-label="No cover yet">
+      {onAdd && (
+        <button type="button" className="dcta" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAdd(); }}>
+          <Icon name="img" className="ic sm" />Add cover
+        </button>
+      )}
     </div>
   );
 }
 
-export function CampaignCover({ campaign, className = "" }: { campaign: Campaign; className?: string }) {
+export function CampaignCover({ campaign, className = "", onAdd }: { campaign: Campaign; className?: string; onAdd?: () => void }) {
   const store = useStore();
   const path = campaign.cover?.path || "";
   const inline = !path && hasUploadedCover(campaign) ? campaign.cover.src : "";
@@ -154,7 +154,7 @@ export function CampaignCover({ campaign, className = "" }: { campaign: Campaign
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path, inline]);
-  if (!url) return <DefaultCover className={className} />;
+  if (!url) return <DefaultCover color={campaign.color} className={className} onAdd={onAdd} />;
   return (
     <div className={`ucover ${className}`.trim()}>
       <img src={url} alt="" />
