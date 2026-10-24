@@ -142,6 +142,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const toastId = useRef(1);
   const stateRef = useRef<AppState | null>(null);
   const coverCache = useRef(new Map<string, string>());
+  const detachRef = useRef<(cid: string) => void>(() => undefined);
   stateRef.current = state;
 
   const flash = useCallback((text: string, tone?: Toast["tone"], action?: Toast["action"]) => {
@@ -203,21 +204,29 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       await authedFetch("/api/auth/link", { method: "POST" }).catch(() => undefined);
     });
 
-    const unsubs: Array<() => void> = [];
+    // Per-campaign listeners, keyed by cid, so one campaign joining or leaving never tears down the rest.
+    const live = new Map<string, Array<() => void>>();
+    const detach = (cid: string) => { for (const stop of live.get(cid) || []) stop(); live.delete(cid); };
+    detachRef.current = detach;
     const memberQuery = query(collectionGroup(db, "members"), where("uid", "==", authUser.uid));
-    const unsubMembers = onSnapshot(memberQuery, (snap) => {
-      // (error handler below clears syncing so a rules error never leaves a skeleton up)
-      const cids = snap.docs.map((d) => d.ref.parent.parent?.id).filter((id): id is string => !!id);
-      for (const stop of unsubs) stop();
-      unsubs.length = 0;
+    // includeMetadataChanges: a member doc we just wrote shows up locally before the server has it.
+    // Attaching campaign listeners then is what caused permission-denied/400s on create, so wait for the commit.
+    const unsubMembers = onSnapshot(memberQuery, { includeMetadataChanges: true }, (snap) => {
+      const cids = snap.docs.filter((d) => !d.metadata.hasPendingWrites).map((d) => d.ref.parent.parent?.id).filter((id): id is string => !!id);
+      for (const cid of [...live.keys()]) if (!cids.includes(cid)) detach(cid);
+      const fresh = cids.filter((cid) => !live.has(cid));
       // First paint waits for each campaign doc and its sessions, so screens never flash "No sessions yet".
-      const pending = new Set(cids.flatMap((cid) => [`c:${cid}`, `s:${cid}`]));
+      const pending = new Set(fresh.flatMap((cid) => [`c:${cid}`, `s:${cid}`]));
       const settle = (key: string) => {
         if (!pending.delete(key) || pending.size) return;
         setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev);
       };
-      if (!pending.size) setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev);
-      for (const cid of cids) {
+      if (!pending.size && !snap.metadata.fromCache) setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev);
+      for (const cid of fresh) {
+        const unsubs: Array<() => void> = [];
+        live.set(cid, unsubs);
+        // A listener that loses access (campaign deleted, member removed) just stops quietly.
+        const lost = () => detach(cid);
         unsubs.push(onSnapshot(doc(db, "campaigns", cid), (c) => {
           if (!c.exists()) { settle(`c:${cid}`); return; }
           const campaign = { ...(c.data() as Omit<Campaign, "id">), id: cid };
@@ -227,23 +236,23 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
             return { ...prev, campaigns: [...rest, campaign] };
           });
           settle(`c:${cid}`);
-        }, () => settle(`c:${cid}`)));
+        }, () => { settle(`c:${cid}`); lost(); }));
         unsubs.push(onSnapshot(collection(db, "campaigns", cid, "sessions"), (ss) => {
           const sessions = ss.docs.map((d) => sessionFrom(d.id, cid, d.data()));
           setState((prev) => prev ? { ...prev, sessions: [...prev.sessions.filter((s) => s.cid !== cid), ...sessions] } : prev);
           settle(`s:${cid}`);
-        }, () => settle(`s:${cid}`)));
+        }, () => { settle(`s:${cid}`); lost(); }));
         unsubs.push(onSnapshot(collection(db, "campaigns", cid, "members"), (ms) => {
           const members = ms.docs.map((d) => ({ ...(d.data() as Omit<Member, "id">), id: d.id }));
           setState((prev) => prev ? { ...prev, members: { ...prev.members, [cid]: members } } : prev);
-        }));
+        }, lost));
         unsubs.push(onSnapshot(collection(db, "campaigns", cid, "polls"), (ps) => {
           const polls = ps.docs.map((d) => {
             const data = d.data() as Omit<Poll, "id">;
             return { ...data, id: d.id, votes: data.votes || {} };
           });
           setState((prev) => prev ? { ...prev, polls: [...prev.polls.filter((p) => p.cid !== cid), ...polls] } : prev);
-        }));
+        }, lost));
       }
     }, () => setState((prev) => prev && prev.syncing ? { ...prev, syncing: false } : prev));
     const unsubUser = onSnapshot(userRef, (snap) => {
@@ -269,7 +278,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       unsubMembers();
       unsubUser();
       unsubAllow();
-      for (const stop of unsubs) stop();
+      for (const cid of [...live.keys()]) detach(cid);
     };
   }, [authUser]);
 
@@ -574,6 +583,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           .catch(() => flash("Couldn't change that.", "err"));
       },
       deleteCampaign: async (cid) => {
+        // Stop listening first: the server deletes the member docs, and live listeners would hit permission-denied.
+        detachRef.current(cid);
         const res = await authedFetch(`/api/campaigns/${cid}`, { method: "DELETE" }).catch(() => null);
         if (!res || !res.ok) {
           flash("Couldn't delete that campaign.", "err");
