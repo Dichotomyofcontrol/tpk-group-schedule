@@ -884,3 +884,13 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 
 /* Campaign page: a real section gap under the header tile, matching the 32px section rhythm */
 .chead ~ .cgrid { margin-top: 32px; }
+
+/* Organizer-only "Manage players" text control in the players header */
+.sh:has(.shact) { flex-wrap: wrap; row-gap: 4px; }
+.sh:has(.shact) h2 { white-space: nowrap; }
+.sh .shact { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; margin-left: auto; }
+.sh .shact .mplayers { margin-left: -8px; }
+.mplayers { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 8px; border: 0; background: none; border-radius: 6px; font: 500 14px/20px var(--ui); color: var(--ink2); cursor: pointer; text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 4px; white-space: nowrap; }
+.mplayers:hover { color: var(--ink); text-decoration-color: currentColor; }
+.mplayers:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.mpsheet .mlist { margin: 4px 0 16px; }
