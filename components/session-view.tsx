@@ -1,4 +1,5 @@
 "use client";
+import { NotOnTpkMark } from "./tpk-assign";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -75,6 +76,7 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
         <span className="mg"><Icon name="clock" className="ic sm" />{formatRangePretty(session.startsAt, session.endsAt, session.tz)}</span>
         {session.location && <MapsLink place={session.location} />}
       </p>
+      <NotOnTpkMark cid={cid} sid={sid} long />
       <div className="sgrid">
         <div className="scol">
           <section className="card pad" aria-labelledby="who-h">

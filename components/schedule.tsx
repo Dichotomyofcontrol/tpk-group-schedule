@@ -1,4 +1,5 @@
 "use client";
+import { NotOnTpkMark } from "./tpk-assign";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -66,7 +67,7 @@ export function SessionRow({ session, showCampaign = false, ledger = false }: { 
       <span className="st">
         {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
         <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</> : displayTitle(session, campaign.name)}</b>
-        <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}</span>
+        <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}<NotOnTpkMark cid={session.cid} sid={session.id} /></span>
         {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
         {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}
       </span>
