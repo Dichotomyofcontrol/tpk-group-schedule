@@ -12,6 +12,7 @@ import { Icon, Skeleton } from "./ui";
 import { HomeScreenHint } from "./home-hint";
 import { GettingStarted } from "./getting-started";
 import { CampaignPicker } from "./campaign-picker";
+import { TpkAssign } from "./tpk-assign";
 
 /** Sessions: the next one as the hero, then every later one grouped by month. Filter by campaign. */
 export function SessionsView() {
@@ -85,6 +86,7 @@ export function SessionsView() {
       <div className="ptitle"><h1 className="lt">Sessions</h1></div>
       <HomeScreenHint />
       <GettingStarted />
+      <TpkAssign />
       {mine.length > 0 && (
         <div className="ltools">
           <div className="seg" role="group" aria-label="Which sessions">
