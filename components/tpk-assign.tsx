@@ -6,7 +6,7 @@ import { getFirebase } from "@/lib/firebase-client";
 import { isOrganizer } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, formatTime, weekdayName, zonedTimeToUtc } from "@/lib/time";
-import { DEFAULT_RULES, TPK_TZ, matchBooking, parseGm, weekdayInTz, type PendingBooking } from "@/lib/tpk-rules";
+import { DEFAULT_RULES, TPK_OWNER_EMAIL, TPK_TZ, matchBooking, parseGm, weekdayInTz, type PendingBooking } from "@/lib/tpk-rules";
 import { DateBlock, Icon } from "./ui";
 
 type Camp = { id: string; name: string };
@@ -35,6 +35,8 @@ function useTpkData() {
       setShared(demoData(camps, state));
       return;
     }
+    // Only the TPK import's owner (Seth) has bookings to sync; everyone else skips the call.
+    if ((state.me?.email || "").trim().toLowerCase() !== TPK_OWNER_EMAIL) return;
     loading = call("/api/import/tpk/pending").then(async (r) => { if (r.ok) setShared(await r.json()); }).catch(() => {}).finally(() => { loading = null; });
   }, [organizer, state, mode]);
   return { data: organizer ? data : null, mode, flash: store.flash };
