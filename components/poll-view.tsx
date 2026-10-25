@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
 import { memberYesCount, mergeVoteSeats, optionClocks, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
+import { linkShareData } from "@/lib/share-link";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
@@ -12,11 +13,11 @@ import { Avatar, Icon, BackBar } from "./ui";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
 
-export async function sharePollLink(url: string, title: string, text: string, copyValue = url): Promise<"shared" | "copied" | "aborted" | "failed"> {
+export async function sharePollLink(url: string, title: string, text?: string, copyValue = url): Promise<"shared" | "copied" | "aborted" | "failed"> {
   const coarse = window.matchMedia("(pointer: coarse)").matches;
   if (coarse && typeof navigator.share === "function") {
     try {
-      await navigator.share({ title, text, url });
+      await navigator.share(linkShareData(title, url, text));
       return "shared";
     } catch (err) {
       if ((err as Error)?.name === "AbortError") return "aborted";
@@ -188,8 +189,7 @@ function PollCard({ poll }: { poll: Poll }) {
           <Link href={path}>{path}</Link>
           <button type="button" className="btn sec sm" onClick={async () => {
             const url = `${window.location.origin}${path}`;
-            const text = `Pick every date that works for ${campaign.name}: ${url}`;
-            const result = await sharePollLink(url, poll.title, text);
+            const result = await sharePollLink(url, poll.title, `Pick every date that works for ${campaign.name}`);
             if (result === "copied") store.flash("Poll link copied. Send it to the table.");
             else if (result === "failed") store.flash("Couldn't copy the link.", "err");
           }}><Icon name="link" className="ic sm" />Copy/share link</button>
@@ -203,9 +203,9 @@ function PollCard({ poll }: { poll: Poll }) {
           const names = quiet.map((m) => (m.displayName || m.characterName || "").split(" ")[0]).filter(Boolean);
           const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] || "friends";
           const url = `${window.location.origin}${path}`;
-          const text = `${who}: we're picking the next ${campaign.name} night. Tap the dates that work for you: ${url}`;
+          const note = `${who}: we're picking the next ${campaign.name} night. Tap the dates that work for you.`;
           for (const m of quiet) store.nudge(poll.id, m.id);
-          const result = await sharePollLink(url, poll.title, text, text);
+          const result = await sharePollLink(url, poll.title, note, `${note} ${url}`);
           if (result === "copied") store.flash("Nudge copied. Paste it in your group chat.");
           else if (result === "failed") store.flash("Couldn't copy the nudge.", "err");
         }}>Nudge {quiet.length === 1 ? (quiet[0].displayName || "them").split(" ")[0] : `the ${quiet.length} who haven't voted`}</button>
@@ -294,7 +294,7 @@ function SessionPollForm({ campaigns }: { campaigns: ReturnType<typeof useStore>
           <Link href={path}>{path}</Link>
           <button type="button" className="btn pri sm" onClick={async () => {
             const url = `${window.location.origin}${path}`;
-            const result = await sharePollLink(url, made.title, `Pick every date that works for ${made.name}: ${url}`);
+            const result = await sharePollLink(url, made.title, `Pick every date that works for ${made.name}`);
             if (result === "copied") store.flash("Poll link copied. Send it to the table.");
             else if (result === "failed") store.flash("Couldn't copy the link.", "err");
           }}><Icon name="link" className="ic sm" />Copy/share link</button>
@@ -356,7 +356,7 @@ function OneShotForm() {
             return (
               <button type="button" className="btn sec sm" onClick={async () => {
                 const url = `${window.location.origin}${path}`;
-                const result = await sharePollLink(url, name, `Pick every date that works for ${name}: ${url}`);
+                const result = await sharePollLink(url, name, `Pick every date that works for ${name}`);
                 if (result === "copied") store.flash("Poll link copied. Send it to the table.");
                 else if (result === "failed") store.flash("Couldn't copy the link.", "err");
               }}><Icon name="link" className="ic sm" />Copy/share link</button>
