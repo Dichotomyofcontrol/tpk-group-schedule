@@ -1,61 +1,52 @@
 import Link from "next/link";
 import { Icon } from "./ui";
 
+const CHAPTERS = [
+  { n: "01", title: "Sessions that assume yes", body: "The whole party is counted in. Mark yourself out in one tap and the GM sees it instantly." },
+  { n: "02", title: "Campaigns with a cover", body: "Players, the usual night, and recaps — typed or as a PDF — live with the story they belong to." },
+  { n: "03", title: "Polls for the next arc", body: "Float a few dates, let the table vote, and lock the winner onto the calendar." },
+];
+
+function Die() {
+  return (
+    <svg className="d20" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.6" aria-hidden="true">
+      <polygon points="50,2 93,26 93,74 50,98 7,74 7,26" />
+      <polygon points="50,22 76,66 24,66" />
+      <path d="M50 2 50 22M93 26 76 66M7 26 24 66M50 98 24 66M50 98 76 66M93 74 76 66M7 74 24 66M50 22 7 26M50 22 93 26M24 66 7 74" />
+    </svg>
+  );
+}
+
 export function Landing() {
   return (
-    <>
-      <section className="hero-land">
-        <div className="hart">
-          <img className="art" src="/brand/cover-emberfall.svg" alt="" />
-        </div>
-        <div className="hin">
-          <div className="eyebrow">For tabletop groups</div>
-          <h1>Every session, <em>every saga,</em> in one place.</h1>
-          <p className="lead">Six in the TPK keeps your party&apos;s sessions, RSVPs and recaps together. Everyone&apos;s in by default; you just say when you can&apos;t make it.</p>
-          <Link className="btn pri" href="/signin"><Icon name="mail" className="ic sm" />Sign in with email</Link>
-          <div className="note">No password. Invite-only — your GM adds you.</div>
-        </div>
+    <div id="content">
+      <section className="almanac-hero">
+        <Die />
+        <p className="kicker">Six in the TPK</p>
+        <h1>
+          <span>Every session,</span>
+          <span className="ghost-type">every saga.</span>
+        </h1>
+        <p className="voice">One table for the nights you play, the nights you can&apos;t, and the story you write down after.</p>
+        <Link className="btn pri" href="/signin"><Icon name="mail" className="ic sm" />Sign in with email</Link>
+        <p className="fine">No password. Invite-only — your GM adds you.</p>
       </section>
-      <section className="feat">
-        <div className="eyebrow">How it works</div>
-        <h2>Less herding cats. More rolling dice.</h2>
-        <div className="fg">
-          <article className="card fc">
-            <span className="fi"><Icon name="dates" /></span>
-            <h3>Sessions that assume yes</h3>
-            <p>The whole party is counted in. Mark yourself out in one tap and the GM sees it instantly.</p>
-            <div className="vig">
-              <div className="dt"><span className="dw">Thu</span><span className="dn">23</span></div>
-              <div style={{ flex: 1 }}><b style={{ fontWeight: 600 }}>Curse of Strahd</b><br /><span className="status">5 of 6 in</span></div>
-            </div>
+      <section className="chapters">
+        <p className="kicker">How it works</p>
+        <h2>Less herding.<span className="ghost-type">More dice.</span></h2>
+        {CHAPTERS.map((chapter) => (
+          <article className="chapter rise" key={chapter.n}>
+            <span className="seal" aria-hidden="true">{chapter.n}</span>
+            <h3>{chapter.title}</h3>
+            <p>{chapter.body}</p>
           </article>
-          <article className="card fc">
-            <span className="fi"><Icon name="camp" /></span>
-            <h3>Campaigns with a cover</h3>
-            <p>Players, the usual night and recaps — typed or as a PDF — live with the story they belong to.</p>
-            <div className="mini">
-              <img className="art" src="/brand/cover-drowned-crown.svg" alt="" />
-              <b>The Drowned Crown</b>
-            </div>
-          </article>
-          <article className="card fc">
-            <span className="fi"><Icon name="polls" /></span>
-            <h3>Polls for the next arc</h3>
-            <p>Float a few dates, let the table vote, lock the winner onto the calendar.</p>
-            <div className="pr">
-              <div><span>Sat, Nov 7</span><b>5</b></div>
-              <div className="bar"><i style={{ width: "83%" }} /></div>
-              <div style={{ marginTop: 10 }}><span>Sun, Nov 8</span><b>2</b></div>
-              <div className="bar"><i style={{ width: "33%", background: "var(--rule2)" }} /></div>
-            </div>
-          </article>
-        </div>
+        ))}
       </section>
-      <section className="quote">
-        <p>“Finally, nobody asks ‘wait, are we playing this week?’ in the group chat.”</p>
-        <span className="note">— a very tired Dungeon Master</span>
+      <section className="quote-band">
+        <p className="voice">“Finally, nobody asks ‘wait, are we playing this week?’ in the group chat.”</p>
+        <span className="kicker">A very tired Dungeon Master</span>
       </section>
       <footer className="foot"><span>© 2026 · Invite-only tables</span><span>Made for the table</span></footer>
-    </>
+    </div>
   );
 }

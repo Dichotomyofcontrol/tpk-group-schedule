@@ -13,7 +13,9 @@ import { addDaysYmd } from "@/lib/time";
 import type { Cadence, Campaign, Member, Session } from "@/lib/types";
 import { CoverEditor } from "./cover-editor";
 import { SessionRow, sessionHref } from "./schedule";
-import { Avatar, BackBar, CampaignCover, Icon, SettingRow, Switch } from "./ui";
+import { Avatar, BackBar, CampaignCover, Icon, SettingRow, Switch, Watermark } from "./ui";
+import { accentVar, worldFor } from "@/lib/world";
+import type { CSSProperties } from "react";
 
 export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: boolean }) {
   const store = useStore();
@@ -25,6 +27,17 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   const allRecaps = pastSessions(state, cid).filter((s) => hasRecap(s));
   const recapKey = allRecaps.map((s) => s.id + (s.recapText || "").length + (s.pdfPath || "")).join("|");
   const [unread, setUnread] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!campaign) return;
+    const world = worldFor(campaign);
+    const root = document.documentElement;
+    root.style.setProperty("--acc", world.accent);
+    document.body.dataset.world = world.id;
+    return () => {
+      root.style.removeProperty("--acc");
+      delete document.body.dataset.world;
+    };
+  }, [campaign]);
   useEffect(() => {
     if (state.syncing || !allRecaps.length) return;
     seedReads(allRecaps);
@@ -43,6 +56,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
       </>
     );
   }
+  const world = worldFor(campaign);
   const organizer = isOrganizer(state, cid);
   const staff = isStaff(state, cid);
   const members = membersOf(state, cid);
@@ -63,13 +77,14 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           {organizer && <button className="btn sec sm" onClick={() => store.archiveCampaign(cid, false)}>Restore</button>}
         </div>
       )}
-      <section className="card hero chead">
+      <section className="card hero chead" data-world={world.id} style={accentVar(campaign) as CSSProperties}>
         <div className="hero-cover">
           <CampaignCover campaign={campaign} onAdd={organizer ? () => setCovering(true) : undefined} />
           {organizer && hasUploadedCover(campaign) && <button className="btn sec sm covbtn" onClick={() => setCovering(true)}><Icon name="img" className="ic sm" />Change cover</button>}
         </div>
         <div className="hb">
-          <div className="eyebrow">Campaign · {owner?.id === state.me.id ? "You run this table" : `${owner?.displayName || "The organizer"} runs this table`}</div>
+          <Watermark word={world.word} />
+          <div className="eyebrow">Ledger · {world.place} · {owner?.id === state.me.id ? "You run this table" : `${owner?.displayName || "The organizer"} runs this table`}</div>
           <h1 className="lt">{campaign.name}</h1>
           <p className="meta">
             <span className="mg"><Icon name="clock" className="ic sm" />{cadenceLine(campaign.cadence)}</span>
@@ -77,6 +92,11 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           </p>
           {organizer && !editing && <button className="btn sec sm edt" onClick={() => setEditing(true)}><Icon name="quill" className="ic sm" />Edit details</button>}
           {organizer && editing && <DetailsForm campaign={campaign} onDone={() => setEditing(false)} />}
+          <div className="bigstats">
+            <div><b>{members.length}</b><span>At the table</span></div>
+            <div><b>{upcoming.length}</b><span>Coming up</span></div>
+            <div><b>{recaps.length}</b><span>{recaps.length === 1 ? "Recap" : "Recaps"}</span></div>
+          </div>
         </div>
       </section>
       {covering && <CoverEditor campaign={campaign} onClose={() => setCovering(false)} />}

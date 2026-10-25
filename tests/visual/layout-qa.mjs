@@ -123,13 +123,14 @@ for (const scheme of schemes) {
         const result = await measure(page);
         checks += 1;
         const problems = [];
-        if (result.theme !== "cream") problems.push(`theme ${result.theme} followed the OS`);
+        if (result.theme !== "night") problems.push(`theme ${result.theme} followed the OS`);
         if (result.offenderCount) problems.push(`${result.offenderCount} under header: ${result.offenders.join(" | ")}`);
         if (result.titleUnder.length) problems.push(`h1 under header: ${result.titleUnder.map((t) => t.text).join(", ")}`);
         if (result.overflow > 1) problems.push(`horizontal overflow ${result.overflow}px`);
         if (result.logoLines > 1) problems.push(`wordmark wraps onto ${result.logoLines} lines`);
         if (result.logos !== 1) problems.push(`${result.logos} logos`);
-        const guestLanding = person === "guest" && (path === "/" || path.startsWith("/?"));
+        // /?view=schedule redirects to /sessions, so only the real home route is the signed-out landing.
+        const guestLanding = person === "guest" && path === "/";
         if (guestLanding && result.signIns !== 1) problems.push(`${result.signIns} sign-in entries on landing`);
         if (person !== "guest" && result.signIns !== 0) problems.push(`${result.signIns} sign-in entries while signed in`);
         if (person === "guest" && !guestLanding && result.signIns !== 0) problems.push(`${result.signIns} extra sign-in entries`);
@@ -152,4 +153,4 @@ console.log("no element top sits under the sticky header");
 console.log("no horizontal overflow");
 console.log("no console errors");
 console.log("wordmark stays on one line");
-console.log("cream stays default when the OS is dark");
+console.log("almanac ink stays default when the OS is light or dark");

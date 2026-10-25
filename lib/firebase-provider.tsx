@@ -134,8 +134,8 @@ async function authedFetch(input: string, init: RequestInit = {}): Promise<Respo
 export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [theme, setThemeState] = useState<"light" | "dark" | "system">("light");
-  const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
+  const [theme, setThemeState] = useState<"light" | "dark" | "system">("dark");
+  const [resolvedTheme, setResolved] = useState<"light" | "dark">("dark");
   const [online, setOnline] = useState(true);
   const [authUser, setAuthUser] = useState<FirebaseUser | null>(null);
   const [authKnown, setAuthKnown] = useState(false);
