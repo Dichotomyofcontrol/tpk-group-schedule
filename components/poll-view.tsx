@@ -173,8 +173,16 @@ function PollCard({ poll }: { poll: Poll }) {
             >
               <span className="fill" style={{ width: `${Math.round((row.yes / max) * 100)}%` }} />
               <span className="chk">{picked && <Icon name="check" />}</span>
-              <span className="dt"><span className="dw">{when.dow}</span><span className="dn">{when.day}</span><span className="dm">{when.mon}</span><span className="tm">{time}</span></span>
-              <span className="t">{everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}{who && <span className="who">{who}</span>}</span>
+              <span className="dt">
+                <span className="dline">
+                  <span className="dw">{when.dow}</span>
+                  <span className="dn">{when.day}</span>
+                  <span className="dm">{when.mon}</span>
+                </span>
+                {everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}
+                <span className="tm">{time}</span>
+              </span>
+              <span className="t">{who && <span className="who">{who}</span>}</span>
               <span className="n">{row.yes}</span>
             </button>
           );

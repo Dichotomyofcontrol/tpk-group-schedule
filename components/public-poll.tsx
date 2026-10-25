@@ -236,20 +236,30 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
                 <div className="gnames" role="group" aria-label="Players on the roster">
                   {view.players.map((player) => {
                     const on = !unlisted && seat === player.id;
+                    const who = player.character ? `${player.name}, ${player.character}` : player.name;
                     return (
                       <button
                         key={player.id}
                         type="button"
                         className={on ? "on" : ""}
                         aria-pressed={on}
+                        aria-label={player.taken ? `${who}, voted` : who}
                         onClick={() => { setSeat(player.id); setUnlisted(false); setName(player.name); setError(""); }}
                       >
-                        {player.character ? `${player.name} · ${player.character}` : player.name}
-                        {player.taken && <small>Voted</small>}
+                        <span className="gn-copy">
+                          <span className="gn-name">{player.name}</span>
+                          {player.character && <span className="gn-char">{player.character}</span>}
+                        </span>
+                        {player.taken && (
+                          <span className="gn-mark">
+                            <Icon name="check" className="ic gn-check" />
+                            <span className="sr">Voted</span>
+                          </span>
+                        )}
                       </button>
                     );
                   })}
-                  <button type="button" className={unlisted ? "on" : ""} aria-pressed={unlisted} onClick={() => { setUnlisted(true); setSeat(""); setName(""); setError(""); }}>
+                  <button type="button" className={unlisted ? "gn-any on" : "gn-any"} aria-pressed={unlisted} onClick={() => { setUnlisted(true); setSeat(""); setName(""); setError(""); }}>
                     I&apos;m not listed
                   </button>
                 </div>
@@ -272,18 +282,21 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
             {view.options.map((option, index) => {
               const picked = picks.includes(option.id);
               const lead = index === 0 && option.yes > 0;
-              const label = `${option.dow} ${option.mon} ${option.day} ${option.time}: ${option.yes} ${option.yes === 1 ? "vote" : "votes"}${option.names.length ? ` (${option.names.join(", ")})` : ""}`;
+              const label = `${option.dow} ${option.mon} ${option.day} ${option.time}: ${option.yes} ${option.yes === 1 ? "vote" : "votes"}${lead ? ", leading" : ""}${option.names.length ? ` (${option.names.join(", ")})` : ""}`;
               const body = (
                 <>
                   <span className="fill" style={{ width: `${Math.round((option.yes / max) * 100)}%` }} />
                   {!locked && <span className="chk">{picked && <Icon name="check" />}</span>}
                   <span className="dt">
-                    <span className="dw">{option.dow}</span>
-                    <span className="dn">{option.day}</span>
-                    <span className="dm">{option.mon}</span>
+                    <span className="dline">
+                      <span className="dw">{option.dow}</span>
+                      <span className="dn">{option.day}</span>
+                      <span className="dm">{option.mon}</span>
+                    </span>
+                    {lead && <b className="lead-t">Leading</b>}
                     <span className="tm">{option.time}</span>
                   </span>
-                  <span className="t">{lead && <b className="lead-t">Leading</b>}{option.names.length > 0 && <span className="who">{whoLabel(option.names)}</span>}</span>
+                  <span className="t">{option.names.length > 0 && <span className="who">{whoLabel(option.names)}</span>}</span>
                   <span className="n">{option.yes}</span>
                 </>
               );
