@@ -6,7 +6,7 @@ export function Landing() {
     <>
       <section className="hero-land">
         <div className="hart">
-          <img className="art" src="/brand/cover-emberfall.svg" alt="" />
+          <img className="art" src="/brand/cover-emberfall.svg" alt="Illustration of a castle below a solar eclipse over misty mountains" />
         </div>
         <div className="hin">
           <div className="eyebrow">For tabletop groups</div>
