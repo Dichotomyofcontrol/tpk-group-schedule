@@ -7,7 +7,6 @@ import { useStore } from "@/lib/store";
 import type { Session } from "@/lib/types";
 import { NextHero, SessionRow } from "./schedule";
 import { Icon, Skeleton } from "./ui";
-import { HomeScreenHint } from "./home-hint";
 import { GettingStarted } from "./getting-started";
 import { CampaignPicker } from "./campaign-picker";
 import { TpkAssign } from "./tpk-assign";
@@ -43,7 +42,6 @@ export function SessionsView() {
   return (
     <>
       <div className="ptitle"><div><p className="kicker">The ledger</p><h1 className="lt">Sessions</h1></div></div>
-      <HomeScreenHint />
       <GettingStarted />
       <TpkAssign />
       {mine.length > 1 && (
