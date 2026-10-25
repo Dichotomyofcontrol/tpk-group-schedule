@@ -170,6 +170,16 @@ export function voteSeats(record: Pick<PollRecord, "members" | "roster">): PollP
   return mergeVoteSeats(members, record.roster);
 }
 
+/** Id the name picker shows. A roster seat uses its roster id; a joined account uses the member id. */
+export function pickerSeatId(seat: PollPlayer): string {
+  return seat.rosterId || seat.id;
+}
+
+function seatFromPicker(seats: PollPlayer[], id: string): PollPlayer | undefined {
+  return seats.find((seat) => pickerSeatId(seat) === id)
+    || seats.find((seat) => seat.id === id || seat.memberId === id || seat.rosterId === id);
+}
+
 export function parseGuestBallot(body: unknown): { token: string; name: string; picks: string[]; rosterId?: string } | { error: string; status: number } {
   if (!body || typeof body !== "object") return { error: "Send JSON.", status: 400 };
   const raw = body as { token?: unknown; name?: unknown; picks?: unknown; rosterId?: unknown };
@@ -185,7 +195,7 @@ export function parseGuestBallot(body: unknown): { token: string; name: string; 
   const picks = [...new Set(raw.picks as string[])];
   let rosterId: string | undefined;
   if (raw.rosterId != null && raw.rosterId !== "") {
-    if (typeof raw.rosterId !== "string" || !/^[A-Za-z0-9_-]{1,40}$/.test(raw.rosterId)) {
+    if (typeof raw.rosterId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(raw.rosterId)) {
       return { error: "That player isn't on this table.", status: 400 };
     }
     rosterId = raw.rosterId;
@@ -318,7 +328,7 @@ export async function toPublicPoll(record: PollRecord, token: string | null): Pr
       const vote = poll.votes?.[m.id];
       const taken = voteHasYes(vote) && vote?.guestToken !== hash;
       return {
-        id: m.rosterId || m.id,
+        id: pickerSeatId(m),
         name: m.displayName.trim(),
         character: m.characterName && nameKey(m.characterName) !== nameKey(m.displayName) ? m.characterName : undefined,
         taken,
@@ -381,7 +391,7 @@ async function applyRosterVote(
 
   let seat: PollPlayer | undefined;
   if (input.rosterId) {
-    seat = seats.find((item) => item.rosterId === input.rosterId);
+    seat = seatFromPicker(seats, input.rosterId);
     if (!seat) return { error: "That player isn't on this table.", status: 400 };
   } else {
     const matches = memberMatches(seats, nameKey(named.name));

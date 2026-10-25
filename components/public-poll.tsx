@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { applyGuestVote, GUEST_TOKEN_RE, toPublicPoll, type PollPlayer, type PublicPollView } from "@/lib/poll-public";
+import { applyGuestVote, GUEST_TOKEN_RE, toPublicPoll, voteSeats, type PollPlayer, type PublicPollView } from "@/lib/poll-public";
 import { seatsFromRoster } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 import { Icon } from "./ui";
@@ -131,7 +131,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
       pending: member.pending,
     }));
     const roster = seatsFromRoster(await store.rosterList(cid));
-    const seats = roster.length ? roster : members;
+    const seats = voteSeats({ members, roster: roster.length ? roster : undefined });
     const result = await applyGuestVote(poll, { token, name: ballotName, picks: ballotPicks, rosterId }, seats);
     if ("error" in result) {
       setError(result.error);
