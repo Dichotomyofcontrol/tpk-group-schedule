@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { durableCoverSrc } from "@/lib/cover-doc";
 import { hasUploadedCover } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import type { Campaign } from "@/lib/types";
@@ -149,15 +150,18 @@ export function DefaultCover({ color = "", className = "", onAdd }: { color?: st
 export function CampaignCover({ campaign, className = "", onAdd }: { campaign: Campaign; className?: string; onAdd?: () => void }) {
   const store = useStore();
   const path = campaign.cover?.path || "";
-  const inline = !path && hasUploadedCover(campaign) ? campaign.cover.src : "";
-  const [url, setUrl] = useState<string | null>(inline || null);
+  const durable = durableCoverSrc(campaign.cover?.src);
+  const inline = !path && !durable && hasUploadedCover(campaign) ? campaign.cover.src : "";
+  const [url, setUrl] = useState<string | null>(durable || inline || null);
   useEffect(() => {
     let live = true;
+    if (durable) { setUrl(durable); return; }
     if (!path) { setUrl(inline || null); return; }
     void store.coverUrl(path).then((u) => { if (live) setUrl(u); });
     return () => { live = false; };
+    // The store identity changes every sync. coverUrl reads refs, so the path is enough.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, inline]);
+  }, [path, durable, inline]);
   if (!url) return <DefaultCover color={campaign.color} className={className} onAdd={onAdd} />;
   return (
     <div className={`ucover ${className}`.trim()}>
