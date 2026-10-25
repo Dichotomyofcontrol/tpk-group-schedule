@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { GuestBallot } from "./poll-public";
 import type { RecapPatch } from "./recap";
+import type { RosterInput, RosterPlayer } from "./roster";
 import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Session, Toast } from "./types";
 
 export type CampaignInput = {
@@ -72,6 +73,20 @@ export type StoreApi = {
   createOneShot: (input: OneShotInput) => string | null;
   nudge: (pollId: string, uid: string) => void;
   createInvite: (cid: string, role: Invite["role"], email?: string) => Promise<string | null>;
+  rosterList: (cid: string) => Promise<RosterPlayer[]>;
+  rosterAdd: (cid: string, input: RosterInput) => Promise<RosterPlayer | { error: string }>;
+  rosterSave: (cid: string, id: string, input: RosterInput) => Promise<RosterPlayer | { error: string }>;
+  rosterRemove: (cid: string, id: string) => Promise<boolean>;
+  claimSeat: (token: string) => Promise<{
+    ok: true;
+    campaignName: string;
+    cid: string;
+    player: { id: string; name: string; characterName?: string; status: RosterPlayer["status"]; memberId?: string };
+    member: Member | null;
+    created: boolean;
+    linked: boolean;
+    already: boolean;
+  } | { ok: false; error: string }>;
   acceptInvite: (token: string, person?: { id: string; email: string; displayName: string; characterName?: string }) => boolean;
   sendMagicLink: (email: string, inviteToken?: string) => Promise<void>;
   /** Completes an email-link landing on /auth/finish. */

@@ -1,6 +1,6 @@
 import { adminConfigured, adminDb } from "@/lib/firebase-admin";
 import { demoPollRecord, saveDemoPoll } from "@/lib/poll-demo";
-import { applyGuestVote, parseGuestBallot, toPublicPoll, validPollId, type PollRecord } from "@/lib/poll-public";
+import { applyGuestVote, parseGuestBallot, toPublicPoll, validPollId, voteSeats, type PollRecord } from "@/lib/poll-public";
 import { loadPollRecord, pollFromData } from "@/lib/poll-record";
 import { allowPollVote } from "@/lib/poll-vote-limit";
 
@@ -49,7 +49,7 @@ export async function POST(request: Request, context: { params: Promise<{ cid: s
     if (!db) {
       const record = demoPollRecord(cid, pid);
       if (!record || record.campaignStatus === "archived") return json({ error: "That poll isn't open." }, 404);
-      const result = await applyGuestVote(record.poll, parsed, record.members);
+      const result = await applyGuestVote(record.poll, parsed, voteSeats(record));
       if ("error" in result) return json({ error: result.error }, result.status);
       saveDemoPoll(result.poll, record);
       const view = await toPublicPoll({ ...record, poll: result.poll }, parsed.token);
@@ -62,11 +62,11 @@ export async function POST(request: Request, context: { params: Promise<{ cid: s
   }
 }
 
-async function commitLiveVote(cid: string, pid: string, parsed: { token: string; name: string; picks: string[] }) {
+async function commitLiveVote(cid: string, pid: string, parsed: { token: string; name: string; picks: string[]; rosterId?: string }) {
   const db = adminDb();
   const loaded = await loadPollRecord(cid, pid);
   if (!loaded || loaded.campaignStatus === "archived") return json({ error: "That poll isn't open." }, 404);
-  const members = loaded.members;
+  const members = voteSeats(loaded);
   const ref = db.collection("campaigns").doc(cid).collection("polls").doc(pid);
   const saved = await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);

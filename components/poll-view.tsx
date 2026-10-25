@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
-import { memberYesCount, optionClocks, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot } from "@/lib/poll-public";
+import { memberYesCount, optionClocks, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
+import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
@@ -11,7 +12,7 @@ import { Avatar, Icon, BackBar } from "./ui";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
 
-async function sharePollLink(url: string, title: string, text: string, copyValue = url): Promise<"shared" | "copied" | "aborted" | "failed"> {
+export async function sharePollLink(url: string, title: string, text: string, copyValue = url): Promise<"shared" | "copied" | "aborted" | "failed"> {
   const coarse = window.matchMedia("(pointer: coarse)").matches;
   if (coarse && typeof navigator.share === "function") {
     try {
@@ -121,8 +122,23 @@ export function PollList() {
 function PollCard({ poll }: { poll: Poll }) {
   const store = useStore();
   const campaign = store.state.campaigns.find((c) => c.id === poll.cid);
+  const [roster, setRoster] = useState<RosterPlayer[] | null>(null);
+  const listRef = useRef(store.rosterList);
+  listRef.current = store.rosterList;
+  useEffect(() => {
+    let alive = true;
+    listRef.current(poll.cid).then((players) => { if (alive) setRoster(players); }).catch(() => { if (alive) setRoster([]); });
+    return () => { alive = false; };
+  }, [poll.cid, store.state.me.id]);
   if (!campaign) return null;
-  const members = membersOf(store.state, poll.cid);
+  const accounts = membersOf(store.state, poll.cid);
+  const seated = roster && roster.length ? seatsFromRoster(roster) : null;
+  const members: PollPlayer[] = seated || accounts.map((member) => ({
+    id: member.id,
+    displayName: member.displayName,
+    characterName: member.characterName,
+    pending: member.pending,
+  }));
   const ranked = rankedOptions(poll, campaign.cadence);
   const max = Math.max(1, ...ranked.map((r) => r.yes));
   const mine = poll.votes[store.state.me.id]?.picks ?? {};

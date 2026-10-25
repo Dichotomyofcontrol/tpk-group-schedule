@@ -4,6 +4,8 @@ import { adminConfigured, adminDb } from "./firebase-admin";
 import { dedupeMembers } from "./model";
 import { demoPollRecord } from "./poll-demo";
 import { POLL_DISPLAY_TZ, validPollId, type PollPlayer, type PollRecord } from "./poll-public";
+import { seatsFromRoster } from "./roster";
+import { loadRoster } from "./roster-server";
 import type { Member, Poll, PollOption } from "./types";
 
 function asOptions(value: unknown): PollOption[] {
@@ -80,11 +82,13 @@ export async function loadPollRecord(cid: string, pid: string): Promise<PollReco
   if (campaign.status === "archived" || !campaign.name) return null;
   const poll = pollFromData(pid, cid, pollSnap.data() || {});
   if (!poll) return null;
+  const roster = seatsFromRoster(await loadRoster(cid));
   return {
     poll,
     campaignName: String(campaign.name).slice(0, 80),
     kind: campaign.kind === "oneshot" ? "oneshot" : undefined,
     campaignStatus: "active",
     members: membersFromDocs(membersSnap.docs),
+    roster: roster.length ? roster : undefined,
   };
 }

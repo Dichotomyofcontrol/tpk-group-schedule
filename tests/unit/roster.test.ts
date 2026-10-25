@@ -1,0 +1,125 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { applyGuestVote, summarizePoll, toPublicPoll, voteSeats } from "../../lib/poll-public.ts";
+import { seatsFromRoster } from "../../lib/roster.ts";
+import { applyClaim, parseRosterInput, buildRosterPlayer, patchRosterPlayer } from "../../lib/roster.ts";
+import { SALTMARSH_ROSTER, addDemoRosterPlayer, resetDemoRoster } from "../../lib/roster-demo.ts";
+import { demoPollRecord, resetDemoPolls } from "../../lib/poll-demo.ts";
+import type { Poll } from "../../lib/types.ts";
+
+const TOKEN = "device-token-roster-1111";
+const OTHER = "device-token-roster-2222";
+
+function saltPoll(): Poll {
+  const record = demoPollRecord("saltmarsh", "salt-dates");
+  assert.ok(record);
+  return structuredClone(record!.poll);
+}
+
+test("roster input keeps optional contact details and rejects a bad phone", () => {
+  const parsed = parseRosterInput({ name: "  Elara  ", characterName: "Elara Voss", email: "Elara@Example.com", phone: "(415) 555-0136" });
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.equal(parsed.value.name, "Elara");
+  assert.equal(parsed.value.email, "elara@example.com");
+  assert.equal(parsed.value.phone, "(415) 555-0136");
+  assert.equal(parseRosterInput({ name: "Elara", phone: "12" }).ok, false);
+  assert.equal(parseRosterInput({ name: "" }).ok, false);
+  resetDemoRoster();
+  const duplicate = addDemoRosterPlayer("saltmarsh", { name: "elara" }, "rp-dup", "token-dup");
+  assert.equal("error" in duplicate, true);
+});
+
+test("claiming a seat links an existing member and creates one for a new player", () => {
+  const elara = SALTMARSH_ROSTER.find((player) => player.id === "rp-elara")!;
+  const linked = applyClaim(elara, SALTMARSH_ROSTER, [{ id: "seth" }], { id: "seth", email: "seth@example.com", displayName: "Seth" });
+  assert.equal(linked.ok, false);
+  const fresh = applyClaim(elara, SALTMARSH_ROSTER, [{ id: "seth" }], { id: "giada", email: "giada@example.com", displayName: "Giada" });
+  assert.equal(fresh.ok, true);
+  if (!fresh.ok) return;
+  assert.equal(fresh.created, true);
+  assert.equal(fresh.player.status, "joined");
+  assert.equal(fresh.player.memberId, "giada");
+  assert.equal(fresh.member?.displayName, "Giada");
+  assert.equal(fresh.member?.characterName, "Elara Voss");
+  const again = applyClaim(fresh.player, [...SALTMARSH_ROSTER.filter((player) => player.id !== "rp-elara"), fresh.player], [{ id: "seth" }, { id: "giada" }], { id: "giada", email: "giada@example.com", displayName: "Giada" });
+  assert.equal(again.ok, true);
+  if (!again.ok) return;
+  assert.equal(again.already, true);
+  const stolen = applyClaim(fresh.player, SALTMARSH_ROSTER, [{ id: "seth" }], { id: "amy", email: "amy@example.com", displayName: "Amy" });
+  assert.equal(stolen.ok, false);
+});
+
+test("an edit keeps the claim link and a patch does not drop the token", () => {
+  const player = buildRosterPlayer("saltmarsh", { name: "Elara", characterName: "Elara Voss" }, "rp-x", "token-1");
+  const next = patchRosterPlayer(player, { name: "Elara Quinn", email: "elara@example.com" });
+  assert.equal(next.token, "token-1");
+  assert.equal(next.status, "invited");
+  assert.equal(next.name, "Elara Quinn");
+  assert.equal(next.email, "elara@example.com");
+  assert.equal(next.characterName, undefined);
+});
+
+test("poll counts and nudges use the roster, one vote per seat", async () => {
+  resetDemoPolls();
+  resetDemoRoster();
+  const record = demoPollRecord("saltmarsh", "salt-dates");
+  assert.ok(record?.roster && record.roster.length === 3);
+  const seats = voteSeats(record!);
+  assert.deepEqual(seats.map((seat) => seat.displayName).sort(), ["Corin", "Elara", "Seth"]);
+  assert.equal(summarizePoll(record!.poll, seats).line.startsWith("0 of 3 voted"), true);
+
+  const poll = saltPoll();
+  const voted = await applyGuestVote(poll, { token: TOKEN, name: "Elara", picks: [poll.options[0].id], rosterId: "rp-elara" }, seats);
+  assert.equal("error" in voted, false);
+  if ("error" in voted) return;
+  assert.equal(voted.poll.votes["roster:rp-elara"]?.name, "Elara");
+  const summary = summarizePoll(voted.poll, seats);
+  assert.equal(summary.voted, 1);
+  assert.equal(summary.total, 3);
+  assert.equal(summary.quiet.includes("Elara"), false);
+  assert.equal(summary.quiet.includes("Corin"), true);
+
+  const other = await applyGuestVote(voted.poll, { token: OTHER, name: "Elara", picks: [poll.options[1].id], rosterId: "rp-elara" }, seats);
+  assert.equal("error" in other, true);
+  if (!("error" in other)) return;
+  assert.equal(other.error, "Elara already voted.");
+
+  const edit = await applyGuestVote(voted.poll, { token: TOKEN, name: "Elara", picks: [poll.options[1].id], rosterId: "rp-elara" }, seats);
+  assert.equal("error" in edit, false);
+  if ("error" in edit) return;
+  assert.equal(edit.edited, true);
+  assert.equal(edit.poll.votes["roster:rp-elara"]?.picks[poll.options[1].id], true);
+
+  const guest = await applyGuestVote(edit.poll, { token: OTHER, name: "Mira", picks: [poll.options[0].id] }, seats);
+  assert.equal("error" in guest, false);
+  if ("error" in guest) return;
+  assert.ok(Object.keys(guest.poll.votes).some((id) => id.startsWith("guest:")));
+  assert.equal(summarizePoll(guest.poll, seats).guests, 1);
+
+  const view = await toPublicPoll({ ...record!, poll: edit.poll }, OTHER);
+  const elara = view.players.find((player) => player.name === "Elara");
+  assert.equal(elara?.taken, true);
+  const mine = await toPublicPoll({ ...record!, poll: edit.poll }, TOKEN);
+  assert.equal(mine.players.find((player) => player.name === "Elara")?.taken, false);
+  assert.equal(mine.mine?.name, "Elara");
+  assert.equal(JSON.stringify(view).includes(TOKEN), false);
+  assert.equal(seatsFromRoster(SALTMARSH_ROSTER).find((seat) => seat.rosterId === "rp-seth")?.id, "seth");
+});
+
+test("roster writes stay on the server and the claim route checks the import-style bearer", () => {
+  const rules = readFileSync(new URL("../../firebase/firestore.rules", import.meta.url), "utf8");
+  const block = rules.match(/match \/roster\/\{rid\} \{[\s\S]*?\n {6}\}/);
+  assert.ok(block);
+  assert.match(block![0], /allow read, write: if false/);
+  assert.match(rules, /match \/rosterTokens\/\{token\}/);
+  const route = readFileSync(new URL("../../app/api/campaigns/[cid]/roster/route.ts", import.meta.url), "utf8");
+  assert.match(route, /verifyBearer/);
+  assert.match(route, /createRosterPlayer/);
+  const claim = readFileSync(new URL("../../app/api/join/[token]/route.ts", import.meta.url), "utf8");
+  assert.match(claim, /verifyBearer/);
+  assert.match(claim, /claimRosterSeat/);
+  const recap = readFileSync(new URL("../../app/api/import/recap/route.ts", import.meta.url), "utf8");
+  assert.match(recap, /secretOk/);
+});

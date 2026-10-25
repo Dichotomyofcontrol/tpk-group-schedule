@@ -54,6 +54,7 @@ import {
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
 import { omitUndefined } from "./omit";
+import type { RosterInput, RosterPlayer } from "./roster";
 import type { AppState, Attendance, AttendanceState, Campaign, Invite, Member, Poll, Session, SessionFile, Toast, User } from "./types";
 
 function emptyState(me: User): AppState {
@@ -363,6 +364,11 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     createOneShot: () => null,
     nudge: () => undefined,
     createInvite: async () => null,
+    rosterList: async () => [],
+    rosterAdd: async () => ({ error: "Sign in first." }),
+    rosterSave: async () => ({ error: "Sign in first." }),
+    rosterRemove: async () => false,
+    claimSeat: async () => ({ ok: false, error: "Sign in first." }),
     acceptInvite: () => false,
     signOut: async () => undefined,
     sendMagicLink: async (email: string, inviteToken?: string) => {
@@ -787,6 +793,51 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           flash("Couldn't create that invite. Try again.", "err");
           return null;
         }
+      },
+      rosterList: async (cid) => {
+        const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster`).catch(() => null);
+        if (!res?.ok) return [];
+        const body = await res.json() as { players?: RosterPlayer[] };
+        return body.players || [];
+      },
+      rosterAdd: async (cid, input: RosterInput) => {
+        const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster`, {
+          method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input),
+        }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as { player?: RosterPlayer; error?: string } : {};
+        if (!res?.ok || !body.player) return { error: body.error || "Couldn't add that player." };
+        return body.player;
+      },
+      rosterSave: async (cid, id, input: RosterInput) => {
+        const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, {
+          method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(input),
+        }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as { player?: RosterPlayer; error?: string } : {};
+        if (!res?.ok || !body.player) return { error: body.error || "Couldn't save that player." };
+        return body.player;
+      },
+      rosterRemove: async (cid, id) => {
+        const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => null);
+        return !!res?.ok;
+      },
+      claimSeat: async (token) => {
+        const res = await authedFetch(`/api/join/${encodeURIComponent(token)}`, { method: "POST" }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as {
+          ok?: boolean; error?: string; cid?: string; campaignName?: string; member?: Member | null;
+          player?: { id: string; name: string; characterName?: string; status: RosterPlayer["status"]; memberId?: string };
+          created?: boolean; linked?: boolean; already?: boolean;
+        } : {};
+        if (!res?.ok || !body.ok || !body.player || !body.cid || !body.campaignName) return { ok: false as const, error: body.error || "Couldn't claim that seat." };
+        return {
+          ok: true as const,
+          campaignName: body.campaignName,
+          cid: body.cid,
+          player: body.player,
+          member: body.member || null,
+          created: !!body.created,
+          linked: !!body.linked,
+          already: !!body.already,
+        };
       },
       acceptInvite: (token, person) => {
         const me = person ?? { id: authUser.uid, email: authUser.email || "", displayName: state.me.displayName };

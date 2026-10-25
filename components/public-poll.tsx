@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { applyGuestVote, GUEST_TOKEN_RE, toPublicPoll, type PollPlayer, type PublicPollView } from "@/lib/poll-public";
+import { seatsFromRoster } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 import { Icon } from "./ui";
 
@@ -39,6 +40,8 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
   const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
+  const [seat, setSeat] = useState("");
+  const [unlisted, setUnlisted] = useState(false);
   const [picks, setPicks] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -51,10 +54,21 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
     setMissing(false);
     if (next.mine) {
       hadVote.current = true;
-      setName(next.mine.name);
+      const match = next.players.find((player) => player.name.toLowerCase() === next.mine!.name.toLowerCase());
+      if (match && !match.taken) {
+        setSeat(match.id);
+        setUnlisted(false);
+        setName(match.name);
+      } else {
+        setSeat("");
+        setUnlisted(true);
+        setName(next.mine.name);
+      }
       setPicks(next.mine.picks);
     } else if (!name && savedName) {
-      setName(savedName);
+      const match = next.players.find((player) => player.name.toLowerCase() === savedName.toLowerCase() && !player.taken);
+      if (match) { setSeat(match.id); setName(match.name); setUnlisted(false); }
+      else setName(savedName);
     }
   }
 
@@ -69,7 +83,8 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
       characterName: member.characterName,
       pending: member.pending,
     }));
-    return toPublicPoll({ poll, campaignName: campaign.name, kind: campaign.kind, campaignStatus: campaign.status, members }, token);
+    const roster = seatsFromRoster(await store.rosterList(cid));
+    return toPublicPoll({ poll, campaignName: campaign.name, kind: campaign.kind, campaignStatus: campaign.status, members, roster: roster.length ? roster : undefined }, token);
   }
 
   useEffect(() => {
@@ -104,7 +119,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cid, pid, store.mode]);
 
-  async function voteLocally(token: string, ballotName: string, ballotPicks: string[]) {
+  async function voteLocally(token: string, ballotName: string, ballotPicks: string[], rosterId?: string) {
     const state = stateRef.current;
     const poll = state.polls.find((item) => item.id === pid && item.cid === cid);
     const campaign = state.campaigns.find((item) => item.id === cid);
@@ -115,13 +130,15 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
       characterName: member.characterName,
       pending: member.pending,
     }));
-    const result = await applyGuestVote(poll, { token, name: ballotName, picks: ballotPicks }, members);
+    const roster = seatsFromRoster(await store.rosterList(cid));
+    const seats = roster.length ? roster : members;
+    const result = await applyGuestVote(poll, { token, name: ballotName, picks: ballotPicks, rosterId }, seats);
     if ("error" in result) {
       setError(result.error);
       return true;
     }
     store.replacePoll(result.poll);
-    const next = await toPublicPoll({ poll: result.poll, campaignName: campaign.name, kind: campaign.kind, campaignStatus: campaign.status, members }, token);
+    const next = await toPublicPoll({ poll: result.poll, campaignName: campaign.name, kind: campaign.kind, campaignStatus: campaign.status, members, roster: roster.length ? roster : undefined }, token);
     const edited = hadVote.current;
     hadVote.current = true;
     setBanner(edited ? "updated" : "saved");
@@ -136,7 +153,10 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
     event.preventDefault();
     if (busy || !view || view.status !== "open") return;
     setError("");
-    if (!name.trim()) { setError("Enter your name."); return; }
+    const chosen = unlisted ? undefined : view.players.find((player) => player.id === seat);
+    const ballotName = chosen ? chosen.name : name.trim();
+    if (chosen?.taken) { setError(`${chosen.name.split(" ")[0]} already voted.`); return; }
+    if (!ballotName) { setError(view.players.length ? "Pick your name." : "Enter your name."); return; }
     if (!picks.length) { setError("Pick at least one date that works."); return; }
     setBusy(true);
     const token = tokenRef.current || readGuestToken();
@@ -144,7 +164,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
       const res = await fetch(`/api/polls/${encodeURIComponent(cid)}/${encodeURIComponent(pid)}`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-guest-token": token },
-        body: JSON.stringify({ token, name: name.trim(), picks }),
+        body: JSON.stringify({ token, name: ballotName, picks, rosterId: chosen ? chosen.id : undefined }),
       });
       const body = await res.json().catch(() => ({})) as PublicPollView & { error?: string };
       if (res.ok && Array.isArray(body.options)) {
@@ -152,20 +172,20 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
         hadVote.current = true;
         setBanner(edited ? "updated" : "saved");
         setView(body);
-        setName(body.mine?.name || name.trim());
+        setName(body.mine?.name || ballotName);
         setPicks(body.mine?.picks || picks);
-        window.localStorage.setItem(NAME_KEY, body.mine?.name || name.trim());
+        window.localStorage.setItem(NAME_KEY, body.mine?.name || ballotName);
         if (store.mode === "demo" && body.guestBallots?.length) store.mergeGuestBallots(pid, body.guestBallots);
         return;
       }
       if (res.status === 404 && store.mode === "demo") {
-        const handled = await voteLocally(token, name.trim(), picks);
+        const handled = await voteLocally(token, ballotName, picks, chosen?.id);
         if (handled) return;
       }
       setError(body.error || "Couldn't save that vote.");
     } catch {
       if (store.mode === "demo") {
-        const handled = await voteLocally(token, name.trim(), picks);
+        const handled = await voteLocally(token, ballotName, picks, chosen?.id);
         if (handled) return;
       }
       setError("Couldn't save that vote.");
@@ -189,7 +209,8 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
 
   const max = Math.max(1, ...view.options.map((option) => option.yes));
   const locked = view.status !== "open";
-  const chosenName = view.players.find((player) => player.name.toLowerCase() === name.trim().toLowerCase());
+  const chosen = unlisted ? undefined : view.players.find((player) => player.id === seat);
+  const taken = !!chosen?.taken;
 
   return (
     <div className="guest-poll-wrap">
@@ -203,41 +224,48 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
         {view.lockedLabel && <p className="status ok lockd" style={{ marginTop: 12 }}><Icon name="check" className="ic sm" />Locked · {view.lockedLabel}</p>}
         {banner === "saved" && <p className="gvoted" role="status">Your vote is in. The table can see {view.mine?.name || name}.</p>}
         {banner === "updated" && <p className="gvoted" role="status">Updated. The table has your new dates.</p>}
-        {!banner && view.mine && (
+        {!banner && view.mine && !taken && (
           <p className="galready" role="status">You already voted as {view.mine.name}. Change any dates, then update your vote.</p>
         )}
+        {taken && chosen && <p className="galready" role="status">{chosen.name.split(" ")[0]} already voted.</p>}
         <form onSubmit={onSubmit}>
           {!locked && (
             <div className="field">
               <label htmlFor="guest-name">Your name</label>
               {view.players.length > 0 && (
-                <div className="gnames" role="group" aria-label="Players at this table">
+                <div className="gnames" role="group" aria-label="Players on the roster">
                   {view.players.map((player) => {
-                    const on = name.trim().toLowerCase() === player.name.toLowerCase();
+                    const on = !unlisted && seat === player.id;
                     return (
                       <button
-                        key={player.name}
+                        key={player.id}
                         type="button"
                         className={on ? "on" : ""}
                         aria-pressed={on}
-                        onClick={() => { setName(player.name); setError(""); }}
+                        onClick={() => { setSeat(player.id); setUnlisted(false); setName(player.name); setError(""); }}
                       >
                         {player.character ? `${player.name} · ${player.character}` : player.name}
+                        {player.taken && <small>Voted</small>}
                       </button>
                     );
                   })}
+                  <button type="button" className={unlisted ? "on" : ""} aria-pressed={unlisted} onClick={() => { setUnlisted(true); setSeat(""); setName(""); setError(""); }}>
+                    I&apos;m not listed
+                  </button>
                 </div>
               )}
-              <input
-                id="guest-name"
-                className="inp"
-                maxLength={40}
-                autoComplete="nickname"
-                placeholder={view.players.length ? "Or type a name" : "Your name"}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-              />
-              {chosenName?.character && <p className="note">Voting as {chosenName.name}.</p>}
+              {(view.players.length === 0 || unlisted) && (
+                <input
+                  id="guest-name"
+                  className="inp"
+                  maxLength={40}
+                  autoComplete="nickname"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                />
+              )}
+              {chosen && !taken && <p className="note">Voting as {chosen.name}.</p>}
             </div>
           )}
           <div className="opts" role="group" aria-label="Dates that work">
@@ -279,7 +307,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
           </div>
           <p className="note">{view.line}</p>
           {error && <p className="guest-err" role="alert">{error}</p>}
-          {!locked && (
+          {!locked && !taken && (
             <button className="btn pri" type="submit" disabled={busy}>
               {busy ? "Saving…" : (view.mine || banner) ? "Update my vote" : "Submit my dates"}
             </button>

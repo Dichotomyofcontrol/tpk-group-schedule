@@ -60,6 +60,9 @@ service cloud.firestore {
     match /emailIndex/{id} {
       allow read, write: if false;
     }
+    match /rosterTokens/{token} {
+      allow read, write: if false;
+    }
     match /users/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn() && request.auth.uid == uid
@@ -112,6 +115,10 @@ service cloud.firestore {
         allow create: if isStaff(cid) && request.resource.data.cid == cid;
         allow update: if isStaff(cid) || (isMember(cid) && ownVote());
         allow delete: if isStaff(cid);
+      }
+
+      match /roster/{rid} {
+        allow read, write: if false;
       }
     }
   }

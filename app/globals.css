@@ -851,8 +851,22 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .guest-poll h1 { font: 400 32px/38px var(--serif); letter-spacing: -.03em; margin: 8px 0 4px; }
 .guest-poll .btn.pri { margin-top: 8px; }
 .gnames { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
-.gnames button { min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--rule2); background: var(--paper); color: var(--ink2); font: 500 14px/20px var(--ui); cursor: pointer; }
+.gnames button { min-height: 44px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rule2); background: var(--paper); color: var(--ink2); font: 500 14px/20px var(--ui); cursor: pointer; }
+.gnames button small { display: block; font: 600 10px/14px var(--ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
 .gnames button.on { color: var(--ink); border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.roster .rform { display: grid; gap: 12px; margin: 8px 0 16px; }
+.roster .rform .two:not(.end) { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 720px) { .roster .rform .two:not(.end) { grid-template-columns: 1fr 1fr; } }
+.rlist .rrow { flex-wrap: wrap; align-items: flex-start; padding: 12px 0; }
+.rlist .rrow .mi { flex: 1 1 160px; min-width: 0; }
+.rlist .rrow .mi .note { display: block; overflow-wrap: anywhere; }
+.rpill { flex: none; align-self: center; padding: 4px 8px; border: .5px solid var(--rule2); border-radius: 999px; font: 600 11px/16px var(--ui); letter-spacing: .08em; text-transform: uppercase; color: var(--ink3); }
+.rpill.joined { color: var(--moss); border-color: color-mix(in srgb, var(--moss) 45%, var(--rule2)); }
+.racts { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.racts .btn { flex: 1 1 auto; justify-content: center; }
+.join-seat .ib { display: grid; gap: 12px; padding: 24px; }
+.join-seat h1 { margin: 0; }
+.join-seat .btn { justify-content: center; }
 .gvoted, .galready { margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; font-size: 14.5px; line-height: 20px; }
 .gvoted { background: color-mix(in srgb, var(--moss) 16%, var(--paper)); border: .5px solid color-mix(in srgb, var(--moss) 45%, var(--rule)); color: var(--ink); }
 .galready { background: var(--paper2); border: .5px solid var(--rule2); color: var(--ink2); }

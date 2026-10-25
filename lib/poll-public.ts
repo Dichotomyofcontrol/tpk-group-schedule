@@ -15,9 +15,13 @@ export type PollPlayer = {
   displayName: string;
   characterName?: string;
   pending?: boolean;
+  /** Set when this seat comes from the campaign roster. */
+  rosterId?: string;
+  /** Account linked to a roster seat, when they have joined. */
+  memberId?: string;
 };
 
-export type GuestBallot = { name: string; picks: string[] };
+export type GuestBallot = { name: string; picks: string[]; seatId?: string };
 
 export type PollRecord = {
   poll: Poll;
@@ -25,6 +29,8 @@ export type PollRecord = {
   kind?: "oneshot";
   campaignStatus: "active" | "archived";
   members: PollPlayer[];
+  /** Roster seats, when the campaign has any. Poll counts and the name picker use these. */
+  roster?: PollPlayer[];
 };
 
 export type PublicPollOption = {
@@ -48,7 +54,7 @@ export type PublicPollView = {
   campaignName: string;
   kind?: "oneshot";
   options: PublicPollOption[];
-  players: { name: string; character?: string }[];
+  players: { id: string; name: string; character?: string; taken: boolean }[];
   voted: number;
   memberCount: number;
   quiet: string[];
@@ -125,9 +131,14 @@ export function cleanGuestName(raw: unknown): { name: string } | { error: string
   return { name };
 }
 
-export function parseGuestBallot(body: unknown): { token: string; name: string; picks: string[] } | { error: string; status: number } {
+export function voteSeats(record: Pick<PollRecord, "members" | "roster">): PollPlayer[] {
+  if (record.roster && record.roster.length) return record.roster;
+  return record.members.filter((member) => !member.pending);
+}
+
+export function parseGuestBallot(body: unknown): { token: string; name: string; picks: string[]; rosterId?: string } | { error: string; status: number } {
   if (!body || typeof body !== "object") return { error: "Send JSON.", status: 400 };
-  const raw = body as { token?: unknown; name?: unknown; picks?: unknown };
+  const raw = body as { token?: unknown; name?: unknown; picks?: unknown; rosterId?: unknown };
   if (typeof raw.token !== "string" || !GUEST_TOKEN_RE.test(raw.token)) {
     return { error: "This device couldn't start a ballot. Refresh and try again.", status: 400 };
   }
@@ -138,7 +149,14 @@ export function parseGuestBallot(body: unknown): { token: string; name: string; 
     return { error: "One of those dates isn't on this poll.", status: 400 };
   }
   const picks = [...new Set(raw.picks as string[])];
-  return { token: raw.token, name: named.name, picks };
+  let rosterId: string | undefined;
+  if (raw.rosterId != null && raw.rosterId !== "") {
+    if (typeof raw.rosterId !== "string" || !/^[A-Za-z0-9_-]{1,40}$/.test(raw.rosterId)) {
+      return { error: "That player isn't on this table.", status: 400 };
+    }
+    rosterId = raw.rosterId;
+  }
+  return { token: raw.token, name: named.name, picks, rosterId };
 }
 
 const hashCache = new Map<string, string>();
@@ -175,7 +193,7 @@ export function memberYesCount(poll: Poll, members: PollPlayer[], optionId: stri
 }
 
 export function participationLine(voted: number, total: number, quiet: string[], guests: number): string {
-  const who = quiet.length ? ` · ${quiet.join(", ")} hasn't` : "";
+  const who = quiet.length === 0 ? "" : quiet.length === 1 ? ` · ${quiet[0]} hasn't` : ` · ${quiet.slice(0, -1).join(", ")} and ${quiet[quiet.length - 1]} haven't`;
   const extra = guests > 0 ? ` · ${guests} guest${guests === 1 ? "" : "s"}` : "";
   return `${voted} of ${total} voted${who}${extra}`;
 }
@@ -206,7 +224,7 @@ function activePlayers(members: PollPlayer[]): PollPlayer[] {
     if (member.pending) continue;
     const name = member.displayName?.trim();
     if (!name) continue;
-    const key = nameKey(name);
+    const key = member.rosterId || nameKey(name);
     if (seen.has(key)) continue;
     seen.add(key);
     list.push(member);
@@ -216,7 +234,7 @@ function activePlayers(members: PollPlayer[]): PollPlayer[] {
 
 export async function toPublicPoll(record: PollRecord, token: string | null): Promise<PublicPollView> {
   const { poll } = record;
-  const members = record.members.filter((m) => !m.pending);
+  const members = voteSeats(record);
   const summary = summarizePoll(poll, members);
   const hash = token && GUEST_TOKEN_RE.test(token) ? await guestTokenHash(token) : null;
   let mine: PublicPollView["mine"] = null;
@@ -251,9 +269,9 @@ export async function toPublicPoll(record: PollRecord, token: string | null): Pr
       lockedLabel = `${when.dow} ${when.day} ${when.mon} · ${optionTimeLabel(chosen)}`;
     } else lockedLabel = "Locked";
   }
-  const guestBallots: GuestBallot[] = Object.values(poll.votes || {})
-    .filter((vote): vote is PollVote => !!vote?.guestToken && !!vote.name && voteHasYes(vote))
-    .map((vote) => ({ name: vote.name!, picks: yesIds(vote) }));
+  const guestBallots: GuestBallot[] = Object.entries(poll.votes || {})
+    .filter((entry): entry is [string, PollVote] => !!entry[1]?.guestToken && !!entry[1]?.name && voteHasYes(entry[1]))
+    .map(([id, vote]) => ({ name: vote.name!, picks: yesIds(vote), seatId: members.some((seat) => seat.id === id) ? id : undefined }));
   return {
     id: poll.id,
     cid: poll.cid,
@@ -262,10 +280,16 @@ export async function toPublicPoll(record: PollRecord, token: string | null): Pr
     campaignName: record.campaignName,
     kind: record.kind,
     options,
-    players: activePlayers(record.members).map((m) => ({
-      name: m.displayName.trim(),
-      character: m.characterName && nameKey(m.characterName) !== nameKey(m.displayName) ? m.characterName : undefined,
-    })),
+    players: activePlayers(members).map((m) => {
+      const vote = poll.votes?.[m.id];
+      const taken = voteHasYes(vote) && vote?.guestToken !== hash;
+      return {
+        id: m.rosterId || m.id,
+        name: m.displayName.trim(),
+        character: m.characterName && nameKey(m.characterName) !== nameKey(m.displayName) ? m.characterName : undefined,
+        taken,
+      };
+    }),
     voted: summary.voted,
     memberCount: summary.total,
     quiet: summary.quiet,
@@ -300,20 +324,72 @@ function memberMatches(members: PollPlayer[], nk: string): PollPlayer[] {
  * A matching player who has not voted is recorded on their member id so the
  * table's "who voted" line includes them. The raw token is never stored.
  */
+function alreadyVoted(name: string): string {
+  const first = name.trim().split(/\s+/)[0] || "That player";
+  return `${first} already voted.`;
+}
+
+async function applyRosterVote(
+  poll: Poll,
+  input: { token: string; name: string; picks: string[]; rosterId?: string },
+  seats: PollPlayer[],
+  now: Date,
+): Promise<{ poll: Poll; edited: boolean } | { error: string; status: number }> {
+  const named = cleanGuestName(input.name);
+  if ("error" in named) return { error: named.error, status: 400 };
+  const hash = await guestTokenHash(input.token);
+  const votes: Poll["votes"] = { ...(poll.votes || {}) };
+  let ownedKey: string | null = null;
+  for (const [id, vote] of Object.entries(votes)) {
+    if (vote?.guestToken === hash) { ownedKey = id; break; }
+  }
+  if (!ownedKey && Object.keys(votes).length >= 200) return { error: "This poll is full.", status: 409 };
+
+  let seat: PollPlayer | undefined;
+  if (input.rosterId) {
+    seat = seats.find((item) => item.rosterId === input.rosterId);
+    if (!seat) return { error: "That player isn't on this table.", status: 400 };
+  } else {
+    const matches = memberMatches(seats, nameKey(named.name));
+    if (matches.length > 1) return { error: "A few players share that name. Pick them from the list.", status: 400 };
+    if (matches.length === 1) seat = matches[0];
+  }
+
+  const desired = seat ? seat.id : `guest:${hash}`;
+  const ballotName = seat ? seat.displayName : named.name;
+  const existing = votes[desired];
+  if (seat && existing && voteHasYes(existing) && existing.guestToken !== hash) {
+    return { error: alreadyVoted(ballotName), status: 409 };
+  }
+  for (const [id, vote] of Object.entries(votes)) {
+    if (id === ownedKey || id === desired) continue;
+    if (vote?.guestToken && vote.guestToken !== hash && vote.name && nameKey(vote.name) === nameKey(ballotName) && voteHasYes(vote)) {
+      return { error: NAME_TAKEN, status: 409 };
+    }
+  }
+  const picks: Record<string, boolean> = {};
+  for (const id of input.picks) picks[id] = true;
+  const ballot: PollVote = { picks, updatedAt: now.toISOString(), name: ballotName, guestToken: hash };
+  if (ownedKey && ownedKey !== desired) delete votes[ownedKey];
+  votes[desired] = ballot;
+  return { poll: { ...poll, votes }, edited: !!ownedKey };
+}
+
 export async function applyGuestVote(
   poll: Poll,
-  input: { token: string; name: string; picks: string[] },
+  input: { token: string; name: string; picks: string[]; rosterId?: string },
   members: PollPlayer[],
   now = new Date(),
 ): Promise<{ poll: Poll; edited: boolean } | { error: string; status: number }> {
   if (poll.status !== "open") return { error: "This poll is locked.", status: 409 };
   if (!GUEST_TOKEN_RE.test(input.token)) return { error: "This device couldn't start a ballot. Refresh and try again.", status: 400 };
-  const named = cleanGuestName(input.name);
-  if ("error" in named) return { error: named.error, status: 400 };
   const known = new Set(poll.options.map((o) => o.id));
   if (input.picks.length < 1 || input.picks.some((id) => !known.has(id))) {
     return { error: "One of those dates isn't on this poll.", status: 400 };
   }
+  if (members.some((member) => member.rosterId)) return applyRosterVote(poll, input, members, now);
+  const named = cleanGuestName(input.name);
+  if ("error" in named) return { error: named.error, status: 400 };
   const hash = await guestTokenHash(input.token);
   const votes: Poll["votes"] = { ...(poll.votes || {}) };
   let ownedKey: string | null = null;
@@ -365,6 +441,14 @@ export function withGuestBallots(poll: Poll, members: PollPlayer[], ballots: Gue
     const picks = ballot.picks.filter((id) => poll.options.some((o) => o.id === id));
     if (!picks.length) continue;
     const nk = nameKey(named.name);
+    if (ballot.seatId && (ballot.seatId.startsWith("roster:") || members.some((member) => member.id === ballot.seatId))) {
+      if (votes[ballot.seatId] && voteHasYes(votes[ballot.seatId])) continue;
+      const pickMap: Record<string, boolean> = {};
+      for (const id of picks) pickMap[id] = true;
+      votes[ballot.seatId] = { picks: pickMap, updatedAt: new Date().toISOString(), name: named.name };
+      changed = true;
+      continue;
+    }
     const already = Object.entries(votes).some(([id, vote]) => {
       if (vote?.name && nameKey(vote.name) === nk) return true;
       const member = members.find((m) => m.id === id);
