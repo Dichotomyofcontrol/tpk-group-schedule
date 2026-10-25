@@ -134,12 +134,12 @@ test("reminders are due 3 days and 3 hours before, once", () => {
 
 test("locking a poll creates one session and does not invent quorum", () => {
   const state = buildDemo("seth");
-  const poll = state.polls[0]!;
+  const poll = state.polls.find((item) => item.id === "frost-dec")!;
   const best = "2026-12-07-18:00";
   const next = lockPoll(state, poll.id, best);
   assert.ok(!("error" in next));
   if ("error" in next) return;
-  assert.equal(next.polls[0]?.status, "locked");
+  assert.equal(next.polls.find((item) => item.id === "frost-dec")?.status, "locked");
   assert.ok(next.sessions.some((session) => session.id === "frostmaiden-poll-2026-12-07-18:00"));
   const rules = readFileSync(new URL("../../firebase/firestore.rules", import.meta.url), "utf8");
   assert.match(rules, /allowMemberInvites|isOrganizer/);

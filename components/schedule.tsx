@@ -4,8 +4,9 @@ import { NotOnTpkMark } from "./tpk-assign";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, displayTitle, isStaff, membersOf } from "@/lib/model";
-import { hasRecap } from "@/lib/recap";
+import { campaignById, displayTitle, isStaff, latestRecap, membersOf } from "@/lib/model";
+import { hasRecap, markdownToHtml, openingParagraph, readAloudMinutes } from "@/lib/recap";
+import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
@@ -134,6 +135,41 @@ function HeroPlace({ place }: { place: string }) {
   return <a className="hplace" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}>{place}</a>;
 }
 
+/** Read-aloud opener inside the next-session hero. The session field wins; otherwise the latest recap's opening paragraph. */
+function PreviouslyOn({ session }: { session: Session }) {
+  const store = useStore();
+  const own = session.previouslyOn?.trim() || "";
+  const source = own ? null : latestRecap(store.state.sessions, session.cid);
+  const fallback = !own && source ? openingParagraph(source) : "";
+  const text = own || fallback;
+  const today = daysUntil(session.startsAt, store.state.me.tz) === 0;
+  const [open, setOpen] = useState(today);
+  useEffect(() => { setOpen(daysUntil(session.startsAt, store.state.me.tz) === 0); }, [session.id, session.startsAt, store.state.me.tz]);
+  if (!text) return null;
+  const minutes = readAloudMinutes(text);
+  const html = sanitizeRecapHtml(markdownToHtml(text));
+  const panel = `prevon-${session.id}`;
+  return (
+    <section className={open ? "prevon open" : "prevon"}>
+      <button type="button" className="ptog" aria-expanded={open} aria-controls={panel} onClick={() => setOpen((v) => !v)}>
+        <span className="eyebrow">Previously on…</span>
+        <span className="note">{minutes} min read-aloud</span>
+        <Icon name="chev" className="ic sm mchev" />
+      </button>
+      {open && (
+        <div id={panel}>
+          <div className="prevon-body" dangerouslySetInnerHTML={{ __html: html }} />
+          {source && (
+            <Link className="prevon-from" href={sessionHref(source)}>
+              From {displayTitle(source, campaignById(store.state, source.cid)?.name || "the last session")} <Icon name="arrow" className="ic sm" />
+            </Link>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 /** The next session, big. */
 export function NextHero({ session, showCampaign = true }: { session: Session; showCampaign?: boolean }) {
   const store = useStore();
@@ -155,6 +191,7 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
         <h2><Link href={sessionHref(session)}>{title}</Link></h2>
         <p className="hmeta">{[showCampaign && title !== campaign.name ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time].filter(Boolean).join(" · ")}{session.location && <> · <HeroPlace place={session.location} /></>}</p>
         {q && <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" aria-hidden="true" />{q.text}</p>}
+        <PreviouslyOn session={session} />
         <PartyChips session={session} />
         <RsvpControl session={session} />
       </div>

@@ -416,7 +416,9 @@ export function lockPoll(state: AppState, pollId: string, optionId: string): App
     seriesId: null,
     occurrenceKey: null,
     startsAt: option.startsAt,
-    endsAt: option.endsAt,
+    endsAt: option.endsAt && new Date(option.endsAt).getTime() > new Date(option.startsAt).getTime()
+      ? option.endsAt
+      : new Date(new Date(option.startsAt).getTime() + 4 * 3600_000).toISOString(),
     tz: option.tz,
     title: poll.title.replace(/dates$/i, "").trim() || campaign?.name || "Session",
     location: campaign?.defaultLocation ?? "",

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildDemo } from "./demo-data";
+import { withGuestBallots } from "./poll-public";
 import { countPdfPages, nestedRecapPath, validatePdf } from "./recap";
 import {
   acceptInvite,
@@ -32,6 +33,22 @@ import {
 import { applyTheme, readStoredTheme } from "./theme";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
 import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Session, Toast } from "./types";
+
+function publishDemoPoll(state: AppState, poll: Poll) {
+  const campaign = state.campaigns.find((item) => item.id === poll.cid);
+  if (!campaign) return;
+  const members = (state.members[poll.cid] || []).map((member) => ({
+    id: member.id,
+    displayName: member.displayName,
+    characterName: member.characterName,
+    pending: member.pending,
+  }));
+  void fetch("/api/polls/demo", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ campaignName: campaign.name, kind: campaign.kind, campaignStatus: campaign.status, members, poll }),
+  }).catch(() => undefined);
+}
 
 const STORAGE = "tpk-playdates-v1";
 
@@ -257,8 +274,33 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       },
       addPoll: (cid, title, options: Poll["options"]) => {
         const result = addPoll(stateRef.current, cid, title, options);
-        if ("error" in result) flash(result.error, "err");
-        else setState(result);
+        if ("error" in result) {
+          flash(result.error, "err");
+          return null;
+        }
+        setState(result);
+        const poll = result.polls[result.polls.length - 1];
+        if (poll) publishDemoPoll(result, poll);
+        return poll?.id ?? null;
+      },
+      replacePoll: (poll) => {
+        setState((prev) => {
+          if (!prev) return prev;
+          const polls = prev.polls.some((item) => item.id === poll.id)
+            ? prev.polls.map((item) => item.id === poll.id ? poll : item)
+            : [...prev.polls, poll];
+          return { ...prev, polls };
+        });
+      },
+      mergeGuestBallots: (pollId, ballots) => {
+        setState((prev) => {
+          if (!prev) return prev;
+          const poll = prev.polls.find((item) => item.id === pollId);
+          if (!poll) return prev;
+          const next = withGuestBallots(poll, prev.members[poll.cid] || [], ballots);
+          if (!next) return prev;
+          return { ...prev, polls: prev.polls.map((item) => item.id === pollId ? next : item) };
+        });
       },
       createOneShot: (input) => {
         const made = createCampaign(stateRef.current, { name: input.title, color: "#ce93d8", icon: "✨", tz: input.tz, location: input.location, requireRsvps: false, allowMemberInvites: true, cadence: null, kind: "oneshot" });
@@ -268,6 +310,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         if ("error" in polled) { flash(polled.error, "err"); return null; }
         stateRef.current = polled;
         setState(polled);
+        const poll = polled.polls[polled.polls.length - 1];
+        if (poll) publishDemoPoll(polled, poll);
         return id;
       },
       nudge: (pollId, uid) => {

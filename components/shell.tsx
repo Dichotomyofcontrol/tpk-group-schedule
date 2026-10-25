@@ -120,11 +120,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const mine = memberCampaigns(state);
   const openPolls = state.polls.filter((p) => p.status === "open" && mine.some((c) => c.id === p.cid)).length;
-  const tab = path.startsWith("/campaigns/") && path.includes("/sessions/") ? from : path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") ? "polls" : path.startsWith("/invite") ? "invites" : path.startsWith("/account") ? "" : "sessions";
+  const tab = path.startsWith("/campaigns/") && path.includes("/sessions/") ? from : path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") || path.startsWith("/p/") ? "polls" : path.startsWith("/invite") ? "invites" : path.startsWith("/account") ? "" : "sessions";
   const bare = path === "/signin" || path.startsWith("/auth/");
   const night = store.resolvedTheme === "dark";
-  // Signed-out visitors on app screens get one clear way in instead of a dead end.
-  const gate = !signedIn && !!store.signedOutConfirmed && !path.startsWith("/invite/");
+  // Signed-out visitors on app screens get one clear way in. Invite links and public polls stay open.
+  const gate = !signedIn && !!store.signedOutConfirmed && !path.startsWith("/invite/") && !path.startsWith("/p/");
   const needsName = signedIn && store.mode === "live" && !state.me.nameSet && !state.me.displayName;
 
   return (

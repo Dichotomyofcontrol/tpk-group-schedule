@@ -128,6 +128,12 @@ export type Session = {
   requireRsvps: boolean | null;
 
   notes?: string;
+  /**
+   * Read-aloud opener for this night, as markdown. An automation can set it
+   * the day of the game. Empty means the Sessions hero falls back to the
+   * latest recap's opening paragraph.
+   */
+  previouslyOn?: string;
   /** ICS SEQUENCE. Bumped whenever the time or status changes. */
   seq: number;
   recapHtml?: string;
@@ -157,8 +163,21 @@ export type Session = {
 export type PollOption = {
   id: string;
   startsAt: string;
-  endsAt: string;
+  /** Absent on a date-only option. New polls store start plus four hours. */
+  endsAt?: string;
   tz: string;
+};
+
+export type PollVote = {
+  picks: Record<string, boolean>;
+  updatedAt: string;
+  /** Display name for a ballot cast from the public link. */
+  name?: string;
+  /**
+   * SHA-256 prefix of the device token that may edit this ballot.
+   * The raw token stays in the voter's browser.
+   */
+  guestToken?: string;
 };
 
 export type Poll = {
@@ -173,7 +192,8 @@ export type Poll = {
   sessionId?: string | null;
   /** uid → when a nudge was requested. A future send (or the Discord bot) reads this. */
   nudges?: Record<string, string>;
-  votes: Record<string, { picks: Record<string, boolean>; updatedAt: string }>;
+  /** Member uid, or `guest:<hash>` for someone who is not on the player list. */
+  votes: Record<string, PollVote>;
 };
 
 export type Invite = {

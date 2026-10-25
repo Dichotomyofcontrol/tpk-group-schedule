@@ -80,6 +80,39 @@ export function markdownToHtml(markdown: string): string {
   return out.join("");
 }
 
+/** First real paragraph of a recap, skipping a short "Recap by …" byline. */
+export function openingParagraph(session: Pick<Session, "recapHtml" | "recapMarkdown" | "recapText">): string {
+  const htmlParas = [...(session.recapHtml || "").matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((match) => stripHtml(match[1] || ""));
+  const fromHtml = firstParagraph(htmlParas);
+  if (fromHtml) return fromHtml;
+  const fromMarkdown = firstParagraph(markdownBlocks(session.recapMarkdown || ""));
+  if (fromMarkdown) return fromMarkdown;
+  return firstParagraph([(session.recapText || "").trim()]) || "";
+}
+
+function markdownBlocks(markdown: string): string[] {
+  return markdown.replace(/\r\n/g, "\n").split(/\n\s*\n/).map((block) => {
+    const trimmed = block.trim();
+    if (!trimmed || /^#{1,6}\s/.test(trimmed)) return "";
+    return stripHtml(markdownToHtml(trimmed));
+  });
+}
+
+function isByline(text: string): boolean {
+  return /^recap by\b/i.test(text) && text.length < 80;
+}
+
+function firstParagraph(parts: string[]): string {
+  const clean = parts.map((part) => part.replace(/\s+/g, " ").replace(/\s+([.,;:!?])/g, "$1").trim()).filter(Boolean);
+  return clean.find((part) => !isByline(part) && part.length >= 40) || clean.find((part) => !isByline(part)) || "";
+}
+
+/** Spoken pace for a Previously on opener. About 150 words a minute. */
+export function readAloudMinutes(text: string): number {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return words ? Math.max(1, Math.round(words / 150)) : 0;
+}
+
 export function excerpt(text: string, max = 200): string {
   const clean = text.replace(/\s+/g, " ").trim();
   if (clean.length <= max) return clean;
