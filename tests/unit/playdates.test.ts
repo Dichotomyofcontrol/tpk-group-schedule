@@ -347,7 +347,7 @@ test("saving the latest recap refreshes Previously on and leaves older nights al
 });
 
 test("email-link continue URL stays on the site that sent it", () => {
-  assert.equal(magicLinkContinueUrl("https://www.sixinthetpk.com"), "https://www.sixinthetpk.com/auth/finish");
+  assert.equal(magicLinkContinueUrl("https://taverning.com"), "https://taverning.com/auth/finish");
   assert.equal(
     magicLinkContinueUrl("https://preview.example.vercel.app", "invite-token"),
     "https://preview.example.vercel.app/auth/finish?invite=invite-token",

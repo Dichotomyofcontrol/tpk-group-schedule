@@ -135,11 +135,12 @@ h3 { font-size: clamp(1.35rem, 2.4vw, 1.7rem); letter-spacing: .02em; }
 }
 .hdr.clear .brand i { color: var(--ink2); }
 .brand {
-  font-family: var(--mono);
-  font-size: 12px;
+  font-family: var(--display);
+  font-size: 22px;
   font-weight: 400;
-  letter-spacing: .14em;
+  letter-spacing: .08em;
   text-transform: uppercase;
+  line-height: 1;
   font-variation-settings: normal;
 }
 .brand i {

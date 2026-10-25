@@ -502,7 +502,7 @@ export function planMigration(input: LegacyExport | Record<string, unknown>, zon
 
 export function formatDryRun(plan: MigrationPlan, source: string): string {
   const lines: string[] = [];
-  lines.push("Six in the TPK — migration dry run");
+  lines.push("Taverning — migration dry run");
   lines.push("No writes. Nothing was sent to Firestore.");
   lines.push(`Source: ${source}`);
   lines.push(`Time zone applied to legacy date+time strings: ${plan.zone}`);

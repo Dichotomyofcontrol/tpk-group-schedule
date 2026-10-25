@@ -57,7 +57,7 @@ export function Mark() {
       <path d="M16 2.5l11.7 6.75v13.5L16 29.5 4.3 22.75V9.25z" strokeWidth="1.4" strokeLinejoin="round" />
       <path className="die-face" d="M16 9.5l6.2 10.7H9.8z" />
       <path d="M16 2.5v7M27.7 9.25l-5.5 10.95M4.3 9.25l5.5 10.95M9.8 20.2L4.3 22.75M22.2 20.2l5.5 2.55M9.8 20.2L16 29.5l6.2-9.3M16 9.5L4.3 9.25M16 9.5l11.7-.25" strokeWidth="1" strokeLinejoin="round" />
-      <text x="16" y="18.2" textAnchor="middle" fontFamily="Anton, Impact, sans-serif" fontSize="6.5" fill="var(--bg)">6</text>
+      <text x="16" y="18.4" textAnchor="middle" fontFamily="Anton, Impact, sans-serif" fontSize="7" fill="var(--bg)">T</text>
     </svg>
   );
 }
@@ -70,7 +70,7 @@ export function Brand({ href = "/" }: { href?: string }) {
   return (
     <Link className="brand" href={href}>
       <Mark />
-      <span>Six <i>in the</i> TPK</span>
+      <span>Taverning</span>
     </Link>
   );
 }

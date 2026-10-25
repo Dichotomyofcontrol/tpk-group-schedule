@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Six in the TPK — sessions, RSVPs, and recaps for your table";
+export const alt = "Taverning — sessions, RSVPs, and recaps for your table";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -14,7 +14,7 @@ export function shareCard(kicker: string, title: string, sub: string) {
             <path d="M16 9.5l6.2 10.7H9.8z" fill="#9E2F1F" />
             <path d="M16 2.5v7M27.7 9.25l-5.5 10.95M4.3 9.25l5.5 10.95M9.8 20.2L4.3 22.75M22.2 20.2l5.5 2.55M9.8 20.2L16 29.5l6.2-9.3" fill="none" stroke="#1D1915" strokeWidth="1.1" strokeLinejoin="round" />
           </svg>
-          <div style={{ fontSize: 34, letterSpacing: 1 }}>Six in the TPK</div>
+          <div style={{ fontSize: 36, letterSpacing: 4, textTransform: "uppercase" }}>Taverning</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 26, letterSpacing: 4, textTransform: "uppercase", color: "#9E2F1F", marginBottom: 18 }}>{kicker}</div>

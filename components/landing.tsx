@@ -22,7 +22,7 @@ export function Landing() {
     <div id="content">
       <section className="almanac-hero">
         <Die />
-        <p className="kicker">Six in the TPK</p>
+        <p className="kicker">Taverning</p>
         <h1>
           <span>Every session,</span>
           <span className="ghost-type">every saga.</span>
@@ -46,7 +46,7 @@ export function Landing() {
         <p className="voice">“Finally, nobody asks ‘wait, are we playing this week?’ in the group chat.”</p>
         <span className="kicker">A very tired Dungeon Master</span>
       </section>
-      <footer className="foot"><span>© 2026 · Invite-only tables</span><span>Made for the table</span></footer>
+      <footer className="foot"><span>© 2026 · Taverning</span><span>Made for the table</span></footer>
     </div>
   );
 }

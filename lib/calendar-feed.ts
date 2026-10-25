@@ -25,7 +25,7 @@ export function demoFeed(token: string, cid?: string, hide: string[] = []): stri
       viewerOut: attendanceState(campaign, session, persona) === "out",
     });
   }
-  const name = cid ? known.campaigns.find((item) => item.id === cid)?.name || "Sessions" : "Six in the TPK";
+  const name = cid ? known.campaigns.find((item) => item.id === cid)?.name || "Sessions" : "Taverning";
   return buildIcs(name, events);
 }
 

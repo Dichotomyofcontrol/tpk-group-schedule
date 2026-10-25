@@ -19,7 +19,7 @@ export function HomeScreenHint() {
   return (
     <div className="card a2hs" role="note">
       <span className="fi"><Icon name="plus" /></span>
-      <p><b>Put Six in the TPK on your Home Screen.</b> Tap <ShareGlyph /> Share, then <i>Add to Home Screen</i>.</p>
+      <p><b>Put Taverning on your Home Screen.</b> Tap <ShareGlyph /> Share, then <i>Add to Home Screen</i>.</p>
       <button type="button" className="iconbtn" aria-label="Dismiss" onClick={() => { window.localStorage.setItem("tpk-a2hs-dismissed", "1"); setShow(false); }}><Icon name="x" /></button>
     </div>
   );

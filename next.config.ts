@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { legacyHostRedirects } from "./lib/site";
 
 function pub(name: string, legacy: string): string {
   return process.env[name] || process.env[legacy] || "";
@@ -15,6 +16,9 @@ const nextConfig: NextConfig = {
       { source: "/schedule", destination: "/sessions", permanent: true },
       { source: "/", has: [{ type: "query", key: "view", value: "schedule" }], destination: "/sessions", permanent: true },
       { source: "/profile", destination: "/account", permanent: true },
+      // Host-scoped, so this is a no-op on *.vercel.app and localhost.
+      // permanent is a 308, which browsers cache. Next forwards the query string.
+      ...legacyHostRedirects(),
     ];
   },
   eslint: { ignoreDuringBuilds: true },

@@ -32,7 +32,7 @@ export function buildIcs(name: string, events: IcsEvent[], now = new Date()): st
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Six in the TPK//Sessions//EN",
+    "PRODID:-//Taverning//Sessions//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${esc(name)}`,
@@ -46,9 +46,10 @@ export function buildIcs(name: string, events: IcsEvent[], now = new Date()): st
       displayTitle(session, campaign.name) !== campaign.name ? displayTitle(session, campaign.name) : "",
       session.location,
       campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "",
-      "From Six in the TPK",
+      "From Taverning",
     ].filter(Boolean).join("\n");
     lines.push("BEGIN:VEVENT");
+    // Stable id. Changing the host would make calendar apps treat existing nights as new events.
     lines.push(`UID:${session.id}@sixinthetpk.com`);
     lines.push(`DTSTAMP:${toIcsUtc(now.toISOString())}`);
     lines.push(`DTSTART:${toIcsUtc(session.startsAt)}`);
@@ -76,7 +77,7 @@ export function googleEventTemplate(session: Session, campaign: Campaign): strin
     text: (displayTitle(session, campaign.name) !== campaign.name ? `${campaign.name} — ${displayTitle(session, campaign.name)}` : campaign.name),
     dates,
     location: session.location || "",
-    details: campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "Six in the TPK",
+    details: campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "Taverning",
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }

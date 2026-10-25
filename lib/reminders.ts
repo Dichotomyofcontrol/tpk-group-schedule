@@ -40,7 +40,7 @@ export function reminderText(campaign: Campaign, session: Session, members: Memb
     session.notes?.trim() ? `Note for the table: ${session.notes.trim()}` : "",
     out.length ? `Out: ${out.join(", ")}` : "Nobody has marked themselves out.",
     campaign.previouslyOn ? `Previously on: ${campaign.previouslyOn}` : "",
-    "Open Six in the TPK if you can't make it.",
+    "Open Taverning if you can't make it.",
   ];
   return lines.filter(Boolean).join("\n");
 }
