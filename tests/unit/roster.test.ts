@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { validateUserInput } from "@google-cloud/firestore/build/src/serializer.js";
 import { applyGuestVote, mergeVoteSeats, summarizePoll, toPublicPoll, voteSeats } from "../../lib/poll-public.ts";
-import { seatsFromRoster, rosterDocument, rosterFailureMessage, unifyPlayers } from "../../lib/roster.ts";
+import { seatsFromRoster, rosterDocument, rosterFailureMessage, unifyPlayers, seatLabel, markLinkShared, parseStoredRoster } from "../../lib/roster.ts";
 import { applyClaim, parseRosterInput, buildRosterPlayer, patchRosterPlayer } from "../../lib/roster.ts";
-import { SALTMARSH_ROSTER, addDemoRosterPlayer, resetDemoRoster } from "../../lib/roster-demo.ts";
+import { SALTMARSH_ROSTER, addDemoRosterPlayer, markDemoRosterShared, resetDemoRoster } from "../../lib/roster-demo.ts";
 import { demoPollRecord, resetDemoPolls } from "../../lib/poll-demo.ts";
 import type { Poll } from "../../lib/types.ts";
 
@@ -54,6 +54,42 @@ test("empty email and phone are omitted so Firestore can store the seat", () => 
   assert.match(shown, /found in field "email"/);
 });
 
+test("a seat stays not invited until the server records a copied link", () => {
+  resetDemoRoster();
+  const added = addDemoRosterPlayer("saltmarsh", { name: "Greg", characterName: "Gor", email: "", phone: "" }, "rp-greg", "token-greg");
+  assert.equal("error" in added, false);
+  if ("error" in added) return;
+  assert.equal(added.linkSharedAt, undefined);
+  assert.equal(seatLabel(added), "Not invited");
+  assert.equal(seatLabel(SALTMARSH_ROSTER[0]!), "Joined");
+  const stored = parseStoredRoster("rp-old", "saltmarsh", { name: "Greg", token: "token-old", status: "invited" });
+  assert.equal(stored?.linkSharedAt, undefined);
+  assert.equal(seatLabel(stored!), "Not invited");
+  const when = new Date("2026-10-25T21:40:00.000Z");
+  const shared = markDemoRosterShared("saltmarsh", "rp-greg", when);
+  assert.equal("error" in shared, false);
+  if ("error" in shared) return;
+  assert.equal(shared.linkSharedAt, when.toISOString());
+  assert.equal(seatLabel(shared), "Link copied");
+  const edited = patchRosterPlayer(shared, { name: "Greg", characterName: "Gor" });
+  assert.equal(edited.linkSharedAt, when.toISOString());
+  assert.equal(seatLabel(markLinkShared(added, when)), "Link copied");
+  const sharedDoc = rosterDocument(shared);
+  assert.equal(sharedDoc.linkSharedAt, when.toISOString());
+  assert.equal("linkSharedAt" in rosterDocument(added), false);
+  assert.doesNotThrow(() => validateUserInput("data", sharedDoc, "document", { allowUndefined: false }, undefined, 0, false));
+  assert.equal(parseStoredRoster("rp-bad", "saltmarsh", { name: "Greg", token: "token-bad", status: "invited", linkSharedAt: "not-a-date" })?.linkSharedAt, undefined);
+  const listed = unifyPlayers(
+    [{ id: "seth", displayName: "Seth", role: "organizer" }],
+    [shared],
+  );
+  assert.equal(listed.find((row) => row.name === "Greg")?.linkSharedAt, when.toISOString());
+  assert.equal(seatLabel(listed.find((row) => row.name === "Greg")!), "Link copied");
+  const route = readFileSync(new URL("../../app/api/campaigns/[cid]/roster/[id]/share/route.ts", import.meta.url), "utf8");
+  assert.match(route, /shareRosterLink/);
+  assert.doesNotMatch(route, /linkSharedAt/);
+});
+
 test("the player list keeps joined accounts and invited seats without duplicating a name", () => {
   const rows = unifyPlayers(
     [
@@ -65,6 +101,8 @@ test("the player list keeps joined accounts and invited seats without duplicatin
   assert.equal(rows.filter((row) => row.name === "Seth").length, 1);
   assert.equal(rows.find((row) => row.name === "Seth")?.status, "joined");
   assert.equal(rows.find((row) => row.name === "Elara")?.status, "invited");
+  assert.equal(seatLabel(rows.find((row) => row.name === "Elara")!), "Not invited");
+  assert.equal(seatLabel(rows.find((row) => row.name === "Seth")!), "Joined");
   assert.equal(rows.find((row) => row.name === "Mira")?.status, "joined");
   assert.equal(rows.find((row) => row.name === "Mira")?.token, undefined);
   const seats = mergeVoteSeats(

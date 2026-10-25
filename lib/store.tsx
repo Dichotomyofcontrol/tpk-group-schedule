@@ -76,6 +76,7 @@ export type StoreApi = {
   rosterList: (cid: string) => Promise<RosterPlayer[]>;
   rosterAdd: (cid: string, input: RosterInput) => Promise<RosterPlayer | { error: string }>;
   rosterSave: (cid: string, id: string, input: RosterInput) => Promise<RosterPlayer | { error: string }>;
+  rosterShare: (cid: string, id: string) => Promise<RosterPlayer | { error: string }>;
   rosterRemove: (cid: string, id: string) => Promise<boolean>;
   claimSeat: (token: string) => Promise<{
     ok: true;

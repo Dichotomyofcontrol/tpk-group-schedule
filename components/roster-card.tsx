@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { rosterJoinPath, unifyPlayers, type RosterInput, type RosterPlayer, type TableSeat } from "@/lib/roster";
+import { rosterJoinPath, seatLabel, unifyPlayers, type RosterInput, type RosterPlayer, type TableSeat } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 import type { Member, Role } from "@/lib/types";
 import { sharePollLink } from "./poll-view";
@@ -30,6 +30,8 @@ export function RosterCard({ cid, manage, members, canInvite = false }: { cid: s
   const [editing, setEditing] = useState<string | null>(null);
   const [edit, setEdit] = useState<RosterInput>(EMPTY);
   const [role, setRole] = useState<Role>("member");
+  const [menu, setMenu] = useState<string | null>(null);
+  const [menuUp, setMenuUp] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -41,13 +43,18 @@ export function RosterCard({ cid, manage, members, canInvite = false }: { cid: s
   const seats = unifyPlayers(members, roster || []);
 
   async function share(seat: TableSeat) {
-    if (!seat.token) return;
+    if (!seat.token || !seat.rosterId) return;
+    setMenu(null);
     const path = rosterJoinPath(seat.token);
     const url = `${window.location.origin}${path}`;
     const text = `Claim your seat as ${seat.name}: ${url}`;
     const result = await sharePollLink(url, `Seat for ${seat.name}`, text);
-    if (result === "copied") store.flash("Seat link copied. Send it to them.");
-    else if (result === "failed") store.flash("Couldn't copy the link.", "err");
+    if (result === "aborted") return;
+    if (result === "failed") { store.flash("Couldn't copy the link.", "err"); return; }
+    const saved = await store.rosterShare(cid, seat.rosterId);
+    if ("error" in saved) { store.flash(saved.error, "err"); return; }
+    setRoster((list) => (list || []).map((item) => item.id === saved.id ? saved : item));
+    store.flash(result === "shared" ? "Link shared." : "Link copied. Send it to them.");
   }
 
   async function add(event: React.FormEvent) {
@@ -156,31 +163,52 @@ export function RosterCard({ cid, manage, members, canInvite = false }: { cid: s
         {manage && !adding && <button type="button" className="btn sec sm" onClick={() => { setAdding(true); setEditing(null); setError(""); }}><Icon name="plus" className="ic sm" />Add player</button>}
         {!manage && canInvite && <Link className="btn sec sm" href={`/invites?campaign=${cid}`}><Icon name="plus" className="ic sm" />Invite</Link>}
       </div>
-      <p className="note">Joined players already have an account. Invited players get a personal link to claim their seat. Polls count this list.</p>
+      {manage && <p className="note">A seat stays not invited until you copy its link. Polls count this list.</p>}
       {adding && form(draft, setDraft, add, "Add player")}
       {roster === null && seats.length === 0 && <p className="note">Loading players…</p>}
       {roster !== null && seats.length === 0 && !adding && <p className="note">No players yet.</p>}
       {seats.length > 0 && (
         <ul className="mlist rlist">
           {seats.map((seat) => {
-            const detail = [seat.characterName && seat.characterName !== seat.name ? seat.characterName : "", seat.email, seat.phone].filter(Boolean).join(" · ");
-            const mine = seat.memberId === store.state.me.id;
+            const character = seat.characterName && seat.characterName !== seat.name ? seat.characterName : "";
+            const label = seatLabel(seat);
+            const open = menu === seat.key;
             return (
-              <li key={seat.key} className="rrow">
+              <li key={seat.key} className={editing === seat.key ? "prow editing" : "prow"}>
                 {editing === seat.key ? (
                   form(edit, setEdit, (event) => save(seat, event), "Save", seat)
                 ) : (
                   <>
                     <div className="mi">
                       <b>{seat.name}</b>
-                      <span className="note">{[detail, mine ? "you" : "", seat.role === "organizer" ? "Organizer" : seat.role === "coorganizer" ? "Co-organizer" : ""].filter(Boolean).join(" · ")}</span>
+                      {character && <span className="sub">{character}</span>}
                     </div>
-                    <span className={seat.status === "joined" ? "rpill joined" : "rpill"}>{seat.status === "joined" ? "Joined" : "Invited"}</span>
+                    <span className={label === "Joined" ? "rpill joined" : label === "Link copied" ? "rpill copied" : "rpill"}>{label}</span>
                     {manage && (
-                      <div className="racts">
-                        {seat.token && <button type="button" className="btn sec sm" onClick={() => share(seat)}><Icon name="link" className="ic sm" />Copy/share link</button>}
-                        <button type="button" className="btn ghost sm" onClick={() => { setEditing(seat.key); setEdit(fields(seat)); setRole(seat.role === "coorganizer" ? "coorganizer" : "member"); setAdding(false); setError(""); }}>Edit</button>
-                        {seat.role !== "organizer" && <button type="button" className="btn ghost sm ver" onClick={() => remove(seat)}>Remove</button>}
+                      <div className="prow-acts">
+                        {seat.token && seat.status !== "joined" && (
+                          <button type="button" className="iconbtn" title="Copy link" aria-label={`Copy invite link for ${seat.name}`} onClick={() => share(seat)}>
+                            <Icon name="link" className="ic sm" />
+                          </button>
+                        )}
+                        <div className="mwrap">
+                          <button type="button" className="iconbtn" aria-label={`Actions for ${seat.name}`} aria-haspopup="menu" aria-expanded={open} onClick={(event) => {
+                            if (open) { setMenu(null); return; }
+                            setMenuUp(event.currentTarget.getBoundingClientRect().bottom > window.innerHeight - 160);
+                            setMenu(seat.key);
+                          }}>
+                            <Icon name="dots" />
+                          </button>
+                          {open && (
+                            <>
+                              <button className="mscrim" type="button" aria-label="Close" onClick={() => setMenu(null)} />
+                              <div className={menuUp ? "fmenu up" : "fmenu"} role="menu">
+                                <button role="menuitem" type="button" onClick={() => { setMenu(null); setEditing(seat.key); setEdit(fields(seat)); setRole(seat.role === "coorganizer" ? "coorganizer" : "member"); setAdding(false); setError(""); }}>Edit</button>
+                                {seat.role !== "organizer" && <button role="menuitem" type="button" className="ver" onClick={() => { setMenu(null); remove(seat); }}>Remove</button>}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
                   </>

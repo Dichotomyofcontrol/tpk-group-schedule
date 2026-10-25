@@ -361,6 +361,12 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         if ("error" in result) return result;
         return result.player;
       },
+      rosterShare: async (cid, id) => {
+        const res = await rosterFetch(stateRef.current.me.id, `/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}/share`, { method: "POST" }).catch(() => null);
+        const result = await rosterMutationResult(res, "Couldn't save that the link was copied.");
+        if ("error" in result) return result;
+        return result.player;
+      },
       rosterRemove: async (cid, id) => {
         const res = await rosterFetch(stateRef.current.me.id, `/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => null);
         return !!res?.ok;

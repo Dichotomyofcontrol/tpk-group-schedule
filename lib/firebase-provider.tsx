@@ -367,6 +367,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     rosterList: async () => [],
     rosterAdd: async () => ({ error: "Sign in first." }),
     rosterSave: async () => ({ error: "Sign in first." }),
+    rosterShare: async () => ({ error: "Sign in first." }),
     rosterRemove: async () => false,
     claimSeat: async () => ({ ok: false, error: "Sign in first." }),
     acceptInvite: () => false,
@@ -813,6 +814,12 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(input),
         }).catch(() => null);
         const result = await rosterMutationResult(res, "Couldn't save that player.");
+        if ("error" in result) return result;
+        return result.player;
+      },
+      rosterShare: async (cid, id) => {
+        const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}/share`, { method: "POST" }).catch(() => null);
+        const result = await rosterMutationResult(res, "Couldn't save that the link was copied.");
         if ("error" in result) return result;
         return result.player;
       },

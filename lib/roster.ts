@@ -23,6 +23,8 @@ export type RosterPlayer = {
   token: string;
   /** Account that claimed this seat. */
   memberId?: string;
+  /** Set by the server when the organizer copies or shares the claim link. Absent until then. */
+  linkSharedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -60,9 +62,23 @@ export function stripRosterSecrets(player: RosterPlayer): RosterPlayer {
     status: player.status,
     token: "",
     memberId: player.memberId,
+    linkSharedAt: player.linkSharedAt,
     createdAt: player.createdAt,
     updatedAt: player.updatedAt,
   };
+}
+
+export type SeatLabel = "Joined" | "Link copied" | "Not invited";
+
+/** Joined once claimed. Link copied only after a recorded share. Otherwise the seat exists and nobody was invited. */
+export function seatLabel(seat: { status: RosterStatus; linkSharedAt?: string }): SeatLabel {
+  if (seat.status === "joined") return "Joined";
+  return seat.linkSharedAt ? "Link copied" : "Not invited";
+}
+
+export function markLinkShared(player: RosterPlayer, now = new Date()): RosterPlayer {
+  const stamp = now.toISOString();
+  return { ...player, linkSharedAt: stamp, updatedAt: stamp };
 }
 
 function cleanCharacter(raw: unknown): { value?: string } | { error: string } {
@@ -240,6 +256,7 @@ export type TableSeat = {
   memberId?: string;
   rosterId?: string;
   token?: string;
+  linkSharedAt?: string;
 };
 
 /** One row per person: joined accounts, plus invited seats that nobody has claimed. */
@@ -262,6 +279,7 @@ export function unifyPlayers(members: KnownMember[], roster: RosterPlayer[]): Ta
       memberId: member?.id || linked.memberId,
       rosterId: seat.id,
       token: seat.token,
+      linkSharedAt: seat.linkSharedAt,
     });
   }
   for (const member of active) {
@@ -304,7 +322,15 @@ export function parseStoredRoster(id: string, cid: string, data: Record<string, 
     status,
     token,
     memberId: typeof data.memberId === "string" && data.memberId ? data.memberId : undefined,
+    linkSharedAt: sharedStamp(data.linkSharedAt),
     createdAt: typeof data.createdAt === "string" ? data.createdAt : "",
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : "",
   };
+}
+
+function sharedStamp(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  const time = Date.parse(value);
+  if (Number.isNaN(time)) return undefined;
+  return new Date(time).toISOString();
 }

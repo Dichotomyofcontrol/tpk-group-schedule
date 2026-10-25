@@ -12,6 +12,7 @@ import {
   demoRosterByToken,
   editDemoRosterPlayer,
   listDemoRoster,
+  markDemoRosterShared,
   removeDemoRosterPlayer,
   saveDemoRosterPlayer,
 } from "./roster-demo";
@@ -19,6 +20,7 @@ import {
   applyClaim,
   attachKnownMember,
   buildRosterPlayer,
+  markLinkShared,
   parseRosterInput,
   parseStoredRoster,
   patchRosterPlayer,
@@ -148,6 +150,26 @@ export async function updateRosterPlayer(cid: string, id: string, body: unknown)
   const existing = await readLive(db, cid);
   if (rosterNameTaken(existing, parsed.value.name, id)) return { error: "That name is already on the roster.", status: 400 };
   const player = attachKnownMember(patchRosterPlayer(current, parsed.value), await liveKnownMembers(db, cid), existing);
+  try {
+    await ref.set(rosterDocument(player));
+  } catch (error) {
+    return { error: rosterFailureMessage(error), status: 500 };
+  }
+  return player;
+}
+
+export async function shareRosterLink(cid: string, id: string, now = new Date()): Promise<RosterPlayer | { error: string; status: number }> {
+  if (!adminConfigured()) {
+    const shared = markDemoRosterShared(cid, id, now);
+    if ("error" in shared) return { error: shared.error, status: 404 };
+    return shared;
+  }
+  const db = adminDb();
+  const ref = rosterRef(db, cid, id);
+  const snap = await ref.get();
+  const current = snap.exists ? parseStoredRoster(id, cid, snap.data() || {}) : null;
+  if (!current) return { error: "That player isn't on the roster.", status: 404 };
+  const player = markLinkShared(current, now);
   try {
     await ref.set(rosterDocument(player));
   } catch (error) {
