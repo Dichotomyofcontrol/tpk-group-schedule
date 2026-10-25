@@ -32,7 +32,14 @@ import {
 } from "./model";
 import { applyTheme, readStoredTheme } from "./theme";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
+import type { RosterInput, RosterPlayer } from "./roster";
 import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Session, Toast } from "./types";
+
+function rosterFetch(persona: string, path: string, init: RequestInit = {}) {
+  const headers = new Headers(init.headers);
+  if (persona) headers.set("x-demo-persona", persona);
+  return fetch(path, { ...init, headers });
+}
 
 function publishDemoPoll(state: AppState, poll: Poll) {
   const campaign = state.campaigns.find((item) => item.id === poll.cid);
@@ -327,6 +334,70 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         const invite = result.invites[result.invites.length - 1];
         flash(email ? `Invite ready for ${email}.` : "Link copied to your invites.");
         return invite?.token ?? null;
+      },
+      rosterList: async (cid) => {
+        const res = await rosterFetch(stateRef.current.me.id, `/api/campaigns/${encodeURIComponent(cid)}/roster`).catch(() => null);
+        if (!res?.ok) return [];
+        const body = await res.json() as { players?: RosterPlayer[] };
+        return body.players || [];
+      },
+      rosterAdd: async (cid, input: RosterInput) => {
+        const res = await rosterFetch(stateRef.current.me.id, `/api/campaigns/${encodeURIComponent(cid)}/roster`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(input),
+        }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as { player?: RosterPlayer; error?: string } : {};
+        if (!res?.ok || !body.player) return { error: body.error || "Couldn't add that player." };
+        return body.player;
+      },
+      rosterSave: async (cid, id, input: RosterInput) => {
+        const res = await rosterFetch(stateRef.current.me.id, `/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(input),
+        }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as { player?: RosterPlayer; error?: string } : {};
+        if (!res?.ok || !body.player) return { error: body.error || "Couldn't save that player." };
+        return body.player;
+      },
+      rosterRemove: async (cid, id) => {
+        const res = await rosterFetch(stateRef.current.me.id, `/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => null);
+        return !!res?.ok;
+      },
+      claimSeat: async (token) => {
+        const me = stateRef.current.me;
+        if (!me.id) return { ok: false as const, error: "Sign in first." };
+        const res = await rosterFetch(me.id, `/api/join/${encodeURIComponent(token)}`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ personaId: me.id }),
+        }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as {
+          ok?: boolean; error?: string; cid?: string; campaignName?: string; member?: Member | null;
+          player?: { id: string; name: string; characterName?: string; status: RosterPlayer["status"]; memberId?: string };
+          created?: boolean; linked?: boolean; already?: boolean;
+        } : {};
+        if (!res?.ok || !body.ok || !body.player || !body.cid || !body.campaignName) return { ok: false as const, error: body.error || "Couldn't claim that seat." };
+        if (body.member) {
+          const joined = body.member;
+          const cid = body.cid;
+          setState((prev) => {
+            const list = prev.members[cid] || [];
+            if (list.some((item) => item.id === joined.id)) return prev;
+            return { ...prev, members: { ...prev.members, [cid]: [...list, joined] } };
+          });
+        }
+        return {
+          ok: true as const,
+          campaignName: body.campaignName,
+          cid: body.cid,
+          player: body.player,
+          member: body.member || null,
+          created: !!body.created,
+          linked: !!body.linked,
+          already: !!body.already,
+        };
       },
       acceptInvite: (token, person) => {
         const me = person ?? {

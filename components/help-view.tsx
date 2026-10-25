@@ -4,8 +4,8 @@ import { BackBar, Icon, type IconName } from "./ui";
 
 const ITEMS: { icon: IconName; title: string; body: string }[] = [
   { icon: "dates", title: "Sessions", body: "The next game is up top, with Previously on when there's an opener. Upcoming nights follow, then past nights, newest first. Everyone counts as in unless they tap Can't make it." },
-  { icon: "camp", title: "Campaigns", body: "Each table has a usual night, a place and its players. The organizer sets it once and the sessions fill in." },
-  { icon: "polls", title: "Polls", body: "Not sure when? The organizer floats a few dates, everyone taps the ones that work, and the winner goes on the list. A share link lets friends vote without an account." },
+  { icon: "camp", title: "Campaigns", body: "Each table has a usual night, a place and its players. The organizer can add a roster seat and send that player a personal link to claim it." },
+  { icon: "polls", title: "Polls", body: "Not sure when? The organizer floats a few dates, everyone taps the ones that work, and the winner goes on the list. A share link lets friends vote without an account, picking their name from the roster." },
   { icon: "inv", title: "Invites", body: "Organizers send a link. Players open it, sign in with their email, and they're at the table." },
   { icon: "doc", title: "Recaps", body: "After a session, add what happened. Recaps stay with the night and on the campaign page." },
 ];

@@ -12,6 +12,7 @@ import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
 import type { Cadence, Campaign, Member, Session } from "@/lib/types";
 import { CoverEditor } from "./cover-editor";
+import { RosterCard } from "./roster-card";
 import { SessionRow, sessionHref } from "./schedule";
 import { Avatar, BackBar, CampaignCover, Icon, SettingRow, Switch, Watermark } from "./ui";
 import { accentVar, worldFor } from "@/lib/world";
@@ -135,6 +136,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           )}
         </div>
         <aside className="cside">
+          <RosterCard cid={cid} manage={staff} />
           {organizer ? <OrganizerPanel campaign={campaign} members={members} me={me} /> : <PlayerPanel campaign={campaign} me={me} members={members} />}
         </aside>
       </div>

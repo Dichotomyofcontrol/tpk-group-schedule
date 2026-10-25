@@ -1,6 +1,8 @@
 /** In-memory polls for local demo mode, when Firebase Admin is not configured. */
 import { buildDemo } from "./demo-data";
 import { POLL_ID_RE, type PollPlayer, type PollRecord } from "./poll-public";
+import { seatsFromRoster } from "./roster";
+import { listDemoRoster } from "./roster-demo";
 import type { Poll } from "./types";
 
 /** Survives the dev server rebuilding a route, so a guest can reload the poll they just voted on. */
@@ -21,9 +23,15 @@ function playersOf(list: PollPlayer[]): PollPlayer[] {
   }));
 }
 
+function rosterSeats(cid: string): PollPlayer[] {
+  const seats = seatsFromRoster(listDemoRoster(cid));
+  return seats.length ? seats : [];
+}
+
 export function demoPollRecord(cid: string, pid: string): PollRecord | null {
   const saved = memory.get(key(cid, pid));
-  if (saved) return structuredClone(saved);
+  const roster = POLL_ID_RE.test(cid) ? rosterSeats(cid) : [];
+  if (saved) return { ...structuredClone(saved), roster: roster.length ? roster : undefined };
   if (!POLL_ID_RE.test(cid) || !POLL_ID_RE.test(pid)) return null;
   const state = buildDemo("seth");
   const poll = state.polls.find((item) => item.id === pid && item.cid === cid);
@@ -35,6 +43,7 @@ export function demoPollRecord(cid: string, pid: string): PollRecord | null {
     kind: campaign.kind,
     campaignStatus: campaign.status,
     members: playersOf(state.members[cid] || []),
+    roster: roster.length ? roster : undefined,
   };
 }
 
