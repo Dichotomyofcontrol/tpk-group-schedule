@@ -1,46 +1,51 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { rosterJoinPath, type RosterInput, type RosterPlayer } from "@/lib/roster";
+import { rosterJoinPath, unifyPlayers, type RosterInput, type RosterPlayer, type TableSeat } from "@/lib/roster";
 import { useStore } from "@/lib/store";
+import type { Member, Role } from "@/lib/types";
 import { sharePollLink } from "./poll-view";
 import { Icon } from "./ui";
 
 const EMPTY: RosterInput = { name: "", characterName: "", email: "", phone: "" };
 
-function fields(player?: RosterPlayer): RosterInput {
+function fields(seat?: TableSeat): RosterInput {
   return {
-    name: player?.name || "",
-    characterName: player?.characterName || "",
-    email: player?.email || "",
-    phone: player?.phone || "",
+    name: seat?.name || "",
+    characterName: seat?.characterName || "",
+    email: seat?.email || "",
+    phone: seat?.phone || "",
   };
 }
 
-export function RosterCard({ cid, manage }: { cid: string; manage: boolean }) {
+export function RosterCard({ cid, manage, members, canInvite = false }: { cid: string; manage: boolean; members: Member[]; canInvite?: boolean }) {
   const store = useStore();
   const listRef = useRef(store.rosterList);
   listRef.current = store.rosterList;
   const gen = useRef(0);
-  const [players, setPlayers] = useState<RosterPlayer[] | null>(null);
+  const [roster, setRoster] = useState<RosterPlayer[] | null>(null);
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<RosterInput>(EMPTY);
   const [editing, setEditing] = useState<string | null>(null);
   const [edit, setEdit] = useState<RosterInput>(EMPTY);
+  const [role, setRole] = useState<Role>("member");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const ticket = ++gen.current;
-    listRef.current(cid).then((list) => { if (ticket === gen.current) setPlayers(list); }).catch(() => { if (ticket === gen.current) setPlayers([]); });
+    listRef.current(cid).then((list) => { if (ticket === gen.current) setRoster(list); }).catch(() => { if (ticket === gen.current) setRoster([]); });
   }, [cid, store.state.me.id]);
 
-  async function share(player: RosterPlayer) {
-    if (!player.token) return;
-    const path = rosterJoinPath(player.token);
+  const seats = unifyPlayers(members, roster || []);
+
+  async function share(seat: TableSeat) {
+    if (!seat.token) return;
+    const path = rosterJoinPath(seat.token);
     const url = `${window.location.origin}${path}`;
-    const text = `Claim your seat as ${player.name}: ${url}`;
-    const result = await sharePollLink(url, `Seat for ${player.name}`, text);
+    const text = `Claim your seat as ${seat.name}: ${url}`;
+    const result = await sharePollLink(url, `Seat for ${seat.name}`, text);
     if (result === "copied") store.flash("Seat link copied. Send it to them.");
     else if (result === "failed") store.flash("Couldn't copy the link.", "err");
   }
@@ -59,48 +64,83 @@ export function RosterCard({ cid, manage }: { cid: string; manage: boolean }) {
     });
     setBusy(false);
     if ("error" in result) { setError(result.error); return; }
-    setPlayers((list) => [...(list || []).filter((item) => item.id !== result.id), result]);
+    setRoster((list) => [...(list || []).filter((item) => item.id !== result.id), result]);
     setDraft(EMPTY);
     setAdding(false);
-    store.flash(`${result.name} is on the roster.`);
+    store.flash(`${result.name} is on the list.`);
   }
 
-  async function save(player: RosterPlayer, event: React.FormEvent) {
+  async function save(seat: TableSeat, event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
     setError("");
     gen.current += 1;
-    const result = await store.rosterSave(cid, player.id, {
-      name: edit.name,
-      characterName: edit.characterName || undefined,
-      email: edit.email || undefined,
-      phone: edit.phone || undefined,
-    });
+    if (seat.rosterId) {
+      const result = await store.rosterSave(cid, seat.rosterId, {
+        name: edit.name,
+        characterName: edit.characterName || undefined,
+        email: edit.email || undefined,
+        phone: edit.phone || undefined,
+      });
+      if ("error" in result) { setBusy(false); setError(result.error); return; }
+      setRoster((list) => (list || []).map((item) => item.id === result.id ? result : item));
+    } else if (seat.memberId) {
+      store.patchMember(cid, seat.memberId, { characterName: edit.characterName?.trim() || "" });
+    }
+    if (seat.memberId && seat.role && seat.role !== "organizer" && role !== seat.role) {
+      store.patchMember(cid, seat.memberId, { role });
+    }
     setBusy(false);
-    if ("error" in result) { setError(result.error); return; }
-    setPlayers((list) => (list || []).map((item) => item.id === result.id ? result : item));
     setEditing(null);
     store.flash("Saved.");
   }
 
-  async function remove(player: RosterPlayer) {
-    if (!window.confirm(`Remove ${player.name} from the roster?`)) return;
+  async function remove(seat: TableSeat) {
+    if (seat.memberId && seat.status === "joined") {
+      if (seat.role === "organizer") return;
+      if (!window.confirm(`Remove ${seat.name} from this campaign?`)) return;
+      store.removeMember(cid, seat.memberId);
+      if (seat.rosterId) {
+        gen.current += 1;
+        const ok = await store.rosterRemove(cid, seat.rosterId);
+        if (ok) setRoster((list) => (list || []).filter((item) => item.id !== seat.rosterId));
+      }
+      store.flash(`${seat.name} was removed.`);
+      return;
+    }
+    if (!seat.rosterId) return;
+    if (!window.confirm(`Remove ${seat.name} from the list?`)) return;
     gen.current += 1;
-    const ok = await store.rosterRemove(cid, player.id);
+    const ok = await store.rosterRemove(cid, seat.rosterId);
     if (!ok) { store.flash("Couldn't remove that player.", "err"); return; }
-    setPlayers((list) => (list || []).filter((item) => item.id !== player.id));
-    store.flash(`${player.name} was removed from the roster.`);
+    setRoster((list) => (list || []).filter((item) => item.id !== seat.rosterId));
+    store.flash(`${seat.name} was removed.`);
   }
 
-  const form = (value: RosterInput, set: (next: RosterInput) => void, onSubmit: (event: React.FormEvent) => void, submit: string) => (
+  const form = (value: RosterInput, set: (next: RosterInput) => void, onSubmit: (event: React.FormEvent) => void, submit: string, seat?: TableSeat) => (
     <form className="rform" onSubmit={onSubmit}>
-      <div className="fld"><label htmlFor="rn">Name</label><input id="rn" required maxLength={40} value={value.name} onChange={(event) => set({ ...value, name: event.target.value })} /></div>
+      {seat?.memberId && !seat.rosterId ? (
+        <p className="note" style={{ margin: 0 }}>{seat.name} already has an account.</p>
+      ) : (
+        <div className="fld"><label htmlFor="rn">Name</label><input id="rn" required maxLength={40} value={value.name} onChange={(event) => set({ ...value, name: event.target.value })} /></div>
+      )}
       <div className="fld"><label htmlFor="rc">Character name</label><input id="rc" maxLength={60} value={value.characterName || ""} placeholder="Optional" onChange={(event) => set({ ...value, characterName: event.target.value })} /></div>
-      <div className="two">
-        <div className="fld"><label htmlFor="re">Email</label><input id="re" type="email" maxLength={80} value={value.email || ""} placeholder="Optional" onChange={(event) => set({ ...value, email: event.target.value })} /></div>
-        <div className="fld"><label htmlFor="rp">Phone</label><input id="rp" type="tel" maxLength={24} value={value.phone || ""} placeholder="Optional" onChange={(event) => set({ ...value, phone: event.target.value })} /></div>
-      </div>
+      {(!seat || seat.rosterId) && (
+        <div className="two">
+          <div className="fld"><label htmlFor="re">Email</label><input id="re" type="email" maxLength={80} value={value.email || ""} placeholder="Optional" onChange={(event) => set({ ...value, email: event.target.value })} /></div>
+          <div className="fld"><label htmlFor="rp">Phone</label><input id="rp" type="tel" maxLength={24} value={value.phone || ""} placeholder="Optional" onChange={(event) => set({ ...value, phone: event.target.value })} /></div>
+        </div>
+      )}
+      {seat?.memberId && seat.role && seat.role !== "organizer" && (
+        <div className="fld">
+          <label htmlFor="rr">Role</label>
+          <select id="rr" className="inp" value={role} onChange={(event) => setRole(event.target.value as Role)}>
+            <option value="member">Player</option>
+            <option value="coorganizer">Co-organizer</option>
+          </select>
+        </div>
+      )}
       {error && <p className="guest-err" role="alert">{error}</p>}
       <div className="two end">
         <button type="button" className="btn ghost sm" onClick={() => { setAdding(false); setEditing(null); setError(""); }}>Cancel</button>
@@ -112,37 +152,42 @@ export function RosterCard({ cid, manage }: { cid: string; manage: boolean }) {
   return (
     <section className="card pad roster">
       <div className="sh">
-        <h2>Roster{players ? ` · ${players.length}` : ""}</h2>
+        <h2>Players · {seats.length}</h2>
         {manage && !adding && <button type="button" className="btn sec sm" onClick={() => { setAdding(true); setEditing(null); setError(""); }}><Icon name="plus" className="ic sm" />Add player</button>}
+        {!manage && canInvite && <Link className="btn sec sm" href={`/invites?campaign=${cid}`}><Icon name="plus" className="ic sm" />Invite</Link>}
       </div>
-      <p className="note">Each player gets a personal link to claim their seat. Polls count this list.</p>
+      <p className="note">Joined players already have an account. Invited players get a personal link to claim their seat. Polls count this list.</p>
       {adding && form(draft, setDraft, add, "Add player")}
-      {players === null && <p className="note">Loading the roster…</p>}
-      {players && players.length === 0 && !adding && <p className="note">No one on the roster yet.</p>}
-      {players && players.length > 0 && (
+      {roster === null && seats.length === 0 && <p className="note">Loading players…</p>}
+      {roster !== null && seats.length === 0 && !adding && <p className="note">No players yet.</p>}
+      {seats.length > 0 && (
         <ul className="mlist rlist">
-          {players.map((player) => (
-            <li key={player.id} className="rrow">
-              {editing === player.id ? (
-                form(edit, setEdit, (event) => save(player, event), "Save")
-              ) : (
-                <>
-                  <div className="mi">
-                    <b>{player.name}</b>
-                    <span className="note">{[player.characterName, player.email, player.phone].filter(Boolean).join(" · ")}</span>
-                  </div>
-                  <span className={player.status === "joined" ? "rpill joined" : "rpill"}>{player.status === "joined" ? "Joined" : "Invited"}</span>
-                  {manage && (
-                    <div className="racts">
-                      {player.token && <button type="button" className="btn sec sm" onClick={() => share(player)}><Icon name="link" className="ic sm" />Copy/share link</button>}
-                      <button type="button" className="btn ghost sm" onClick={() => { setEditing(player.id); setEdit(fields(player)); setAdding(false); setError(""); }}>Edit</button>
-                      <button type="button" className="btn ghost sm ver" onClick={() => remove(player)}>Remove</button>
+          {seats.map((seat) => {
+            const detail = [seat.characterName && seat.characterName !== seat.name ? seat.characterName : "", seat.email, seat.phone].filter(Boolean).join(" · ");
+            const mine = seat.memberId === store.state.me.id;
+            return (
+              <li key={seat.key} className="rrow">
+                {editing === seat.key ? (
+                  form(edit, setEdit, (event) => save(seat, event), "Save", seat)
+                ) : (
+                  <>
+                    <div className="mi">
+                      <b>{seat.name}</b>
+                      <span className="note">{[detail, mine ? "you" : "", seat.role === "organizer" ? "Organizer" : seat.role === "coorganizer" ? "Co-organizer" : ""].filter(Boolean).join(" · ")}</span>
                     </div>
-                  )}
-                </>
-              )}
-            </li>
-          ))}
+                    <span className={seat.status === "joined" ? "rpill joined" : "rpill"}>{seat.status === "joined" ? "Joined" : "Invited"}</span>
+                    {manage && (
+                      <div className="racts">
+                        {seat.token && <button type="button" className="btn sec sm" onClick={() => share(seat)}><Icon name="link" className="ic sm" />Copy/share link</button>}
+                        <button type="button" className="btn ghost sm" onClick={() => { setEditing(seat.key); setEdit(fields(seat)); setRole(seat.role === "coorganizer" ? "coorganizer" : "member"); setAdding(false); setError(""); }}>Edit</button>
+                        {seat.role !== "organizer" && <button type="button" className="btn ghost sm ver" onClick={() => remove(seat)}>Remove</button>}
+                      </div>
+                    )}
+                  </>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

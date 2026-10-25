@@ -54,7 +54,7 @@ import {
 } from "./model";
 import { StoreContext, type CampaignInput, type StoreApi } from "./store";
 import { omitUndefined } from "./omit";
-import type { RosterInput, RosterPlayer } from "./roster";
+import { rosterMutationResult, type RosterInput, type RosterPlayer } from "./roster";
 import type { AppState, Attendance, AttendanceState, Campaign, Invite, Member, Poll, Session, SessionFile, Toast, User } from "./types";
 
 function emptyState(me: User): AppState {
@@ -804,17 +804,17 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster`, {
           method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input),
         }).catch(() => null);
-        const body = res ? await res.json().catch(() => ({})) as { player?: RosterPlayer; error?: string } : {};
-        if (!res?.ok || !body.player) return { error: body.error || "Couldn't add that player." };
-        return body.player;
+        const result = await rosterMutationResult(res, "Couldn't add that player.");
+        if ("error" in result) return result;
+        return result.player;
       },
       rosterSave: async (cid, id, input: RosterInput) => {
         const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, {
           method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(input),
         }).catch(() => null);
-        const body = res ? await res.json().catch(() => ({})) as { player?: RosterPlayer; error?: string } : {};
-        if (!res?.ok || !body.player) return { error: body.error || "Couldn't save that player." };
-        return body.player;
+        const result = await rosterMutationResult(res, "Couldn't save that player.");
+        if ("error" in result) return result;
+        return result.player;
       },
       rosterRemove: async (cid, id) => {
         const res = await authedFetch(`/api/campaigns/${encodeURIComponent(cid)}/roster/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => null);

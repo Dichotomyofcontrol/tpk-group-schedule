@@ -14,7 +14,7 @@ import type { Cadence, Campaign, Member, Session } from "@/lib/types";
 import { CoverEditor } from "./cover-editor";
 import { RosterCard } from "./roster-card";
 import { SessionRow, sessionHref } from "./schedule";
-import { Avatar, BackBar, CampaignCover, Icon, SettingRow, Switch, Watermark } from "./ui";
+import { BackBar, CampaignCover, Icon, SettingRow, Switch, Watermark } from "./ui";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
 
@@ -136,8 +136,8 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
           )}
         </div>
         <aside className="cside">
-          <RosterCard cid={cid} manage={staff} />
-          {organizer ? <OrganizerPanel campaign={campaign} members={members} me={me} /> : <PlayerPanel campaign={campaign} me={me} members={members} />}
+          <RosterCard cid={cid} manage={staff} members={membersOf(state, cid)} canInvite={!staff && !!campaign.allowMemberInvites} />
+          {organizer ? <OrganizerPanel campaign={campaign} members={members} me={me} /> : <PlayerPanel campaign={campaign} me={me} />}
         </aside>
       </div>
     </>
@@ -244,72 +244,21 @@ function DetailsForm({ campaign, onDone }: { campaign: Campaign; onDone: () => v
   );
 }
 
-function roleName(role: Member["role"]): string {
-  return role === "organizer" ? "Organizer" : role === "coorganizer" ? "Co-organizer" : "Player";
-}
-
-function MemberRow({ m, cid, manage }: { m: Member; cid: string; manage: boolean }) {
-  const store = useStore();
-  const [menu, setMenu] = useState(false);
-  const [naming, setNaming] = useState(false);
-  const [name, setName] = useState(m.characterName || "");
-  const mine = m.id === store.state.me.id;
-  const primary = m.characterName && m.characterName !== m.displayName ? m.characterName : m.displayName || "Player";
-  const secondary = m.characterName && m.characterName !== m.displayName ? m.displayName : "";
-  return (
-    <li>
-      <Avatar name={m.displayName || primary} id={m.id} />
-      {naming ? (
-        <form className="mi inrow" onSubmit={(e) => { e.preventDefault(); store.patchMember(cid, m.id, { characterName: name.trim() }); setNaming(false); store.flash("Saved."); }}>
-          <label className="sr" htmlFor={`cn-${m.id}`}>Character name for {m.displayName || primary}</label>
-          <input id={`cn-${m.id}`} size={1} autoFocus value={name} maxLength={60} placeholder="Character name" onChange={(e) => setName(e.target.value)} />
-          <button className="btn pri sm" type="submit">Save</button>
-          <button className="iconbtn" type="button" aria-label="Cancel" onClick={() => { setNaming(false); setName(m.characterName || ""); }}><Icon name="x" /></button>
-        </form>
-      ) : (
-      <div className="mi">
-        <b>{primary}</b>
-        {(secondary || mine) && <span className="note">{[secondary, mine ? "you" : ""].filter(Boolean).join(" · ")}</span>}
-      </div>
-      )}
-      {!naming && <span className="rl">{roleName(m.role)}</span>}
-      {naming ? null : manage && m.role !== "organizer" ? (
-        <div className="mwrap">
-          <button className="iconbtn" type="button" aria-label={`Manage ${m.displayName || primary}`} aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((v) => !v)}><Icon name="dots" /></button>
-          {menu && (
-            <>
-              <button className="mscrim" type="button" aria-label="Close" onClick={() => setMenu(false)} />
-              <div className="fmenu" role="menu">
-                <button role="menuitem" type="button" onClick={() => { setMenu(false); setName(m.characterName || ""); setNaming(true); }}>Character name</button>
-                <button role="menuitem" type="button" onClick={() => { setMenu(false); store.patchMember(cid, m.id, { role: m.role === "coorganizer" ? "member" : "coorganizer" }); }}>
-                  {m.role === "coorganizer" ? "Make a player" : "Make co-organizer"}
-                </button>
-                <button role="menuitem" type="button" className="ver" onClick={() => { setMenu(false); if (window.confirm(`Remove ${m.displayName || primary} from this campaign?`)) store.removeMember(cid, m.id); }}>Remove from campaign</button>
-              </div>
-            </>
-          )}
-        </div>
-      ) : manage ? <span className="iconpad" aria-hidden="true" /> : null}
-    </li>
-  );
-}
-
 function OrganizerPanel({ campaign, members, me }: { campaign: Campaign; members: Member[]; me?: Member }) {
   const store = useStore();
   const router = useRouter();
   const [transfer, setTransfer] = useState(false);
   const [to, setTo] = useState("");
   const [deleting, setDeleting] = useState(false);
-  const [managing, setManaging] = useState(false);
   const others = members.filter((m) => m.role !== "organizer");
   const archived = campaign.status === "archived";
   return (
     <>
-      <section className="card pad">
-        <div className="sh"><h2>Players · {members.length}</h2><div className="shact"><button type="button" className="mplayers" aria-haspopup="dialog" onClick={() => setManaging(true)}><Icon name="user" className="ic sm" />Manage players</button><Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite</Link></div></div>
-        <ul className="mlist">{members.map((m) => <MemberRow key={m.id} m={m} cid={campaign.id} manage />)}</ul>
-        {me && <CharacterField campaign={campaign} me={me} label="Your character name" />}
-      </section>
+      {me && (
+        <section className="card pad">
+          <CharacterField campaign={campaign} me={me} label="Your character name" />
+        </section>
+      )}
       <section className="card pad">
         <h2 className="ph2">Table rules</h2>
         <SettingRow title="Ask for RSVPs" detail="Off: everyone counts as in until they say otherwise.">
@@ -349,32 +298,8 @@ function OrganizerPanel({ campaign, members, me }: { campaign: Campaign; members
           <button className="btn ghost sm full ver" onClick={() => setDeleting(true)}>Delete campaign…</button>
         </div>
       </section>
-      {managing && <ManagePlayersSheet campaign={campaign} members={members} onClose={() => setManaging(false)} />}
       {deleting && <DeleteSheet campaign={campaign} onClose={() => setDeleting(false)} onDeleted={() => router.push("/campaigns")} />}
     </>
-  );
-}
-
-/** Organizer-only member management: invite, roles, character names, remove. */
-function ManagePlayersSheet({ campaign, members, onClose }: { campaign: Campaign; members: Member[]; onClose: () => void }) {
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
-  }, [onClose]);
-  return (
-    <div className="modal" role="dialog" aria-modal="true" aria-labelledby="mp-h">
-      <button className="modal-scrim" type="button" aria-label="Close" onClick={onClose} />
-      <div className="card sheet mpsheet">
-        <div className="sh"><h2 id="mp-h">Manage players</h2><button className="iconbtn" type="button" aria-label="Close" autoFocus onClick={onClose}><Icon name="x" /></button></div>
-        <p className="note">Set character names, make someone a co-organizer, or remove a player with the ••• menu.</p>
-        <ul className="mlist">{members.map((m) => <MemberRow key={m.id} m={m} cid={campaign.id} manage />)}</ul>
-        <div className="two end">
-          <Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite players</Link>
-          <button type="button" className="btn pri sm" onClick={onClose}>Done</button>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -431,11 +356,9 @@ function CharacterField({ campaign, me, label = "Character name" }: { campaign: 
   );
 }
 
-function PlayerPanel({ campaign, me, members }: { campaign: Campaign; me: Member; members: Member[] }) {
+function PlayerPanel({ campaign, me }: { campaign: Campaign; me: Member }) {
   const store = useStore();
   const router = useRouter();
-  const staff = me.role === "coorganizer";
-  const canInvite = staff || campaign.allowMemberInvites;
   return (
     <>
       <section className="card pad">
@@ -444,10 +367,6 @@ function PlayerPanel({ campaign, me, members }: { campaign: Campaign; me: Member
         <SettingRow title="Email reminders" detail="3 days and 3 hours before each session.">
           <Switch on={!me.remindersOff} label="Email reminders" onChange={(v) => store.patchMe(campaign.id, { remindersOff: !v })} />
         </SettingRow>
-      </section>
-      <section className="card pad">
-        <div className="sh"><h2>Players · {members.length}</h2>{canInvite && <Link className="btn sec sm" href={`/invites?campaign=${campaign.id}`}><Icon name="plus" className="ic sm" />Invite</Link>}</div>
-        <ul className="mlist">{members.map((m) => <MemberRow key={m.id} m={m} cid={campaign.id} manage={false} />)}</ul>
       </section>
       <section className="card pad">
         <button className="btn ghost sm full ver" onClick={async () => {
