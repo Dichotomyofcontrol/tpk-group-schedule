@@ -3,7 +3,10 @@ import { buildDemo } from "./demo-data";
 import { POLL_ID_RE, type PollPlayer, type PollRecord } from "./poll-public";
 import type { Poll } from "./types";
 
-const memory = new Map<string, PollRecord>();
+/** Survives the dev server rebuilding a route, so a guest can reload the poll they just voted on. */
+const demoGlobals = globalThis as typeof globalThis & { __tpkDemoPolls?: Map<string, PollRecord> };
+if (!demoGlobals.__tpkDemoPolls) demoGlobals.__tpkDemoPolls = new Map();
+const memory = demoGlobals.__tpkDemoPolls;
 
 function key(cid: string, pid: string): string {
   return `${cid}/${pid}`;
@@ -107,3 +110,4 @@ export function parseDemoRegistration(body: unknown): PollRecord | { error: stri
     members,
   };
 }
+
