@@ -47,8 +47,7 @@ export function RosterCard({ cid, manage, members, canInvite = false }: { cid: s
     setMenu(null);
     const path = rosterJoinPath(seat.token);
     const url = `${window.location.origin}${path}`;
-    const text = `Claim your seat as ${seat.name}: ${url}`;
-    const result = await sharePollLink(url, `Seat for ${seat.name}`, text);
+    const result = await sharePollLink(url, `Seat for ${seat.name}`, `Claim your seat as ${seat.name}`);
     if (result === "aborted") return;
     if (result === "failed") { store.flash("Couldn't copy the link.", "err"); return; }
     const saved = await store.rosterShare(cid, seat.rosterId);

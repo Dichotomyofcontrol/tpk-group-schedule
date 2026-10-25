@@ -190,6 +190,43 @@ test("poll counts and nudges use the roster, one vote per seat", async () => {
   assert.equal(seatsFromRoster(SALTMARSH_ROSTER).find((seat) => seat.rosterId === "rp-seth")?.id, "seth");
 });
 
+test("a public vote counts for a joined member and for an unclaimed seat", async () => {
+  const poll = saltPoll();
+  const sethId = "K3mN8sEthDexterJoined01abcd";
+  const members = [{ id: sethId, displayName: "Seth", characterName: "Dexter" }];
+  const roster = [{ id: "roster:rp-elara", displayName: "Elara", characterName: "Elara Voss", rosterId: "rp-elara" }];
+  const seats = mergeVoteSeats(members, roster);
+  const record = { poll, campaignName: "Ghosts of Saltmarsh", campaignStatus: "active" as const, members, roster };
+  const view = await toPublicPoll(record, null);
+  const seth = view.players.find((player) => player.name === "Seth");
+  const elara = view.players.find((player) => player.name === "Elara");
+  assert.equal(seth?.character, "Dexter");
+  assert.equal(seth?.id, sethId);
+  assert.equal(elara?.id, "rp-elara");
+
+  const asSeth = await applyGuestVote(poll, { token: TOKEN, name: "Seth", picks: [poll.options[0]!.id], rosterId: seth!.id }, seats);
+  assert.equal("error" in asSeth, false);
+  if ("error" in asSeth) return;
+  assert.equal(asSeth.poll.votes[sethId]?.name, "Seth");
+  const afterSeth = summarizePoll(asSeth.poll, seats);
+  assert.equal(afterSeth.voted, 1);
+  assert.equal(afterSeth.guests, 0);
+  assert.equal(afterSeth.quiet.includes("Seth"), false);
+  assert.equal(afterSeth.quiet.includes("Elara"), true);
+
+  const asElara = await applyGuestVote(asSeth.poll, { token: OTHER, name: "Elara", picks: [poll.options[1]!.id], rosterId: elara!.id }, seats);
+  assert.equal("error" in asElara, false);
+  if ("error" in asElara) return;
+  assert.equal(asElara.poll.votes["roster:rp-elara"]?.name, "Elara");
+  const afterBoth = summarizePoll(asElara.poll, seats);
+  assert.equal(afterBoth.voted, 2);
+  assert.equal(afterBoth.guests, 0);
+  assert.deepEqual(afterBoth.quiet, []);
+  const shown = await toPublicPoll({ ...record, poll: asElara.poll }, null);
+  assert.equal(shown.players.find((player) => player.name === "Seth")?.taken, true);
+  assert.equal(shown.players.find((player) => player.name === "Elara")?.taken, true);
+});
+
 test("roster writes stay on the server and the claim route checks the import-style bearer", () => {
   const rules = readFileSync(new URL("../../firebase/firestore.rules", import.meta.url), "utf8");
   const block = rules.match(/match \/roster\/\{rid\} \{[\s\S]*?\n {6}\}/);
