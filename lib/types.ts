@@ -128,6 +128,12 @@ export type Session = {
   requireRsvps: boolean | null;
 
   notes?: string;
+  /**
+   * Read-aloud opener for this night, as markdown. An automation can set it
+   * the day of the game. Empty means the Sessions hero falls back to the
+   * latest recap's opening paragraph.
+   */
+  previouslyOn?: string;
   /** ICS SEQUENCE. Bumped whenever the time or status changes. */
   seq: number;
   recapHtml?: string;

@@ -17,6 +17,17 @@ const ARGYN_HTML = [
   "<p>The beacon is lit. The revenants are quieter, not kinder.</p>",
 ].join("");
 
+/** About two minutes aloud. Pushed onto the next Icewind night the way the import route would. */
+const FROST_OPENER = [
+  "Last time, the whale opened an eye under the ice, and nobody at the table agreed on what it meant. Auril's aurora still hangs over Ten-Towns. You left Easthaven with the cauldron shards wrapped in sailcloth, Sephek's blade cold in the boat, and a promise to the speaker that you would be back before the next new moon.",
+  "",
+  "The chwinga that followed you from the ferry is still in Vellynne's hood. She will not say why. She will say, if someone asks her tonight, that the island of Solstice is closer than the map admits, and that the tests there are not metaphors. The duergar plot in Easthaven is not finished. The speaker knows their faces. The cauldron is still in three pieces.",
+  "",
+  "You rowed out at dusk. The water was the color of ink, and the light under the ice kept pace with the boat. Name who sat where: who held the shards, who watched the shore, who would not look down. Give the table a breath. Then give them the night. The island is a black line on the horizon. The cold has a voice in it. Something large blinked, once, and the aurora answered.",
+  "",
+  "If they argue about the whale, let them. That argument is how this night starts. When it settles, remind them of the promise, the three pieces of the cauldron, and the tests that are not metaphors. Then deal the first scene: the rowboat, the dark water, and the light that will not let them pass.",
+].join("\n");
+
 export const USERS: User[] = [
   { id: "seth", email: "sthomas131@gmail.com", displayName: "Seth", tz: TZ, calToken: "demo-seth", canCreateCampaigns: true, nameSet: true },
   { id: "amy", email: "amy@example.com", displayName: "Amy", tz: TZ, calToken: "demo-amy", canCreateCampaigns: false, nameSet: true },
@@ -293,6 +304,7 @@ function makeSession(input: {
   pdfName?: string;
   pdfUrl?: string;
   notes?: string;
+  previouslyOn?: string;
   requireRsvps?: boolean | null;
 }): Session {
   const cadence = { interval: 1, weekday: 0, startTime: input.hm, durationMin: input.durationMin, tz: TZ, anchorDate: input.ymd };
@@ -319,6 +331,7 @@ function makeSession(input: {
     pdfName: input.pdfName,
     pdfUrl: input.pdfUrl,
     notes: input.notes,
+    previouslyOn: input.previouslyOn,
   };
 }
 
@@ -394,6 +407,7 @@ function buildSessions(): Session[] {
       seriesId: "frost-series",
       status: ymd === "2026-09-14" ? "cancelled" : "scheduled",
       exception: ymd === "2026-09-14" ? "skip" : null,
+      previouslyOn: ymd === "2026-10-26" ? FROST_OPENER : undefined,
     }));
   });
 

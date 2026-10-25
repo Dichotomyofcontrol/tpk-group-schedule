@@ -98,6 +98,7 @@ function sessionFrom(id: string, cid: string, data: DocumentData): Session {
     exception: data.exception ?? null,
     requireRsvps: data.requireRsvps ?? null,
     notes: optionalString(data.notes),
+    previouslyOn: optionalString(data.previouslyOn),
     seq: data.seq ?? 0,
     recapHtml: optionalString(data.recapHtml),
     recapText: optionalString(data.recapText),
