@@ -18,6 +18,7 @@ import {
   onSnapshot,
   query,
   setDoc,
+  updateDoc,
   where,
   writeBatch,
   type DocumentData,
@@ -355,7 +356,9 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     createCampaign: () => null,
     toggleVote: () => undefined,
     lockPoll: () => undefined,
-    addPoll: () => undefined,
+    addPoll: () => null,
+    replacePoll: () => undefined,
+    mergeGuestBallots: () => undefined,
     createOneShot: () => null,
     nudge: () => undefined,
     createInvite: async () => null,
@@ -688,11 +691,14 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         return created.id;
       },
       toggleVote: (pollId, optionId) => {
+        const uid = (stateRef.current || state).me.id;
         const next = applyLocal((s) => toggleVote(s, pollId, optionId));
         const poll = next?.polls.find((p) => p.id === pollId);
-        if (poll) {
+        const vote = uid ? poll?.votes[uid] : undefined;
+        // Write only this person's ballot so a guest vote landing at the same time stays put.
+        if (poll && vote) {
           const { db } = getFirebase();
-          void setDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), poll, { merge: true });
+          void updateDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), { [`votes.${uid}`]: vote });
         }
       },
       lockPoll: (pollId, optionId) => {
@@ -705,7 +711,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const poll = result.polls.find((p) => p.id === pollId);
         const session = result.sessions.find((s) => s.id === poll?.sessionId);
         const { db } = getFirebase();
-        if (poll) void setDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), poll);
+        if (poll) {
+          void updateDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), {
+            status: poll.status,
+            chosenOptionId: poll.chosenOptionId ?? null,
+            sessionId: poll.sessionId ?? null,
+          });
+        }
         if (session) void persistSession(session);
         flash("Locked in. It's a real session now.");
       },
@@ -713,13 +725,16 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const result = addPoll(stateRef.current || state, cid, title, options);
         if ("error" in result) {
           flash(result.error, "err");
-          return;
+          return null;
         }
         setState(result);
         const poll = result.polls[result.polls.length - 1];
         const { db } = getFirebase();
         void setDoc(doc(db, "campaigns", cid, "polls", poll.id), poll);
+        return poll?.id ?? null;
       },
+      replacePoll: () => undefined,
+      mergeGuestBallots: () => undefined,
       createOneShot: (input) => {
         const made = createCampaign(stateRef.current || state, { name: input.title, color: "#ce93d8", icon: "✨", tz: input.tz, location: input.location, requireRsvps: false, allowMemberInvites: true, cadence: null, kind: "oneshot" });
         if ("error" in made) { flash(made.error, "err"); return null; }

@@ -206,6 +206,24 @@ export const CAMPAIGNS: Campaign[] = [
     cadence: null,
     discord: null,
   },
+  {
+    id: "saltmarsh",
+    orgId: null,
+    name: "Ghosts of Saltmarsh",
+    slug: "saltmarsh",
+    color: "#26a69a",
+    icon: "⚓",
+    cover: cover("/covers/wilds.svg", "After Ivan Aivazovsky, The Ninth Wave"),
+    system: "Dungeons & Dragons",
+    defaultLocation: "TPK Brewing",
+    tz: TZ,
+    ownerUid: "seth",
+    status: "active",
+    allowMemberInvites: false,
+    requireRsvps: false,
+    cadence: null,
+    discord: null,
+  },
 ];
 
 const STRAHD_PARTY: Member[] = [
@@ -462,6 +480,23 @@ function pollOption(id: string, ymd: string, hm: string): Poll["options"][number
 const POLL_DATES = ["2026-12-04", "2026-12-07", "2026-12-11", "2026-12-12", "2026-12-14"];
 const POLL_TIMES = ["14:00", "16:00", "18:00", "19:00", "20:00"];
 
+function saltPoll(): Poll {
+  return {
+    id: "salt-dates",
+    cid: "saltmarsh",
+    title: "Options?",
+    options: [
+      pollOption("2026-11-21-18:00", "2026-11-21", "18:00"),
+      pollOption("2026-11-29-18:00", "2026-11-29", "18:00"),
+      pollOption("2026-12-19-14:00", "2026-12-19", "14:00"),
+    ],
+    status: "open",
+    createdBy: "seth",
+    votes: {},
+    nudges: {},
+  };
+}
+
 function buildPoll(): Poll {
   const options = POLL_DATES.flatMap((ymd) => POLL_TIMES.map((hm) => pollOption(`${ymd}-${hm}`, ymd, hm)));
   const yes = (ids: string[]) => ({ picks: Object.fromEntries(ids.map((id) => [id, true])), updatedAt: "2026-10-19T00:00:00.000Z" });
@@ -512,8 +547,9 @@ export function buildDemo(personaId = "giada"): AppState {
       leyfarers: LEY_PARTY.map((m) => ({ ...m })),
       beerovia: BEER_PARTY.map((m) => ({ ...m })),
       special: ONE_PARTY.map((m) => ({ ...m })),
+      saltmarsh: [member("seth", "organizer", { tags: ["dm"] })],
     },
-    polls: [buildPoll()],
+    polls: [saltPoll(), buildPoll()],
     invites: INVITES.map((i) => ({ ...i })),
     hiddenCids: ["special"],
     groupStartedOn: "2024-10-18",

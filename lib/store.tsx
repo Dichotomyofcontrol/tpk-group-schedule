@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { GuestBallot } from "./poll-public";
 import type { RecapPatch } from "./recap";
 import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Session, Toast } from "./types";
 
@@ -62,7 +63,11 @@ export type StoreApi = {
   createCampaign: (input: CampaignInput) => string | null;
   toggleVote: (pollId: string, optionId: string) => void;
   lockPoll: (pollId: string, optionId: string) => void;
-  addPoll: (cid: string, title: string, options: Poll["options"]) => void;
+  addPoll: (cid: string, title: string, options: Poll["options"]) => string | null;
+  /** Drop a newer copy of a poll into local state (demo fallback for a public vote). */
+  replacePoll: (poll: Poll) => void;
+  /** Add public-link ballots the member card doesn't have yet. */
+  mergeGuestBallots: (pollId: string, ballots: GuestBallot[]) => void;
   /** A standalone one-shot: its own little table (no campaign) plus the date poll. Returns its id. */
   createOneShot: (input: OneShotInput) => string | null;
   nudge: (pollId: string, uid: string) => void;
