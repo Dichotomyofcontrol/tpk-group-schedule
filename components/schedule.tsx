@@ -9,6 +9,8 @@ import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
 import type { Campaign, Member, Session } from "@/lib/types";
+import { accentVar, worldFor } from "@/lib/world";
+import type { CSSProperties } from "react";
 import { Avatar, CampaignCover, DateBlock, Icon, useMapsHref } from "./ui";
 
 export function shortCount(campaign: Campaign, session: Session, members: Member[]): { text: string; warn: boolean } {
@@ -46,6 +48,8 @@ export function SessionRow({ session, showCampaign = false, ledger = false }: { 
   if (!campaign) return null;
   const members = membersOf(store.state, session.cid);
   const when = formatDayHeading(session.startsAt, session.tz);
+  const world = worldFor(campaign);
+  const accent = accentVar(campaign) as CSSProperties;
   const count = shortCount(campaign, session, members);
   const moved = session.exception === "move" || session.exception === "edit";
   const meId = store.state.me.id;
@@ -54,19 +58,19 @@ export function SessionRow({ session, showCampaign = false, ledger = false }: { 
     // A night that already happened: quieter and smaller, and it says whether the recap is in.
     const recap = hasRecap(session);
     return (
-      <Link className="srow past" href={sessionHref(session)}>
+      <Link className="srow past" href={sessionHref(session)} data-world={world.id} style={accent}>
         <DateBlock dow={when.dow} day={when.day} />
-        <span className="st"><b>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</b></span>
+        <span className="st"><b>{showCampaign && <i className="dot" style={{ background: world.accent }} />}{ledgerTitle(session, campaign.name)}</b></span>
         <span className={recap ? "pst done" : "pst"}><Icon name={recap ? "doc" : "quill"} className="ic sm" />{recap ? "Recap" : isStaff(store.state, session.cid) ? "Add recap" : "No recap yet"}</span>
       </Link>
     );
   }
   return (
-    <Link className="srow" href={sessionHref(session)}>
+    <Link className="srow" href={sessionHref(session)} data-world={world.id} style={accent}>
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <span className="st">
-        {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: campaign.color }} /><span className="cnt">{campaign.name}</span></span>}
-        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: campaign.color }} />}{ledgerTitle(session, campaign.name)}</> : displayTitle(session, campaign.name)}</b>
+        {showCampaign && !ledger && <span className="cn"><i className="dot" style={{ background: world.accent }} /><span className="cnt">{campaign.name}</span></span>}
+        <b>{ledger ? <>{showCampaign && <i className="dot" style={{ background: world.accent }} />}{ledgerTitle(session, campaign.name)}</> : displayTitle(session, campaign.name)}</b>
         <span className="note">{formatTime(new Date(session.startsAt), session.tz)}{session.location ? ` · ${session.location}` : ""}{moved ? " · moved" : ""}<NotOnTpkMark cid={session.cid} sid={session.id} /></span>
         {mineState === "out" && <span className="me-rsvp out">You can&apos;t make it</span>}
         {mineState === "unset" && <span className="me-rsvp ask">Waiting on your RSVP</span>}
@@ -140,13 +144,14 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
   const time = formatTime(new Date(session.startsAt), session.tz);
   const q = quorumLine(campaign, session, membersOf(store.state, session.cid));
   const title = ledgerTitle(session, campaign.name);
+  const world = worldFor(campaign);
   return (
-    <article className="card hero">
+    <article className="card hero rise" data-world={world.id} style={accentVar(campaign) as CSSProperties}>
       <Link href={sessionHref(session)} className="hero-cover" aria-label={`Open ${title}`}>
         <CampaignCover campaign={campaign} />
       </Link>
       <div className="hb">
-        <div className="eyebrow ver">{daysUntil(session.startsAt, store.state.me.tz) === 0 && <i className="live" aria-hidden="true" />}Up next · {soon}</div>
+        <div className="eyebrow ver">{daysUntil(session.startsAt, store.state.me.tz) === 0 && <i className="live" aria-hidden="true" />}{world.word} · Up next · {soon}</div>
         <h2><Link href={sessionHref(session)}>{title}</Link></h2>
         <p className="hmeta">{[showCampaign && title !== campaign.name ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time].filter(Boolean).join(" · ")}{session.location && <> · <HeroPlace place={session.location} /></>}</p>
         {q && <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" aria-hidden="true" />{q.text}</p>}

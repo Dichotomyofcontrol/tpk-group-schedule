@@ -6,6 +6,8 @@ import { useStore } from "@/lib/store";
 import { relativeWhen } from "@/lib/time";
 import type { Campaign } from "@/lib/types";
 import { CampaignCover, Icon, Skeleton } from "./ui";
+import { accentVar, worldFor } from "@/lib/world";
+import type { CSSProperties } from "react";
 
 export function CampaignsView() {
   const store = useStore();
@@ -15,7 +17,10 @@ export function CampaignsView() {
   return (
     <>
       <div className="ptitle">
-        <h1 className="lt">Campaigns</h1>
+        <div>
+          <p className="kicker">Worlds</p>
+          <h1 className="lt">Campaigns</h1>
+        </div>
         {state.me.canCreateCampaigns && <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New campaign</Link>}
       </div>
       {state.syncing && <Skeleton rows={2} hero={false} />}
@@ -49,13 +54,15 @@ export function CampaignsView() {
 function CampaignCard({ campaign }: { campaign: Campaign }) {
   const { state } = useStore();
   const now = Date.now();
+  const world = worldFor(campaign);
   const next = state.sessions
     .filter((s) => s.cid === campaign.id && s.status === "scheduled" && new Date(s.endsAt).getTime() >= now)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0];
   return (
-    <Link href={`/campaigns/${campaign.id}`} className="card camp-card">
+    <Link href={`/campaigns/${campaign.id}`} className="card camp-card rise" data-world={world.id} style={accentVar(campaign) as CSSProperties}>
       <CampaignCover campaign={campaign} />
       <span className="pad">
+        <p className="kicker">{world.word}</p>
         <h2>{campaign.name}</h2>
         <span className="note">{next ? `Next ${relativeWhen(next.startsAt, state.me.tz).toLowerCase()}${displayTitle(next, campaign.name) !== campaign.name ? ` · ${displayTitle(next, campaign.name)}` : ""}` : "No session scheduled"}</span>
       </span>

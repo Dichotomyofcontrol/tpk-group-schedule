@@ -42,8 +42,8 @@ function isState(value: unknown): value is AppState {
 export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(() => buildDemo("giada"));
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [theme, setThemeState] = useState<"light" | "dark" | "system">("light");
-  const [resolvedTheme, setResolved] = useState<"light" | "dark">("light");
+  const [theme, setThemeState] = useState<"light" | "dark" | "system">("dark");
+  const [resolvedTheme, setResolved] = useState<"light" | "dark">("dark");
   const [online, setOnline] = useState(true);
   const toastId = useRef(1);
   const stateRef = useRef(state);

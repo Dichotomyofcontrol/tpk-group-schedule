@@ -14,7 +14,9 @@ import type { Campaign, Session } from "@/lib/types";
 import { RecapSection } from "./recap-section";
 import { TableNote } from "./table-note";
 import { ledgerTitle, NightTools, PartyChips, quorumLine, RsvpControl, sessionHref, shortCount } from "./schedule";
-import { BackBar, Icon, useMapsHref } from "./ui";
+import { BackBar, DateBlock, Icon, useMapsHref, Watermark } from "./ui";
+import { accentVar, worldFor } from "@/lib/world";
+import type { CSSProperties } from "react";
 
 export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   const store = useStore();
@@ -29,6 +31,17 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
 
   const recapped = session && hasRecap(session) ? session : null;
   useEffect(() => { if (recapped && new Date(recapped.endsAt).getTime() < Date.now()) markRead(recapped); }, [recapped]);
+  useEffect(() => {
+    if (!campaign) return;
+    const world = worldFor(campaign);
+    const root = document.documentElement;
+    root.style.setProperty("--acc", world.accent);
+    document.body.dataset.world = world.id;
+    return () => {
+      root.style.removeProperty("--acc");
+      delete document.body.dataset.world;
+    };
+  }, [campaign]);
 
   if (!campaign || !member) {
     return (
@@ -69,13 +82,19 @@ export function SessionView({ cid, sid }: { cid: string; sid: string }) {
   return (
     <>
       <BackBar href={back.href} label={back.label} />
-      <div className="eyebrow ver">{when.dow} {when.mon} {when.day}{status ? ` · ${status}` : ""}{soon ? ` · ${soon}` : ""}</div>
-      <h1 className="lt">{ledgerTitle(session, campaign.name)}</h1>
-      <p className="meta">
-        <Link className="cl" href={`/campaigns/${cid}`}><i className="dot" style={{ background: campaign.color }} />{campaign.name}</Link>
-        <span className="mg"><Icon name="clock" className="ic sm" />{formatRangePretty(session.startsAt, session.endsAt, session.tz)}</span>
-        {session.location && <MapsLink place={session.location} />}
-      </p>
+      <header className="night-head" data-world={worldFor(campaign).id} style={accentVar(campaign) as CSSProperties}>
+        <Watermark word={worldFor(campaign).word} />
+        <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
+        <div>
+          <p className="kicker">{worldFor(campaign).word} · {worldFor(campaign).place}{status ? ` · ${status}` : ""}{soon ? ` · ${soon}` : ""}</p>
+          <h1 className="lt">{ledgerTitle(session, campaign.name)}</h1>
+          <p className="meta">
+            <Link className="cl" href={`/campaigns/${cid}`}><i className="dot" style={{ background: worldFor(campaign).accent }} />{campaign.name}</Link>
+            <span className="mg"><Icon name="clock" className="ic sm" />{formatRangePretty(session.startsAt, session.endsAt, session.tz)}</span>
+            {session.location && <MapsLink place={session.location} />}
+          </p>
+        </div>
+      </header>
       <NotOnTpkMark cid={cid} sid={sid} long />
       <div className="sgrid">
         <div className="scol">

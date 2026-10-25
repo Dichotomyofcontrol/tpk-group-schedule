@@ -81,6 +81,43 @@ export function Shell({ children }: { children: React.ReactNode }) {
     else if (path === "/sessions" || path === "/") window.sessionStorage.setItem("tpk-from", "sessions");
   }, [path]);
 
+  useEffect(() => {
+    const bar = document.getElementById("read-prog");
+    const onScroll = () => {
+      if (!bar) return;
+      const h = document.documentElement;
+      const max = h.scrollHeight - window.innerHeight;
+      bar.style.width = `${max > 0 ? (h.scrollTop / max) * 100 : 0}%`;
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>(".rise"));
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      nodes.forEach((node) => node.classList.add("in"));
+      return () => window.removeEventListener("scroll", onScroll);
+    }
+    const io = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("in");
+        io.unobserve(entry.target);
+      }
+    }, { threshold: 0.16, rootMargin: "0px 0px -6% 0px" });
+    for (const node of nodes) {
+      const rect = node.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.94 && rect.bottom > 0) node.classList.add("shown");
+      else {
+        node.classList.add("wait");
+        io.observe(node);
+      }
+    }
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      io.disconnect();
+    };
+  }, [path, state.me.id]);
+
   const mine = memberCampaigns(state);
   const openPolls = state.polls.filter((p) => p.status === "open" && mine.some((c) => c.id === p.cid)).length;
   const tab = path.startsWith("/campaigns/") && path.includes("/sessions/") ? from : path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") ? "polls" : path.startsWith("/invite") ? "invites" : path.startsWith("/account") ? "" : "sessions";
@@ -92,6 +129,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      <div id="read-prog" aria-hidden="true" />
+      <a className="skip" href="#content">Skip to content</a>
       {!store.online && <div className="offline">You&apos;re offline. Showing your last-synced schedule.</div>}
       <header className={landing ? "hdr clear" : "hdr"}>
         <Brand href={signedIn ? "/sessions" : "/"} />
@@ -113,7 +152,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </>
         )}
       </header>
-      {landing || bare ? children : <main>{needsName ? <NamePrompt /> : gate ? <SignInGate /> : children}</main>}
+      {landing || bare ? children : <main id="content">{needsName ? <NamePrompt /> : gate ? <SignInGate /> : children}</main>}
       {signedIn && !bare && (
         <nav className="tabs" aria-label="Primary">
           {TABS.map((item) => (

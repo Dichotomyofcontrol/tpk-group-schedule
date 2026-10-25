@@ -54,12 +54,16 @@ export function Icon({ name, className = "ic" }: { name: IconName; className?: s
 export function Mark() {
   return (
     <svg className="mark" viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M16 2.5l11.7 6.75v13.5L16 29.5 4.3 22.75V9.25z" fill="#FBF8F2" stroke="#1D1915" strokeWidth="1.6" strokeLinejoin="round" />
-      <path d="M16 9.5l6.2 10.7H9.8z" fill="#9E2F1F" />
-      <path d="M16 2.5v7M27.7 9.25l-5.5 10.95M4.3 9.25l5.5 10.95M9.8 20.2L4.3 22.75M22.2 20.2l5.5 2.55M9.8 20.2L16 29.5l6.2-9.3M16 9.5L4.3 9.25M16 9.5l11.7-.25" fill="none" stroke="#1D1915" strokeWidth="1.1" strokeLinejoin="round" strokeLinecap="round" opacity=".85" />
-      <text x="16" y="18.6" textAnchor="middle" fontFamily="Fraunces, Georgia, serif" fontSize="7" fontWeight="600" fill="#FBF8F2">6</text>
+      <path d="M16 2.5l11.7 6.75v13.5L16 29.5 4.3 22.75V9.25z" strokeWidth="1.4" strokeLinejoin="round" />
+      <path className="die-face" d="M16 9.5l6.2 10.7H9.8z" />
+      <path d="M16 2.5v7M27.7 9.25l-5.5 10.95M4.3 9.25l5.5 10.95M9.8 20.2L4.3 22.75M22.2 20.2l5.5 2.55M9.8 20.2L16 29.5l6.2-9.3M16 9.5L4.3 9.25M16 9.5l11.7-.25" strokeWidth="1" strokeLinejoin="round" />
+      <text x="16" y="18.2" textAnchor="middle" fontFamily="Anton, Impact, sans-serif" fontSize="6.5" fill="var(--bg)">6</text>
     </svg>
   );
+}
+
+export function Watermark({ word }: { word: string }) {
+  return <span className="watermark" aria-hidden="true">{word}</span>;
 }
 
 export function Brand({ href = "/" }: { href?: string }) {

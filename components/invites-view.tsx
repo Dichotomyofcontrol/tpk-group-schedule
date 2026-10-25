@@ -44,6 +44,7 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
     <>
       <div className="ptitle">
         <div>
+          <p className="kicker">The door</p>
           {incoming.length > 0 && <div className="eyebrow">{incoming.length} waiting for you</div>}
           <h1 className="lt">Invites</h1>
         </div>

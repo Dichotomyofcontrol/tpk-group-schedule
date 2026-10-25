@@ -11,14 +11,11 @@ export function SignInView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   return (
-    <div className="sw">
-      <div className="sart">
-        <img className="art" src="/brand/cover-wildwood.svg" alt="" />
-      </div>
+    <div className="sw" id="content">
       <div className="sp-in">
-        <div className="eyebrow">Welcome back, adventurer</div>
-        <h1>Sign in with email</h1>
-        <p>We&apos;ll send a one-tap link. No password, no Google account — and you only see the campaigns you&apos;re invited to.</p>
+        <p className="kicker">The door</p>
+        <h1>Sign in<span className="ghost-type">with email</span></h1>
+        <p className="voice">We&apos;ll send a one-tap link. No password, no Google account — and you only see the campaigns you&apos;re invited to.</p>
         {sent ? (
           <div className="card inbox">
             <span className="fi"><Icon name="mail" /></span>
@@ -42,10 +39,11 @@ export function SignInView() {
           </form>
         )}
         <ol className="steps">
-          <li><b>1</b>Open the email on this device.</li>
-          <li><b>2</b>Tap the link — you&apos;re in for 30 days.</li>
+          <li><b>01</b>Open the email on this device.</li>
+          <li><b>02</b>Tap the link — you&apos;re in for 30 days.</li>
         </ol>
       </div>
+      <div className="sw-mark" aria-hidden="true"><span className="watermark">Six</span></div>
     </div>
   );
 }

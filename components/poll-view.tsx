@@ -7,6 +7,8 @@ import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
 import { Avatar, Icon, BackBar } from "./ui";
+import { accentVar, worldFor } from "@/lib/world";
+import type { CSSProperties } from "react";
 
 export function PollList() {
   const store = useStore();
@@ -20,6 +22,7 @@ export function PollList() {
     <>
       <div className="ptitle">
         <div>
+          <p className="kicker">The vote</p>
           {open.length > 0 && <div className="eyebrow">{open.length} need{open.length === 1 ? "s" : ""} your vote</div>}
           <h1 className="lt">Polls</h1>
         </div>
@@ -70,9 +73,9 @@ function PollCard({ poll }: { poll: Poll }) {
   const voted = members.filter((m) => poll.votes[m.id] && Object.values(poll.votes[m.id].picks).some(Boolean));
   const quiet = members.filter((m) => !voted.some((v) => v.id === m.id));
   return (
-    <article className="card poll">
+    <article className="card poll rise" data-world={worldFor(campaign).id} style={accentVar(campaign) as CSSProperties}>
       <span className="ribbon" />
-      <div className="eyebrow">{campaign.kind === "oneshot" ? "One-shot" : campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
+      <div className="eyebrow">{worldFor(campaign).word} · {campaign.kind === "oneshot" ? "One-shot" : campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
       <h2>{campaign.kind === "oneshot" ? campaign.name : poll.title}</h2>
       <p className="note" style={{ margin: 0 }}>Pick every date that works. {isStaff(store.state, poll.cid) ? "You can lock the winner." : "The organizer locks the winner."}</p>
       <div className="opts">

@@ -1,38 +1,51 @@
-:root {
-  --bg: #F3EDE1;
-  --paper: #FBF8F2;
-  --paper2: #F7F2E8;
-  --ink: #1D1915;
-  --ink2: #5A5047;
-  --ink3: #74695D;
-  --rule: #E2D7C3;
-  --rule2: #D3C5AC;
-  --ver: #9E2F1F;
-  --ver2: #C2452E;
-  --gold: #A9823A;
-  --moss: #4E6B4F;
+/* Almanac ink is the default. Cream is the paper ledger, opt-in from the account menu. */
+:root, :root[data-theme="night"] {
+  --bg: #0b0a0c;
+  --paper: #141216;
+  --paper2: #1e1a22;
+  --ink: #efe7da;
+  --ink2: rgba(239,231,218,.74);
+  --ink3: rgba(239,231,218,.68);
+  --rule: rgba(239,231,218,.14);
+  --rule2: rgba(239,231,218,.28);
+  --ver: #ff3b4e;
+  --ver2: #ff8a96;
+  --gold: #e7c98a;
+  --moss: #3ff0c4;
+  --acc: #efe7da;
   --serif: var(--font-fraunces), "Fraunces", Georgia, serif;
   --ui: var(--font-inter), "Inter", -apple-system, system-ui, sans-serif;
   --s1: 8px; --s2: 16px; --s3: 24px; --s4: 32px; --s5: 40px; --s6: 48px; --s8: 64px;
-  --r: 14px; --r2: 20px;
-  --sh: 0 1px 0 rgba(255,255,255,.7) inset, 0 1px 2px rgba(60,40,20,.06), 0 8px 24px -12px rgba(60,40,20,.18);
-  --glass: rgba(243,237,225,.82);
-  --glass2: rgba(251,248,242,.86);
-  --field: #fff;
-  --onbtn: #FBF8F2;
+  --r: 0px; --r2: 0px;
+  --sh: none;
+  --glass: rgba(11,10,12,.82);
+  --glass2: rgba(11,10,12,.9);
+  --field: #0c0b0e;
+  --onbtn: #0b0a0c;
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-t: env(safe-area-inset-top, 0px);
-  color-scheme: light;
-}
-:root[data-theme="night"] {
-  --bg: #0F1218; --paper: #171B24; --paper2: #1D222D;
-  --ink: #EDE6D8; --ink2: #B7AE9F; --ink3: #948C80;
-  --rule: #262C38; --rule2: #323947;
-  --ver: #E07A62; --ver2: #F09A80; --gold: #D4B06A; --moss: #8FB394;
-  --glass: rgba(15,18,24,.78); --glass2: rgba(23,27,36,.84);
-  --field: #11151C; --onbtn: #0F1218;
-  --sh: 0 1px 0 rgba(255,255,255,.04) inset, 0 1px 2px rgba(0,0,0,.3), 0 12px 32px -12px rgba(0,0,0,.6);
   color-scheme: dark;
+}
+:root[data-theme="cream"] {
+  --bg: #efe7da;
+  --paper: #f7f1e6;
+  --paper2: #e6dece;
+  --ink: #0b0a0c;
+  --ink2: rgba(11,10,12,.72);
+  --ink3: rgba(11,10,12,.52);
+  --rule: rgba(11,10,12,.12);
+  --rule2: rgba(11,10,12,.22);
+  --ver: #c4162a;
+  --ver2: #e15a68;
+  --gold: #8a6a2f;
+  --moss: #0f7a5c;
+  --acc: #0b0a0c;
+  --glass: rgba(239,231,218,.86);
+  --glass2: rgba(239,231,218,.92);
+  --field: #fffdf8;
+  --onbtn: #efe7da;
+  --sh: none;
+  color-scheme: light;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(68px + var(--safe-t)); }
@@ -44,14 +57,6 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   min-height: 100vh;
-  background-image:
-    radial-gradient(1200px 600px at 80% -10%, rgba(169,130,58,.10), transparent 60%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-:root[data-theme="night"] body {
-  background-image:
-    radial-gradient(1000px 520px at 80% -10%, rgba(120,140,200,.10), transparent 60%),
-    radial-gradient(800px 400px at 0% 100%, rgba(212,176,106,.05), transparent 60%);
 }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; color: inherit; }

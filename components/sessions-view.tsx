@@ -83,7 +83,7 @@ export function SessionsView() {
 
   return (
     <>
-      <div className="ptitle"><h1 className="lt">Sessions</h1></div>
+      <div className="ptitle"><div><p className="kicker">The ledger</p><h1 className="lt">Sessions</h1></div></div>
       <HomeScreenHint />
       <GettingStarted />
       <TpkAssign />
