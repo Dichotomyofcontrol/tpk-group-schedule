@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Suspense } from "react";
 import { Providers } from "@/components/providers";
+import { SITE_NAME, SITE_ORIGIN } from "@/lib/site";
 import "./globals.css";
 import "./almanac.css";
 
@@ -38,12 +39,12 @@ const mono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Six in the TPK",
+  title: SITE_NAME,
   description: "Sessions, RSVPs, and recaps for your table.",
-  metadataBase: new URL("https://www.sixinthetpk.com"),
-  openGraph: { siteName: "Six in the TPK", type: "website" },
+  metadataBase: new URL(SITE_ORIGIN),
+  openGraph: { siteName: SITE_NAME, type: "website" },
   twitter: { card: "summary_large_image" },
-  appleWebApp: { capable: true, title: "TPK", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

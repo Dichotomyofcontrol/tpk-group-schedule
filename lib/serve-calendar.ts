@@ -41,6 +41,6 @@ export async function serveCalendar(token: string, cid: string | undefined, hide
       events.push({ session, campaign, viewerOut: attendanceState(campaign, session, uid) === "out" });
     }
   }
-  const name = cid ? events[0]?.campaign.name || "Sessions" : "Six in the TPK";
+  const name = cid ? events[0]?.campaign.name || "Sessions" : "Taverning";
   return new Response(buildIcs(name, events), { headers: calendarHeaders() });
 }

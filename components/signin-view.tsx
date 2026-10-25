@@ -43,7 +43,7 @@ export function SignInView() {
           <li><b>02</b>Tap the link — you&apos;re in for 30 days.</li>
         </ol>
       </div>
-      <div className="sw-mark" aria-hidden="true"><span className="watermark">Six</span></div>
+      <div className="sw-mark" aria-hidden="true"><span className="watermark">Taverning</span></div>
     </div>
   );
 }

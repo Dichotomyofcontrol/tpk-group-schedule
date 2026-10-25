@@ -1,7 +1,7 @@
 import { invitePreview } from "@/lib/invite-preview";
 import { shareCard } from "../../opengraph-image";
 
-export const alt = "You're invited to a table on Six in the TPK";
+export const alt = "You're invited to a table on Taverning";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

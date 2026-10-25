@@ -1,4 +1,4 @@
-/* Six in the TPK service worker: open the app offline. Network first for pages (never stale after a deploy),
+/* Taverning service worker: open the app offline. Network first for pages (never stale after a deploy),
    cache first for hashed build assets. Never touches API, auth, or Firebase traffic. */
 const VERSION = "tpk-sw-v1";
 const PAGES = `${VERSION}-pages`;

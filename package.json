@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Six in the TPK — play dates for a D&D group. Next.js app. The legacy single-file site remains in index.html until cutover.",
+  "description": "Taverning — play dates for a D&D group. Next.js app. The legacy single-file site remains in index.html until cutover.",
   "scripts": {
     "dev": "next dev",
     "prebuild": "node scripts/stage-legacy-static.mjs",

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Six in the TPK",
-    short_name: "TPK",
+    name: "Taverning",
+    short_name: "Taverning",
     description: "Sessions, RSVPs, and recaps for your table.",
     start_url: "/sessions",
     scope: "/",

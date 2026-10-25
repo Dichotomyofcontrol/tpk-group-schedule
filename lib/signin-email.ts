@@ -1,6 +1,8 @@
-/** Branded sign-in email for Six in the TPK. Pure functions so they can be unit tested and rendered offline. */
+/** Branded sign-in email for Taverning. Pure functions so they can be unit tested and rendered offline. */
 
-export const SIGNIN_SUBJECT = "Your sign-in link for Six in the TPK";
+import { SITE_NAME, SITE_ORIGIN } from "./site";
+
+export const SIGNIN_SUBJECT = `Your sign-in link for ${SITE_NAME}`;
 
 const EMAIL_RE = /^[^\s@<>()[\],;:"]+@[^\s@<>()[\],;:"]+\.[^\s@<>()[\],;:"]{2,}$/;
 
@@ -11,20 +13,20 @@ export function normalizeEmail(input: unknown): string | null {
   return email;
 }
 
-const PROD_ORIGIN = "https://www.sixinthetpk.com";
+const OWN_HOSTS = new Set(["taverning.com", "www.taverning.com", "sixinthetpk.com", "www.sixinthetpk.com"]);
 
-/** Only send links back to our own hosts, never to an arbitrary Origin header. */
+/** Only send links back to our own hosts, never to an arbitrary Origin header. Production hosts canonicalize to https://taverning.com. */
 export function safeOrigin(candidate: string | null | undefined): string {
-  if (!candidate) return PROD_ORIGIN;
+  if (!candidate) return SITE_ORIGIN;
   try {
     const url = new URL(candidate);
     const host = url.hostname;
-    const ok =
-      (url.protocol === "https:" && (host === "sixinthetpk.com" || host === "www.sixinthetpk.com" || host.endsWith(".vercel.app"))) ||
-      (url.protocol === "http:" && (host === "localhost" || host === "127.0.0.1"));
-    return ok ? url.origin : PROD_ORIGIN;
+    if (url.protocol === "http:" && (host === "localhost" || host === "127.0.0.1")) return url.origin;
+    if (url.protocol === "https:" && host.endsWith(".vercel.app")) return url.origin;
+    if (url.protocol === "https:" && OWN_HOSTS.has(host)) return SITE_ORIGIN;
+    return SITE_ORIGIN;
   } catch {
-    return PROD_ORIGIN;
+    return SITE_ORIGIN;
   }
 }
 
@@ -57,14 +59,14 @@ function esc(value: string): string {
 
 export function signInEmailText(link: string): string {
   return [
-    "Six in the TPK",
+    SITE_NAME,
     "",
-    "Here's your link to sign in to Six in the TPK:",
+    `Here's your link to sign in to ${SITE_NAME}:`,
     link,
     "",
     "It works once and expires soon. If you didn't ask for it, you can ignore this email.",
     "",
-    "— Six in the TPK · sixinthetpk.com",
+    `— ${SITE_NAME} · taverning.com`,
   ].join("\n");
 }
 
@@ -110,7 +112,7 @@ export function signInEmailHtml(link: string): string {
   <tr><td align="center" style="padding:48px 16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;">
       <tr><td class="card" align="center" style="background:${card};border:1px solid ${rule};border-radius:14px;padding:48px 40px;">
-        <div class="wordmark ink" style="font-family:${serif};font-size:34px;line-height:1.1;font-weight:500;letter-spacing:-0.01em;color:${ink};">Six <i style="font-style:italic;font-weight:400;">in the</i> TPK</div>
+        <div class="wordmark ink" style="font-family:${serif};font-size:28px;line-height:1;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${ink};">${SITE_NAME}</div>
         <div style="width:40px;height:2px;background:${vermilion};margin:18px auto 26px;line-height:2px;font-size:0;">&nbsp;</div>
         <p class="ink" style="margin:0 0 28px;font-family:${sans};font-size:16px;line-height:1.5;color:${ink};">Here’s your link to sign in to the table.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
@@ -121,7 +123,7 @@ export function signInEmailHtml(link: string): string {
         <p class="muted" style="margin:28px 0 0;font-family:${sans};font-size:13px;line-height:1.55;color:${muted};">This link works once and expires soon.<br>If you didn’t ask for it, you can ignore this email.</p>
         <p class="muted fallback" style="margin:18px 0 0;font-family:${sans};font-size:12px;line-height:1.5;color:${muted};">Button not working? <a href="${href}" target="_blank" style="color:${vermilion};text-decoration:underline;">Open the sign-in link</a></p>
       </td></tr>
-      <tr><td align="center" class="muted" style="padding:22px 8px 0;font-family:${serif};font-size:12px;line-height:1.5;color:${muted};">Six in the TPK · <a href="https://www.sixinthetpk.com" style="color:${muted};text-decoration:none;" class="muted">sixinthetpk.com</a></td></tr>
+      <tr><td align="center" class="muted" style="padding:22px 8px 0;font-family:${serif};font-size:12px;line-height:1.5;color:${muted};">${SITE_NAME} · <a href="${SITE_ORIGIN}" style="color:${muted};text-decoration:none;" class="muted">taverning.com</a></td></tr>
     </table>
   </td></tr>
 </table>
