@@ -419,10 +419,11 @@ section > .mhd {
 }
 .almanac-hero h1 {
   font-size: clamp(2.6rem, 11.5vw, 9.2rem);
+  line-height: 1.08;
   max-width: 100%;
   margin: 12px 0 18px;
   overflow: hidden;
-  padding-bottom: .06em;
+  padding: .04em 0 .08em;
 }
 .almanac-hero h1 span { display: block; }
 .almanac-hero .voice {
@@ -447,7 +448,7 @@ section > .mhd {
   margin: 0 auto;
   border-top: 1px solid var(--rule);
 }
-.chapters > h2 { font-size: clamp(2.6rem, 8vw, 6rem); margin: 0 0 40px; max-width: 12ch; }
+.chapters > h2 { font-size: clamp(2.6rem, 8vw, 6rem); line-height: 1.08; margin: 0 0 40px; max-width: 12ch; }
 .chapter {
   border-top: 1px solid var(--rule);
   padding: 28px 0 36px;
@@ -483,10 +484,17 @@ section > .mhd {
   border-top: 1px solid var(--rule);
 }
 
-/* Sign in */
+/* Sign in.
+   globals.css pins this heading to a 40px/52px line-height. Anton caps are
+   ~0.86em and the size below is much taller than that, so the outline of
+   "with email" painted on top of "sign in" (and on itself when it wrapped). */
 .sw { position: relative; overflow: hidden; }
-.sp-in h1 { font-size: clamp(3rem, 10vw, 6.2rem); margin: 8px 0 16px; }
-.sp-in h1 .ghost-type, .chapters h2 .ghost-type { display: block; }
+.sp-in { max-width: 34rem; }
+.sp-in h1 { font-size: clamp(2.75rem, 8.5vw, 5.6rem); line-height: 1.08; margin: 8px 0 16px; }
+.sp-in h1 .ghost-type, .chapters > h2 .ghost-type, .almanac-hero h1 .ghost-type {
+  display: block;
+  line-height: 1.08;
+}
 .sp-in .voice { font-size: 1.15rem; color: var(--ink2); margin: 0 0 28px; max-width: 36ch; }
 .sw-mark {
   display: none;
