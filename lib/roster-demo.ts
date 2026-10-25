@@ -1,5 +1,5 @@
 /** In-memory roster for demo mode, when Firebase Admin is not configured. */
-import { buildRosterPlayer, parseRosterInput, patchRosterPlayer, rosterNameTaken, type RosterPlayer } from "./roster";
+import { buildRosterPlayer, markLinkShared, parseRosterInput, patchRosterPlayer, rosterNameTaken, type RosterPlayer } from "./roster";
 
 const SALT_CREATED = "2026-10-01T00:00:00.000Z";
 
@@ -102,6 +102,14 @@ export function addDemoRosterPlayer(cid: string, body: unknown, id: string, toke
   if (list.length >= 40) return { error: "This roster is full." };
   if (rosterNameTaken(list, parsed.value.name)) return { error: "That name is already on the roster." };
   const player = buildRosterPlayer(cid, parsed.value, id, token, now);
+  saveDemoRosterPlayer(player);
+  return player;
+}
+
+export function markDemoRosterShared(cid: string, id: string, now = new Date()): RosterPlayer | { error: string } {
+  const current = listDemoRoster(cid).find((player) => player.id === id);
+  if (!current) return { error: "That player isn't on the roster." };
+  const player = markLinkShared(current, now);
   saveDemoRosterPlayer(player);
   return player;
 }
