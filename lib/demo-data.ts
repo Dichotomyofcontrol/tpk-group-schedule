@@ -511,6 +511,66 @@ function saltPoll(): Poll {
   };
 }
 
+function amyOpenPoll(): Poll {
+  return {
+    id: "frost-amy",
+    cid: "frostmaiden",
+    title: "Icewind weekend",
+    options: [
+      pollOption("2026-12-05-18:00", "2026-12-05", "18:00"),
+      pollOption("2026-12-06-14:00", "2026-12-06", "14:00"),
+    ],
+    status: "open",
+    createdBy: "amy",
+    votes: {
+      amy: { picks: { "2026-12-05-18:00": true }, updatedAt: "2026-10-20T00:00:00.000Z" },
+      giada: { picks: { "2026-12-05-18:00": true, "2026-12-06-14:00": true }, updatedAt: "2026-10-20T00:00:00.000Z" },
+    },
+  };
+}
+
+function sethLockedPoll(): Poll {
+  const chosen = "2026-11-07-18:30";
+  return {
+    id: "strahd-lock",
+    cid: "strahd",
+    title: "Barovia makeup night",
+    options: [
+      pollOption(chosen, "2026-11-07", "18:30"),
+      pollOption("2026-11-08-18:30", "2026-11-08", "18:30"),
+    ],
+    status: "locked",
+    chosenOptionId: chosen,
+    createdBy: "seth",
+    votes: {
+      seth: { picks: { [chosen]: true }, updatedAt: "2026-10-01T00:00:00.000Z" },
+      amy: { picks: { [chosen]: true }, updatedAt: "2026-10-01T00:00:00.000Z" },
+      ben: { picks: { "2026-11-08-18:30": true }, updatedAt: "2026-10-01T00:00:00.000Z" },
+    },
+  };
+}
+
+function amyLockedPoll(): Poll {
+  const chosen = "2026-10-18-19:00";
+  return {
+    id: "ley-lock",
+    cid: "leyfarers",
+    title: "Leyfarers · October",
+    options: [
+      pollOption(chosen, "2026-10-18", "19:00"),
+      pollOption("2026-10-25-19:00", "2026-10-25", "19:00"),
+      pollOption("2026-11-01-19:00", "2026-11-01", "19:00"),
+    ],
+    status: "locked",
+    chosenOptionId: chosen,
+    createdBy: "amy",
+    votes: {
+      amy: { picks: { [chosen]: true }, updatedAt: "2026-10-10T00:00:00.000Z" },
+      seth: { picks: { [chosen]: true, "2026-10-25-19:00": true }, updatedAt: "2026-10-10T00:00:00.000Z" },
+    },
+  };
+}
+
 function buildPoll(): Poll {
   const options = POLL_DATES.flatMap((ymd) => POLL_TIMES.map((hm) => pollOption(`${ymd}-${hm}`, ymd, hm)));
   const yes = (ids: string[]) => ({ picks: Object.fromEntries(ids.map((id) => [id, true])), updatedAt: "2026-10-19T00:00:00.000Z" });
@@ -563,7 +623,7 @@ export function buildDemo(personaId = "giada"): AppState {
       special: ONE_PARTY.map((m) => ({ ...m })),
       saltmarsh: [member("seth", "organizer", { tags: ["dm"] })],
     },
-    polls: [saltPoll(), buildPoll()],
+    polls: [saltPoll(), buildPoll(), amyOpenPoll(), sethLockedPoll(), amyLockedPoll()],
     invites: INVITES.map((i) => ({ ...i })),
     hiddenCids: ["special"],
     groupStartedOn: "2024-10-18",
