@@ -2,8 +2,10 @@ import { getAuth } from "firebase-admin/auth";
 import { adminApp, adminConfigured, adminDb } from "@/lib/firebase-admin";
 import { magicLinkContinueUrl } from "@/lib/magic-link";
 import { hit } from "@/lib/rate-limit";
+import { deleteSignInCode, saveSignInCode } from "@/lib/sign-in-code-store";
+import { generateSignInCode } from "@/lib/sign-in-code";
 import { brandedSignInLink, normalizeEmail, safeOrigin } from "@/lib/signin-email";
-import { sendViaResend } from "@/lib/send-link";
+import { emailFromAddress, sendViaResend } from "@/lib/send-link";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +19,13 @@ export async function POST(request: Request) {
   if (!email) return Response.json({ error: "Enter a valid email." }, { status: 400 });
   const invite = typeof body.invite === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(body.invite) ? body.invite : undefined;
 
-  if (!adminConfigured() || !process.env.RESEND_API_KEY) {
-    console.error("send-link: missing FIREBASE_SERVICE_ACCOUNT or RESEND_API_KEY");
-    return Response.json({ error: "Email sign-in isn't configured on this deploy.", fallback: true }, { status: 503 });
+  if (!adminConfigured()) {
+    console.error("send-link: refusing Firebase fallback because FIREBASE_SERVICE_ACCOUNT is not set");
+    return Response.json({ error: "Email sign-in isn't configured on this deploy." }, { status: 503 });
+  }
+  if (!process.env.RESEND_API_KEY) {
+    console.error("send-link: refusing Firebase fallback because RESEND_API_KEY is not set");
+    return Response.json({ error: "Email sign-in isn't configured on this deploy." }, { status: 503 });
   }
 
   const ip = (request.headers.get("x-forwarded-for") || "").split(",")[0]!.trim() || "unknown";
@@ -35,19 +41,34 @@ export async function POST(request: Request) {
   // (the one people open) dead, so send at most one link per address per minute.
   if (!(await hit(db, `recent:${email}`, 1, 60 * 1000))) return OK();
 
+  const origin = safeOrigin(request.headers.get("origin") || new URL(request.url).origin);
+  const continueUrl = magicLinkContinueUrl(origin, invite);
+  let raw: string;
   try {
-    const origin = safeOrigin(request.headers.get("origin") || new URL(request.url).origin);
-    const continueUrl = magicLinkContinueUrl(origin, invite);
-    const raw = await getAuth(adminApp()).generateSignInWithEmailLink(email, { url: continueUrl, handleCodeInApp: true });
-    const sent = await sendViaResend(email, brandedSignInLink(raw, continueUrl));
-    if (!sent) {
-      console.error("send-link: Resend rejected the message");
-      return Response.json({ fallback: true }, { status: 502 });
-    }
+    raw = await getAuth(adminApp()).generateSignInWithEmailLink(email, { url: continueUrl, handleCodeInApp: true });
   } catch (error) {
-    console.error("send-link failed", error instanceof Error ? error.message : "unknown");
-    // Let the client send Firebase's standard link so sign-in never silently fails.
-    return Response.json({ fallback: true }, { status: 502 });
+    const message = error instanceof Error ? error.message : "unknown";
+    console.error(`send-link: refusing Firebase fallback because generateSignInWithEmailLink failed (${continueUrl}): ${message}`);
+    return Response.json({ error: "Couldn't send the sign-in email. Try again." }, { status: 502 });
+  }
+  const code = generateSignInCode();
+  const link = brandedSignInLink(raw, continueUrl);
+  if (!db) {
+    console.error("send-link: refusing Firebase fallback because Firestore admin is unavailable");
+    return Response.json({ error: "Couldn't send the sign-in email. Try again." }, { status: 502 });
+  }
+  try {
+    await saveSignInCode(db, email, code, link);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown";
+    console.error(`send-link: refusing Firebase fallback because the code could not be stored: ${message}`);
+    return Response.json({ error: "Couldn't send the sign-in email. Try again." }, { status: 502 });
+  }
+  const sent = await sendViaResend(email, link, code);
+  if (!sent.ok) {
+    await deleteSignInCode(db, email).catch(() => undefined);
+    console.error(`send-link: refusing Firebase fallback (Resend ${sent.status}, from ${emailFromAddress()}): ${sent.reason}`);
+    return Response.json({ error: "Couldn't send the sign-in email. Try again." }, { status: 502 });
   }
   return OK();
 }

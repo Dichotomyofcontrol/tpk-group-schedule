@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { brandedSignInLink, normalizeEmail, safeOrigin, signInEmailHtml, signInEmailText, SIGNIN_SUBJECT } from "../../lib/signin-email.ts";
 import { hitMemory, resetMemoryLimits } from "../../lib/rate-limit.ts";
-import { sendViaResend } from "../../lib/send-link.ts";
+import { DEFAULT_EMAIL_FROM, sendViaResend } from "../../lib/send-link.ts";
 
 const FB = "https://tpk-group-8cdc8.firebaseapp.com/__/auth/action?apiKey=AIzaX&mode=signIn&oobCode=CODE123&continueUrl=https%3A%2F%2Ftaverning.com%2Fauth%2Ffinish%3Finvite%3Dabc&lang=en";
 
@@ -38,19 +38,25 @@ test("brandedSignInLink falls back on unexpected links", () => {
   assert.equal(brandedSignInLink("not a url", "https://taverning.com/auth/finish"), "not a url");
 });
 
-test("email html/text contain the link, button, copy and escape it", () => {
+test("email html/text contain the code, the link, and escape it", () => {
   const link = "https://taverning.com/auth/finish?a=1&b=\"2\"";
-  const html = signInEmailHtml(link);
+  const html = signInEmailHtml(link, "482913");
   assert.match(html, />Sign in</);
+  assert.match(html, /482913|4<\/td>.*9<\/td>/s);
+  assert.match(html, />4<\/td>/);
   assert.match(html, /a=1&amp;b=&quot;2&quot;/);
   assert.doesNotMatch(html, /b="2"/);
   assert.match(html, /ignore this email/);
   assert.match(html, /https:\/\/taverning\.com/);
+  assert.match(html, /Home Screen app/);
   assert.doesNotMatch(html, /sixinthetpk/);
-  const text = signInEmailText(link);
+  const text = signInEmailText(link, "482913");
   assert.ok(text.includes(link));
+  assert.match(text, /482913/);
+  assert.match(text, /15 minutes/);
   assert.match(text, /Taverning/);
   assert.match(SIGNIN_SUBJECT, /Taverning/);
+  assert.match(SIGNIN_SUBJECT, /code/);
   assert.doesNotMatch(SIGNIN_SUBJECT, /Six in the TPK/);
 });
 
@@ -62,18 +68,22 @@ test("memory rate limit windows", () => {
   assert.ok(hitMemory("k", 2, 1000, 1001));
 });
 
-test("sendViaResend posts subject, from, html and text", async () => {
+test("sendViaResend posts the code and reports a rejected from-domain", async () => {
   process.env.RESEND_API_KEY = process.env.RESEND_API_KEY || "test-key";
   const previous = process.env.EMAIL_FROM;
   delete process.env.EMAIL_FROM;
   let sent: { url: string; body: Record<string, unknown> } | null = null;
   const fake = (async (url: string, init: RequestInit) => { sent = { url, body: JSON.parse(String(init.body)) }; return new Response("{}", { status: 200 }); }) as unknown as typeof fetch;
-  assert.ok(await sendViaResend("a@b.co", "https://taverning.com/auth/finish?x=1", fake));
+  const ok = await sendViaResend("a@b.co", "https://taverning.com/auth/finish?x=1", "482913", fake);
+  assert.deepEqual(ok, { ok: true });
   assert.equal(sent!.url, "https://api.resend.com/emails");
   assert.equal(sent!.body.subject, SIGNIN_SUBJECT);
-  assert.equal(sent!.body.from, "Taverning <noreply@mail.sixinthetpk.com>");
-  assert.match(String(sent!.body.text), /Taverning/);
-  assert.ok(sent!.body.html);
+  assert.equal(sent!.body.from, DEFAULT_EMAIL_FROM);
+  assert.match(String(sent!.body.text), /482913/);
+  assert.match(String(sent!.body.html), />4</);
+  const denied = (async () => new Response(JSON.stringify({ message: "The mail.taverning.com domain is not verified." }), { status: 403, statusText: "Forbidden" })) as unknown as typeof fetch;
+  const bad = await sendViaResend("a@b.co", "https://taverning.com/auth/finish?x=1", "482913", denied);
+  assert.deepEqual(bad, { ok: false, status: 403, reason: "The mail.taverning.com domain is not verified." });
   if (previous === undefined) delete process.env.EMAIL_FROM;
   else process.env.EMAIL_FROM = previous;
 });

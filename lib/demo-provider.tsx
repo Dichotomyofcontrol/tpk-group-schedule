@@ -420,8 +420,33 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         return true;
       },
       sendMagicLink: async (email) => {
+        const bytes = new Uint32Array(1);
+        crypto.getRandomValues(bytes);
+        const code = String(bytes[0]! % 1_000_000).padStart(6, "0");
         window.sessionStorage.setItem("tpk-magic-email", email.trim());
-        flash(`Preview link ready for ${email.trim()}. On the live site this is a real email.`);
+        window.sessionStorage.setItem("tpk-demo-code", code);
+        flash("Preview only. No email was sent.");
+      },
+      completeSignInCode: async (email, code) => {
+        const expected = window.sessionStorage.getItem("tpk-demo-code");
+        const pending = (window.sessionStorage.getItem("tpk-magic-email") || "").trim().toLowerCase();
+        if (!expected || pending !== email.trim().toLowerCase() || code.replace(/\s+/g, "") !== expected) {
+          throw new Error("That code didn't work. Check it, or request a new email.");
+        }
+        window.sessionStorage.removeItem("tpk-demo-code");
+        const stored = email.trim();
+        const person = stateRef.current.directory.find((user) => user.email.toLowerCase() === stored.toLowerCase());
+        const me = person ?? {
+          id: `mail-${stored.toLowerCase()}`,
+          email: stored,
+          displayName: "",
+          nameSet: false,
+          tz: stateRef.current.me.tz || "America/Los_Angeles",
+          calToken: "demo",
+          canCreateCampaigns: false,
+        };
+        setState({ ...stateRef.current, me });
+        document.body.dataset.persona = me.id;
       },
       finishMagicLink: async (email) => {
         const params = new URLSearchParams(window.location.search);

@@ -512,6 +512,19 @@ section > .mhd {
   font-variation-settings: normal;
 }
 .inbox h2 { font-size: 2rem; }
+.form.inbox { place-items: stretch; justify-items: stretch; text-align: left; }
+.form.inbox .fi { margin: 0 auto 8px; }
+.form.inbox h2, .form.inbox .note { text-align: center; }
+.inbox .otp {
+  width: 100%;
+  height: 64px;
+  margin: 4px 0 8px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 28px;
+  letter-spacing: .32em;
+  text-indent: .32em;
+}
 
 .pop { border-radius: 0; border: 1px solid var(--rule2); }
 .pop button.item, .pop a.item { border-radius: 0; font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
