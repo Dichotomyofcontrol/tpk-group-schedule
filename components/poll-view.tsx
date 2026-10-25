@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
-import { memberYesCount, optionClocks, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
+import { memberYesCount, mergeVoteSeats, optionClocks, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
@@ -132,13 +132,13 @@ function PollCard({ poll }: { poll: Poll }) {
   }, [poll.cid, store.state.me.id]);
   if (!campaign) return null;
   const accounts = membersOf(store.state, poll.cid);
-  const seated = roster && roster.length ? seatsFromRoster(roster) : null;
-  const members: PollPlayer[] = seated || accounts.map((member) => ({
+  const accountSeats: PollPlayer[] = accounts.map((member) => ({
     id: member.id,
     displayName: member.displayName,
     characterName: member.characterName,
     pending: member.pending,
   }));
+  const members: PollPlayer[] = roster && roster.length ? mergeVoteSeats(accountSeats, seatsFromRoster(roster)) : accountSeats;
   const ranked = rankedOptions(poll, campaign.cadence);
   const max = Math.max(1, ...ranked.map((r) => r.yes));
   const mine = poll.votes[store.state.me.id]?.picks ?? {};

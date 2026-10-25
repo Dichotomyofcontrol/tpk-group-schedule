@@ -3,8 +3,9 @@
  * person has an account. The personal link claims the seat; polls count seats.
  * Pure helpers. Routes and the demo memory store call these.
  */
+import { omitUndefined } from "./omit";
 import { cleanGuestName, nameKey, type PollPlayer } from "./poll-public";
-import type { Member } from "./types";
+import type { Member, Role } from "./types";
 
 export const ROSTER_MAX = 40;
 
@@ -173,6 +174,114 @@ export function applyClaim(player: RosterPlayer, roster: RosterPlayer[], members
     joinedAt: now.toISOString(),
   };
   return { ok: true, player: next, member, created: true, linked: false, already: false };
+}
+
+/** Firestore rejects undefined. Optional email, phone, and character must be omitted, not stored as undefined. */
+export function rosterDocument(player: RosterPlayer): Record<string, unknown> {
+  return omitUndefined({ ...player }) as Record<string, unknown>;
+}
+
+export function rosterFailureMessage(error: unknown): string {
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : "";
+  const clean = message.replace(/\s+/g, " ").trim();
+  if (!clean) return "Couldn't save that player.";
+  return clean.slice(0, 240);
+}
+
+export async function rosterMutationResult(res: Response | null, fallback: string): Promise<{ player: RosterPlayer } | { error: string }> {
+  if (!res) return { error: `${fallback} The request didn't reach the server.` };
+  const parsed = await readRosterResponse(res);
+  const player = parsed.body.player;
+  if (res.ok && player && typeof player === "object" && typeof (player as RosterPlayer).id === "string") {
+    return { player: player as RosterPlayer };
+  }
+  return { error: parsed.error || `${fallback.replace(/\.$/, "")} (${res.status}).` };
+}
+
+export async function readRosterResponse(res: Response | null): Promise<{ status: number; body: Record<string, unknown>; error: string }> {
+  if (!res) return { status: 0, body: {}, error: "" };
+  const raw = await res.text().catch(() => "");
+  let body: Record<string, unknown> = {};
+  if (raw) {
+    try { body = JSON.parse(raw) as Record<string, unknown>; } catch { body = {}; }
+  }
+  const fromBody = typeof body.error === "string" ? body.error.trim() : "";
+  const fromText = !fromBody && raw && !raw.trim().startsWith("<") ? raw.replace(/\s+/g, " ").trim().slice(0, 240) : "";
+  return { status: res.status, body, error: fromBody || fromText };
+}
+
+export type KnownMember = { id: string; email?: string; displayName?: string; characterName?: string; role?: Role; pending?: boolean };
+
+/** Link a seat to the one account that already matches it, so the table does not list that person twice. */
+export function attachKnownMember(player: RosterPlayer, members: KnownMember[], roster: RosterPlayer[]): RosterPlayer {
+  if (player.memberId) {
+    if (!members.some((member) => member.id === player.memberId)) return player;
+    return player.status === "joined" ? player : { ...player, status: "joined" };
+  }
+  const emailHits = player.email
+    ? members.filter((member) => member.email && member.email.toLowerCase() === player.email)
+    : [];
+  const key = nameKey(player.name);
+  const nameHits = members.filter((member) => nameKey(member.displayName || "") === key || (!!member.characterName && nameKey(member.characterName) === key));
+  const pool = emailHits.length === 1 ? emailHits : nameHits;
+  const free = pool.filter((member) => !roster.some((other) => other.id !== player.id && other.memberId === member.id));
+  if (free.length !== 1) return player;
+  return { ...player, memberId: free[0]!.id, status: "joined" };
+}
+
+export type TableSeat = {
+  key: string;
+  name: string;
+  characterName?: string;
+  email?: string;
+  phone?: string;
+  status: RosterStatus;
+  role?: Role;
+  memberId?: string;
+  rosterId?: string;
+  token?: string;
+};
+
+/** One row per person: joined accounts, plus invited seats that nobody has claimed. */
+export function unifyPlayers(members: KnownMember[], roster: RosterPlayer[]): TableSeat[] {
+  const active = members.filter((member) => member.id && !member.pending);
+  const usedMembers = new Set<string>();
+  const rows: TableSeat[] = [];
+  for (const seat of roster) {
+    const linked = attachKnownMember(seat, active, roster);
+    const member = linked.memberId ? active.find((item) => item.id === linked.memberId) : undefined;
+    if (member) usedMembers.add(member.id);
+    rows.push({
+      key: member?.id || `roster:${seat.id}`,
+      name: linked.name || member?.displayName || "Player",
+      characterName: linked.characterName || member?.characterName,
+      email: linked.email,
+      phone: linked.phone,
+      status: member || linked.memberId ? "joined" : "invited",
+      role: member?.role,
+      memberId: member?.id || linked.memberId,
+      rosterId: seat.id,
+      token: seat.token,
+    });
+  }
+  for (const member of active) {
+    if (usedMembers.has(member.id)) continue;
+    rows.push({
+      key: member.id,
+      name: member.displayName || member.characterName || "Player",
+      characterName: member.characterName,
+      email: member.email,
+      status: "joined",
+      role: member.role,
+      memberId: member.id,
+    });
+  }
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    if (seen.has(row.key)) return false;
+    seen.add(row.key);
+    return true;
+  }).sort((a, b) => a.name.localeCompare(b.name) || a.key.localeCompare(b.key));
 }
 
 export function rosterNameTaken(roster: RosterPlayer[], name: string, exceptId = ""): boolean {

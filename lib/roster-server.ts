@@ -5,7 +5,8 @@
 import { randomBytes } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
 import { adminConfigured, adminDb } from "./firebase-admin";
-import { buildDemo } from "./demo-data";
+import { USERS, buildDemo } from "./demo-data";
+import { omitUndefined } from "./omit";
 import {
   addDemoRosterPlayer,
   demoRosterByToken,
@@ -16,13 +17,17 @@ import {
 } from "./roster-demo";
 import {
   applyClaim,
+  attachKnownMember,
   buildRosterPlayer,
   parseRosterInput,
   parseStoredRoster,
   patchRosterPlayer,
+  rosterDocument,
+  rosterFailureMessage,
   rosterNameTaken,
   stripRosterSecrets,
   type ClaimPerson,
+  type KnownMember,
   type RosterPlayer,
 } from "./roster";
 import type { Member } from "./types";
@@ -49,9 +54,55 @@ async function readLive(db: Firestore, cid: string): Promise<RosterPlayer[]> {
   return players.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.name.localeCompare(b.name));
 }
 
+function demoKnownMembers(cid: string): KnownMember[] {
+  const seen = new Map<string, KnownMember>();
+  for (const user of USERS) {
+    for (const member of buildDemo(user.id).members[cid] || []) {
+      seen.set(member.id, { id: member.id, email: member.email, displayName: member.displayName, characterName: member.characterName, role: member.role, pending: member.pending });
+    }
+  }
+  return [...seen.values()];
+}
+
+async function liveKnownMembers(db: Firestore, cid: string): Promise<KnownMember[]> {
+  const snap = await db.collection("campaigns").doc(cid).collection("members").get();
+  return snap.docs.map((doc) => {
+    const data = doc.data() || {};
+    return {
+      id: doc.id,
+      email: typeof data.email === "string" ? data.email : undefined,
+      displayName: typeof data.displayName === "string" ? data.displayName : undefined,
+      characterName: typeof data.characterName === "string" ? data.characterName : undefined,
+      pending: data.pending === true,
+    };
+  });
+}
+
+function linkedRoster(players: RosterPlayer[], members: KnownMember[]): RosterPlayer[] {
+  return players.map((player) => attachKnownMember(player, members, players));
+}
+
+async function persistLinks(cid: string, before: RosterPlayer[], after: RosterPlayer[]): Promise<void> {
+  for (const player of after) {
+    const prev = before.find((item) => item.id === player.id);
+    if (!prev || (prev.memberId === player.memberId && prev.status === player.status)) continue;
+    if (!adminConfigured()) saveDemoRosterPlayer(player);
+    else await rosterRef(adminDb(), cid, player.id).set(rosterDocument(player));
+  }
+}
+
 export async function loadRoster(cid: string): Promise<RosterPlayer[]> {
-  if (!adminConfigured()) return listDemoRoster(cid);
-  return readLive(adminDb(), cid);
+  if (!adminConfigured()) {
+    const players = listDemoRoster(cid);
+    const linked = linkedRoster(players, demoKnownMembers(cid));
+    await persistLinks(cid, players, linked);
+    return linked;
+  }
+  const db = adminDb();
+  const players = await readLive(db, cid);
+  const linked = linkedRoster(players, await liveKnownMembers(db, cid));
+  await persistLinks(cid, players, linked);
+  return linked;
 }
 
 export async function createRosterPlayer(cid: string, body: unknown): Promise<RosterPlayer | { error: string; status: number }> {
@@ -60,7 +111,9 @@ export async function createRosterPlayer(cid: string, body: unknown): Promise<Ro
   if (!adminConfigured()) {
     const added = addDemoRosterPlayer(cid, parsed.value, newId(), newToken());
     if ("error" in added) return { error: added.error, status: added.error === "This roster is full." ? 409 : 400 };
-    return added;
+    const linked = attachKnownMember(added, demoKnownMembers(cid), listDemoRoster(cid));
+    if (linked.memberId !== added.memberId || linked.status !== added.status) saveDemoRosterPlayer(linked);
+    return linked;
   }
   const db = adminDb();
   const campaign = await db.collection("campaigns").doc(cid).get();
@@ -68,9 +121,14 @@ export async function createRosterPlayer(cid: string, body: unknown): Promise<Ro
   const existing = await readLive(db, cid);
   if (existing.length >= 40) return { error: "This roster is full.", status: 409 };
   if (rosterNameTaken(existing, parsed.value.name)) return { error: "That name is already on the roster.", status: 400 };
-  const player = buildRosterPlayer(cid, parsed.value, newId(), newToken());
-  await rosterRef(db, cid, player.id).set(player);
-  await db.collection("rosterTokens").doc(player.token).set({ cid, id: player.id });
+  const built = buildRosterPlayer(cid, parsed.value, newId(), newToken());
+  const player = attachKnownMember(built, await liveKnownMembers(db, cid), existing);
+  try {
+    await rosterRef(db, cid, player.id).set(rosterDocument(player));
+    await db.collection("rosterTokens").doc(player.token).set({ cid, id: player.id });
+  } catch (error) {
+    return { error: rosterFailureMessage(error), status: 500 };
+  }
   return player;
 }
 
@@ -89,8 +147,12 @@ export async function updateRosterPlayer(cid: string, id: string, body: unknown)
   if (!current) return { error: "That player isn't on the roster.", status: 404 };
   const existing = await readLive(db, cid);
   if (rosterNameTaken(existing, parsed.value.name, id)) return { error: "That name is already on the roster.", status: 400 };
-  const player = patchRosterPlayer(current, parsed.value);
-  await ref.set(player);
+  const player = attachKnownMember(patchRosterPlayer(current, parsed.value), await liveKnownMembers(db, cid), existing);
+  try {
+    await ref.set(rosterDocument(player));
+  } catch (error) {
+    return { error: rosterFailureMessage(error), status: 500 };
+  }
   return player;
 }
 
@@ -177,9 +239,9 @@ export async function claimRosterSeat(token: string, person: ClaimPerson): Promi
   const current = roster.find((player) => player.id === found.player.id) || found.player;
   const result = applyClaim(current, roster, members, person);
   if (!result.ok) return result;
-  await rosterRef(db, current.cid, current.id).set(result.player);
+  await rosterRef(db, current.cid, current.id).set(rosterDocument(result.player));
   if (result.member) {
-    await db.collection("campaigns").doc(current.cid).collection("members").doc(person.id).set(result.member);
+    await db.collection("campaigns").doc(current.cid).collection("members").doc(person.id).set(omitUndefined(result.member));
   }
   return { ...result, campaignName: found.campaignName };
 }

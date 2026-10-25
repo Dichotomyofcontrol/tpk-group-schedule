@@ -1,8 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { applyGuestVote, summarizePoll, toPublicPoll, voteSeats } from "../../lib/poll-public.ts";
-import { seatsFromRoster } from "../../lib/roster.ts";
+import { validateUserInput } from "@google-cloud/firestore/build/src/serializer.js";
+import { applyGuestVote, mergeVoteSeats, summarizePoll, toPublicPoll, voteSeats } from "../../lib/poll-public.ts";
+import { seatsFromRoster, rosterDocument, rosterFailureMessage, unifyPlayers } from "../../lib/roster.ts";
 import { applyClaim, parseRosterInput, buildRosterPlayer, patchRosterPlayer } from "../../lib/roster.ts";
 import { SALTMARSH_ROSTER, addDemoRosterPlayer, resetDemoRoster } from "../../lib/roster-demo.ts";
 import { demoPollRecord, resetDemoPolls } from "../../lib/poll-demo.ts";
@@ -29,6 +30,49 @@ test("roster input keeps optional contact details and rejects a bad phone", () =
   resetDemoRoster();
   const duplicate = addDemoRosterPlayer("saltmarsh", { name: "elara" }, "rp-dup", "token-dup");
   assert.equal("error" in duplicate, true);
+});
+
+test("empty email and phone are omitted so Firestore can store the seat", () => {
+  const parsed = parseRosterInput({ name: "Greg", characterName: "Gor", email: "", phone: "" });
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.equal(parsed.value.email, undefined);
+  assert.equal(parsed.value.phone, undefined);
+  assert.equal(parsed.value.characterName, "Gor");
+  const player = buildRosterPlayer("saltmarsh", parsed.value, "rp-greg", "token-greg");
+  assert.throws(
+    () => validateUserInput("data", { ...player }, "document", { allowUndefined: false }, undefined, 0, false),
+    /undefined/,
+  );
+  const stored = rosterDocument(player);
+  assert.equal("email" in stored, false);
+  assert.equal("phone" in stored, false);
+  assert.equal(stored.name, "Greg");
+  assert.equal(stored.characterName, "Gor");
+  assert.doesNotThrow(() => validateUserInput("data", stored, "document", { allowUndefined: false }, undefined, 0, false));
+  const shown = rosterFailureMessage(new Error('Value for argument "data" is not a valid Firestore document. Cannot use "undefined" as a Firestore value (found in field "email").'));
+  assert.match(shown, /found in field "email"/);
+});
+
+test("the player list keeps joined accounts and invited seats without duplicating a name", () => {
+  const rows = unifyPlayers(
+    [
+      { id: "seth", displayName: "Seth", role: "organizer", email: "seth@example.com" },
+      { id: "mira", displayName: "Mira", role: "member" },
+    ],
+    SALTMARSH_ROSTER,
+  );
+  assert.equal(rows.filter((row) => row.name === "Seth").length, 1);
+  assert.equal(rows.find((row) => row.name === "Seth")?.status, "joined");
+  assert.equal(rows.find((row) => row.name === "Elara")?.status, "invited");
+  assert.equal(rows.find((row) => row.name === "Mira")?.status, "joined");
+  assert.equal(rows.find((row) => row.name === "Mira")?.token, undefined);
+  const seats = mergeVoteSeats(
+    [{ id: "seth", displayName: "Seth" }, { id: "mira", displayName: "Mira" }],
+    seatsFromRoster(SALTMARSH_ROSTER),
+  );
+  assert.deepEqual(seats.map((seat) => seat.displayName).sort(), ["Corin", "Elara", "Mira", "Seth"]);
+  assert.equal(seats.filter((seat) => seat.id === "seth").length, 1);
 });
 
 test("claiming a seat links an existing member and creates one for a new player", () => {

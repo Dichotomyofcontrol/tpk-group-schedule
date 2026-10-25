@@ -1,5 +1,6 @@
 import { adminConfigured, adminDb, verifyBearer } from "@/lib/firebase-admin";
 import { validPollId } from "@/lib/poll-public";
+import { rosterFailureMessage } from "@/lib/roster";
 import { demoMember, demoStaff, deleteRosterPlayer, updateRosterPlayer } from "@/lib/roster-server";
 
 export const dynamic = "force-dynamic";
@@ -31,16 +32,26 @@ export async function PATCH(request: Request, context: { params: Promise<{ cid: 
   if (gate instanceof Response) return gate;
   let body: unknown;
   try { body = await request.json(); } catch { return json({ error: "Send JSON." }, 400); }
-  const result = await updateRosterPlayer(cid, id, body);
-  if ("error" in result) return json({ error: result.error }, result.status);
-  return json({ player: result });
+  try {
+    const result = await updateRosterPlayer(cid, id, body);
+    if ("error" in result) return json({ error: result.error }, result.status);
+    return json({ player: result });
+  } catch (error) {
+    console.error("roster save failed", error instanceof Error ? error.message : "unknown");
+    return json({ error: rosterFailureMessage(error) }, 500);
+  }
 }
 
 export async function DELETE(request: Request, context: { params: Promise<{ cid: string; id: string }> }) {
   const { cid, id } = await context.params;
   const gate = await staff(cid, request);
   if (gate instanceof Response) return gate;
-  const result = await deleteRosterPlayer(cid, id);
-  if ("error" in result) return json({ error: result.error }, result.status);
-  return json({ ok: true });
+  try {
+    const result = await deleteRosterPlayer(cid, id);
+    if ("error" in result) return json({ error: result.error }, result.status);
+    return json({ ok: true });
+  } catch (error) {
+    console.error("roster remove failed", error instanceof Error ? error.message : "unknown");
+    return json({ error: rosterFailureMessage(error) }, 500);
+  }
 }

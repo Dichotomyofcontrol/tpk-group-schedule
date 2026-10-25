@@ -1,5 +1,6 @@
 import { adminConfigured, adminDb, verifyBearer } from "@/lib/firebase-admin";
 import { hit } from "@/lib/rate-limit";
+import { rosterFailureMessage } from "@/lib/roster";
 import { demoMember, demoStaff, loadRoster, createRosterPlayer, rosterForClient } from "@/lib/roster-server";
 import { validPollId } from "@/lib/poll-public";
 
@@ -47,7 +48,12 @@ export async function POST(request: Request, context: { params: Promise<{ cid: s
   if (!(await hit(db, `roster-add:${cid}:${who}`, 30, 10 * 60 * 1000))) {
     return json({ error: "Too many players added. Wait a few minutes." }, 429);
   }
-  const result = await createRosterPlayer(cid, body);
-  if ("error" in result) return json({ error: result.error }, result.status);
-  return json({ player: result }, 201);
+  try {
+    const result = await createRosterPlayer(cid, body);
+    if ("error" in result) return json({ error: result.error }, result.status);
+    return json({ player: result }, 201);
+  } catch (error) {
+    console.error("roster add failed", error instanceof Error ? error.message : "unknown");
+    return json({ error: rosterFailureMessage(error) }, 500);
+  }
 }

@@ -131,9 +131,43 @@ export function cleanGuestName(raw: unknown): { name: string } | { error: string
   return { name };
 }
 
+/** Joined accounts and invited roster seats, one row each. A seat already linked to an account is not counted twice. */
+export function mergeVoteSeats(members: PollPlayer[], roster: PollPlayer[]): PollPlayer[] {
+  const active = members.filter((member) => !member.pending && member.displayName?.trim());
+  const used = new Set<string>();
+  const seats: PollPlayer[] = [];
+  for (const seat of roster) {
+    let member = active.find((item) => (seat.memberId && item.id === seat.memberId) || item.id === seat.id);
+    if (!member) {
+      const key = nameKey(seat.displayName || "");
+      const hits = active.filter((item) => !used.has(item.id) && (nameKey(item.displayName || "") === key || (!!item.characterName && nameKey(item.characterName) === key)));
+      if (hits.length === 1) member = hits[0];
+    }
+    if (member) used.add(member.id);
+    seats.push(member ? {
+      id: member.id,
+      displayName: seat.displayName || member.displayName,
+      characterName: seat.characterName || member.characterName,
+      rosterId: seat.rosterId,
+      memberId: member.id,
+    } : seat);
+  }
+  for (const member of active) {
+    if (used.has(member.id)) continue;
+    seats.push({ id: member.id, displayName: member.displayName, characterName: member.characterName, memberId: member.id });
+  }
+  const seen = new Set<string>();
+  return seats.filter((seat) => {
+    if (seen.has(seat.id)) return false;
+    seen.add(seat.id);
+    return true;
+  });
+}
+
 export function voteSeats(record: Pick<PollRecord, "members" | "roster">): PollPlayer[] {
-  if (record.roster && record.roster.length) return record.roster;
-  return record.members.filter((member) => !member.pending);
+  const members = record.members.filter((member) => !member.pending);
+  if (!record.roster?.length) return members;
+  return mergeVoteSeats(members, record.roster);
 }
 
 export function parseGuestBallot(body: unknown): { token: string; name: string; picks: string[]; rosterId?: string } | { error: string; status: number } {
