@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Shell } from "@/components/shell";
 import { useStore } from "@/lib/store";
+import { finishDestination } from "@/lib/magic-link";
 
 export default function Finish() {
   const store = useStore();
@@ -32,8 +33,9 @@ export default function Finish() {
         setMessage("Open the link from your email to finish signing in.");
         return;
       }
-      const token = params.get("invite");
-      router.replace(token ? `/invite/${token}` : "/");
+      let storedSeat: string | null = null;
+      try { storedSeat = window.sessionStorage.getItem("tpk-join-seat"); window.sessionStorage.removeItem("tpk-join-seat"); } catch { storedSeat = null; }
+      router.replace(finishDestination(params, storedSeat));
     } catch (error) {
       const code = (error as { code?: string })?.code || (error instanceof Error ? error.message : "");
       if (/invalid-email|user-mismatch/.test(code)) {
@@ -59,7 +61,7 @@ export default function Finish() {
     if (busy || !email.trim()) return;
     setBusy(true);
     try {
-      await store.sendMagicLink(email.trim(), params.get("invite") || undefined);
+      await store.sendMagicLink(email.trim(), params.get("invite") || undefined, params.get("seat") || undefined);
       setResent(true);
       setMessage(`We sent a new link to ${email.trim()}. Open the newest email.`);
     } catch (error) {

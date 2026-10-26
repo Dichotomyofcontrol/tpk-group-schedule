@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
+import { firebaseConfigured, getFirebase } from "@/lib/firebase-client";
+import { seatMessage } from "@/lib/roster";
 
 type Preview = {
   cid: string;
@@ -27,7 +29,14 @@ export function JoinSeat({ token }: { token: string }) {
     let alive = true;
     const headers = new Headers();
     if (store.state.me.id) headers.set("x-demo-persona", store.state.me.id);
-    fetch(`/api/join/${encodeURIComponent(token)}`, { headers, cache: "no-store" })
+    // On the live site the preview needs the signed-in user's ID token, so "mine" is right.
+    const bearer = store.mode === "live" && firebaseConfigured()
+      ? Promise.resolve(getFirebase().auth.currentUser?.getIdToken().catch(() => "") ?? "")
+      : Promise.resolve("");
+    bearer.then((idToken) => {
+      if (idToken) headers.set("authorization", `Bearer ${idToken}`);
+      return fetch(`/api/join/${encodeURIComponent(token)}`, { headers, cache: "no-store" });
+    })
       .then(async (res) => {
         if (!alive) return;
         if (!res.ok) { setSeat("missing"); return; }
@@ -35,7 +44,7 @@ export function JoinSeat({ token }: { token: string }) {
       })
       .catch(() => { if (alive) setSeat("missing"); });
     return () => { alive = false; };
-  }, [token, store.state.me.id]);
+  }, [token, store.state.me.id, store.mode]);
 
   if (seat === "loading") return <div className="center-narrow"><p className="note">Opening your seat…</p></div>;
   if (seat === "missing" || !seat) {
@@ -58,7 +67,7 @@ export function JoinSeat({ token }: { token: string }) {
         <div className="eyebrow">{seat.campaignName}</div>
         <h1>Your seat is {seat.name}</h1>
         <p>{who === seat.name ? `Claim this seat at ${seat.campaignName}.` : `${who}. Claim it at ${seat.campaignName}.`}</p>
-        <p className="note">{seat.claimed ? (seat.mine ? "This seat is already yours." : "Someone has already claimed this seat.") : "Sign in or create an account to take it. If you're already at the table, this just links the seat."}</p>
+        <p className="note">{seatMessage(seat, store.signedIn)}</p>
         {done && (
           <p className="gvoted" role="status">
             {done === "created" && `You're in as ${seat.name}.`}
@@ -74,6 +83,7 @@ export function JoinSeat({ token }: { token: string }) {
             const result = await store.claimSeat(token);
             setBusy(false);
             if (!result.ok) { setError(result.error); return; }
+            setSeat({ ...seat, status: "joined", claimed: true, mine: true });
             setDone(result.already ? "already" : result.linked ? "linked" : "created");
           }}>{busy ? "Claiming…" : seat.mine ? "This seat is yours" : "Claim this seat"}</button>
         )}
@@ -83,7 +93,7 @@ export function JoinSeat({ token }: { token: string }) {
             if (busy) return;
             setBusy(true);
             window.sessionStorage.setItem("tpk-join-seat", token);
-            try { await store.sendMagicLink(email, token); setSent(true); } finally { setBusy(false); }
+            try { await store.sendMagicLink(email, undefined, token); setSent(true); } finally { setBusy(false); }
           }}>
             <div className="fld"><label htmlFor="je">Email</label><input id="je" type="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@email.com" /></div>
             <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : "Email me a sign-in link"}</button>

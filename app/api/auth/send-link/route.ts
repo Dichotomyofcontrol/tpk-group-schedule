@@ -13,11 +13,12 @@ const OK = () => Response.json({ ok: true });
 
 /** Sends the branded sign-in email. Always answers with a generic OK so it can't be used to probe accounts. */
 export async function POST(request: Request) {
-  let body: { email?: unknown; invite?: unknown } = {};
+  let body: { email?: unknown; invite?: unknown; seat?: unknown } = {};
   try { body = await request.json(); } catch { /* fall through */ }
   const email = normalizeEmail(body.email);
   if (!email) return Response.json({ error: "Enter a valid email." }, { status: 400 });
   const invite = typeof body.invite === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(body.invite) ? body.invite : undefined;
+  const seat = typeof body.seat === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(body.seat) ? body.seat : undefined;
 
   if (!adminConfigured()) {
     console.error("send-link: refusing Firebase fallback because FIREBASE_SERVICE_ACCOUNT is not set");
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
   if (!(await hit(db, `recent:${email}`, 1, 60 * 1000))) return OK();
 
   const origin = safeOrigin(request.headers.get("origin") || new URL(request.url).origin);
-  const continueUrl = magicLinkContinueUrl(origin, invite);
+  const continueUrl = magicLinkContinueUrl(origin, invite, seat);
   let raw: string;
   try {
     raw = await getAuth(adminApp()).generateSignInWithEmailLink(email, { url: continueUrl, handleCodeInApp: true });

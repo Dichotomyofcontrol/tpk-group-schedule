@@ -19,14 +19,21 @@ export function InviteGuest({ token }: { token: string }) {
     fetch(`/api/invites/${encodeURIComponent(token)}`).then(async (res) => {
       const body = res.ok ? await res.json() as { campaign?: { id: string; name: string; color?: string; cover?: Campaign["cover"]; location?: string }; invitedBy?: string; role?: Invite["role"]; status?: string } : null;
       if (!alive) return;
-      if (!body?.campaign || (body.status && body.status !== "pending")) { setRemote(null); return; }
+      if (!body?.campaign || (body.status && body.status !== "pending")) {
+        // Roster seat links live at /join. A sign-in link from an older build could land a seat token here.
+        const seat = await fetch(`/api/join/${encodeURIComponent(token)}`, { cache: "no-store" }).catch(() => null);
+        if (!alive) return;
+        if (seat?.ok) { router.replace(`/join/${encodeURIComponent(token)}`); return; }
+        setRemote(null);
+        return;
+      }
       setRemote({
         invite: { token, cid: body.campaign.id, role: body.role || "member", createdByName: body.invitedBy || "Your organizer", status: "pending" } as Invite,
         campaign: { id: body.campaign.id, name: body.campaign.name, color: body.campaign.color || "#888", cover: body.campaign.cover || { src: "", path: null }, defaultLocation: body.campaign.location || "" } as Campaign,
       });
     }).catch(() => { if (alive) setRemote(null); });
     return () => { alive = false; };
-  }, [store.mode, token]);
+  }, [store.mode, token, router]);
   const local = store.state.invites.find((i) => i.token === token);
   const invite = local || (remote && remote !== "loading" ? remote.invite : undefined);
   const campaign = store.state.campaigns.find((c) => c.id === invite?.cid) || (remote && remote !== "loading" ? remote.campaign : undefined);

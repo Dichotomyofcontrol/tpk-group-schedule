@@ -334,3 +334,11 @@ function sharedStamp(value: unknown): string | undefined {
   if (Number.isNaN(time)) return undefined;
   return new Date(time).toISOString();
 }
+
+/** The line under a seat link. Only says "claimed" when someone else really holds the seat. */
+export function seatMessage(seat: { claimed: boolean; mine: boolean }, signedIn: boolean): string {
+  if (seat.claimed && seat.mine) return "Joined. This seat is yours.";
+  if (seat.claimed) return "Someone else has already claimed this seat. Ask the organizer if that's a mistake.";
+  if (signedIn) return "This seat is open. Claim it to join the table.";
+  return "Sign in or create an account to take it. The email link brings you back here.";
+}
