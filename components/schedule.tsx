@@ -4,8 +4,8 @@ import { NotOnTpkMark } from "./tpk-assign";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { attendanceState, headcount, isGreyed, rsvpPillLabel, rsvpPillToggle, sessionRequiresRsvp } from "@/lib/attendance";
-import { campaignById, displayTitle, isStaff, latestRecap, membersOf } from "@/lib/model";
-import { hasRecap, markdownToHtml, openingParagraph, readAloudMinutes } from "@/lib/recap";
+import { campaignById, displayTitle, isStaff, membersOf } from "@/lib/model";
+import { hasRecap, markdownToHtml, readAloudMinutes, storedReadAloud } from "@/lib/recap";
 import { sanitizeRecapHtml } from "@/lib/sanitize";
 import { useStore } from "@/lib/store";
 import { daysUntil, formatDayHeading, formatTime, hmInZone, relativeWhen, ymdInZone } from "@/lib/time";
@@ -198,13 +198,10 @@ function HeroPlace({ place }: { place: string }) {
   return <a className="hplace" href={href} target="_blank" rel="noopener noreferrer" aria-label={`${place}, open in Maps`}>{place}</a>;
 }
 
-/** Read-aloud opener inside the next-session hero. The session field wins; otherwise the latest recap's opening paragraph. */
+/** Read-aloud opener inside the next-session hero. Hidden when neither the session nor the campaign has a stored opener. */
 function PreviouslyOn({ session }: { session: Session }) {
   const store = useStore();
-  const own = session.previouslyOn?.trim() || "";
-  const source = own ? null : latestRecap(store.state.sessions, session.cid);
-  const fallback = !own && source ? openingParagraph(source) : "";
-  const text = own || fallback;
+  const text = storedReadAloud(session, campaignById(store.state, session.cid));
   const today = daysUntil(session.startsAt, store.state.me.tz) === 0;
   const [open, setOpen] = useState(today);
   useEffect(() => { setOpen(daysUntil(session.startsAt, store.state.me.tz) === 0); }, [session.id, session.startsAt, store.state.me.tz]);
@@ -222,11 +219,6 @@ function PreviouslyOn({ session }: { session: Session }) {
       {open && (
         <div id={panel}>
           <div className="prevon-body" dangerouslySetInnerHTML={{ __html: html }} />
-          {source && (
-            <Link className="prevon-from" href={sessionHref(source)}>
-              From {displayTitle(source, campaignById(store.state, source.cid)?.name || "the last session")} <Icon name="arrow" className="ic sm" />
-            </Link>
-          )}
         </div>
       )}
     </section>

@@ -113,6 +113,17 @@ export function readAloudMinutes(text: string): number {
   return words ? Math.max(1, Math.round(words / 150)) : 0;
 }
 
+/**
+ * The read-aloud for Up next. The session's stored opener wins.
+ * Otherwise the campaign's stored opener. A recap heading is not an opener.
+ */
+export function storedReadAloud(
+  session: { previouslyOn?: string } | null | undefined,
+  campaign: { previouslyOn?: string } | null | undefined,
+): string {
+  return session?.previouslyOn?.trim() || campaign?.previouslyOn?.trim() || "";
+}
+
 export function excerpt(text: string, max = 200): string {
   const clean = text.replace(/\s+/g, " ").trim();
   if (clean.length <= max) return clean;
