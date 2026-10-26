@@ -258,16 +258,27 @@ export async function claimRosterSeat(token: string, person: ClaimPerson): Promi
     return { ...result, campaignName: found.campaignName };
   }
   const db = adminDb();
-  const memberSnap = await db.collection("campaigns").doc(found.player.cid).collection("members").get();
-  const members = memberSnap.docs.map((doc) => ({ id: doc.id }));
-  const roster = await readLive(db, found.player.cid);
-  const current = roster.find((player) => player.id === found.player.id) || found.player;
-  const result = applyClaim(current, roster, members, person);
+  const cid = found.player.cid;
+  // One transaction: two people opening the same link can't both take the seat.
+  const result = await db.runTransaction(async (tx) => {
+    const [memberSnap, rosterSnap] = await Promise.all([
+      tx.get(db.collection("campaigns").doc(cid).collection("members")),
+      tx.get(db.collection("campaigns").doc(cid).collection("roster")),
+    ]);
+    const members = memberSnap.docs.map((doc) => ({ id: doc.id }));
+    const roster = rosterSnap.docs
+      .map((doc) => parseStoredRoster(doc.id, cid, doc.data() || {}))
+      .filter((player): player is RosterPlayer => !!player);
+    const current = roster.find((player) => player.id === found.player.id);
+    if (!current || current.token !== token) return { ok: false as const, status: 404, error: "This seat isn't open." };
+    const outcome = applyClaim(current, roster, members, person);
+    if (!outcome.ok || outcome.already) return outcome;
+    tx.set(rosterRef(db, cid, current.id), rosterDocument(outcome.player));
+    if (outcome.member) tx.set(db.collection("campaigns").doc(cid).collection("members").doc(person.id), omitUndefined(outcome.member));
+    return outcome;
+  });
   if (!result.ok) return result;
-  await rosterRef(db, current.cid, current.id).set(rosterDocument(result.player));
-  if (result.member) {
-    await db.collection("campaigns").doc(current.cid).collection("members").doc(person.id).set(omitUndefined(result.member));
-  }
+  const current = result.player;
   await ensurePendingSummary(current.cid, result.player.characterName || result.member?.characterName);
   return { ...result, campaignName: found.campaignName };
 }

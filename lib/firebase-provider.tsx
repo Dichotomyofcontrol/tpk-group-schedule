@@ -393,7 +393,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     claimSeat: async () => ({ ok: false, error: "Sign in first." }),
     acceptInvite: () => false,
     signOut: async () => undefined,
-    sendMagicLink: async (email: string, inviteToken?: string) => {
+    sendMagicLink: async (email: string, inviteToken?: string, seatToken?: string) => {
       if (!firebaseConfigured()) {
         const message = "Firebase isn't configured on this deploy yet.";
         flash(message, "err");
@@ -402,7 +402,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/send-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, invite: inviteToken }),
+        body: JSON.stringify({ email, invite: inviteToken, seat: seatToken }),
       }).catch(() => null);
       const data = res ? await res.json().catch(() => ({})) as { error?: string } : {};
       if (!res?.ok) throw new Error(data.error || "Couldn't send the sign-in email. Try again.");

@@ -89,7 +89,7 @@ export type StoreApi = {
     already: boolean;
   } | { ok: false; error: string }>;
   acceptInvite: (token: string, person?: { id: string; email: string; displayName: string; characterName?: string }) => boolean;
-  sendMagicLink: (email: string, inviteToken?: string) => Promise<void>;
+  sendMagicLink: (email: string, inviteToken?: string, seatToken?: string) => Promise<void>;
   /** Types the 6-digit code from the sign-in email. The same code works in the Home Screen app. */
   completeSignInCode: (email: string, code: string) => Promise<void>;
   /** Completes an email-link landing on /auth/finish. */
