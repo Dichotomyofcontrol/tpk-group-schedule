@@ -1,3 +1,4 @@
+import { recordedCampaign } from "./almanac-stats";
 import { membersOf, sessionTitle } from "./model";
 import { excerpt, recapPlain } from "./recap";
 import { groupStats } from "./stats";
@@ -85,9 +86,11 @@ export function campaignBook(state: AppState, cid: string, uid = state.me.id, no
   const chronicle = nights.filter(hasWrittenRecap).map((session) => toNight(state, session));
   const places = placeNotes(campaign, nights);
   const ledger = [...(campaign.ledger ?? [])].sort((a, b) => a.at.localeCompare(b.at));
-  const blanks: CampaignBook["blanks"] = ["npcs", "factions"];
+  const recorded = recordedCampaign(campaign.id);
+  const blanks: CampaignBook["blanks"] = ["factions"];
+  if (!recorded?.npcs.length) blanks.push("npcs");
   if (!ledger.length) blanks.push("ledger");
-  if (!places.length) blanks.push("places");
+  if (!places.length && !recorded?.locations.length) blanks.push("places");
   return {
     spread: spreadFor(state, campaign, uid, now),
     current,

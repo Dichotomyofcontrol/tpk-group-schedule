@@ -1,0 +1,879 @@
+{
+ "recorded": "Aug 2024 – Oct 2026",
+ "note": "Counts mined from the Archivist recordings. Replace a campaign object to refresh. Deaths and labeledSessions are canon kept beside the counts.",
+ "campaigns": {
+  "frostmaiden": {
+   "sourceKey": "rime",
+   "name": "Rime of the Frostmaiden",
+   "short": "Rime",
+   "element": "Ice",
+   "where": "Icewind Dale",
+   "day": "Wednesdays",
+   "labeledSessions": 6,
+   "deaths": [
+    {
+     "name": "Cooter",
+     "line": "Died S11 · regrown from a ritual cocoon. Back in the party.",
+     "returned": true
+    },
+    {
+     "name": "Ryn",
+     "line": "Died S19 · impaled by an ice troll, revivified on a fleeing sled. Back in the party.",
+     "returned": true
+    },
+    {
+     "name": "Theo",
+     "line": "Died S41 · Everyone Dies in Termalaine. Stayed dead.",
+     "returned": false
+    },
+    {
+     "name": "Oli",
+     "line": "Died S55 · stabbed by a daughter of Auril, brought back. Back in the party.",
+     "returned": true
+    }
+   ],
+   "sessions": 57,
+   "hours": 230.0,
+   "words": 1502042,
+   "longest": {
+    "title": "33- Nildar's Demise & Everyone's King",
+    "date": "2025-08-06",
+    "hours": 5.73,
+    "words": 26724
+   },
+   "first": "2024-08-21",
+   "last": "2026-10-21",
+   "nat20": 55,
+   "nat1": 28,
+   "nat20By": [
+    {
+     "label": "Diana (Rosie [PC])",
+     "count": 1
+    }
+   ],
+   "nat1By": [
+    {
+     "label": "Savannah (Oli [PC])",
+     "count": 1
+    },
+    {
+     "label": "Diana (Rosie [PC])",
+     "count": 1
+    }
+   ],
+   "talkers": [
+    {
+     "label": "Max (GM)",
+     "words": 76874
+    },
+    {
+     "label": "Brandon (Cooter [PC])",
+     "words": 19572
+    },
+    {
+     "label": "Diana (Rosie [PC])",
+     "words": 18012
+    },
+    {
+     "label": "Savannah (Oli [PC])",
+     "words": 13038
+    },
+    {
+     "label": "Seth Thomas (Ryn [PC])",
+     "words": 10356
+    },
+    {
+     "label": "Dylan (Gordo [PC])",
+     "words": 2645
+    },
+    {
+     "label": "Savannah (Theo [PC])",
+     "words": 2012
+    }
+   ],
+   "npcs": [
+    {
+     "name": "Garrett",
+     "count": 769
+    },
+    {
+     "name": "Auril",
+     "count": 702
+    },
+    {
+     "name": "Snoopy",
+     "count": 424
+    },
+    {
+     "name": "Averice",
+     "count": 317
+    },
+    {
+     "name": "Vellynne",
+     "count": 306
+    },
+    {
+     "name": "Angajuk",
+     "count": 192
+    },
+    {
+     "name": "Sephek",
+     "count": 172
+    },
+    {
+     "name": "Pthierry",
+     "count": 151
+    }
+   ],
+   "locations": [
+    {
+     "name": "Targos",
+     "count": 271
+    },
+    {
+     "name": "Lonelywood",
+     "count": 184
+    },
+    {
+     "name": "Sunblight",
+     "count": 133
+    },
+    {
+     "name": "Bryn Shander",
+     "count": 120
+    },
+    {
+     "name": "Caer-Dineval",
+     "count": 110
+    },
+    {
+     "name": "Grimskala",
+     "count": 96
+    },
+    {
+     "name": "Bremen",
+     "count": 89
+    },
+    {
+     "name": "Termalaine",
+     "count": 59
+    }
+   ],
+   "deathWords": 1349,
+   "pcs": [
+    "Oli",
+    "Alma",
+    "Ryn",
+    "Theo",
+    "Cooter",
+    "Rosie",
+    "Gordo"
+   ],
+   "sessionsList": [
+    {
+     "title": "Averice Claims Oli",
+     "date": "2026-10-08",
+     "hours": 3.87,
+     "words": 24741
+    },
+    {
+     "title": "Winter’s Rot Spreads Through Targos",
+     "date": "2026-10-15",
+     "hours": 3.99,
+     "words": 24593
+    },
+    {
+     "title": "27 - Lalokah & Kapok Afterlife",
+     "date": "2025-06-18",
+     "hours": 4.04,
+     "words": 29192
+    },
+    {
+     "title": "The Effigies Beneath Bremen",
+     "date": "2026-10-21",
+     "hours": 4.27,
+     "words": 26337
+    },
+    {
+     "title": "14 - More Dogs & Yeti Cave at Kelvin's Cairn",
+     "date": "2025-02-19",
+     "hours": 4.03,
+     "words": 30086
+    },
+    {
+     "title": "16 - The Dead Speak, Descend into Konig",
+     "date": "2025-03-26",
+     "hours": 4.34,
+     "words": 33203
+    },
+    {
+     "title": "42 - Everyone Dies in Termalaine",
+     "date": "2025-11-05",
+     "hours": 4.27,
+     "words": 26037
+    },
+    {
+     "title": "23 - Below Dineval Tower",
+     "date": "2025-05-21",
+     "hours": 4.04,
+     "words": 23649
+    },
+    {
+     "title": "Blizzard's Tempest and Triumph",
+     "date": "2026-06-10",
+     "hours": 3.44,
+     "words": 20840
+    },
+    {
+     "title": "18 - Museum of Caer-Konig",
+     "date": "2025-04-16",
+     "hours": 4.35,
+     "words": 28085
+    },
+    {
+     "title": "Blizzard's Embrace and New Allies",
+     "date": "2026-01-28",
+     "hours": 4.11,
+     "words": 22965
+    },
+    {
+     "title": "Into the Frosted Fortress",
+     "date": "2026-05-13",
+     "hours": 4.17,
+     "words": 29968
+    },
+    {
+     "title": "05 - Meeting the Battlehammer Clan (Part 1)",
+     "date": "2024-10-16",
+     "hours": 2.74,
+     "words": 21656
+    },
+    {
+     "title": "33- Nildar's Demise & Everyone's King",
+     "date": "2025-08-06",
+     "hours": 5.73,
+     "words": 26724
+    },
+    {
+     "title": "21 - Yveth & Kadroths Gang in Caer-Dineval",
+     "date": "2025-04-30",
+     "hours": 4.9,
+     "words": 31842
+    },
+    {
+     "title": "01 - Torrga Icevein and Sephek Kaltro  (Part 2)",
+     "date": "2024-08-21",
+     "hours": 1.26,
+     "words": 9750
+    },
+    {
+     "title": "Blizzard's Secrets Unveiled",
+     "date": "2026-01-21",
+     "hours": 4.43,
+     "words": 16832
+    },
+    {
+     "title": "28 - Meeting Arveiaturace and Many-Arrows",
+     "date": "2025-06-25",
+     "hours": 4.76,
+     "words": 34963
+    },
+    {
+     "title": "25 - Rosie's Temptation & Averice's Betrayal",
+     "date": "2025-06-04",
+     "hours": 4.01,
+     "words": 19187
+    },
+    {
+     "title": "Depths of Shadows Unleashed",
+     "date": "2026-03-11",
+     "hours": 4.02,
+     "words": 21999
+    },
+    {
+     "title": "35 - Destroying the Forge",
+     "date": "2025-09-03",
+     "hours": 4.13,
+     "words": 22341
+    },
+    {
+     "title": "Frostbitten Retreat from Auril",
+     "date": "2026-05-28",
+     "hours": 4.02,
+     "words": 23756
+    },
+    {
+     "title": "41 - To Targos & Termalaine with Arveiaturace",
+     "date": "2025-10-29",
+     "hours": 4.11,
+     "words": 23578
+    },
+    {
+     "title": "12 - Wright, Wrongs and Orbs",
+     "date": "2025-01-22",
+     "hours": 4.26,
+     "words": 26514
+    },
+    {
+     "title": "01 - Torrga Icevein and Sephek Kaltro (Part 1)",
+     "date": "2024-08-21",
+     "hours": 1.2,
+     "words": 8874
+    },
+    {
+     "title": "37 - Leaving Sunblight to Ten Towns",
+     "date": "2025-09-24",
+     "hours": 4.2,
+     "words": 30615
+    },
+    {
+     "title": "39 - Business in Bryn Shander",
+     "date": "2025-10-15",
+     "hours": 3.95,
+     "words": 24910
+    },
+    {
+     "title": "Trials Beneath the Blizzard",
+     "date": "2026-09-29",
+     "hours": 3.99,
+     "words": 24474
+    },
+    {
+     "title": "31 - Entering Sunblight",
+     "date": "2025-07-16",
+     "hours": 3.83,
+     "words": 15427
+    },
+    {
+     "title": "36 - Averice in Xardorok's Chamber",
+     "date": "2025-09-13",
+     "hours": 4.78,
+     "words": 32258
+    },
+    {
+     "title": "34 - Cinderhulk and Illusionary King",
+     "date": "2025-08-20",
+     "hours": 4.14,
+     "words": 16667
+    },
+    {
+     "title": "44 - Haunted Battles and Frosty Trials",
+     "date": "2025-12-17",
+     "hours": 4.1,
+     "words": 25808
+    },
+    {
+     "title": "19 - Death of Ryn and Mittens by Many Arrows",
+     "date": "2025-04-23",
+     "hours": 4.1,
+     "words": 25274
+    },
+    {
+     "title": "04 - Auril Cult In Termalaine",
+     "date": "2024-10-02",
+     "hours": 3.64,
+     "words": 27616
+    },
+    {
+     "title": "13 - Subterranean Spaceship",
+     "date": "2025-02-05",
+     "hours": 4.79,
+     "words": 37693
+    },
+    {
+     "title": "29 - Mystical Animals at the Fortress",
+     "date": "2025-07-02",
+     "hours": 4.61,
+     "words": 34856
+    },
+    {
+     "title": "24 - Pissing Battel of Dinev's Rest",
+     "date": "2025-05-28",
+     "hours": 4.86,
+     "words": 33730
+    },
+    {
+     "title": "22 - Caer-Dineval Battle & Stealth",
+     "date": "2025-05-14",
+     "hours": 0.19,
+     "words": 1924
+    },
+    {
+     "title": "30 - Mammoth Encounter at the Duergar Fortress",
+     "date": "2025-07-09",
+     "hours": 3.92,
+     "words": 22767
+    },
+    {
+     "title": "32 - Druth's Demise and Meeting Grandolpha",
+     "date": "2025-07-23",
+     "hours": 4.2,
+     "words": 18876
+    },
+    {
+     "title": "40 - House of the Morning Lord",
+     "date": "2025-10-22",
+     "hours": 4.28,
+     "words": 32724
+    },
+    {
+     "title": "38 - Bryn Shander in Ruins",
+     "date": "2025-10-08",
+     "hours": 3.92,
+     "words": 26177
+    },
+    {
+     "title": "09 - Ivahd in the Endless Well",
+     "date": "2024-12-11",
+     "hours": 3.64,
+     "words": 25264
+    },
+    {
+     "title": "02 - Entrusting Puppino to Hlinda",
+     "date": "2024-09-04",
+     "hours": 4.11,
+     "words": 29883
+    },
+    {
+     "title": "Blood and Blizzard at Vassavicken",
+     "date": "2026-09-30",
+     "hours": 3.72,
+     "words": 21524
+    },
+    {
+     "title": "08 - Monsters in the Meat Lockers",
+     "date": "2024-11-27",
+     "hours": 5.03,
+     "words": 43402
+    },
+    {
+     "title": "03 - Owlbear Sacrifice",
+     "date": "2024-09-18",
+     "hours": 3.73,
+     "words": 30110
+    },
+    {
+     "title": "06 - Entering the Mine",
+     "date": "2024-10-30",
+     "hours": 4.32,
+     "words": 33070
+    },
+    {
+     "title": "43 - House of Iriskree in Lonelywood",
+     "date": "2025-11-19",
+     "hours": 4.46,
+     "words": 27892
+    },
+    {
+     "title": "11 - Lich Bitch vs the Slug Trail",
+     "date": "2025-01-07",
+     "hours": 5.17,
+     "words": 37632
+    },
+    {
+     "title": "Blizzard's Bitter End",
+     "date": "2026-04-29",
+     "hours": 3.97,
+     "words": 27192
+    },
+    {
+     "title": "Beneath the Ice and Shadows",
+     "date": "2026-03-18",
+     "hours": 3.89,
+     "words": 23194
+    },
+    {
+     "title": "17 - G73NN and the Drunk Speaker Who Was Important",
+     "date": "2025-04-02",
+     "hours": 4.81,
+     "words": 36084
+    },
+    {
+     "title": "26 - Garrett's Reunion in Targos",
+     "date": "2025-06-11",
+     "hours": 4.75,
+     "words": 29640
+    },
+    {
+     "title": "07 - Endless Battle in the Mine",
+     "date": "2024-11-13",
+     "hours": 4.04,
+     "words": 33451
+    },
+    {
+     "title": "10 - Death and Rebirth of Cooter",
+     "date": "2024-12-22",
+     "hours": 3.87,
+     "words": 30781
+    },
+    {
+     "title": "45 - Victory at the Moon Temple",
+     "date": "2026-01-14",
+     "hours": 4.54,
+     "words": 33415
+    }
+   ]
+  },
+  "strahd": {
+   "sourceKey": "strahd",
+   "name": "Curse of Strahd",
+   "short": "Strahd",
+   "element": "Blood",
+   "where": "Barovia",
+   "day": "Fridays",
+   "labeledSessions": 1,
+   "deaths": [],
+   "sessions": 7,
+   "hours": 26.6,
+   "words": 167120,
+   "longest": {
+    "title": "Storm of Shadows",
+    "date": "2026-02-27",
+    "hours": 4.08,
+    "words": 22813
+   },
+   "first": "2025-10-24",
+   "last": "2026-05-31",
+   "nat20": 10,
+   "nat1": 3,
+   "nat20By": [],
+   "nat1By": [
+    {
+     "label": "Susanna (Lysander [PC])",
+     "count": 1
+    }
+   ],
+   "talkers": [
+    {
+     "label": "Max (GM)",
+     "words": 8920
+    },
+    {
+     "label": "Brandon (Aralyth [PC])",
+     "words": 2738
+    },
+    {
+     "label": "Diana (Lizbeth [PC])",
+     "words": 2309
+    },
+    {
+     "label": "Savannah (Giada [PC])",
+     "words": 2085
+    },
+    {
+     "label": "Seth (Vloskev [PC])",
+     "words": 1402
+    },
+    {
+     "label": "Dylan (Ichabod [PC])",
+     "words": 1124
+    },
+    {
+     "label": "Susanna (Lysander [PC])",
+     "words": 860
+    }
+   ],
+   "npcs": [
+    {
+     "name": "Ireena Kolyana",
+     "count": 109
+    },
+    {
+     "name": "Yolanda",
+     "count": 83
+    },
+    {
+     "name": "Augie",
+     "count": 82
+    },
+    {
+     "name": "Father Petrovich",
+     "count": 49
+    },
+    {
+     "name": "Rictavio",
+     "count": 48
+    },
+    {
+     "name": "Madam Eva",
+     "count": 26
+    },
+    {
+     "name": "Doctor Lazarescu",
+     "count": 24
+    },
+    {
+     "name": "Mad Mary",
+     "count": 18
+    }
+   ],
+   "locations": [
+    {
+     "name": "Vallaki",
+     "count": 88
+    },
+    {
+     "name": "Barovia",
+     "count": 79
+    },
+    {
+     "name": "Gatehouse",
+     "count": 33
+    },
+    {
+     "name": "Old Bonegrinder",
+     "count": 15
+    },
+    {
+     "name": "Lake Zarovich",
+     "count": 13
+    },
+    {
+     "name": "Blue Water Inn",
+     "count": 10
+    },
+    {
+     "name": "Church of St. Andral",
+     "count": 8
+    },
+    {
+     "name": "Castle Ravenloft",
+     "count": 7
+    }
+   ],
+   "deathWords": 149,
+   "pcs": [
+    "Aralyth",
+    "Lysander",
+    "Ichabod",
+    "Giada",
+    "Vloskev",
+    "Lizbeth"
+   ],
+   "sessionsList": [
+    {
+     "title": "Bats, Blood, and Broken Hope",
+     "date": "2026-05-31",
+     "hours": 3.4,
+     "words": 19438
+    },
+    {
+     "title": "Storms of Despair and Loss",
+     "date": "2025-12-12",
+     "hours": 3.76,
+     "words": 28614
+    },
+    {
+     "title": "Storm of Shadows",
+     "date": "2026-02-27",
+     "hours": 4.08,
+     "words": 22813
+    },
+    {
+     "title": "Bats and Shadows of Vallaki",
+     "date": "2026-04-24",
+     "hours": 3.87,
+     "words": 20924
+    },
+    {
+     "title": "Storms and Shadows of Barovia",
+     "date": "2025-10-24",
+     "hours": 3.47,
+     "words": 20923
+    },
+    {
+     "title": "Shadows of the Black Gate",
+     "date": "2026-01-30",
+     "hours": 4.08,
+     "words": 24468
+    },
+    {
+     "title": "Gallows of Grim Secrets",
+     "date": "2026-01-09",
+     "hours": 3.98,
+     "words": 29940
+    }
+   ]
+  },
+  "saltmarsh": {
+   "sourceKey": "saltmarsh",
+   "name": "Ghosts of Saltmarsh",
+   "short": "Saltmarsh",
+   "element": "Salt",
+   "where": "The Azure Sea",
+   "day": "Saturdays",
+   "labeledSessions": 2,
+   "deaths": [],
+   "sessions": 6,
+   "hours": 22.0,
+   "words": 178180,
+   "longest": {
+    "title": "Chaos at the Solmar Estate",
+    "date": "2025-05-24",
+    "hours": 4.14,
+    "words": 33846
+   },
+   "first": "2025-05-24",
+   "last": "2026-08-29",
+   "nat20": 7,
+   "nat1": 1,
+   "nat20By": [
+    {
+     "label": "SageGM Ricci (GM)",
+     "count": 1
+    }
+   ],
+   "nat1By": [
+    {
+     "label": "Seth (Dexter [PC])",
+     "count": 1
+    }
+   ],
+   "talkers": [
+    {
+     "label": "SageGM Ricci (GM)",
+     "words": 31968
+    },
+    {
+     "label": "Ross (Giago [PC])",
+     "words": 8265
+    },
+    {
+     "label": "Seth (Dexter [PC])",
+     "words": 3947
+    },
+    {
+     "label": "Nick (Dom [PC])",
+     "words": 2409
+    },
+    {
+     "label": "Greg (Gor [PC])",
+     "words": 1897
+    },
+    {
+     "label": "Cesar (Olyndris [PC])",
+     "words": 1882
+    },
+    {
+     "label": "Josh (Jet [PC])",
+     "words": 832
+    }
+   ],
+   "npcs": [
+    {
+     "name": "Anders",
+     "count": 107
+    },
+    {
+     "name": "Sammy",
+     "count": 68
+    },
+    {
+     "name": "Sanbalet",
+     "count": 65
+    },
+    {
+     "name": "Vanthus Solmor",
+     "count": 36
+    },
+    {
+     "name": "Punkitas",
+     "count": 34
+    },
+    {
+     "name": "Malthus",
+     "count": 22
+    },
+    {
+     "name": "Pincus",
+     "count": 14
+    },
+    {
+     "name": "Undead Spellcaster",
+     "count": 12
+    }
+   ],
+   "locations": [
+    {
+     "name": "Solmor",
+     "count": 119
+    },
+    {
+     "name": "Saltmarsh",
+     "count": 66
+    },
+    {
+     "name": "Marinthian",
+     "count": 59
+    },
+    {
+     "name": "Macastor",
+     "count": 45
+    },
+    {
+     "name": "Boathouse",
+     "count": 24
+    },
+    {
+     "name": "Parrot Island",
+     "count": 13
+    },
+    {
+     "name": "Haunted House",
+     "count": 7
+    },
+    {
+     "name": "Sea Ghost",
+     "count": 7
+    }
+   ],
+   "deathWords": 105,
+   "pcs": [
+    "Dom",
+    "Gor",
+    "Olyndris",
+    "Giago",
+    "Jet",
+    "Dexter"
+   ],
+   "sessionsList": [
+    {
+     "title": "Underground Battles and Mystical Mishaps",
+     "date": "2026-06-27",
+     "hours": 2.89,
+     "words": 20826
+    },
+    {
+     "title": "Chaos at the Solmar Estate",
+     "date": "2025-05-24",
+     "hours": 4.14,
+     "words": 33846
+    },
+    {
+     "title": "New Alliances and Hidden Secrets",
+     "date": "2026-03-07",
+     "hours": 3.56,
+     "words": 26411
+    },
+    {
+     "title": "Awakening Shadows and Schemes",
+     "date": "2026-01-31",
+     "hours": 3.63,
+     "words": 30620
+    },
+    {
+     "title": "Island Intrigue and Dragon Duel",
+     "date": "2026-08-29",
+     "hours": 3.99,
+     "words": 30374
+    },
+    {
+     "title": "Macastor Mansion Showdown",
+     "date": "2025-11-30",
+     "hours": 3.8,
+     "words": 36103
+    }
+   ]
+  }
+ }
+}
