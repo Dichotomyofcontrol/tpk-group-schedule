@@ -67,7 +67,7 @@ const CharacterPanel = forwardRef<CharacterPanelHandle, { cid: string; name: str
           <Icon name="x" />
         </button>
         <Avatar name={name} id={player?.id || summaryDocId(name)} className="char-portrait" />
-        <p className="kicker">Character</p>
+        
         <h2 id={titleId}>{name}</h2>
         {player && <p className="char-player">Played by {player.displayName}</p>}
         {summary.status === "ready" && summary.text ? (

@@ -18,7 +18,7 @@ export function CampaignsView() {
     <>
       <div className="ptitle">
         <div>
-          <p className="kicker">Worlds</p>
+          
           <h1 className="lt">Campaigns</h1>
         </div>
         {state.me.canCreateCampaigns && <Link className="btn sec sm" href="/campaigns/new"><Icon name="plus" className="ic sm" />New campaign</Link>}

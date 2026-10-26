@@ -21,7 +21,7 @@ export function AccountView() {
   return (
     <div className="narrow">
       <BackBar href="/sessions" label="Sessions" />
-      <p className="kicker">You</p>
+      
       <h1 className="lt">Account</h1>
       <p className="sub">Signed in as {state.me.email}</p>
       <form className="card pad" onSubmit={async (e) => { e.preventDefault(); await store.setDisplayName(name); store.flash("Name saved."); }}>

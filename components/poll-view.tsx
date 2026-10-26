@@ -16,6 +16,12 @@ import { Avatar, Icon, BackBar } from "./ui";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
 
+function leadLabel(iso: string): string {
+  const when = formatDayHeading(iso, POLL_DISPLAY_TZ);
+  const cap = (v: string) => v.charAt(0) + v.slice(1).toLowerCase();
+  return `${cap(when.dow)} ${cap(when.mon)} ${when.day}`;
+}
+
 export async function sharePollLink(url: string, title: string, text?: string, copyValue = url): Promise<"shared" | "copied" | "aborted" | "failed"> {
   const coarse = window.matchMedia("(pointer: coarse)").matches;
   if (coarse && typeof navigator.share === "function") {
@@ -94,7 +100,7 @@ export function PollList() {
     <>
       <div className="ptitle">
         <div>
-          <p className="kicker">The vote</p>
+          
           {waiting > 0 && <div className="eyebrow">{waiting} need{waiting === 1 ? "s" : ""} your vote</div>}
           <h1 className="lt">Polls</h1>
         </div>
@@ -249,33 +255,34 @@ function PollCard({ poll }: { poll: Poll }) {
           );
         })}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <div className="poll-voted">
         <span className="stack">{members.map((m) => <Avatar key={m.id} name={m.displayName} id={m.id} out={quiet.some((v) => v.id === m.id)} />)}</span>
         <span className="note">{summary.line}</span>
       </div>
       {staff && poll.status === "open" && (
-        <div className="shareline">
-          <Link href={path}>{path}</Link>
+        <div className="poll-actions">
+          {ranked[0] && ranked[0].yes > 0 && (
+            <button type="button" className="btn pri sm" onClick={() => store.lockPoll(poll.id, ranked[0].option.id)}>
+              Lock in {leadLabel(ranked[0].option.startsAt)}
+            </button>
+          )}
           <button type="button" className="btn sec sm" onClick={async () => {
             const url = `${window.location.origin}${path}`;
             const result = await sharePollLink(url, poll.title, `Pick every date that works for ${campaign.name}`);
-            if (result === "copied") store.flash("Poll link copied. Send it to the table.");
+            if (result === "copied") store.flash("Link copied");
             else if (result === "failed") store.flash("Couldn't copy the link.", "err");
-          }}><Icon name="link" className="ic sm" />Copy/share link</button>
+          }}><Icon name="link" className="ic sm" />Share link</button>
+          {quiet.some((m) => m.id !== store.state.me.id) && (
+            <button type="button" className="btn sec sm remind" onClick={async () => {
+              const names = quiet.filter((m) => m.id !== store.state.me.id).map((m) => (m.displayName || m.characterName || "").split(" ")[0]).filter(Boolean);
+              const url = `${window.location.origin}${path}`;
+              const text = pollReminderMessage(names, campaign.name, url);
+              const result = await sharePollLink(url, poll.title, text, text);
+              if (result === "copied") store.flash("Reminder copied");
+              else if (result === "failed") store.flash("Couldn't copy the reminder.", "err");
+            }}><Icon name="bell" className="ic sm" />Share reminder</button>
+          )}
         </div>
-      )}
-      {staff && poll.status === "open" && ranked[0] && ranked[0].yes > 0 && (
-        <button className="btn pri sm" style={{ marginTop: 16 }} onClick={() => store.lockPoll(poll.id, ranked[0].option.id)}>Lock in the leader</button>
-      )}
-      {staff && poll.status === "open" && quiet.some((m) => m.id !== store.state.me.id) && (
-        <button type="button" className="btn sec sm remind" onClick={async () => {
-          const names = quiet.filter((m) => m.id !== store.state.me.id).map((m) => (m.displayName || m.characterName || "").split(" ")[0]).filter(Boolean);
-          const url = `${window.location.origin}${path}`;
-          const text = pollReminderMessage(names, campaign.name, url);
-          const result = await sharePollLink(url, poll.title, text, text);
-          if (result === "copied") store.flash("Copied");
-          else if (result === "failed") store.flash("Couldn't copy the reminder.", "err");
-        }}><Icon name="bell" className="ic sm" />Share reminder</button>
       )}
     </article>
   );

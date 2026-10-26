@@ -83,11 +83,10 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
       <section className="card hero chead" data-world={world.id} style={accentVar(campaign) as CSSProperties}>
         <div className="hero-cover">
           <CampaignCover campaign={campaign} onAdd={organizer ? () => setCovering(true) : undefined} />
-          {organizer && hasUploadedCover(campaign) && <button className="btn sec sm covbtn" onClick={() => setCovering(true)}><Icon name="img" className="ic sm" />Change cover</button>}
+          {organizer && hasUploadedCover(campaign) && <button type="button" className="covbtn" aria-label="Change cover" title="Change cover" onClick={() => setCovering(true)}><Icon name="img" className="ic sm" /></button>}
         </div>
         <div className="hb">
           <Watermark word={world.word} />
-          <div className="eyebrow">Ledger · {world.place} · {owner?.id === state.me.id ? "You run this table" : `${owner?.displayName || "The organizer"} runs this table`}</div>
           <h1 className="lt">{campaign.name}</h1>
           <p className="meta">
             <span className="mg"><Icon name="clock" className="ic sm" />{cadenceLine(campaign.cadence)}</span>
