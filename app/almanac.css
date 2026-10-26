@@ -960,13 +960,13 @@ button.char-name:hover, button.char-name:focus-visible { color: var(--acc, var(-
 .rec-bars { list-style: none; margin: 0; padding: 0; }
 .rec-bars li {
   display: grid;
-  grid-template-columns: minmax(0, 7.4rem) minmax(0, 1fr) 2.8rem;
-  gap: 8px;
+  grid-template-columns: minmax(0, 9.5rem) minmax(0, 1fr) 2.8rem;
+  gap: 6px 10px;
   align-items: center;
   margin: 7px 0;
   font-size: 14px;
 }
-.rec-bars .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rec-bars .lbl { min-width: 0; overflow-wrap: anywhere; line-height: 1.25; }
 .rec-bars .bar { display: block; height: 10px; background: color-mix(in srgb, var(--ink) 10%, transparent); }
 .rec-bars .bar i { display: block; height: 100%; width: var(--w); background: var(--acc, var(--ink)); }
 .rec-bars .num { font-family: var(--mono); font-size: 12px; text-align: right; }
@@ -1020,7 +1020,8 @@ button.char-name:hover, button.char-name:focus-visible { color: var(--acc, var(-
 .award .who { margin: 0 0 8px; font-family: var(--serif); font-style: italic; font-weight: 700; font-size: 1.15rem; }
 .award .src { margin: 10px 0 0; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); }
 @media (min-width: 800px) {
-  .rec-big { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .rec-big { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  .rec-big b { font-size: clamp(2.2rem, 4.2vw, 3.4rem); }
   .rec-grid, .award-grid { grid-template-columns: 1fr 1fr; }
 }
 @media (min-width: 1100px) {
@@ -1052,6 +1053,12 @@ button.char-name:hover, button.char-name:focus-visible { color: var(--acc, var(-
 .for-you .seat-note { margin-top: 0; }
 .rec-grid h3 small { font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); margin-left: 6px; }
 .alm-facts { padding: 18px 16px; }
-.alm-facts-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 12px; }
-.alm-facts-h h2 { margin: 0; }
+.alm-facts-h { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin: 0 0 12px; }
+.alm-facts-h h2 { margin: 0; min-width: 0; flex: 1 1 12rem; overflow-wrap: anywhere; }
+.alm-facts-h .lnk { flex: none; white-space: nowrap; }
 .alm-facts .bigstats { margin-bottom: 18px; }
+
+/* Names never clip: long character, NPC, place and campaign names wrap instead. */
+.award h3, .award .who, .rec-deaths .death-name, .rec-long b, .seat-row li b, .seat-char, .for-you-list li, .rec-big span, .rec-big em { overflow-wrap: anywhere; }
+.rec-deaths .death-name { white-space: normal; text-align: left; }
+@media (min-width: 800px) { .rec-bars li { grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 2.8rem; } }

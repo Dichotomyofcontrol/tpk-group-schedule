@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { almanacSpreads, campaignBook, type AlmanacSpread } from "@/lib/almanac";
 import { recordedCampaign, recordedKey } from "@/lib/almanac-stats";
 import { useStore } from "@/lib/store";
@@ -49,10 +49,33 @@ function CampaignSwitcher({ spreads, campaigns }: { spreads: AlmanacSpread[]; ca
     .map((spread) => ({ spread, campaign: campaigns.find((item) => item.id === spread.id) }))
     .filter((row): row is { spread: AlmanacSpread; campaign: Campaign } => !!row.campaign);
   const [picked, setPicked] = useState<string | null>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: false, end: false });
   useEffect(() => {
     const c = new URLSearchParams(window.location.search).get("c");
     if (c) setPicked(c);
   }, []);
+  const activeId = rows.find((row) => row.campaign.id === picked)?.campaign.id ?? null;
+  useEffect(() => {
+    const el = strip.current;
+    if (!el) return;
+    const update = () => setEdges({ start: el.scrollLeft > 4, end: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [rows.length]);
+  useEffect(() => {
+    // Keep the picked chip in view inside the strip without moving the page.
+    const el = strip.current;
+    const chip = el?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!el || !chip) return;
+    const left = chip.offsetLeft - (el.clientWidth - chip.offsetWidth) / 2;
+    el.scrollTo({ left: Math.max(0, left), behavior: "instant" as ScrollBehavior });
+  }, [activeId, rows.length]);
   if (!rows.length) return null;
   const hoursOf = ({ spread, campaign }: { spread: AlmanacSpread; campaign: Campaign }) => {
     const key = recordedKey(campaign);
@@ -70,12 +93,14 @@ function CampaignSwitcher({ spreads, campaigns }: { spreads: AlmanacSpread[]; ca
   return (
     <>
       {rows.length > 1 && (
-        <div className="alm-switch" role="tablist" aria-label="Campaign">
+        <div className={`alm-switch${edges.start ? " fade-s" : ""}${edges.end ? " fade-e" : ""}`}>
+          <div className="alm-strip" ref={strip} role="tablist" aria-label="Campaign">
           {rows.map(({ campaign }) => (
             <button key={campaign.id} type="button" role="tab" aria-selected={campaign.id === current.campaign.id} className="alm-chip" style={accentVar(campaign) as CSSProperties} onClick={() => choose(campaign.id)}>
-              <i aria-hidden="true" />{campaign.name}
+              <i aria-hidden="true" /><span>{campaign.name}</span>
             </button>
           ))}
+          </div>
         </div>
       )}
       <div className="almanac-stack" role="tabpanel">
