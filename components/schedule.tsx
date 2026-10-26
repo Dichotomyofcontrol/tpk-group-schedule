@@ -3,7 +3,7 @@ import { NotOnTpkMark } from "./tpk-assign";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { attendanceState, headcount, isGreyed, sessionRequiresRsvp } from "@/lib/attendance";
+import { attendanceState, headcount, isGreyed, rsvpPillLabel, rsvpPillToggle, sessionRequiresRsvp } from "@/lib/attendance";
 import { campaignById, displayTitle, isStaff, latestRecap, membersOf } from "@/lib/model";
 import { hasRecap, markdownToHtml, openingParagraph, readAloudMinutes } from "@/lib/recap";
 import { sanitizeRecapHtml } from "@/lib/sanitize";
@@ -81,16 +81,24 @@ export function SessionRow({ session, showCampaign = false, ledger = false }: { 
   );
 }
 
-export function PartyChips({ session }: { session: Session }) {
+export function PartyChips({ session, compact = false }: { session: Session; compact?: boolean }) {
   const store = useStore();
   const campaign = campaignById(store.state, session.cid);
   if (!campaign) return null;
   const members = membersOf(store.state, session.cid);
   return (
-    <div className="party">
+    <div className={compact ? "party avs" : "party"}>
       {members.map((m) => {
         const out = isGreyed(campaign, session, m.id);
         const name = m.displayName || m.characterName || "Player";
+        const who = m.characterName && m.characterName !== m.displayName ? `${name}, ${m.characterName}` : name;
+        if (compact) {
+          return (
+            <span key={m.id} className={out ? "avchip out" : "avchip"} title={who} aria-label={out ? `${who}, can't make it` : who}>
+              <Avatar name={name} id={m.id} />
+            </span>
+          );
+        }
         return (
           <span key={m.id} className={out ? "pp out" : "pp"} title={m.characterName && m.characterName !== m.displayName ? m.characterName : undefined}>
             <Avatar name={name} id={m.id} />
@@ -102,12 +110,67 @@ export function PartyChips({ session }: { session: Session }) {
   );
 }
 
-/** I'm in / Can't make it. One control for both RSVP modes. */
 /** A tiny haptic tick where the platform supports it (Android). Silent elsewhere. */
 function tick() {
   try { navigator.vibrate?.(8); } catch { /* not supported */ }
 }
 
+/** Going / RSVP on the Up next attendee row. Can't make it lives in the small menu. */
+function HeroRsvp({ session }: { session: Session }) {
+  const store = useStore();
+  const campaign = campaignById(store.state, session.cid);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const me = store.state.me.id;
+  const member = !!campaign && membersOf(store.state, session.cid).some((m) => m.id === me);
+  const past = new Date(session.endsAt).getTime() < Date.now();
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  if (!campaign || !member || past || session.status === "cancelled") return null;
+  const mine = attendanceState(campaign, session, me);
+  const label = rsvpPillLabel(mine);
+  const choose = (state: "in" | "out" | "unset") => {
+    tick();
+    store.mark(session.id, me, state);
+    setOpen(false);
+  };
+  return (
+    <div className={`rsvp ${mine === "in" ? "in" : mine === "out" ? "out" : "ask"}`} ref={ref}>
+      <button
+        type="button"
+        className="go"
+        aria-pressed={mine === "in"}
+        aria-label={label === "Going" ? "Going" : label === "Can't" ? "Can't make it" : "RSVP"}
+        onClick={() => choose(rsvpPillToggle(mine))}
+      >
+        {mine === "in" && <Icon name="check" className="ic sm" />}
+        {label}
+      </button>
+      <button type="button" className="more" aria-haspopup="menu" aria-expanded={open} aria-label="RSVP options" onClick={() => setOpen((v) => !v)}>
+        <Icon name="chev" className="ic sm" />
+      </button>
+      {open && (
+        <div className="rsvp-menu" role="menu">
+          <button type="button" role="menuitemradio" aria-checked={mine === "in"} onClick={() => choose("in")}>Going</button>
+          <button type="button" role="menuitemradio" aria-checked={mine === "out"} className="out" onClick={() => choose("out")}>Can&apos;t make it</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** I'm in / Can't make it, on the session page. */
 export function RsvpControl({ session }: { session: Session }) {
   const store = useStore();
   const campaign = campaignById(store.state, session.cid);
@@ -149,11 +212,11 @@ function PreviouslyOn({ session }: { session: Session }) {
   const minutes = readAloudMinutes(text);
   const html = sanitizeRecapHtml(markdownToHtml(text));
   const panel = `prevon-${session.id}`;
+  const readout = `${minutes} min read-aloud`;
   return (
     <section className={open ? "prevon open" : "prevon"}>
-      <button type="button" className="ptog" aria-expanded={open} aria-controls={panel} onClick={() => setOpen((v) => !v)}>
-        <span className="eyebrow">Previously on…</span>
-        <span className="note">{minutes} min read-aloud</span>
+      <button type="button" className="ptog" aria-expanded={open} aria-controls={panel} aria-label={`Previously on, ${readout}`} onClick={() => setOpen((v) => !v)}>
+        <span className="readout">{readout}</span>
         <Icon name="chev" className="ic sm mchev" />
       </button>
       {open && (
@@ -192,8 +255,10 @@ export function NextHero({ session, showCampaign = true }: { session: Session; s
         <p className="hmeta">{[showCampaign && title !== campaign.name ? campaign.name : "", `${when.dow} ${when.mon} ${when.day}`, time].filter(Boolean).join(" · ")}{session.location && <> · <HeroPlace place={session.location} /></>}</p>
         {q && <p className={q.ok ? "quorum ok" : "quorum need"} role="status"><i className="qdot" aria-hidden="true" />{q.text}</p>}
         <PreviouslyOn session={session} />
-        <PartyChips session={session} />
-        <RsvpControl session={session} />
+        <div className="hero-who">
+          <PartyChips session={session} compact />
+          <HeroRsvp session={session} />
+        </div>
       </div>
     </article>
   );

@@ -3,7 +3,7 @@
 import { BackBar, Icon, type IconName } from "./ui";
 
 const ITEMS: { icon: IconName; title: string; body: string }[] = [
-  { icon: "dates", title: "Sessions", body: "The next game is up top, with Previously on when there's an opener. Upcoming nights follow, then past nights, newest first. Everyone counts as in unless they tap Can't make it." },
+  { icon: "dates", title: "Sessions", body: "The next game is up top, with a read-aloud when there's an opener. Upcoming nights follow, then past nights, newest first. Everyone counts as in unless they say they can't make it." },
   { icon: "camp", title: "Campaigns", body: "Each table has a usual night, a place and its players. The organizer adds a player and copies a personal link. Until that link is copied, the seat stays not invited. People already at the table show as joined." },
   { icon: "polls", title: "Polls", body: "Not sure when? The organizer floats a few dates, everyone taps the ones that work, and the winner goes on the list. A share link lets friends vote without an account, picking their name from the player list." },
   { icon: "inv", title: "Invites", body: "Organizers send a link. Players open it, sign in with their email, and they're at the table." },

@@ -4,6 +4,18 @@ export function sessionRequiresRsvp(campaign: Campaign, session: Session): boole
   return session.requireRsvps ?? campaign.requireRsvps;
 }
 
+/** Compact Up next pill. Going and RSVP trade places; Can't is a menu choice. */
+export function rsvpPillLabel(state: AttendanceState): "Going" | "RSVP" | "Can't" {
+  if (state === "in") return "Going";
+  if (state === "out") return "Can't";
+  return "RSVP";
+}
+
+/** One tap on the pill. Can't make it goes back to Going; Going clears to RSVP. */
+export function rsvpPillToggle(state: AttendanceState): AttendanceState {
+  return state === "in" ? "unset" : "in";
+}
+
 export function attendanceState(campaign: Campaign, session: Session, uid: string): AttendanceState {
   const row = session.attendance.find((a) => a.uid === uid);
   if (row) return row.state;

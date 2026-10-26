@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { attendanceState, headcountLabel } from "../../lib/attendance.ts";
+import { attendanceState, headcountLabel, rsvpPillLabel, rsvpPillToggle } from "../../lib/attendance.ts";
 import { contrastRatio, textOn } from "../../lib/color.ts";
 import { buildDemo } from "../../lib/demo-data.ts";
 import { demoFeed } from "../../lib/calendar-feed.ts";
@@ -12,7 +12,7 @@ import { containsUndefined } from "../../lib/omit.ts";
 import { applyCadence, lockPoll, saveRecap, skipSession, upcomingSessions } from "../../lib/model.ts";
 import { magicLinkContinueUrl } from "../../lib/magic-link.ts";
 import { coverArt } from "../../lib/covers.ts";
-import { markdownToHtml } from "../../lib/recap.ts";
+import { markdownToHtml, readAloudMinutes } from "../../lib/recap.ts";
 import { cadenceDates } from "../../lib/recurrence.ts";
 import { dueReminder } from "../../lib/reminders.ts";
 import { zonedTimeToUtc } from "../../lib/time.ts";
@@ -59,6 +59,18 @@ test("everyone is in until they tap can't make it", () => {
   const visible = upcomingSessions(state).map((item) => item.cid);
   assert.equal(visible.includes("beerovia"), false);
   assert.ok(state.invites.some((invite) => invite.token === "beerovia-demo"));
+});
+
+test("the Up next pill toggles Going and RSVP, and the frost opener is a 2 minute read", () => {
+  assert.equal(rsvpPillLabel("in"), "Going");
+  assert.equal(rsvpPillLabel("unset"), "RSVP");
+  assert.equal(rsvpPillLabel("maybe"), "RSVP");
+  assert.equal(rsvpPillLabel("out"), "Can't");
+  assert.equal(rsvpPillToggle("in"), "unset");
+  assert.equal(rsvpPillToggle("unset"), "in");
+  assert.equal(rsvpPillToggle("out"), "in");
+  const opener = buildDemo("seth").sessions.find((session) => session.id === "frostmaiden-2026-10-261830")?.previouslyOn || "";
+  assert.equal(readAloudMinutes(opener), 2);
 });
 
 test("campaign colours stay readable on their tiles", () => {
