@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { openingParagraph, readAloudMinutes } from "../../lib/recap.ts";
+import { openingParagraph, readAloudMinutes, storedReadAloud } from "../../lib/recap.ts";
 import { parsePreviouslyOn, publishPreviouslyOn, type PreviouslyOnDeps } from "../../lib/previously-on.ts";
 import type { StoredSession } from "../../lib/recap-import.ts";
 import { zonedTimeToUtc } from "../../lib/time.ts";
@@ -39,6 +39,19 @@ test("opening paragraph skips a short byline", () => {
   assert.equal(text, "The vineyard burned. Ichabod kept the gem, and the Abbot smiled far too widely.");
   assert.equal(openingParagraph({ recapMarkdown: "## Title\n\nRecap by Seth.\n\nThe beacon is lit and the hall is quiet enough to hear the snow." }), "The beacon is lit and the hall is quiet enough to hear the snow.");
   assert.equal(readAloudMinutes("word ".repeat(300)), 2);
+});
+
+test("up next reads a stored opener and stays hidden without one", () => {
+  assert.equal(storedReadAloud({ previouslyOn: "  Session script.  " }, { previouslyOn: "Campaign line." }), "Session script.");
+  assert.equal(storedReadAloud({ previouslyOn: "   " }, { previouslyOn: "  The whale opened an eye.  " }), "The whale opened an eye.");
+  assert.equal(storedReadAloud({}, {}), "");
+  assert.equal(storedReadAloud({ previouslyOn: "" }, { previouslyOn: " " }), "");
+  const opener = "The Effigies Beneath Bremen. A flashback, set about four months before the campaign proper.";
+  assert.equal(readAloudMinutes(storedReadAloud({}, { previouslyOn: opener })), readAloudMinutes(opener));
+  const source = readFileSync(new URL("../../components/schedule.tsx", import.meta.url), "utf8");
+  assert.match(source, /storedReadAloud/);
+  assert.doesNotMatch(source, /openingParagraph/);
+  assert.doesNotMatch(source, /prevon-from/);
 });
 
 test("previously on import sets, clears, and refuses a bad night", async () => {
