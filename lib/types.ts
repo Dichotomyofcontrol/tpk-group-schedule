@@ -220,6 +220,23 @@ export type User = {
   nameSet?: boolean;
 };
 
+/** Prose the Archivist writes. The app never generates it. */
+export type CharacterFacts = {
+  class?: string;
+  ancestry?: string;
+  role?: string;
+  moment?: string;
+};
+
+export type CharacterSummary = {
+  name: string;
+  /** "pending" until an admin write fills the prose. */
+  status: "pending" | "ready";
+  text?: string;
+  facts?: CharacterFacts;
+  updatedAt: string;
+};
+
 export type AppState = {
   me: User;
   directory: User[];
@@ -229,6 +246,8 @@ export type AppState = {
   polls: Poll[];
   invites: Invite[];
   hiddenCids: string[];
+  /** Keyed by campaign id. Absent until a character name is saved or the Archivist writes. */
+  characterSummaries?: Record<string, CharacterSummary[]>;
   /** ISO timestamp the group treats as "we started playing". */
   groupStartedOn: string;
   /** True until the first snapshot of every campaign and its sessions has arrived (live mode). */

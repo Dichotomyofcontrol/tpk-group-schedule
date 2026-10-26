@@ -5,6 +5,7 @@ import { membersOf, pastSessions } from "@/lib/model";
 import { hasRecap } from "@/lib/recap";
 import { useStore } from "@/lib/store";
 import { RecapRow } from "./campaign-view";
+import { CampaignTabs } from "./campaign-tabs";
 import { BackBar } from "./ui";
 
 /** Every recap for one campaign, oldest first, so the story reads in order. */
@@ -28,6 +29,7 @@ export function RecapHistory({ cid }: { cid: string }) {
   return (
     <>
       <BackBar href={`/campaigns/${cid}`} label={campaign.name} />
+      <CampaignTabs cid={cid} current="recaps" />
       <div className="ptitle"><h1 className="lt">Recaps</h1></div>
       {recaps.length > 1 && <p className="note rhsub">{recaps.length} recaps, oldest first</p>}
       {recaps.length > 0 ? (

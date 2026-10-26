@@ -11,6 +11,7 @@ import { formatDayHeading, weekdayName } from "@/lib/time";
 import { weekdayOfYmd } from "@/lib/recurrence";
 import { addDaysYmd } from "@/lib/time";
 import type { Cadence, Campaign, Member, Session } from "@/lib/types";
+import { CampaignTabs } from "./campaign-tabs";
 import { CoverEditor } from "./cover-editor";
 import { RosterCard } from "./roster-card";
 import { SessionRow, sessionHref } from "./schedule";
@@ -71,6 +72,7 @@ export function CampaignView({ cid, welcome = false }: { cid: string; welcome?: 
   return (
     <>
       <BackBar href="/campaigns" label="Campaigns" />
+      <CampaignTabs cid={cid} current="table" />
       {welcome && <div className="card banner"><b>You&apos;re in.</b> <span className="note">Your sessions are on the Sessions tab.</span></div>}
       {archived && (
         <div className="card banner">

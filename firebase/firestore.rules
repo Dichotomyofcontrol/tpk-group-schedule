@@ -123,6 +123,18 @@ service cloud.firestore {
       match /roster/{rid} {
         allow read, write: if false;
       }
+
+      // Prose is an admin write. A member may only open a pending shell when they name a character.
+      match /characterSummaries/{id} {
+        allow read: if isMember(cid);
+        allow create: if isMember(cid)
+          && request.resource.data.status == "pending"
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 60
+          && request.resource.data.keys().hasOnly(["name", "status", "updatedAt"]);
+        allow update, delete: if false;
+      }
     }
   }
 }

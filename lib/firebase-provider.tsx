@@ -21,6 +21,7 @@ import {
   writeBatch,
   type DocumentData,
 } from "firebase/firestore";
+import { summaryDocId, summaryFromDoc } from "./character-summary";
 import { cadencePatchForMerge, campaignPatchForMerge } from "./cover-doc";
 import { firebaseConfigured, getFirebase } from "./firebase-client";
 import { applyTheme, readStoredTheme } from "./theme";
@@ -74,6 +75,18 @@ function asAttendance(raw: unknown): Attendance[] {
   if (Array.isArray(raw)) return raw as Attendance[];
   if (raw && typeof raw === "object") return Object.values(raw as Record<string, Attendance>);
   return [];
+}
+
+/** Create the pending shell. An existing doc is an update, which the rules refuse, so a ready summary stays put. */
+function queuePendingSummary(cid: string, name?: string) {
+  const clean = name?.trim();
+  if (!clean) return;
+  const { db } = getFirebase();
+  void setDoc(doc(db, "campaigns", cid, "characterSummaries", summaryDocId(clean)), {
+    name: clean,
+    status: "pending",
+    updatedAt: new Date().toISOString(),
+  }).catch(() => undefined);
 }
 
 function optionalString(value: unknown): string | undefined {
@@ -250,6 +263,13 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           const members = ms.docs.map((d) => ({ ...(d.data() as Omit<Member, "id">), id: d.id }));
           setState((prev) => prev ? { ...prev, members: { ...prev.members, [cid]: members } } : prev);
         }, lost));
+        unsubs.push(onSnapshot(collection(db, "campaigns", cid, "characterSummaries"), (cs) => {
+          const summaries = cs.docs.flatMap((d) => {
+            const summary = summaryFromDoc(d.data() as Record<string, unknown>, d.id);
+            return summary ? [summary] : [];
+          });
+          setState((prev) => prev ? { ...prev, characterSummaries: { ...prev.characterSummaries, [cid]: summaries } } : prev);
+        }, () => undefined));
         unsubs.push(onSnapshot(collection(db, "campaigns", cid, "polls"), (ps) => {
           const polls = ps.docs.map((d) => {
             const data = d.data() as Omit<Poll, "id">;
@@ -646,6 +666,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const { db } = getFirebase();
         void setDoc(doc(db, "campaigns", cid, "members", authUser.uid), patch, { merge: true })
           .catch(() => flash("Couldn't save that.", "err"));
+        queuePendingSummary(cid, patch.characterName);
       },
       setDisplayName: async (name) => {
         const clean = name.trim().slice(0, 40);
@@ -693,6 +714,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           const { db } = getFirebase();
           void setDoc(doc(db, "campaigns", cid, "members", memberId), member);
         }
+        queuePendingSummary(cid, patch.characterName);
       },
       transfer: (cid, uid) => {
         void authedFetch(`/api/campaigns/${cid}/transfer`, { method: "POST", body: JSON.stringify({ uid }) });

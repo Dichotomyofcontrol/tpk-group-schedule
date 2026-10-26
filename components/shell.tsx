@@ -11,6 +11,7 @@ import { Avatar, Brand, Icon, type IconName } from "./ui";
 const TABS: { id: string; href: string; label: string; icon: IconName }[] = [
   { id: "sessions", href: "/sessions", label: "Sessions", icon: "dates" },
   { id: "campaigns", href: "/campaigns", label: "Campaigns", icon: "camp" },
+  { id: "almanac", href: "/almanac", label: "Almanac", icon: "tome" },
   { id: "polls", href: "/polls", label: "Polls", icon: "polls" },
   { id: "invites", href: "/invites", label: "Invites", icon: "inv" },
 ];
@@ -62,12 +63,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") { setMenu(false); setKeys(false); return; }
-      // Desktop shortcuts: 1–4 jump between tabs (ignored while typing or with modifiers).
+      // Desktop shortcuts: 1–5 jump between tabs (ignored while typing or with modifiers).
       const t = event.target as HTMLElement | null;
       if (!signedInRef.current || event.metaKey || event.ctrlKey || event.altKey || (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))) return;
       if (event.key === "?") { event.preventDefault(); setKeys((v) => !v); return; }
-      const i = ["1", "2", "3", "4"].indexOf(event.key);
-      if (i >= 0) { event.preventDefault(); setKeys(false); router.push(TABS[i].href); }
+      const i = Number(event.key) - 1;
+      if (event.key >= "1" && event.key <= "9" && i < TABS.length) { event.preventDefault(); setKeys(false); router.push(TABS[i].href); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -120,7 +121,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const mine = memberCampaigns(state);
   const openPolls = state.polls.filter((p) => p.status === "open" && mine.some((c) => c.id === p.cid)).length;
-  const tab = path.startsWith("/campaigns/") && path.includes("/sessions/") ? from : path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") || path.startsWith("/p/") ? "polls" : path.startsWith("/invite") || path.startsWith("/join") ? "invites" : path.startsWith("/account") ? "" : "sessions";
+  const tab = path.startsWith("/almanac") ? "almanac" : path.startsWith("/campaigns/") && path.includes("/sessions/") ? from : path.startsWith("/campaigns") ? "campaigns" : path.startsWith("/polls") || path.startsWith("/p/") ? "polls" : path.startsWith("/invite") || path.startsWith("/join") ? "invites" : path.startsWith("/account") ? "" : "sessions";
   const bare = path === "/signin" || path.startsWith("/auth/");
   const night = store.resolvedTheme === "dark";
   // Signed-out visitors on app screens get one clear way in. Invite links and public polls stay open.
@@ -178,6 +179,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <hr className="hair" />
             <Link className="item" href="/account" role="menuitem"><Icon name="user" />Account</Link>
             <Link className="item" href="/campaigns" role="menuitem"><Icon name="camp" />Campaigns</Link>
+            <Link className="item" href="/almanac" role="menuitem"><Icon name="tome" />Almanac</Link>
             <button className="item" role="menuitemcheckbox" aria-checked={night} onClick={() => store.setTheme(night ? "light" : "dark")}>
               <Icon name="moon" />Night theme<span className="tog" />
             </button>

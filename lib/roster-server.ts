@@ -6,6 +6,7 @@ import { randomBytes } from "node:crypto";
 import type { Firestore } from "firebase-admin/firestore";
 import { adminConfigured, adminDb } from "./firebase-admin";
 import { USERS, buildDemo } from "./demo-data";
+import { summaryDocId } from "./character-summary";
 import { omitUndefined } from "./omit";
 import {
   addDemoRosterPlayer,
@@ -131,6 +132,7 @@ export async function createRosterPlayer(cid: string, body: unknown): Promise<Ro
   } catch (error) {
     return { error: rosterFailureMessage(error), status: 500 };
   }
+  await ensurePendingSummary(cid, player.characterName);
   return player;
 }
 
@@ -155,6 +157,7 @@ export async function updateRosterPlayer(cid: string, id: string, body: unknown)
   } catch (error) {
     return { error: rosterFailureMessage(error), status: 500 };
   }
+  await ensurePendingSummary(cid, player.characterName);
   return player;
 }
 
@@ -265,7 +268,22 @@ export async function claimRosterSeat(token: string, person: ClaimPerson): Promi
   if (result.member) {
     await db.collection("campaigns").doc(current.cid).collection("members").doc(person.id).set(omitUndefined(result.member));
   }
+  await ensurePendingSummary(current.cid, result.player.characterName || result.member?.characterName);
   return { ...result, campaignName: found.campaignName };
+}
+
+/** Open a pending summary doc if this character does not have one yet. Never writes prose. */
+async function ensurePendingSummary(cid: string, name?: string) {
+  const clean = name?.trim();
+  if (!clean || !adminConfigured()) return;
+  try {
+    const ref = adminDb().collection("campaigns").doc(cid).collection("characterSummaries").doc(summaryDocId(clean));
+    const snap = await ref.get();
+    if (snap.exists) return;
+    await ref.set({ name: clean, status: "pending", updatedAt: new Date().toISOString() });
+  } catch (error) {
+    console.error("character summary pending", error instanceof Error ? error.message : "unknown");
+  }
 }
 
 export function rosterForClient(players: RosterPlayer[], staff: boolean): RosterPlayer[] {

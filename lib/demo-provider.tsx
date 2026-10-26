@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { rememberCharacter } from "./character-summary";
 import { buildDemo } from "./demo-data";
 import { withGuestBallots } from "./poll-public";
 import { countPdfPages, nestedRecapPath, validatePdf } from "./recap";
@@ -349,6 +350,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => null);
         const result = await rosterMutationResult(res, "Couldn't add that player.");
         if ("error" in result) return result;
+        const named = result.player.characterName?.trim();
+        if (named) apply((current) => rememberCharacter(current, cid, named));
         return result.player;
       },
       rosterSave: async (cid, id, input: RosterInput) => {
@@ -359,6 +362,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         }).catch(() => null);
         const result = await rosterMutationResult(res, "Couldn't save that player.");
         if ("error" in result) return result;
+        const named = result.player.characterName?.trim();
+        if (named) apply((current) => rememberCharacter(current, cid, named));
         return result.player;
       },
       rosterShare: async (cid, id) => {
