@@ -31,22 +31,18 @@ export function ForYouLedger({ state }: { state: AppState }) {
       <div className="rec-grid">
         {me.seats.length > 0 && (
           <article>
-            <h3>Your seats</h3>
+            <h3>Your seats <small>by play time</small></h3>
             <ul className="rec-bars">
               {me.seats.map((seat) => (
                 <li key={seat.cid}>
                   <span className="lbl" title={seat.campaign}>
-                    {seat.character ? <CharacterName cid={seat.cid} name={seat.character} /> : "GM"} · {seat.campaign}
+                    {seat.character ? <CharacterName cid={seat.cid} name={seat.character} /> : seat.gm ? "GM" : "Player"} · {seat.campaign}
                   </span>
-                  {seat.share != null ? <span className="bar" style={{ ["--w" as string]: `${seat.share}%` }}><i /></span> : <span />}
-                  <span className="num">
-                    {seat.share != null ? `${seat.share}%` : ""}
-                  </span>
-                  {(seat.rank || seat.nat20 || seat.nat1) && (
-                    <em className="seat-note">
-                      {[seat.rank && seat.of ? `#${seat.rank} of ${seat.of} talkers` : "", seat.gm && seat.share != null ? "of all talk" : "", seat.nat20 ? `nat 20 ×${seat.nat20}` : "", seat.nat1 ? `nat 1 ×${seat.nat1}` : ""].filter(Boolean).join(" · ")}
-                    </em>
-                  )}
+                  <span className="bar" style={{ ["--w" as string]: `${Math.max(seat.width, 2)}%` }}><i /></span>
+                  <span className="num">{seat.playShare}%</span>
+                  <em className="seat-note">
+                    {[`${seat.hours} h · ${seat.nights} ${seat.nights === 1 ? "night" : "nights"}${seat.fromRecordings ? " (recorded)" : ""}`, seat.rank && seat.of ? `#${seat.rank} of ${seat.of} talkers` : "", seat.gm && seat.share != null ? `${seat.share}% of all talk` : "", seat.nat20 ? `nat 20 ×${seat.nat20}` : "", seat.nat1 ? `nat 1 ×${seat.nat1}` : ""].filter(Boolean).join(" · ")}
+                  </em>
                 </li>
               ))}
             </ul>

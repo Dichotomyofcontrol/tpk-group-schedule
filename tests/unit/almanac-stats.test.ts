@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { campaignBook } from "../../lib/almanac.ts";
-import { floorHolders, groupTotals, recordedCampaign, tpkAwards } from "../../lib/almanac-stats.ts";
+import { campaignAwards, floorHolders, groupTotals, recordedCampaign, tpkAwards } from "../../lib/almanac-stats.ts";
 import { buildDemo } from "../../lib/demo-data.ts";
 
 const NOW = new Date("2026-10-26T20:00:00.000Z");
@@ -69,16 +69,30 @@ test("the ceremony totals every joined recording and hides awards from other tab
     "Nosebleed Seats",
     "Hostile Takeover",
     "The Lucky Table",
-    "Open Mic Night",
+    "Home Base",
+    "The Long Haul",
   ]);
+  assert.deepEqual(awards.map((award) => award.n), ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10"]);
+  assert.equal(new Set(awards.map((award) => award.title)).size, 10);
   assert.equal(awards[1]?.who, "Nildar's Demise & Everyone's King");
   assert.match(awards[1]?.body ?? "", /5\.73 hours/);
   assert.match(awards[1]?.body ?? "", /Aug 6, 2025/);
   assert.match(awards[2]?.body ?? "", /769 mentions/);
-  assert.match(awards[2]?.body ?? "", /Auril herself \(702\)/);
-  assert.match(awards[7]?.body ?? "", /55 "nat 20" call-outs to 28 "nat 1"s/);
-  assert.equal(awards[8]?.who, "Giago (Ross)");
-  assert.equal(awards[8]?.evidence, "Speaker-labeled transcripts (2)");
+  assert.match(awards[2]?.body ?? "", /Auril \(702\)/);
+  assert.match(awards[7]?.body ?? "", /72 "nat 20" call-outs to 32 "nat 1"s/);
+
+  // Each table's top 5 is its own list, numbered from 01.
+  for (const cid of ["frostmaiden", "strahd", "saltmarsh"]) {
+    const own = campaignAwards(cid);
+    assert.equal(own.length, 5);
+    assert.deepEqual(own.map((award) => award.n), ["01", "02", "03", "04", "05"]);
+    assert.ok(own.every((award) => award.campaignId === cid));
+  }
+  assert.deepEqual(campaignAwards("strahd").map((award) => award.title).slice(0, 2), ["Bedside Manner", "Nosebleed Seats"]);
+  const salt = campaignAwards("saltmarsh");
+  assert.equal(salt.find((award) => award.title === "Open Mic Night")?.who, "Giago (Ross)");
+  assert.equal(salt.find((award) => award.title === "Open Mic Night")?.evidence, "Speaker-labeled transcripts (2)");
+  assert.deepEqual(campaignAwards("drawsteel"), []);
 
   const giadaIds = ["frostmaiden", "strahd", "drawsteel", "leyfarers"];
   const giada = groupTotals(giadaIds);

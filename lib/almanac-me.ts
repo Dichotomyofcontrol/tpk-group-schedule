@@ -1,5 +1,6 @@
 import { campaignAwards, groupTotals, recordedCampaign, recordedKey, speakerName, type Award } from "./almanac-stats";
 import { almanacSpreads, campaignsInAlmanac } from "./almanac";
+import { sessionHours } from "./stats";
 import type { AppState } from "./types";
 
 const NAME = (value: string | undefined | null) => (value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -11,6 +12,15 @@ export type MySeat = {
   /** Character played, or null when this person runs the table. */
   character: string | null;
   gm: boolean;
+  /** Hours of play at this seat: past, non-cancelled sessions you didn't mark "out". */
+  hours: number;
+  nights: number;
+  /** True when the app has no sessions for this table, so hours come from its recordings. */
+  fromRecordings?: boolean;
+  /** Percent of your total play time. */
+  playShare: number;
+  /** Bar width, relative to your busiest seat. */
+  width: number;
   /** Percent of player talk (players) or of all talk (GM), from speaker-labeled sessions. */
   share?: number;
   /** 1-based rank among players by words spoken. */
@@ -60,6 +70,12 @@ export function forYou(state: AppState, now = new Date()): ForYou {
   const awards: ForYou["awards"] = [];
   const keys: string[] = [];
   const mine = new Set<string>();
+  const played = (cid: string) => {
+    const rows = state.sessions.filter((s) => s.cid === cid && s.status !== "cancelled" && new Date(s.startsAt).getTime() < now.getTime()
+      && !(s.attendance ?? []).some((a) => a.uid === me.id && a.state === "out"));
+    return { nights: rows.length, hours: rows.reduce((sum, s) => sum + sessionHours(s), 0) };
+  };
+  const base = (cid: string, name: string) => ({ cid, campaign: name, ...played(cid), playShare: 0, width: 0 });
 
   for (const campaign of campaigns) {
     const member = (state.members[campaign.id] ?? []).find((row) => row.id === me.id);
@@ -73,14 +89,16 @@ export function forYou(state: AppState, now = new Date()): ForYou {
     const key = recordedKey(campaign);
     const row = key ? recordedCampaign(key) : null;
     if (!row || !key) {
-      if (named[0]) seats.push({ cid: campaign.id, campaign: campaign.name, character: named[0], gm: false });
-      else if (member.tags.includes("dm")) seats.push({ cid: campaign.id, campaign: campaign.name, character: null, gm: true });
+      const dm = !named[0] && member.tags.includes("dm");
+      seats.push({ ...base(campaign.id, campaign.name), character: named[0] ?? null, gm: dm });
       continue;
     }
     keys.push(key);
+    const app = played(campaign.id);
+    const clock = app.nights ? app : { nights: row.sessions, hours: row.hours };
     const hit = myLabel(row.talkers, { characters, displayName: member.displayName || me.displayName, gm: gm || member.tags.includes("dm") });
     const character = hit && !hit.gm ? speakerName(hit.label) : named[0] ?? null;
-    const seat: MySeat = { cid: campaign.id, campaign: campaign.name, character: hit?.gm ? null : character, gm: Boolean(hit?.gm) };
+    const seat: MySeat = { ...base(campaign.id, campaign.name), ...clock, ...(app.nights ? {} : { fromRecordings: true }), character: hit?.gm ? null : character, gm: Boolean(hit?.gm) };
     if (hit) {
       const pool = hit.gm ? row.talkers : row.talkers.filter((t) => !t.label.includes("GM"));
       const total = pool.reduce((sum, t) => sum + t.words, 0) || 1;
@@ -95,7 +113,7 @@ export function forYou(state: AppState, now = new Date()): ForYou {
       if (n20) seat.nat20 = n20;
       if (n1) seat.nat1 = n1;
     }
-    if (seat.character || seat.gm) seats.push(seat);
+    seats.push(seat);
     const names = new Set([seat.character, ...characters].filter(Boolean).map((n) => NAME(n)));
     for (const death of row.deaths) if (names.has(NAME(death.name))) deaths.push({ ...death, campaign: campaign.name, cid: key });
     for (const award of campaignAwards(key)) {
@@ -104,6 +122,15 @@ export function forYou(state: AppState, now = new Date()): ForYou {
         if (!mine.has(award.title)) { mine.add(award.title); awards.push({ ...award, campaign: campaign.name }); }
       }
     }
+  }
+
+  const totalHours = seats.reduce((sum, seat) => sum + seat.hours, 0);
+  seats.sort((a, b) => b.hours - a.hours);
+  const top = seats[0]?.hours || 1;
+  for (const seat of seats) {
+    seat.playShare = totalHours ? Math.round((seat.hours / totalHours) * 100) : 0;
+    seat.width = Math.round((seat.hours / top) * 100);
+    seat.hours = Math.round(seat.hours * 10) / 10;
   }
 
   const totals = groupTotals(keys);

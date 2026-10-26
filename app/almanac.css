@@ -1046,4 +1046,12 @@ button.char-name:hover, button.char-name:focus-visible { color: var(--acc, var(-
 .for-you-list span { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); grid-row: span 2; }
 .for-you-list em { grid-column: 2; font-size: 13px; color: var(--ink2); }
 .for-you .seat-note { grid-column: 1 / -1; font-size: 12px; color: var(--ink2); margin-top: -4px; }
-.for-you .rec-bars li { grid-template-columns: minmax(0, 15rem) 1fr 3rem; }
+.for-you .rec-bars li { grid-template-columns: minmax(0, 1fr) 3rem; gap: 4px 10px; margin: 12px 0; }
+.for-you .rec-bars .lbl { grid-column: 1 / -1; }
+.for-you .rec-bars .bar { height: 12px; min-width: 0; }
+.for-you .seat-note { margin-top: 0; }
+.rec-grid h3 small { font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); margin-left: 6px; }
+.alm-facts { padding: 18px 16px; }
+.alm-facts-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 12px; }
+.alm-facts-h h2 { margin: 0; }
+.alm-facts .bigstats { margin-bottom: 18px; }
