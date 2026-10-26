@@ -52,6 +52,9 @@ service cloud.firestore {
     match /calTokens/{token} {
       allow read, write: if false;
     }
+    match /signInCodes/{id} {
+      allow read, write: if false;
+    }
     match /recapFiles/{file} {
       allow get: if signedIn() && isMember(resource.data.cid);
       allow list: if false;

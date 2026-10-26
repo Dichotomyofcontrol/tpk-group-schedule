@@ -2,7 +2,7 @@
 
 import { SITE_NAME, SITE_ORIGIN } from "./site";
 
-export const SIGNIN_SUBJECT = `Your sign-in link for ${SITE_NAME}`;
+export const SIGNIN_SUBJECT = `Your sign-in code for ${SITE_NAME}`;
 
 const EMAIL_RE = /^[^\s@<>()[\],;:"]+@[^\s@<>()[\],;:"]+\.[^\s@<>()[\],;:"]{2,}$/;
 
@@ -57,20 +57,24 @@ function esc(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-export function signInEmailText(link: string): string {
+export function signInEmailText(link: string, code: string): string {
   return [
     SITE_NAME,
     "",
-    `Here's your link to sign in to ${SITE_NAME}:`,
+    `Your sign-in code is ${code}`,
+    "",
+    "Type that code into the Taverning app on the device where you asked to sign in. It works once and expires in 15 minutes.",
+    "",
+    "In Safari you can open this link instead:",
     link,
     "",
-    "It works once and expires soon. If you didn't ask for it, you can ignore this email.",
+    "If you didn't ask for it, you can ignore this email.",
     "",
     `— ${SITE_NAME} · taverning.com`,
   ].join("\n");
 }
 
-export function signInEmailHtml(link: string): string {
+export function signInEmailHtml(link: string, code: string): string {
   const href = esc(link);
   const ink = "#1D1915";
   const muted = "#7A6E62";
@@ -107,14 +111,19 @@ export function signInEmailHtml(link: string): string {
 </style>
 </head>
 <body class="bg" style="margin:0;padding:0;background:${parchment};-webkit-text-size-adjust:100%;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Tap the button to sign in. The link expires soon.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Your sign-in code is ${esc(code)}. It expires in 15 minutes.&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;&#8199;&#847;</div>
 <table role="presentation" class="bg" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${parchment};">
   <tr><td align="center" style="padding:48px 16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;">
       <tr><td class="card" align="center" style="background:${card};border:1px solid ${rule};border-radius:14px;padding:48px 40px;">
         <div class="wordmark ink" style="font-family:${serif};font-size:28px;line-height:1;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:${ink};">${SITE_NAME}</div>
         <div style="width:40px;height:2px;background:${vermilion};margin:18px auto 26px;line-height:2px;font-size:0;">&nbsp;</div>
-        <p class="ink" style="margin:0 0 28px;font-family:${sans};font-size:16px;line-height:1.5;color:${ink};">Here’s your link to sign in to the table.</p>
+        <p class="ink" style="margin:0 0 8px;font-family:${sans};font-size:16px;line-height:1.5;color:${ink};">Type this code in the app.</p>
+        <p class="muted" style="margin:0 0 18px;font-family:${sans};font-size:13px;line-height:1.5;color:${muted};">It works in the Home Screen app. One use, 15 minutes.</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 28px;">
+          <tr>${code.split("").map((digit) => `<td class="ink" style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;font-weight:700;line-height:1;color:${ink};padding:10px 8px;border:1px solid ${rule};background:${parchment};">${esc(digit)}</td>`).join("")}</tr>
+        </table>
+        <p class="ink" style="margin:0 0 16px;font-family:${sans};font-size:14px;line-height:1.5;color:${ink};">Or, in Safari, use the link.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
           <tr><td align="center" bgcolor="${vermilion}" style="border-radius:999px;background:${vermilion};">
             <a href="${href}" target="_blank" style="display:inline-block;padding:14px 44px;font-family:${sans};font-size:16px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:999px;">Sign in</a>
