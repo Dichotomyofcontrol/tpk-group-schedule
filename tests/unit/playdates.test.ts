@@ -68,6 +68,7 @@ test("the Up next pill toggles Going and RSVP, and the frost opener is a 2 minut
   assert.equal(rsvpPillLabel("out"), "Can't");
   assert.equal(rsvpPillToggle("in"), "unset");
   assert.equal(rsvpPillToggle("unset"), "in");
+  assert.equal(rsvpPillToggle("maybe"), "in");
   assert.equal(rsvpPillToggle("out"), "in");
   const opener = buildDemo("seth").sessions.find((session) => session.id === "frostmaiden-2026-10-261830")?.previouslyOn || "";
   assert.equal(readAloudMinutes(opener), 2);

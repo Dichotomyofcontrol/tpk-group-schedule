@@ -11,9 +11,10 @@ export function rsvpPillLabel(state: AttendanceState): "Going" | "RSVP" | "Can't
   return "RSVP";
 }
 
-/** One tap on the pill. Can't make it goes back to Going; Going clears to RSVP. */
-export function rsvpPillToggle(state: AttendanceState): AttendanceState {
-  return state === "in" ? "unset" : "in";
+/** One tap on the pill. Going clears to RSVP. Maybe, Can't, and an open RSVP become Going. */
+export function rsvpPillToggle(state: AttendanceState): "in" | "unset" {
+  if (state === "maybe" || state === "out" || state === "unset") return "in";
+  return "unset";
 }
 
 export function attendanceState(campaign: Campaign, session: Session, uid: string): AttendanceState {
