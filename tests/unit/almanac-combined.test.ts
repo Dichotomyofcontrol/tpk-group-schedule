@@ -28,6 +28,13 @@ test("for you finds Seth's characters, talk share, deaths and awards from real d
   assert.equal(ryn.character, "Ryn");
   assert.equal(ryn.share, 16);
   assert.equal(me.seats.find((seat) => seat.cid === "strahd")?.character, "Vloskev");
+  // Seats rank by play time, include tables without recordings, and shares add to ~100%.
+  const hours = me.seats.map((seat) => seat.hours);
+  assert.deepEqual(hours, [...hours].sort((a, b) => b - a));
+  assert.equal(me.seats[0]?.width, 100);
+  assert.ok(me.seats.some((seat) => seat.cid === "leyfarers" && seat.hours > 0));
+  const total = me.seats.reduce((sum, seat) => sum + seat.playShare, 0);
+  assert.ok(total >= 97 && total <= 103, `play shares sum to ${total}`);
   assert.deepEqual(me.deaths.map((d) => d.name), ["Ryn"]);
   assert.ok(me.awards.some((a) => a.title === "Bedside Manner"));
   assert.ok(me.next && me.longest && me.mostActive);

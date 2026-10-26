@@ -6,7 +6,7 @@ export type RecordedCampaign = (typeof raw.campaigns)[keyof typeof raw.campaigns
 export type FloorHolder = { name: string; share: number; width: number };
 
 export type Award = {
-  /** Stable ceremony number, 01–09, even when a player cannot see every table. */
+  /** Place in its own list: 01–10 overall, 01–05 per table. */
   n: string;
   title: string;
   who: string;
@@ -159,94 +159,187 @@ function series(names: string[]): string {
   return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
 }
 
-function buildAwards(): Award[] {
-  const rime = recordedCampaign("frostmaiden");
-  const salt = recordedCampaign("saltmarsh");
-  if (!rime || !salt) return [];
-  const stayed = rime.deaths.filter((death) => !death.returned).map((death) => death.name);
-  const back = rime.deaths.filter((death) => death.returned).map((death) => death.name);
-  const top = rime.npcs[0];
-  const auril = rime.npcs.find((npc) => npc.name === "Auril") ?? rime.npcs[1];
-  const lead = rime.talkers.find((talker) => !talker.label.includes("GM")) ?? salt.talkers.find((talker) => !talker.label.includes("GM"));
-  const saltLead = salt.talkers.find((talker) => !talker.label.includes("GM"));
-  const ratio = rime.nat1 > 0 ? ` Roughly ${Math.round(rime.nat20 / rime.nat1)} to 1 in the dice's favor.` : "";
-  const rows: Omit<Award, "n">[] = [
-    {
-      title: "The Revolving Door",
-      who: `${rime.short} party`,
-      body: `${word(rime.deaths.length)} PC deaths in ${rime.sessions} sessions: ${series(rime.deaths.map((death) => death.name))}. ${word(back.length)} of them came back; only ${series(stayed)} stayed down.`,
-      evidence: "Canon · session titles",
-      campaignId: rime.id,
-    },
-    {
-      title: "Iron Bladder",
-      who: rime.longest.title.replace(/^\d+\s*-\s*/, ""),
-      body: `${rime.short}, ${recordDate(rime.longest.date)}. The longest recorded session: ${rime.longest.hours} hours.`,
-      evidence: "Transcript timestamps",
-      campaignId: rime.id,
-    },
-    {
-      title: "Most Wanted",
-      who: top?.name ?? "—",
-      body: `${top?.count ?? 0} mentions. The missing mountain guide the party can't stop talking about, more than ${auril?.name ?? "the next name"} herself (${auril?.count ?? 0}).`,
-      evidence: "Mention count",
-      campaignId: rime.id,
-    },
-    {
-      title: "Coup de Grâce",
-      who: "Rosie",
-      body: "A crystal-tipped dart to the neck froze Sephek Kaltro solid and ended the campaign's first boss fight. (Rime S3)",
-      evidence: "Transcript",
-      campaignId: rime.id,
-    },
-    {
-      title: "Bedside Manner",
-      who: "Vloskev",
-      body: "Emergency surgery on Lysander at a wolf-ringed portcullis, then identified the burgomaster's \"salted meat\" as human thigh. (Strahd S1)",
-      evidence: "Transcript",
-      campaignId: "strahd",
-    },
-    {
-      title: "Nosebleed Seats",
-      who: "Giada",
-      body: "Hit Strahd with a psychic burst that drew blood from his nose, in his first appearance. (Strahd S7)",
-      evidence: "Archivist handout",
-      campaignId: "strahd",
-    },
-    {
-      title: "Hostile Takeover",
-      who: "Gor",
-      body: "Dominated by an undead spellcaster and turned on his friends, then broke free and knocked it flat. (Saltmarsh S5)",
-      evidence: "Archivist handout",
-      campaignId: salt.id,
-    },
-    {
-      title: "The Lucky Table",
-      who: rime.short,
-      body: `${rime.nat20} "nat 20" call-outs to ${rime.nat1} "nat 1"s.${ratio}`,
-      evidence: "Transcript phrase count",
-      campaignId: rime.id,
-    },
-    {
-      title: "Open Mic Night",
-      who: saltLead ? openMicName(saltLead.label) : lead ? openMicName(lead.label) : "—",
-      body: "The largest share of player talk in Saltmarsh's speaker-labeled sessions.",
-      evidence: `Speaker-labeled transcripts (${salt.labeledSessions})`,
-      campaignId: salt.id,
-    },
-  ];
-  return rows.map((award, index) => ({ ...award, n: String(index + 1).padStart(2, "0") }));
+type Draft = Omit<Award, "n">;
+
+/** Story moments cited in the Archivist record, in ceremony order per table. */
+const MOMENTS: Draft[] = [
+  {
+    title: "Coup de Grâce",
+    who: "Rosie",
+    body: "A crystal-tipped dart to the neck froze Sephek Kaltro solid and ended the campaign's first boss fight. (Rime S3)",
+    evidence: "Transcript",
+    campaignId: "frostmaiden",
+  },
+  {
+    title: "Bedside Manner",
+    who: "Vloskev",
+    body: "Emergency surgery on Lysander at a wolf-ringed portcullis, then identified the burgomaster's \"salted meat\" as human thigh. (Strahd S1)",
+    evidence: "Transcript",
+    campaignId: "strahd",
+  },
+  {
+    title: "Nosebleed Seats",
+    who: "Giada",
+    body: "Hit Strahd with a psychic burst that drew blood from his nose, in his first appearance. (Strahd S7)",
+    evidence: "Archivist handout",
+    campaignId: "strahd",
+  },
+  {
+    title: "Hostile Takeover",
+    who: "Gor",
+    body: "Dominated by an undead spellcaster and turned on his friends, then broke free and knocked it flat. (Saltmarsh S5)",
+    evidence: "Archivist handout",
+    campaignId: "saltmarsh",
+  },
+];
+
+function number(rows: Draft[], limit: number): Award[] {
+  return rows.slice(0, limit).map((award, index) => ({ ...award, n: String(index + 1).padStart(2, "0") }));
 }
 
-/** Awards for the recorded tables this player has joined. */
-export function tpkAwards(memberIds: string[]): Award[] {
-  const mine = new Set(memberIds);
-  return buildAwards().filter((award) => mine.has(award.campaignId));
+function cleanTitle(title: string): string {
+  return title.replace(/^\d+\s*-\s*/, "");
 }
 
-/** Awards earned at one table, for that campaign's own Almanac. */
+function revolvingDoor(rows: RecordedCampaign[]): Draft | null {
+  const deaths = rows.flatMap((row) => row.deaths);
+  if (!deaths.length) return null;
+  const back = deaths.filter((death) => death.returned).length;
+  const stayed = deaths.filter((death) => !death.returned).map((death) => death.name);
+  const sessions = rows.reduce((sum, row) => sum + row.sessions, 0);
+  return {
+    title: "The Revolving Door",
+    who: rows.length === 1 ? `${rows[0].short} party` : "Every table",
+    body: `${word(deaths.length)} PC deaths in ${sessions} sessions: ${series(deaths.map((death) => death.name))}. ${word(back)} came back${stayed.length ? `; only ${series(stayed)} stayed down` : ""}.`,
+    evidence: "Canon · session titles",
+    campaignId: rows[0].id,
+  };
+}
+
+function ironBladder(rows: RecordedCampaign[]): Draft | null {
+  const row = [...rows].sort((a, b) => b.longest.hours - a.longest.hours)[0];
+  if (!row) return null;
+  return {
+    title: "Iron Bladder",
+    who: cleanTitle(row.longest.title),
+    body: `${row.short}, ${recordDate(row.longest.date)}. The longest recorded session: ${row.longest.hours} hours.`,
+    evidence: "Transcript timestamps",
+    campaignId: row.id,
+  };
+}
+
+function mostWanted(rows: RecordedCampaign[]): Draft | null {
+  const named = rows.flatMap((row) => row.npcs.map((npc) => ({ ...npc, row })));
+  named.sort((a, b) => b.count - a.count);
+  const [top, next] = named;
+  if (!top || top.count === 0) return null;
+  return {
+    title: "Most Wanted",
+    who: top.name,
+    body: `${top.count} mentions in ${top.row.short}, the most-named NPC${next ? `, ahead of ${next.name} (${next.count})` : ""}.`,
+    evidence: "Mention count",
+    campaignId: top.row.id,
+  };
+}
+
+function homeBase(rows: RecordedCampaign[]): Draft | null {
+  const named = rows.flatMap((row) => row.locations.map((place) => ({ ...place, row })));
+  named.sort((a, b) => b.count - a.count);
+  const [top, next] = named;
+  if (!top || top.count === 0) return null;
+  return {
+    title: "Home Base",
+    who: top.name,
+    body: `${top.count} mentions in ${top.row.short}, the most-named place${next ? `, ahead of ${next.name} (${next.count})` : ""}.`,
+    evidence: "Mention count",
+    campaignId: top.row.id,
+  };
+}
+
+function luckyTable(rows: RecordedCampaign[]): Draft | null {
+  const n20 = rows.reduce((sum, row) => sum + row.nat20, 0);
+  const n1 = rows.reduce((sum, row) => sum + row.nat1, 0);
+  if (n20 <= n1) return null;
+  const ratio = n1 > 0 ? ` Roughly ${Math.round(n20 / n1)} to 1 in the dice's favor.` : "";
+  return {
+    title: "The Lucky Table",
+    who: rows.length === 1 ? rows[0].short : "Every table",
+    body: `${n20} "nat 20" call-outs to ${n1} "nat 1"s.${ratio}`,
+    evidence: "Transcript phrase count",
+    campaignId: rows[0].id,
+  };
+}
+
+function openMic(row: RecordedCampaign): Draft | null {
+  const lead = row.talkers.find((talker) => !talker.label.includes("GM"));
+  if (!lead) return null;
+  const share = floorHolders(row)[0]?.share;
+  return {
+    title: "Open Mic Night",
+    who: openMicName(lead.label),
+    body: `The largest share of player talk in ${row.short}${share ? `: ${share}%` : ""}.`,
+    evidence: `Speaker-labeled transcripts (${row.labeledSessions})`,
+    campaignId: row.id,
+  };
+}
+
+function snakeEyes(row: RecordedCampaign): Draft | null {
+  const top = row.nat1By[0];
+  if (!top) return null;
+  const tied = row.nat1By.filter((entry) => entry.count === top.count).map((entry) => openMicName(entry.label));
+  return {
+    title: "Snake Eyes",
+    who: series(tied),
+    body: `Said "nat 1" out loud the most in ${row.short}'s speaker-labeled sessions (${top.count}).`,
+    evidence: "Transcript phrase count",
+    campaignId: row.id,
+  };
+}
+
+function longHaul(rows: RecordedCampaign[]): Draft | null {
+  if (rows.length < 2) return null;
+  const row = [...rows].sort((a, b) => b.hours - a.hours)[0];
+  return {
+    title: "The Long Haul",
+    who: row.short,
+    body: `${row.sessions} recorded sessions and ${Math.round(row.hours)} hours, the most of any table.`,
+    evidence: "Transcript timestamps",
+    campaignId: row.id,
+  };
+}
+
+/** A table's own top 5, numbered 1–5. Fewer when the record has fewer. */
 export function campaignAwards(cid: string): Award[] {
-  return buildAwards().filter((award) => award.campaignId === cid);
+  const row = recordedCampaign(cid);
+  if (!row) return [];
+  const rows = [
+    revolvingDoor([row]),
+    ...MOMENTS.filter((award) => award.campaignId === cid),
+    ironBladder([row]),
+    mostWanted([row]),
+    openMic(row),
+    luckyTable([row]),
+    homeBase([row]),
+    snakeEyes(row),
+  ].filter((award): award is Draft => !!award);
+  return number(rows, 5);
+}
+
+/** The overall top 10 across every recorded table this player has joined. */
+export function tpkAwards(memberIds: string[]): Award[] {
+  const rows = memberIds.map(recordedCampaign).filter((row): row is RecordedCampaign => !!row);
+  if (!rows.length) return [];
+  const ids = new Set(rows.map((row) => row.id));
+  const list = [
+    revolvingDoor(rows.filter((row) => row.deaths.length)),
+    ironBladder(rows),
+    mostWanted(rows),
+    ...MOMENTS.filter((award) => ids.has(award.campaignId)),
+    luckyTable(rows),
+    homeBase(rows),
+    longHaul(rows),
+  ].filter((award): award is Draft => !!award);
+  return number(list, 10);
 }
 
 /** Cross-campaign totals for the recorded tables this player has joined. */

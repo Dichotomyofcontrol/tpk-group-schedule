@@ -2,6 +2,7 @@ import { CharacterName } from "./character-sheet";
 import {
   byWhom,
   campaignAwards,
+  tpkAwards,
   floorHolders,
   type Award,
   recordDate,
@@ -45,7 +46,19 @@ export function RecordedLedger({ cid, kicker, withAwards = true }: { cid: string
   );
 }
 
-function AwardGrid({ awards }: { awards: Award[] }) {
+/** The overall top 10 across the recorded tables this player has joined. */
+export function OverallAwards({ ids }: { ids: string[] }) {
+  const awards = tpkAwards(ids);
+  if (!awards.length) return null;
+  return (
+    <section className="tpk-ledger" aria-label="Top awards">
+      <h2 className="lt tpk-awards-h">Top {awards.length} awards</h2>
+      <AwardGrid awards={awards} />
+    </section>
+  );
+}
+
+export function AwardGrid({ awards }: { awards: Award[] }) {
   return (
     <div className="award-grid">
       {awards.map((award) => (
