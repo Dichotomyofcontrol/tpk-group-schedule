@@ -16,7 +16,7 @@ export function SignInView() {
   return (
     <div className="sw" id="content">
       <div className="sp-in">
-        <p className="kicker">The door</p>
+        
         <h1>Sign in<span className="ghost-type">with email</span></h1>
         <p className="voice">We&apos;ll email a 6-digit code. Type it here, including from the Home Screen app. The link in the email still works in Safari.</p>
         {sent ? (

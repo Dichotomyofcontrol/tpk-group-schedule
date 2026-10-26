@@ -56,6 +56,7 @@ body {
   font: 400 16px/1.5 var(--ui);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  overflow-x: clip;
   min-height: 100vh;
 }
 a { color: inherit; text-decoration: none; }
@@ -1054,3 +1055,26 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .tpk-miss-l { display: block; margin: -4px 0 14px; font-size: 13px; }
 .tpk-miss-l a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 @media (max-width: 520px) { .tpks { max-height: calc(100vh - 16px); padding: 18px 16px; } }
+
+/* Poll footer: small voted line, then one row of equal-height actions. */
+.poll-voted { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.poll-voted .note { font-size: 13px; }
+.poll-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.poll-actions .btn { height: 44px; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+@media (max-width: 560px) {
+  .poll-actions { flex-direction: column; }
+  .poll-actions .btn { width: 100%; }
+}
+.covbtn { width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: rgba(12,10,8,.5); color: #FBF8F2; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; opacity: .8; transition: opacity .15s, background .15s; }
+.covbtn:hover, .covbtn:focus-visible { opacity: 1; background: rgba(12,10,8,.75); }
+.chead .btn.edt { margin-bottom: 12px; height: 32px; padding: 0 10px; font-size: 11px; opacity: .75; background: transparent; }
+.chead .btn.edt:hover, .chead .btn.edt:focus-visible { opacity: 1; }
+@media (min-width: 561px) { .chead .hb:has(.edt) .lt { margin-right: 130px; } }
+.mbreak { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; font: 600 11px/16px var(--ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); }
+.mbreak::after { content: ""; flex: 1; height: 1px; background: var(--line, rgba(255,255,255,.08)); }
+.alm-switch { position: sticky; top: calc(56px + var(--safe-t, 0px)); z-index: 6; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 24px -20px 12px; padding: 10px 20px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.alm-switch::-webkit-scrollbar { display: none; }
+.alm-chip { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: transparent; color: var(--ink2); font: 600 13px/1 var(--ui); white-space: nowrap; cursor: pointer; }
+.alm-chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); }
+.alm-chip[aria-selected="true"] { color: var(--ink); border-color: var(--acc); background: color-mix(in srgb, var(--acc) 14%, transparent); }
+@media (min-width: 900px) { .alm-switch { top: 68px; margin: 28px 0 12px; padding: 10px 0; } }

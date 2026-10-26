@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { almanacSpreads, campaignBook, type AlmanacSpread } from "@/lib/almanac";
 import { recordedCampaign, recordedKey } from "@/lib/almanac-stats";
 import { useStore } from "@/lib/store";
@@ -38,15 +38,48 @@ export function AlmanacView() {
         </div>
       )}
       <OverallAwards ids={recordedIds} />
-      <div className="almanac-stack">
-        {spreads.map((spread) => {
-          const campaign = state.campaigns.find((item) => item.id === spread.id);
-          if (!campaign) return null;
-          const key = recordedKey(campaign);
-          return (
-            <Facts key={spread.id} campaign={campaign} spread={spread} level={undefined} recorded={key} />
-          );
-        })}
+      <CampaignSwitcher spreads={spreads} campaigns={state.campaigns} />
+    </>
+  );
+}
+
+/** One campaign's stats at a time, picked from a sticky chip row. Defaults to the most hours; mirrors ?c= in the URL. */
+function CampaignSwitcher({ spreads, campaigns }: { spreads: AlmanacSpread[]; campaigns: Campaign[] }) {
+  const rows = spreads
+    .map((spread) => ({ spread, campaign: campaigns.find((item) => item.id === spread.id) }))
+    .filter((row): row is { spread: AlmanacSpread; campaign: Campaign } => !!row.campaign);
+  const [picked, setPicked] = useState<string | null>(null);
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get("c");
+    if (c) setPicked(c);
+  }, []);
+  if (!rows.length) return null;
+  const hoursOf = ({ spread, campaign }: { spread: AlmanacSpread; campaign: Campaign }) => {
+    const key = recordedKey(campaign);
+    const row = key ? recordedCampaign(key) : null;
+    return spread.played > 0 || !row ? spread.hours : row.hours;
+  };
+  const top = [...rows].sort((a, b) => hoursOf(b) - hoursOf(a))[0];
+  const current = rows.find((row) => row.campaign.id === picked) || top;
+  const choose = (id: string) => {
+    setPicked(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("c", id);
+    window.history.replaceState(null, "", url.toString());
+  };
+  return (
+    <>
+      {rows.length > 1 && (
+        <div className="alm-switch" role="tablist" aria-label="Campaign">
+          {rows.map(({ campaign }) => (
+            <button key={campaign.id} type="button" role="tab" aria-selected={campaign.id === current.campaign.id} className="alm-chip" style={accentVar(campaign) as CSSProperties} onClick={() => choose(campaign.id)}>
+              <i aria-hidden="true" />{campaign.name}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="almanac-stack" role="tabpanel">
+        <Facts rise={false} key={current.campaign.id} campaign={current.campaign} spread={current.spread} level={undefined} recorded={recordedKey(current.campaign)} />
       </div>
     </>
   );
@@ -113,7 +146,7 @@ export function CampaignAlmanac({ cid }: { cid: string }) {
 }
 
 /** One campaign's Almanac facts: totals, then the recorded stats. One link out. */
-function Facts({ campaign, spread, level, recorded }: { campaign: Campaign; spread: AlmanacSpread; level?: number | null; recorded: string | null }) {
+function Facts({ campaign, spread, level, recorded, rise = true }: { campaign: Campaign; spread: AlmanacSpread; level?: number | null; recorded: string | null; rise?: boolean }) {
   const row = recorded ? recordedCampaign(recorded) : null;
   // App counts first; a table with no app sessions falls back to its recordings.
   const useApp = spread.played > 0 || !row;
@@ -124,7 +157,7 @@ function Facts({ campaign, spread, level, recorded }: { campaign: Campaign; spre
     level,
   };
   return (
-    <section className="card alm-facts rise" data-world={worldFor(campaign).id} style={accentVar(campaign) as CSSProperties}>
+    <section className={`card alm-facts${rise ? " rise" : ""}`} data-world={worldFor(campaign).id} style={accentVar(campaign) as CSSProperties}>
       <div className="alm-facts-h">
         <h2 className="lt">{campaign.name}</h2>
         <Link className="lnk" href={`/campaigns/${campaign.id}`}>Campaign <Icon name="arrow" className="ic sm" /></Link>

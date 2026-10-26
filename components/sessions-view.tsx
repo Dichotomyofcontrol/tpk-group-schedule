@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { memberCampaigns } from "@/lib/model";
 import { useStore } from "@/lib/store";
 import type { Session } from "@/lib/types";
@@ -10,6 +10,26 @@ import { Icon, Skeleton } from "./ui";
 import { GettingStarted } from "./getting-started";
 import { CampaignPicker } from "./campaign-picker";
 import { TpkAssign } from "./tpk-assign";
+
+/** "November", or "November 2027" outside the current year, in the viewer's zone. */
+function monthOf(iso: string, tz: string) {
+  const parts = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric", timeZone: tz }).formatToParts(new Date(iso));
+  const month = parts.find((p) => p.type === "month")?.value || "";
+  const year = parts.find((p) => p.type === "year")?.value || "";
+  const thisYear = new Intl.DateTimeFormat("en-US", { year: "numeric", timeZone: tz }).format(new Date());
+  return year === thisYear ? month : `${month} ${year}`;
+}
+
+/** Rows with a quiet month label before the first session of each month. */
+function withMonths(list: Session[], tz: string, row: (s: Session) => React.ReactNode, start?: string) {
+  let last = start ? monthOf(start, tz) : "";
+  return list.map((session) => {
+    const m = monthOf(session.startsAt, tz);
+    const brk = m !== last;
+    last = m;
+    return <Fragment key={session.id}>{brk && <div className="mbreak" role="presentation"><span>{m}</span></div>}{row(session)}</Fragment>;
+  });
+}
 
 /** Sessions: the next night on top, then one list split into Upcoming and Past. */
 export function SessionsView() {
@@ -41,7 +61,7 @@ export function SessionsView() {
 
   return (
     <>
-      <div className="ptitle"><div><p className="kicker">The ledger</p><h1 className="lt">Sessions</h1></div></div>
+      <div className="ptitle"><div><h1 className="lt">Sessions</h1></div></div>
       <GettingStarted />
       <TpkAssign />
       {mine.length > 1 && (
@@ -69,7 +89,7 @@ export function SessionsView() {
         <section className="slist" aria-label="Upcoming sessions">
           <div className="sh secth"><h2>Upcoming</h2></div>
           <div className="card list">
-            {later.map((session) => <SessionRow key={session.id} session={session} showCampaign={showCampaign} />)}
+            {withMonths(later, state.me.tz, (session) => <SessionRow session={session} showCampaign={showCampaign} />)}
           </div>
         </section>
       )}
@@ -81,7 +101,7 @@ export function SessionsView() {
           </div>
           {past.length > 0 ? (
             <div className="card list ledger past-list">
-              {past.map((session) => <SessionRow key={session.id} session={session} showCampaign={showCampaign} ledger />)}
+              {withMonths(past, state.me.tz, (session) => <SessionRow session={session} showCampaign={showCampaign} ledger />)}
             </div>
           ) : (
             !state.syncing && <p className="note pempty">No past sessions yet. Recaps live here once you&apos;ve played.</p>
