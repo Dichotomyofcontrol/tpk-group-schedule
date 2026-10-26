@@ -33,7 +33,7 @@ export function GettingStarted() {
       ]
     : [
         { done: mine.length > 0, label: "Join a campaign", detail: "Open the invite link your organizer sent.", href: null },
-        { done: state.sessions.some((s) => (s.attendance || []).some((a) => a.uid === me && a.byUid === me)), label: "Answer for the next session", detail: "Tap I'm in or Can't make it on Up next.", href: null },
+        { done: state.sessions.some((s) => (s.attendance || []).some((a) => a.uid === me && a.byUid === me)), label: "Answer for the next session", detail: "Tap Going on Up next, or say you can't make it.", href: null },
       ];
   if (steps.every((s) => s.done)) return null;
   const close = () => { window.localStorage.setItem(KEY, "1"); setHidden(true); };
