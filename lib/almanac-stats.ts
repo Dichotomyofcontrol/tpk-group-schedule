@@ -35,6 +35,77 @@ export function recordedCampaign(cid: string): RecordedCampaign | null {
   return { id: cid, ...row };
 }
 
+function norm(value: string | undefined | null): string {
+  return (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** The recorded key for a campaign, matched by id, then slug, then name, so a renamed id still finds its numbers. */
+export function recordedKey(campaign: { id: string; slug?: string | null; name?: string | null }): string | null {
+  if (CAMPAIGNS[campaign.id]) return campaign.id;
+  const wanted = [norm(campaign.id), norm(campaign.slug), norm(campaign.name)].filter(Boolean);
+  for (const [key, row] of Object.entries(CAMPAIGNS)) {
+    const names = [norm(key), norm(row.sourceKey), norm(row.name), norm(row.short)];
+    if (wanted.some((w) => names.includes(w) || names.some((n) => n.length > 3 && w.includes(n)))) return key;
+  }
+  return null;
+}
+
+/** A ledger row: one campaign, or several combined. Deaths carry their own campaign for the character link. */
+export type LedgerRow = Omit<RecordedCampaign, "deaths"> & {
+  deaths: { name: string; line: string; returned: boolean; cid?: string }[];
+  /** Set on a combined row: how many campaigns it spans. */
+  span?: number;
+};
+
+function mergeCounts(lists: object[][], key: string, value: string, limit: number): [string, number][] {
+  const totals = new Map<string, number>();
+  for (const list of lists) for (const item of list) {
+    const rec = item as Record<string, string | number>;
+    totals.set(String(rec[key]), (totals.get(String(rec[key])) ?? 0) + Number(rec[value]));
+  }
+  return [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+}
+
+/** Every original stat summed across the given recorded campaigns, for the personal Almanac. */
+export function combinedLedger(ids: string[]): LedgerRow | null {
+  const rows = ids.map(recordedCampaign).filter((row): row is RecordedCampaign => !!row);
+  if (!rows.length) return null;
+  if (rows.length === 1) return rows[0];
+  const sum = (pick: (row: RecordedCampaign) => number) => rows.reduce((total, row) => total + pick(row), 0);
+  const longest = rows.map((row) => row.longest).reduce((a, b) => (b.hours > a.hours ? b : a));
+  const longestRow = rows.find((row) => row.longest === longest)!;
+  const npcLimit = Math.max(...rows.map((row) => row.npcs.length));
+  const placeLimit = Math.max(...rows.map((row) => row.locations.length));
+  return {
+    ...rows[0],
+    id: "",
+    sourceKey: "all",
+    name: "All your tables",
+    short: "All",
+    where: rows.map((row) => row.where).join(" · "),
+    day: rows.map((row) => row.day).join(", "),
+    span: rows.length,
+    labeledSessions: sum((row) => row.labeledSessions),
+    deaths: rows.flatMap((row) => row.deaths.map((death) => ({ ...death, cid: row.id, line: `${row.short} · ${death.line}` }))),
+    sessions: sum((row) => row.sessions),
+    hours: sum((row) => row.hours),
+    words: sum((row) => row.words),
+    longest: { ...longest, title: `${longest.title} (${longestRow.short})` },
+    first: rows.map((row) => row.first).sort()[0],
+    last: rows.map((row) => row.last).sort().reverse()[0],
+    nat20: sum((row) => row.nat20),
+    nat1: sum((row) => row.nat1),
+    nat20By: mergeCounts(rows.map((row) => row.nat20By), "label", "count", 99).map(([label, count]) => ({ label, count })),
+    nat1By: mergeCounts(rows.map((row) => row.nat1By), "label", "count", 99).map(([label, count]) => ({ label, count })),
+    talkers: mergeCounts(rows.map((row) => row.talkers), "label", "words", 999).map(([label, words]) => ({ label, words })),
+    npcs: mergeCounts(rows.map((row) => row.npcs), "name", "count", npcLimit).map(([name, count]) => ({ name, count })),
+    locations: mergeCounts(rows.map((row) => row.locations), "name", "count", placeLimit).map(([name, count]) => ({ name, count })),
+    deathWords: sum((row) => row.deathWords),
+    pcs: rows.flatMap((row) => row.pcs),
+    sessionsList: rows.flatMap((row) => row.sessionsList),
+  } as LedgerRow;
+}
+
 /** Character inside a speaker label, or the person's name when the label is the GM. */
 export function speakerName(label: string): string {
   const character = label.match(/\((.+?)\s*\[/);
@@ -51,7 +122,7 @@ export function openMicName(label: string): string {
   return `${match[2].trim()} (${player})`;
 }
 
-export function floorHolders(row: RecordedCampaign): FloorHolder[] {
+export function floorHolders(row: { talkers: { label: string; words: number }[] }): FloorHolder[] {
   const pcs = row.talkers.filter((talker) => !talker.label.includes("GM")).map((talker) => ({
     name: speakerName(talker.label),
     words: talker.words,
@@ -171,6 +242,11 @@ function buildAwards(): Award[] {
 export function tpkAwards(memberIds: string[]): Award[] {
   const mine = new Set(memberIds);
   return buildAwards().filter((award) => mine.has(award.campaignId));
+}
+
+/** Awards earned at one table, for that campaign's own Almanac. */
+export function campaignAwards(cid: string): Award[] {
+  return buildAwards().filter((award) => award.campaignId === cid);
 }
 
 /** Cross-campaign totals for the recorded tables this player has joined. */

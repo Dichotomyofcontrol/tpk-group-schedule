@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, type ReactNode } from "react";
 import { almanacSpreads, campaignBook, type AlmanacSpread, type CampaignBook, type ChronicleNight } from "@/lib/almanac";
+import { recordedKey } from "@/lib/almanac-stats";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, formatZone, relativeWhen } from "@/lib/time";
 import type { LedgerEntry } from "@/lib/types";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
-import { RecordedLedger, TpkCeremony } from "./almanac-stats";
+import { CombinedLedger, RecordedLedger, TpkCeremony } from "./almanac-stats";
 import { CampaignTabs } from "./campaign-tabs";
 import { CharacterName } from "./character-sheet";
 import { Avatar, BackBar, CampaignCover, Icon, Skeleton, Watermark } from "./ui";
@@ -32,7 +33,22 @@ export function AlmanacView() {
         </div>
       </div>
       <p className="voice almanac-lead">Every table you sit at, gathered in one place.</p>
-      <TpkCeremony campaignIds={spreads.map((spread) => spread.id)} />
+      {(() => {
+        const keys = spreads
+          .map((spread) => state.campaigns.find((item) => item.id === spread.id))
+          .map((campaign) => (campaign ? recordedKey(campaign) : null))
+          .filter((key): key is string => !!key);
+        if (!keys.length) return null;
+        return (
+          <>
+            <TpkCeremony campaignIds={keys} />
+            <CombinedLedger campaignIds={keys} />
+            {keys.length > 1 && keys.map((key, index) => (
+              <RecordedLedger key={key} cid={key} withAwards={false} kicker={`Ledger ${String(index + 1).padStart(2, "0")} / ${String(keys.length).padStart(2, "0")}`} />
+            ))}
+          </>
+        );
+      })()}
       {state.syncing && spreads.length === 0 && <Skeleton rows={2} hero={false} />}
       {!state.syncing && spreads.length === 0 && (
         <div className="card empty-card">
@@ -112,7 +128,7 @@ export function CampaignAlmanac({ cid }: { cid: string }) {
         </div>
       </section>
 
-      <RecordedLedger cid={cid} />
+      {recordedKey(campaign) && <RecordedLedger cid={recordedKey(campaign)!} />}
 
       <div className="sh secth"><h2>The party</h2></div>
       {book.current.length > 0 ? (
