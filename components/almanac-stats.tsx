@@ -7,8 +7,6 @@ import {
   type Award,
   type LedgerRow,
   groupTotals,
-  RECORDED_SPAN,
-  RECORDING_NOTE,
   recordDate,
   recordedCampaign,
   thousandWords,
@@ -40,15 +38,13 @@ export function RecordedLedger({ cid, kicker, withAwards = true }: { cid: string
   const awards = withAwards ? campaignAwards(cid) : [];
   return (
     <>
-      <LedgerBody row={row} kicker={kicker} />
+      <LedgerBody row={row} heading={kicker ? row.name : undefined} />
       {awards.length > 0 && (
         <section className="tpk-ledger" aria-label={`${row.name} awards`}>
-          <h2 className="lt tpk-awards-h">The TPK Awards · {row.short}</h2>
-          <p className="voice rec-span">Nobody voted. The transcripts did. Every award lists its evidence.</p>
+          <h2 className="lt tpk-awards-h">Awards</h2>
           <AwardGrid awards={awards} />
         </section>
       )}
-      {withAwards && <p className="rec-fine">* {RECORDING_NOTE}</p>}
     </>
   );
 }
@@ -57,7 +53,7 @@ export function RecordedLedger({ cid, kicker, withAwards = true }: { cid: string
 export function CombinedLedger({ campaignIds }: { campaignIds: string[] }) {
   const row = combinedLedger(campaignIds);
   if (!row) return null;
-  return <LedgerBody row={row} heading={row.span ? "Across all your tables" : "From the table"} />;
+  return <LedgerBody row={row} heading={row.span ? "All tables" : "Stats"} floorShown={!row.span} />;
 }
 
 function AwardGrid({ awards }: { awards: Award[] }) {
@@ -69,31 +65,27 @@ function AwardGrid({ awards }: { awards: Award[] }) {
           <h3>{award.title}</h3>
           <p className="who">{award.who}</p>
           <p>{award.body}</p>
-          <p className="src">Evidence: {award.evidence}</p>
         </article>
       ))}
     </div>
   );
 }
 
-function LedgerBody({ row, heading = "From the table", kicker }: { row: LedgerRow | RecordedCampaign; heading?: string; kicker?: string }) {
+function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: LedgerRow | RecordedCampaign; heading?: string; floorShown?: boolean }) {
   const floor = floorHolders(row);
   const topNpc = maxCount(row.npcs);
   const topPlace = maxCount(row.locations);
   const nat20By = byWhom(row.nat20By);
   const nat1By = byWhom(row.nat1By);
-  const returned = row.deaths.filter((death) => death.returned).map((death) => death.name);
   return (
     <section className="rec-ledger" aria-label={`${row.name} recordings`}>
-      <p className="kicker">{kicker ? `${kicker} · ` : ""}The recordings · {row.where} · plays {row.day}</p>
       <h2>{heading}</h2>
-      <p className="voice rec-span">{recordDate(row.first)} → {recordDate(row.last)}</p>
       <div className="rec-big">
         <div><b>{row.sessions.toLocaleString()}</b><span>sessions recorded</span></div>
         <div><b>{Math.round(row.hours).toLocaleString()}</b><span>hours at the table</span></div>
         <div><b>{thousandWords(row.words).toLocaleString()}</b><span>thousand words spoken</span></div>
-        <div><b>{row.nat20.toLocaleString()}</b><span>&ldquo;nat 20&rdquo; said aloud*</span>{nat20By && <em>By {nat20By}</em>}</div>
-        <div><b>{row.nat1.toLocaleString()}</b><span>&ldquo;nat 1&rdquo; said aloud*</span>{nat1By && <em>By {nat1By}</em>}</div>
+        <div><b>{row.nat20.toLocaleString()}</b><span>&ldquo;nat 20&rdquo; said aloud</span>{nat20By && <em>By {nat20By}</em>}</div>
+        <div><b>{row.nat1.toLocaleString()}</b><span>&ldquo;nat 1&rdquo; said aloud</span>{nat1By && <em>By {nat1By}</em>}</div>
       </div>
       <div className="rec-grid">
         <article>
@@ -109,27 +101,21 @@ function LedgerBody({ row, heading = "From the table", kicker }: { row: LedgerRo
               </li>
             ))}
           </ul>
-          <p className="rec-fine">
-            Player-character deaths, from campaign canon and session titles. A line through the name means they stayed dead.
-            {returned.length > 0 && ` ${returned.join(", ").replace(/, ([^,]+)$/, " and $1")} died and came back.`}
-            {` The transcripts say killed, died, or death ${row.deathWords.toLocaleString()} times.`}
-          </p>
         </article>
         <article>
           <h3>Most-named NPCs</h3>
           <Bars rows={row.npcs.map((npc) => ({ name: npc.name, width: Math.round((npc.count / topNpc) * 100), value: npc.count.toLocaleString() }))} />
-          <p className="rec-fine">Exact-name mentions across summaries, beats and transcripts. A heuristic.</p>
         </article>
         <article>
           <h3>Most-visited places</h3>
           <Bars rows={row.locations.map((place) => ({ name: place.name, width: Math.round((place.count / topPlace) * 100), value: place.count.toLocaleString() }))} />
-          <p className="rec-fine">Mentions of a curated list of module locations. A heuristic.</p>
         </article>
+        {floorShown && (
         <article>
-          <h3>Who holds the floor</h3>
-          <Bars rows={floor.map((holder) => ({ name: holder.name, width: holder.width, value: `${holder.share}%` }))} />
-          <p className="rec-fine">Each player&apos;s share of words spoken, in the {row.labeledSessions} {row.labeledSessions === 1 ? "session" : "sessions"} whose transcripts name the speakers. A small sample.</p>
-        </article>
+            <h3>Who holds the floor</h3>
+            <Bars rows={floor.map((holder) => ({ name: holder.name, width: holder.width, value: `${holder.share}%` }))} />
+          </article>
+        )}
       </div>
       <p className="rec-long">Longest night: <b>{row.longest.title}</b> · {recordDate(row.longest.date)} · {row.longest.hours} h</p>
     </section>
@@ -142,9 +128,7 @@ export function TpkCeremony({ campaignIds }: { campaignIds: string[] }) {
   if (!totals) return null;
   return (
     <section className="tpk-ledger" aria-label="The TPK awards">
-      <p className="kicker">Ledger · the recordings · {RECORDED_SPAN}</p>
       <h2 className="lt">The TPK</h2>
-      <p className="voice rec-span">{totals.full ? "Three worlds, one table, and everyone who didn't make it." : "Every recorded night at the tables you sit."}</p>
       <div className="tpk-totals">
         <div><b>{totals.sessions.toLocaleString()}</b><span>sessions</span></div>
         <div><b>{totals.hours.toLocaleString()}</b><span>hours</span></div>
@@ -152,12 +136,10 @@ export function TpkCeremony({ campaignIds }: { campaignIds: string[] }) {
       </div>
       {awards.length > 0 && (
         <>
-          <h2 className="lt tpk-awards-h">The TPK Awards</h2>
-          <p className="voice rec-span">Nobody voted. The transcripts did. Every award lists its evidence.</p>
+          <h2 className="lt tpk-awards-h">Awards</h2>
           <AwardGrid awards={awards} />
         </>
       )}
-      <p className="rec-fine">* {RECORDING_NOTE}</p>
     </section>
   );
 }

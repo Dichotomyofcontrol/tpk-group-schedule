@@ -28,11 +28,9 @@ export function AlmanacView() {
     <>
       <div className="ptitle">
         <div>
-          <p className="kicker">The book</p>
           <h1 className="lt">Almanac</h1>
         </div>
       </div>
-      <p className="voice almanac-lead">Every table you sit at, gathered in one place.</p>
       {(() => {
         const keys = spreads
           .map((spread) => state.campaigns.find((item) => item.id === spread.id))
@@ -108,7 +106,6 @@ export function CampaignAlmanac({ cid }: { cid: string }) {
         </div>
         <div className="hb">
           <Watermark word={world.word} />
-          <div className="eyebrow">{spreadKicker(book.spread)}</div>
           <h1 className="lt">{campaign.name}</h1>
           <p className="meta">
             {book.spread.worldPlace !== "The Table" && <span className="mg">{book.spread.worldPlace}</span>}
@@ -228,7 +225,6 @@ function Spread({ spread, cover }: { spread: AlmanacSpread; cover: ReactNode }) 
       </Link>
       <div className="spread-body">
         <Watermark word={spread.worldWord} />
-        <p className="kicker">{spreadKicker(spread)}</p>
         <h2><Link href={`/campaigns/${spread.id}/almanac`}>{spread.name}</Link></h2>
         <div className="bigstats">
           <div><b>{spread.played}</b><span>{spread.played === 1 ? "Night" : "Nights"}</span></div>
@@ -323,9 +319,6 @@ function BlankIndex({ blanks }: { blanks: CampaignBook["blanks"] }) {
   );
 }
 
-function spreadKicker(spread: AlmanacSpread): string {
-  return [spread.archived ? "Archived" : spread.worldWord, spread.system || "System not set"].filter(Boolean).join(" · ");
-}
 
 function whenLabel(iso: string, tz: string): string {
   const when = formatDayHeading(iso, tz);
