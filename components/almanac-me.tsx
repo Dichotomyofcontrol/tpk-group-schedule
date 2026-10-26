@@ -15,18 +15,15 @@ export function ForYouLedger({ state }: { state: AppState }) {
   const me = forYou(state);
   const hasAny = me.totals || me.seats.length || me.next || me.longest;
   if (!hasAny) return null;
+  // Same numbers as Your seats: app sessions, or recordings where the app has none.
+  const nights = me.seats.reduce((sum, seat) => sum + seat.nights, 0);
+  const hours = Math.round(me.seats.reduce((sum, seat) => sum + seat.hours, 0));
   return (
     <section className="rec-ledger for-you" aria-label="For you">
       <div className="rec-big">
-        {me.totals && (
-          <>
-            <div><b>{me.totals.sessions.toLocaleString()}</b><span>sessions recorded</span></div>
-            <div><b>{me.totals.hours.toLocaleString()}</b><span>hours recorded</span></div>
-            <div><b>{me.totals.wordsLabel}</b><span>words recorded</span></div>
-          </>
-        )}
-        {me.played.nights > 0 && <div><b>{me.played.nights.toLocaleString()}</b><span>nights played</span></div>}
-        {me.played.hours > 0 && <div><b>{me.played.hours.toLocaleString()}</b><span>hours played</span></div>}
+        {nights > 0 && <div><b>{nights.toLocaleString()}</b><span>{nights === 1 ? "night" : "nights"}</span></div>}
+        {hours > 0 && <div><b>{hours.toLocaleString()}</b><span>{hours === 1 ? "hour" : "hours"}</span></div>}
+        {me.totals && <div><b>{me.totals.wordsLabel}</b><span>words recorded</span></div>}
       </div>
       <div className="rec-grid">
         {me.seats.length > 0 && (
@@ -52,9 +49,6 @@ export function ForYouLedger({ state }: { state: AppState }) {
           <ul className="for-you-list">
             {me.next && (
               <li><span>Next</span><Link href={`/campaigns/${me.next.cid}/sessions/${me.next.sid}`}>{me.next.title}</Link><em>{me.next.campaign} · {when(me.next.startsAt, me.next.tz)}</em></li>
-            )}
-            {me.mostActive && (
-              <li><span>Most active</span><b>{me.mostActive.campaign}</b><em>{me.mostActive.sessions} sessions · {me.mostActive.hours} h</em></li>
             )}
             {me.streak && (
               <li><span>Streak</span><b>{me.streak.count} in a row</b><em>{me.streak.campaign}</em></li>
