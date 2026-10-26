@@ -1072,9 +1072,19 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 @media (min-width: 561px) { .chead .hb:has(.edt) .lt { margin-right: 130px; } }
 .mbreak { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; font: 600 11px/16px var(--ui); letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); }
 .mbreak::after { content: ""; flex: 1; height: 1px; background: var(--line, rgba(255,255,255,.08)); }
-.alm-switch { position: sticky; top: calc(56px + var(--safe-t, 0px)); z-index: 6; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 24px -20px 12px; padding: 10px 20px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-.alm-switch::-webkit-scrollbar { display: none; }
-.alm-chip { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: transparent; color: var(--ink2); font: 600 13px/1 var(--ui); white-space: nowrap; cursor: pointer; }
-.alm-chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--acc); }
-.alm-chip[aria-selected="true"] { color: var(--ink); border-color: var(--acc); background: color-mix(in srgb, var(--acc) 14%, transparent); }
-@media (min-width: 900px) { .alm-switch { top: 68px; margin: 28px 0 12px; padding: 10px 0; } }
+/* Almanac campaign chips: one sticky strip, even pills, soft edge fades while more chips hide off-screen. */
+.alm-switch { position: sticky; top: calc(56px + var(--safe-t, 0px)); z-index: 6; margin: 28px -20px 16px; padding: 10px 0; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent); }
+.alm-strip { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding: 0 20px; padding: 0 20px; scrollbar-width: none; --fs: 0px; --fe: 0px; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 var(--fs), #000 calc(100% - var(--fe)), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 var(--fs), #000 calc(100% - var(--fe)), transparent 100%); }
+.alm-switch.fade-s .alm-strip { --fs: 28px; }
+.alm-switch.fade-e .alm-strip { --fe: 36px; }
+.alm-strip::-webkit-scrollbar { display: none; }
+.alm-chip { flex: none; scroll-snap-align: start; display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px 0 12px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink2); font: 600 13px/1 var(--ui); letter-spacing: 0; white-space: nowrap; cursor: pointer; transition: background-color .15s, border-color .15s, color .15s; }
+.alm-chip span { white-space: nowrap; }
+.alm-chip i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--acc); }
+.alm-chip:hover { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 28%, transparent); }
+.alm-chip:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.alm-chip[aria-selected="true"] { color: var(--ink); border-color: var(--acc); background: color-mix(in srgb, var(--acc) 22%, transparent); box-shadow: inset 0 0 0 1px var(--acc); }
+@media (min-width: 900px) {
+  .alm-switch { top: 68px; margin: 32px 0 16px; padding: 12px 0; }
+  .alm-strip { flex-wrap: wrap; overflow: visible; padding: 0; -webkit-mask-image: none; mask-image: none; }
+}
