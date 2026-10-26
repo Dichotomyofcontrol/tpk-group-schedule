@@ -29,13 +29,27 @@ function maxCount(rows: { count: number }[]): number {
   return Math.max(1, ...rows.map((row) => row.count));
 }
 
-export function RecordedLedger({ cid, kicker, withAwards = true }: { cid: string; kicker?: string; withAwards?: boolean }) {
+export type TopStats = { nights: number; hours: number; recaps: number; level?: number | null };
+
+/** Nights, hours and recaps from the app, plus party level when known. */
+export function TopTiles({ top }: { top: TopStats }) {
+  return (
+    <>
+      <div><b>{top.nights.toLocaleString()}</b><span>{top.nights === 1 ? "night" : "nights"}</span></div>
+      <div><b>{top.hours.toLocaleString()}</b><span>{top.hours === 1 ? "hour" : "hours"}</span></div>
+      <div><b>{top.recaps.toLocaleString()}</b><span>{top.recaps === 1 ? "recap" : "recaps"}</span></div>
+      {top.level !== undefined && <div><b>{top.level ?? "—"}</b><span>party level</span></div>}
+    </>
+  );
+}
+
+export function RecordedLedger({ cid, kicker, withAwards = true, top }: { cid: string; kicker?: string; withAwards?: boolean; top?: TopStats }) {
   const row = recordedCampaign(cid);
   if (!row) return null;
   const awards = withAwards ? campaignAwards(cid) : [];
   return (
     <>
-      <LedgerBody row={row} heading={kicker ? row.name : undefined} />
+      <LedgerBody row={row} heading={kicker ? row.name : undefined} top={top} />
       {awards.length > 0 && (
         <section className="tpk-ledger" aria-label={`${row.name} awards`}>
           <h2 className="lt tpk-awards-h">Awards</h2>
@@ -73,7 +87,7 @@ export function AwardGrid({ awards }: { awards: Award[] }) {
   );
 }
 
-function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: RecordedCampaign; heading?: string; floorShown?: boolean }) {
+function LedgerBody({ row, heading = "Stats", floorShown = true, top }: { row: RecordedCampaign; heading?: string; floorShown?: boolean; top?: TopStats }) {
   const floor = floorHolders(row);
   const topNpc = maxCount(row.npcs);
   const topPlace = maxCount(row.locations);
@@ -81,10 +95,14 @@ function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: Record
   const nat1By = byWhom(row.nat1By);
   return (
     <section className="rec-ledger" aria-label={`${row.name} recordings`}>
-      <h2>{heading}</h2>
+      {!top && <h2>{heading}</h2>}
       <div className="rec-big">
-        <div><b>{row.sessions.toLocaleString()}</b><span>sessions recorded</span></div>
-        <div><b>{Math.round(row.hours).toLocaleString()}</b><span>hours at the table</span></div>
+        {top ? <TopTiles top={top} /> : (
+          <>
+            <div><b>{row.sessions.toLocaleString()}</b><span>sessions recorded</span></div>
+            <div><b>{Math.round(row.hours).toLocaleString()}</b><span>hours at the table</span></div>
+          </>
+        )}
         <div><b>{thousandWords(row.words).toLocaleString()}</b><span>thousand words spoken</span></div>
         <div><b>{row.nat20.toLocaleString()}</b><span>&ldquo;nat 20&rdquo; said aloud</span>{nat20By && <em>By {nat20By}</em>}</div>
         <div><b>{row.nat1.toLocaleString()}</b><span>&ldquo;nat 1&rdquo; said aloud</span>{nat1By && <em>By {nat1By}</em>}</div>
