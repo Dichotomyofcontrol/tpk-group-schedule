@@ -130,7 +130,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div id="read-prog" aria-hidden="true" />
-      <a className="skip" href="#content">Skip to content</a>
       {!store.online && <div className="offline">You&apos;re offline. Showing your last-synced schedule.</div>}
       <header className={landing ? "hdr clear" : "hdr"}>
         <Brand href={signedIn ? "/sessions" : "/"} />

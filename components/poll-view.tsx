@@ -6,7 +6,7 @@ import { isStaff, membersOf, rankedOptions } from "@/lib/model";
 import { groupMemberPolls, pollDisplayTitle } from "@/lib/poll-lists";
 import { memberYesCount, mergeVoteSeats, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
-import { linkShareData } from "@/lib/share-link";
+import { linkShareData, pollReminderMessage } from "@/lib/share-link";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
@@ -273,17 +273,15 @@ function PollCard({ poll }: { poll: Poll }) {
       {staff && poll.status === "open" && ranked[0] && ranked[0].yes > 0 && (
         <button className="btn pri sm" style={{ marginTop: 16 }} onClick={() => store.lockPoll(poll.id, ranked[0].option.id)}>Lock in the leader</button>
       )}
-      {staff && poll.status === "open" && quiet.length > 0 && (
-        <button className="btn sec sm nudge" onClick={async () => {
-          const names = quiet.map((m) => (m.displayName || m.characterName || "").split(" ")[0]).filter(Boolean);
-          const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] || "friends";
+      {staff && poll.status === "open" && quiet.some((m) => m.id !== store.state.me.id) && (
+        <button type="button" className="btn sec sm remind" onClick={async () => {
+          const names = quiet.filter((m) => m.id !== store.state.me.id).map((m) => (m.displayName || m.characterName || "").split(" ")[0]).filter(Boolean);
           const url = `${window.location.origin}${path}`;
-          const note = `${who}: we're picking the next ${campaign.name} night. Tap the dates that work for you.`;
-          for (const m of quiet) store.nudge(poll.id, m.id);
-          const result = await sharePollLink(url, poll.title, note, `${note} ${url}`);
-          if (result === "copied") store.flash("Nudge copied. Paste it in your group chat.");
-          else if (result === "failed") store.flash("Couldn't copy the nudge.", "err");
-        }}>Nudge {quiet.length === 1 ? (quiet[0].displayName || "them").split(" ")[0] : `the ${quiet.length} who haven't voted`}</button>
+          const text = pollReminderMessage(names, campaign.name, url);
+          const result = await sharePollLink(url, poll.title, text, text);
+          if (result === "copied") store.flash("Copied");
+          else if (result === "failed") store.flash("Couldn't copy the reminder.", "err");
+        }}><Icon name="bell" className="ic sm" />Share reminder</button>
       )}
     </article>
   );
