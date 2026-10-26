@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
-import { memberYesCount, mergeVoteSeats, optionClocks, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
+import { groupMemberPolls, pollDisplayTitle } from "@/lib/poll-lists";
+import { memberYesCount, mergeVoteSeats, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
 import { linkShareData } from "@/lib/share-link";
 import { useStore } from "@/lib/store";
@@ -48,13 +49,9 @@ export async function sharePollLink(url: string, title: string, text?: string, c
   }
 }
 
-export function PollList() {
+function useGuestBallotMerge(pairs: { cid: string; id: string }[]) {
   const store = useStore();
-  const { state } = store;
-  const mine = new Set(Object.entries(state.members).filter(([, members]) => members.some((m) => m.id === state.me.id)).map(([cid]) => cid));
-  const polls = state.polls.filter((p) => mine.has(p.cid));
-  const open = polls.filter((p) => p.status === "open");
-  const pollKey = open.map((poll) => `${poll.cid}/${poll.id}`).join("|");
+  const pollKey = pairs.map((poll) => `${poll.cid}/${poll.id}`).join("|");
   const mergeRef = useRef(store.mergeGuestBallots);
   mergeRef.current = store.mergeGuestBallots;
   useEffect(() => {
@@ -74,54 +71,124 @@ export function PollList() {
     })();
     return () => { alive = false; };
   }, [store.mode, pollKey]);
-  const closed = polls.filter((p) => p.status !== "open");
-  const staff = state.campaigns.some((c) => isStaff(state, c.id));
+}
+
+export function PollList() {
+  const store = useStore();
+  const { state } = store;
+  const mine = new Set(Object.entries(state.members).filter(([, members]) => members.some((m) => m.id === state.me.id)).map(([cid]) => cid));
+  const polls = state.polls.filter((p) => mine.has(p.cid));
+  const groups = groupMemberPolls(polls, state.me.id);
+  const open = [...groups.sent.active, ...groups.received.active];
+  useGuestBallotMerge(open.map((poll) => ({ cid: poll.cid, id: poll.id })));
+  const waiting = open.filter((poll) => !voteHasYes(poll.votes[state.me.id])).length;
+  const canCreate = state.campaigns.some((c) => isStaff(state, c.id)) || state.me.canCreateCampaigns;
+  const [creating, setCreating] = useState(false);
+  const openCreator = () => {
+    setCreating(true);
+    requestAnimationFrame(() => document.getElementById("new-poll")?.scrollIntoView({ block: "start" }));
+  };
   return (
     <>
       <div className="ptitle">
         <div>
           <p className="kicker">The vote</p>
-          {open.length > 0 && <div className="eyebrow">{open.length} need{open.length === 1 ? "s" : ""} your vote</div>}
+          {waiting > 0 && <div className="eyebrow">{waiting} need{waiting === 1 ? "s" : ""} your vote</div>}
           <h1 className="lt">Polls</h1>
         </div>
-        {(staff || state.me.canCreateCampaigns) && <a className="btn sec sm" href="#new-poll"><Icon name="plus" className="ic sm" />New poll</a>}
+        {canCreate && (
+          <button type="button" className="btn sec sm" aria-expanded={creating} aria-controls="find-date-panel" onClick={openCreator}>
+            <Icon name="plus" className="ic sm" />New poll
+          </button>
+        )}
       </div>
-      <div className="grid">
-        <div>
-          {open.map((poll) => <PollCard key={poll.id} poll={poll} />)}
-          {open.length === 0 && <div className="card" style={{ padding: 24, marginBottom: 24 }}><p className="note">No polls open. The usual night stays on the calendar.</p></div>}
-          <div className="card ph-poll" id="new-poll">
-            <span className="fi" style={{ width: 48, height: 48, borderRadius: 14, display: "inline-grid", margin: "0 auto" }}><Icon name="polls" /></span>
-            <h3>Find a date</h3>
-            <p className="note" style={{ margin: "0 auto 20px", maxWidth: 300 }}>Float a few dates and let the table decide. The organizer locks the winner onto the calendar.</p>
-            {staff || state.me.canCreateCampaigns ? <NewPoll /> : <p className="note">An organizer starts the poll.</p>}
-          </div>
-        </div>
-        <aside className="side">
-          <div className="card" style={{ padding: 24 }}>
-            <div className="eyebrow">Recently closed</div>
-            {closed.length === 0 && <p className="note">Nothing locked yet.</p>}
-            {closed.map((poll) => (
-              <div key={poll.id} style={{ marginTop: 16 }}>
-                <p style={{ font: "500 17px/24px var(--serif)", margin: "0 0 4px" }}>{poll.title}</p>
-                {(() => {
-                  const opt = poll.options.find((o) => o.id === poll.chosenOptionId);
-                  if (!opt) return <span className="status">Locked</span>;
-                  const d = formatDayHeading(opt.startsAt, POLL_DISPLAY_TZ);
-                  const label = <><Icon name="check" className="ic sm" />Locked · {d.dow} {d.mon} {d.day} · {optionClocks(opt).start}</>;
-                  return poll.sessionId ? <Link className="status ok lockd" href={`/campaigns/${poll.cid}/sessions/${poll.sessionId}`}>{label}</Link> : <span className="status ok lockd">{label}</span>;
-                })()}
-              </div>
-            ))}
-          </div>
-        </aside>
+      {canCreate && <FindADate open={creating} onToggle={() => setCreating((value) => !value)} />}
+      <div className="poll-buckets">
+        <PollBucket title="Sent by me" phase={groups.sent} />
+        <PollBucket title="Received" phase={groups.received} />
       </div>
     </>
   );
 }
 
+function FindADate({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  return (
+    <section className={`find-date${open ? " open" : ""}`} id="new-poll">
+      <button type="button" className="find-date-tog" aria-expanded={open} aria-controls="find-date-panel" onClick={onToggle}>
+        <span>
+          <b>Find a date</b>
+          <small>New poll</small>
+        </span>
+        <Icon name="chev" className="ic sm" />
+      </button>
+      <div id="find-date-panel" className="find-date-panel" hidden={!open}>
+        <p className="note">Float a few dates and let the table decide. The organizer locks the winner onto the calendar.</p>
+        <NewPoll />
+      </div>
+    </section>
+  );
+}
+
+function PollBucket({ title, phase }: { title: string; phase: { active: Poll[]; closed: Poll[] } }) {
+  const slug = title.toLowerCase().replace(/\s+/g, "-");
+  return (
+    <section className="poll-bucket" aria-labelledby={`${slug}-h`}>
+      <h2 id={`${slug}-h`}>{title}</h2>
+      <PollPhase id={`${slug}-active`} label="Active" polls={phase.active} empty="None open." />
+      <PollPhase id={`${slug}-closed`} label="Closed" polls={phase.closed} empty="None closed." />
+    </section>
+  );
+}
+
+function PollPhase({ id, label, polls, empty }: { id: string; label: string; polls: Poll[]; empty: string }) {
+  return (
+    <div className="poll-phase-block">
+      <h3 className="poll-phase" id={id}>{label}</h3>
+      {polls.length === 0 ? <p className="note poll-empty">{empty}</p> : (
+        <div className="poll-rows" role="list" aria-labelledby={id}>
+          {polls.map((poll) => <PollRow key={poll.id} poll={poll} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PollRow({ poll }: { poll: Poll }) {
+  const store = useStore();
+  const campaign = store.state.campaigns.find((c) => c.id === poll.cid);
+  if (!campaign) return null;
+  const members: PollPlayer[] = membersOf(store.state, poll.cid).map((member) => ({
+    id: member.id,
+    displayName: member.displayName,
+    characterName: member.characterName,
+    pending: member.pending,
+  }));
+  const summary = summarizePoll(poll, members, store.state.me.id);
+  const title = pollDisplayTitle(poll, campaign);
+  const dates = poll.options.length;
+  const open = poll.status === "open";
+  const status = open ? "Open" : "Locked";
+  const dateLabel = `${dates} ${dates === 1 ? "date" : "dates"}`;
+  const voteLabel = `${summary.voted}/${summary.total}`;
+  return (
+    <Link
+      className={`pollrow${open ? "" : " closed"}`}
+      href={`/polls/${poll.id}`}
+      role="listitem"
+      data-world={worldFor(campaign).id}
+      style={accentVar(campaign) as CSSProperties}
+      aria-label={`${title}, ${campaign.name}, ${dateLabel}, ${summary.voted} of ${summary.total} votes, ${status}`}
+    >
+      <b>{title}</b>
+      <span className={`status${open ? "" : " closed"}`}>{status}</span>
+      <span className="meta">{campaign.name} · {dateLabel} · {voteLabel}</span>
+    </Link>
+  );
+}
+
 function PollCard({ poll }: { poll: Poll }) {
   const store = useStore();
+  useGuestBallotMerge(poll.status === "open" ? [{ cid: poll.cid, id: poll.id }] : []);
   const campaign = store.state.campaigns.find((c) => c.id === poll.cid);
   const [roster, setRoster] = useState<RosterPlayer[] | null>(null);
   const listRef = useRef(store.rosterList);
@@ -151,7 +218,7 @@ function PollCard({ poll }: { poll: Poll }) {
     <article className="card poll rise" data-world={worldFor(campaign).id} style={accentVar(campaign) as CSSProperties}>
       <span className="ribbon" />
       <div className="eyebrow">{worldFor(campaign).word} · {campaign.kind === "oneshot" ? "One-shot" : campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
-      <h2>{campaign.kind === "oneshot" ? campaign.name : poll.title}</h2>
+      <h2>{pollDisplayTitle(poll, campaign)}</h2>
       <p className="note" style={{ margin: 0 }}>Pick every date that works. {staff ? "You can lock the winner." : "The organizer locks the winner."}</p>
       <div className="opts">
         {ranked.map((row, i) => {
@@ -173,8 +240,16 @@ function PollCard({ poll }: { poll: Poll }) {
             >
               <span className="fill" style={{ width: `${Math.round((row.yes / max) * 100)}%` }} />
               <span className="chk">{picked && <Icon name="check" />}</span>
-              <span className="dt"><span className="dw">{when.dow}</span><span className="dn">{when.day}</span><span className="dm">{when.mon}</span><span className="tm">{time}</span></span>
-              <span className="t">{everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}{who && <span className="who">{who}</span>}</span>
+              <span className="dt">
+                <span className="dline">
+                  <span className="dw">{when.dow}</span>
+                  <span className="dn">{when.day}</span>
+                  <span className="dm">{when.mon}</span>
+                </span>
+                {everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}
+                <span className="tm">{time}</span>
+              </span>
+              <span className="t">{who && <span className="who">{who}</span>}</span>
               <span className="n">{row.yes}</span>
             </button>
           );
