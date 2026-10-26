@@ -1,8 +1,9 @@
 /** Public date-poll links. Pure helpers shared by the member UI, the guest page, and the vote route. */
 
 import { rankedOptions } from "./model";
+import { bestIds } from "./poll-choice";
 import { formatDayHeading, partsInZone } from "./time";
-import type { Poll, PollVote } from "./types";
+import type { Poll, PollPick, PollVote } from "./types";
 
 /** The table plays at TPK, so every poll option reads in Pacific time. */
 export const POLL_DISPLAY_TZ = "America/Los_Angeles";
@@ -21,7 +22,9 @@ export type PollPlayer = {
   memberId?: string;
 };
 
-export type GuestBallot = { name: string; picks: string[]; seatId?: string };
+export type GuestBallot = { name: string; picks: string[]; best?: string[]; seatId?: string };
+
+export type GuestVoteInput = { token: string; name: string; picks: string[]; best?: string[]; rosterId?: string };
 
 export type PollRecord = {
   poll: Poll;
@@ -42,8 +45,12 @@ export type PublicPollOption = {
   start: string;
   /** Start and end when the option has an end, e.g. "6:00 – 10:00 PM". */
   time: string;
+  /** People who can attend: Works plus Best. */
   yes: number;
+  best: number;
   names: string[];
+  /** Every member of the table can attend. */
+  everyone: boolean;
 };
 
 export type PublicPollView = {
@@ -61,7 +68,7 @@ export type PublicPollView = {
   guests: number;
   line: string;
   lockedLabel: string | null;
-  mine: { name: string; picks: string[] } | null;
+  mine: { name: string; picks: string[]; best: string[] } | null;
   /** Ballots cast from a public link. Names and picks only — never the device token. */
   guestBallots: GuestBallot[];
 };
@@ -78,11 +85,11 @@ export function nameKey(name: string): string {
   return name.normalize("NFKC").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
-export function voteHasYes(vote: { picks?: Record<string, boolean> } | undefined): boolean {
-  return !!vote && Object.values(vote.picks || {}).some(Boolean);
+export function voteHasYes(vote: { picks?: Record<string, PollPick> } | undefined): boolean {
+  return !!vote && Object.values(vote.picks || {}).some((value) => value === true || value === "best");
 }
 
-export function yesIds(vote: { picks?: Record<string, boolean> } | undefined): string[] {
+export function yesIds(vote: { picks?: Record<string, PollPick> } | undefined): string[] {
   if (!vote?.picks) return [];
   return Object.entries(vote.picks).filter(([, on]) => on).map(([id]) => id);
 }
@@ -180,19 +187,33 @@ function seatFromPicker(seats: PollPlayer[], id: string): PollPlayer | undefined
     || seats.find((seat) => seat.id === id || seat.memberId === id || seat.rosterId === id);
 }
 
-export function parseGuestBallot(body: unknown): { token: string; name: string; picks: string[]; rosterId?: string } | { error: string; status: number } {
+function dateIds(value: unknown): string[] | { error: string; status: number } {
+  if (!Array.isArray(value) || value.length > 24 || value.some((id) => typeof id !== "string" || id.length < 1 || id.length > 80)) {
+    return { error: "One of those dates isn't on this poll.", status: 400 };
+  }
+  return [...new Set(value as string[])];
+}
+
+export function parseGuestBallot(body: unknown): GuestVoteInput | { error: string; status: number } {
   if (!body || typeof body !== "object") return { error: "Send JSON.", status: 400 };
-  const raw = body as { token?: unknown; name?: unknown; picks?: unknown; rosterId?: unknown };
+  const raw = body as { token?: unknown; name?: unknown; picks?: unknown; best?: unknown; rosterId?: unknown };
   if (typeof raw.token !== "string" || !GUEST_TOKEN_RE.test(raw.token)) {
     return { error: "This device couldn't start a ballot. Refresh and try again.", status: 400 };
   }
   const named = cleanGuestName(raw.name);
   if ("error" in named) return { error: named.error, status: 400 };
-  if (!Array.isArray(raw.picks) || raw.picks.length < 1) return { error: "Pick at least one date that works.", status: 400 };
-  if (raw.picks.length > 24 || raw.picks.some((id) => typeof id !== "string" || id.length < 1 || id.length > 80)) {
-    return { error: "One of those dates isn't on this poll.", status: 400 };
+  if (!Array.isArray(raw.picks)) return { error: "Pick at least one date that works.", status: 400 };
+  const picked = dateIds(raw.picks);
+  if ("error" in picked) return picked;
+  let best: string[] = [];
+  if (raw.best != null) {
+    const favorites = dateIds(raw.best);
+    if ("error" in favorites) return favorites;
+    best = favorites;
   }
-  const picks = [...new Set(raw.picks as string[])];
+  const picks = [...picked];
+  for (const id of best) if (!picks.includes(id)) picks.push(id);
+  if (picks.length < 1) return { error: "Pick at least one date that works.", status: 400 };
   let rosterId: string | undefined;
   if (raw.rosterId != null && raw.rosterId !== "") {
     if (typeof raw.rosterId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(raw.rosterId)) {
@@ -200,7 +221,14 @@ export function parseGuestBallot(body: unknown): { token: string; name: string; 
     }
     rosterId = raw.rosterId;
   }
-  return { token: raw.token, name: named.name, picks, rosterId };
+  return { token: raw.token, name: named.name, picks, best, rosterId };
+}
+
+function storedPicks(ids: string[], best: string[] = []): Record<string, PollPick> {
+  const favorites = new Set(best);
+  const picks: Record<string, PollPick> = {};
+  for (const id of ids) picks[id] = favorites.has(id) ? "best" : true;
+  return picks;
 }
 
 const hashCache = new Map<string, string>();
@@ -285,7 +313,7 @@ export async function toPublicPoll(record: PollRecord, token: string | null): Pr
   if (hash) {
     for (const vote of Object.values(poll.votes || {})) {
       if (vote?.guestToken === hash && vote.name) {
-        mine = { name: vote.name, picks: yesIds(vote) };
+        mine = { name: vote.name, picks: yesIds(vote), best: bestIds(vote) };
         break;
       }
     }
@@ -301,7 +329,9 @@ export async function toPublicPoll(record: PollRecord, token: string | null): Pr
       start: clocks.start,
       time: clocks.time,
       yes: row.yes,
+      best: row.best,
       names: namesForOption(poll, members, row.option.id),
+      everyone: members.length > 1 && memberYesCount(poll, members, row.option.id) >= members.length,
     };
   });
   let lockedLabel: string | null = null;
@@ -315,7 +345,15 @@ export async function toPublicPoll(record: PollRecord, token: string | null): Pr
   }
   const guestBallots: GuestBallot[] = Object.entries(poll.votes || {})
     .filter((entry): entry is [string, PollVote] => !!entry[1]?.guestToken && !!entry[1]?.name && voteHasYes(entry[1]))
-    .map(([id, vote]) => ({ name: vote.name!, picks: yesIds(vote), seatId: members.some((seat) => seat.id === id) ? id : undefined }));
+    .map(([id, vote]) => {
+      const favorites = bestIds(vote);
+      return {
+        name: vote.name!,
+        picks: yesIds(vote),
+        ...(favorites.length ? { best: favorites } : {}),
+        seatId: members.some((seat) => seat.id === id) ? id : undefined,
+      };
+    });
   return {
     id: poll.id,
     cid: poll.cid,
@@ -375,7 +413,7 @@ function alreadyVoted(name: string): string {
 
 async function applyRosterVote(
   poll: Poll,
-  input: { token: string; name: string; picks: string[]; rosterId?: string },
+  input: GuestVoteInput,
   seats: PollPlayer[],
   now: Date,
 ): Promise<{ poll: Poll; edited: boolean } | { error: string; status: number }> {
@@ -411,9 +449,7 @@ async function applyRosterVote(
       return { error: NAME_TAKEN, status: 409 };
     }
   }
-  const picks: Record<string, boolean> = {};
-  for (const id of input.picks) picks[id] = true;
-  const ballot: PollVote = { picks, updatedAt: now.toISOString(), name: ballotName, guestToken: hash };
+  const ballot: PollVote = { picks: storedPicks(input.picks, input.best), updatedAt: now.toISOString(), name: ballotName, guestToken: hash };
   if (ownedKey && ownedKey !== desired) delete votes[ownedKey];
   votes[desired] = ballot;
   return { poll: { ...poll, votes }, edited: !!ownedKey };
@@ -421,7 +457,7 @@ async function applyRosterVote(
 
 export async function applyGuestVote(
   poll: Poll,
-  input: { token: string; name: string; picks: string[]; rosterId?: string },
+  input: GuestVoteInput,
   members: PollPlayer[],
   now = new Date(),
 ): Promise<{ poll: Poll; edited: boolean } | { error: string; status: number }> {
@@ -466,9 +502,7 @@ export async function applyGuestVote(
     desired = `guest:${hash}`;
   }
 
-  const picks: Record<string, boolean> = {};
-  for (const id of input.picks) picks[id] = true;
-  const ballot: PollVote = { picks, updatedAt: now.toISOString(), name: named.name, guestToken: hash };
+  const ballot: PollVote = { picks: storedPicks(input.picks, input.best), updatedAt: now.toISOString(), name: named.name, guestToken: hash };
   if (ownedKey && ownedKey !== desired) delete votes[ownedKey];
   votes[desired] = ballot;
   return { poll: { ...poll, votes }, edited: !!ownedKey };
@@ -487,9 +521,7 @@ export function withGuestBallots(poll: Poll, members: PollPlayer[], ballots: Gue
     const nk = nameKey(named.name);
     if (ballot.seatId && (ballot.seatId.startsWith("roster:") || members.some((member) => member.id === ballot.seatId))) {
       if (votes[ballot.seatId] && voteHasYes(votes[ballot.seatId])) continue;
-      const pickMap: Record<string, boolean> = {};
-      for (const id of picks) pickMap[id] = true;
-      votes[ballot.seatId] = { picks: pickMap, updatedAt: new Date().toISOString(), name: named.name };
+      votes[ballot.seatId] = { picks: storedPicks(picks, ballot.best), updatedAt: new Date().toISOString(), name: named.name };
       changed = true;
       continue;
     }
@@ -503,9 +535,7 @@ export function withGuestBallots(poll: Poll, members: PollPlayer[], ballots: Gue
     const matches = memberMatches(members, nk);
     const key = matches.length === 1 ? matches[0]!.id : `guest-view:${nk}`;
     if (votes[key] && voteHasYes(votes[key])) continue;
-    const pickMap: Record<string, boolean> = {};
-    for (const id of picks) pickMap[id] = true;
-    votes[key] = { picks: pickMap, updatedAt: new Date().toISOString(), name: named.name };
+    votes[key] = { picks: storedPicks(picks, ballot.best), updatedAt: new Date().toISOString(), name: named.name };
     changed = true;
   }
   return changed ? { ...poll, votes } : null;

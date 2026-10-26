@@ -88,6 +88,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
     setState(result);
+    stateRef.current = result;
     return result;
   }, [flash]);
 

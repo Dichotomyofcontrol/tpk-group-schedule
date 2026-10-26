@@ -1,6 +1,6 @@
 import { adminConfigured, adminDb } from "@/lib/firebase-admin";
 import { demoPollRecord, saveDemoPoll } from "@/lib/poll-demo";
-import { applyGuestVote, parseGuestBallot, toPublicPoll, validPollId, voteSeats, type PollRecord } from "@/lib/poll-public";
+import { applyGuestVote, parseGuestBallot, toPublicPoll, validPollId, voteSeats, type GuestVoteInput, type PollRecord } from "@/lib/poll-public";
 import { loadPollRecord, pollFromData } from "@/lib/poll-record";
 import { allowPollVote } from "@/lib/poll-vote-limit";
 
@@ -62,7 +62,7 @@ export async function POST(request: Request, context: { params: Promise<{ cid: s
   }
 }
 
-async function commitLiveVote(cid: string, pid: string, parsed: { token: string; name: string; picks: string[]; rosterId?: string }) {
+async function commitLiveVote(cid: string, pid: string, parsed: GuestVoteInput) {
   const db = adminDb();
   const loaded = await loadPollRecord(cid, pid);
   if (!loaded || loaded.campaignStatus === "archived") return json({ error: "That poll isn't open." }, 404);

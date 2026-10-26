@@ -168,8 +168,11 @@ export type PollOption = {
   tz: string;
 };
 
+/** `true` is Works, including every yes saved before Best. `"best"` can attend and is a favorite. */
+export type PollPick = boolean | "best";
+
 export type PollVote = {
-  picks: Record<string, boolean>;
+  picks: Record<string, PollPick>;
   updatedAt: string;
   /** Display name for a ballot cast from the public link. */
   name?: string;

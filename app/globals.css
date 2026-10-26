@@ -322,6 +322,12 @@ label { display: block; font: 600 13px/16px var(--ui); margin-bottom: 8px; }
 .opt .tm { flex-basis: auto; font: 500 12.5px/16px var(--ui); letter-spacing: 0; text-transform: none; color: var(--ink2); white-space: nowrap; }
 .opt .t { flex: 1 1 auto; min-width: 0; font-size: 13.5px; color: var(--ink3); overflow: hidden; }
 .opt .n { flex: 0 0 auto; min-width: 1.75rem; text-align: right; font: 500 20px/1 var(--serif); font-variant-numeric: tabular-nums lining-nums; color: var(--ink); }
+.opt .n.tally { min-width: 0; font: 500 12px/1.25 var(--ui); letter-spacing: 0; text-transform: none; color: var(--ink2); white-space: nowrap; }
+.opt .dt { max-width: calc(100% - 9.25rem); }
+.opt.fav { border-color: var(--ver); }
+.opt.fav .chk { background: var(--ver); border-color: var(--ver); color: var(--onbtn); }
+.opt .mine-best { margin-left: 8px; color: var(--ver); font: 600 11px/1 var(--ui); letter-spacing: .06em; text-transform: uppercase; }
+.opt.all { box-shadow: inset 3px 0 0 var(--moss); }
 .chk { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--rule2); display: grid; place-items: center; flex: none; background: transparent; }
 .opt.mine .chk { background: var(--ink); border-color: var(--ink); color: #fff; }
 .opt.mine .chk .ic { width: 14px; height: 14px; stroke-width: 2.5; }
@@ -688,6 +694,7 @@ form.ib > .field { margin: 0; }
 .opt { transition: border-color .2s ease, box-shadow .2s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
 .opt:active:not(:disabled) { transform: scale(.985); }
 .opt.mine .chk { color: var(--onbtn); }
+.opt.fav .chk { background: var(--ver); border-color: var(--ver); color: var(--onbtn); }
 @media (prefers-reduced-motion: reduce) { .opt, .opt .fill { transition: none; } .opt:active { transform: none; } }
 
 /* Sessions rows: your own RSVP when it needs attention. */
