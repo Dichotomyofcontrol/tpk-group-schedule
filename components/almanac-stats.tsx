@@ -1,0 +1,133 @@
+import { CharacterName } from "./character-sheet";
+import {
+  byWhom,
+  floorHolders,
+  groupTotals,
+  RECORDED_SPAN,
+  RECORDING_NOTE,
+  recordDate,
+  recordedCampaign,
+  thousandWords,
+  tpkAwards,
+  type RecordedCampaign,
+} from "@/lib/almanac-stats";
+
+function Bars({ rows }: { rows: { name: string; width: number; value: string }[] }) {
+  return (
+    <ul className="rec-bars">
+      {rows.map((row) => (
+        <li key={row.name}>
+          <span className="lbl" title={row.name}>{row.name}</span>
+          <span className="bar" style={{ ["--w" as string]: `${row.width}%` }}><i /></span>
+          <span className="num">{row.value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function maxCount(rows: { count: number }[]): number {
+  return Math.max(1, ...rows.map((row) => row.count));
+}
+
+export function RecordedLedger({ cid }: { cid: string }) {
+  const row = recordedCampaign(cid);
+  if (!row) return null;
+  return <LedgerBody row={row} />;
+}
+
+function LedgerBody({ row }: { row: RecordedCampaign }) {
+  const floor = floorHolders(row);
+  const topNpc = maxCount(row.npcs);
+  const topPlace = maxCount(row.locations);
+  const nat20By = byWhom(row.nat20By);
+  const nat1By = byWhom(row.nat1By);
+  const returned = row.deaths.filter((death) => death.returned).map((death) => death.name);
+  return (
+    <section className="rec-ledger" aria-label={`${row.name} recordings`}>
+      <p className="kicker">The recordings · {row.where} · plays {row.day}</p>
+      <h2>From the table</h2>
+      <p className="voice rec-span">{recordDate(row.first)} → {recordDate(row.last)}</p>
+      <div className="rec-big">
+        <div><b>{row.sessions.toLocaleString()}</b><span>sessions recorded</span></div>
+        <div><b>{Math.round(row.hours).toLocaleString()}</b><span>hours at the table</span></div>
+        <div><b>{thousandWords(row.words).toLocaleString()}</b><span>thousand words spoken</span></div>
+        <div><b>{row.nat20.toLocaleString()}</b><span>&ldquo;nat 20&rdquo; said aloud</span>{nat20By && <em>By {nat20By}</em>}</div>
+        <div><b>{row.nat1.toLocaleString()}</b><span>&ldquo;nat 1&rdquo; said aloud</span>{nat1By && <em>By {nat1By}</em>}</div>
+      </div>
+      <div className="rec-grid">
+        <article>
+          <h3>Death register</h3>
+          <ul className="rec-deaths">
+            {row.deaths.length === 0 && (
+              <li className="none"><b>0</b><i>No player character has died on record. Yet.</i></li>
+            )}
+            {row.deaths.map((death) => (
+              <li key={death.name} className={death.returned ? "back" : "stayed"}>
+                <CharacterName cid={row.id} name={death.name} className="death-name" />
+                <i>{death.line}</i>
+              </li>
+            ))}
+          </ul>
+          <p className="rec-fine">
+            Player-character deaths, from campaign canon and session titles. A line through the name means they stayed dead.
+            {returned.length > 0 && ` ${returned.join(", ").replace(/, ([^,]+)$/, " and $1")} died and came back.`}
+            {` The transcripts say killed, died, or death ${row.deathWords.toLocaleString()} times.`}
+          </p>
+        </article>
+        <article>
+          <h3>Most-named NPCs</h3>
+          <Bars rows={row.npcs.map((npc) => ({ name: npc.name, width: Math.round((npc.count / topNpc) * 100), value: npc.count.toLocaleString() }))} />
+          <p className="rec-fine">Exact-name mentions across summaries, beats and transcripts. A heuristic.</p>
+        </article>
+        <article>
+          <h3>Most-visited places</h3>
+          <Bars rows={row.locations.map((place) => ({ name: place.name, width: Math.round((place.count / topPlace) * 100), value: place.count.toLocaleString() }))} />
+          <p className="rec-fine">Mentions of a curated list of module locations. A heuristic.</p>
+        </article>
+        <article>
+          <h3>Who holds the floor</h3>
+          <Bars rows={floor.map((holder) => ({ name: holder.name, width: holder.width, value: `${holder.share}%` }))} />
+          <p className="rec-fine">Each player&apos;s share of words spoken, in the {row.labeledSessions} {row.labeledSessions === 1 ? "session" : "sessions"} whose transcripts name the speakers. A small sample.</p>
+        </article>
+      </div>
+      <p className="rec-long">Longest night: <b>{row.longest.title}</b> · {recordDate(row.longest.date)} · {row.longest.hours} h</p>
+    </section>
+  );
+}
+
+export function TpkCeremony({ campaignIds }: { campaignIds: string[] }) {
+  const totals = groupTotals(campaignIds);
+  const awards = tpkAwards(campaignIds);
+  if (!totals) return null;
+  return (
+    <section className="tpk-ledger" aria-label="The TPK awards">
+      <p className="kicker">Ledger · the recordings · {RECORDED_SPAN}</p>
+      <h2 className="lt">The TPK</h2>
+      <p className="voice rec-span">{totals.full ? "Three worlds, one table, and everyone who didn't make it." : "Every recorded night at the tables you sit."}</p>
+      <div className="tpk-totals">
+        <div><b>{totals.sessions.toLocaleString()}</b><span>sessions</span></div>
+        <div><b>{totals.hours.toLocaleString()}</b><span>hours</span></div>
+        <div><b>{totals.wordsLabel}</b><span>words</span></div>
+      </div>
+      {awards.length > 0 && (
+        <>
+          <h2 className="lt tpk-awards-h">The TPK Awards</h2>
+          <p className="voice rec-span">Nobody voted. The transcripts did. Every award lists its evidence.</p>
+          <div className="award-grid">
+            {awards.map((award) => (
+              <article key={award.title} className="award">
+                <div className="seal" aria-hidden="true">{award.n}</div>
+                <h3>{award.title}</h3>
+                <p className="who">{award.who}</p>
+                <p>{award.body}</p>
+                <p className="src">Evidence: {award.evidence}</p>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+      <p className="rec-fine">{RECORDING_NOTE}</p>
+    </section>
+  );
+}

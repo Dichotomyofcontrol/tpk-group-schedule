@@ -31,7 +31,7 @@ test("an overview spread draws cover fields, the next night, played nights, and 
   assert.match(book.spread.latest?.snippet ?? "", /vineyard burned/i);
   assert.equal(book.spread.latest?.title, "The Wizard of Wines");
   assert.ok(book.spread.party.some((spot) => spot.name === "Aralyth" && spot.detail === "Amy"));
-  assert.equal(book.blanks.includes("npcs"), true);
+  assert.equal(book.blanks.includes("npcs"), false);
   assert.equal(book.blanks.includes("factions"), true);
   assert.equal(book.blanks.includes("ledger"), true);
 });
