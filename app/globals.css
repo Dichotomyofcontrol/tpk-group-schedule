@@ -720,7 +720,7 @@ main { animation: page-in .22s cubic-bezier(.2,.8,.2,1) backwards; }
 .tline .rrow:first-child::after { background: var(--gold); }
 
 
-.poll .nudge { margin-top: 12px; margin-left: 8px; }
+.poll .remind { margin-top: 12px; width: fit-content; max-width: 100%; }
 
 /* Session place opens in Maps */
 .maplink { color: inherit; text-decoration: underline; text-decoration-color: var(--rule2); text-underline-offset: 4px; min-height: 44px; display: inline-flex; align-items: center; }

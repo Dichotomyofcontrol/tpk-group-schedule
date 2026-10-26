@@ -17,6 +17,12 @@ export function linkCount(data: LinkShareData): number {
   return `${data.text || ""}\n${data.url}`.split(data.url).length - 1;
 }
 
+/** A ready-to-send note naming who hasn't voted, with the poll link in the message. */
+export function pollReminderMessage(names: string[], campaignName: string, url: string): string {
+  const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}` : names[0] || "friends";
+  return `${who}: we're picking the next ${campaignName} night. Tap the dates that work for you: ${url}`;
+}
+
 function proseWithoutLink(text: string | undefined, url: string): string {
   if (!text) return "";
   const stripped = url ? text.split(url).join(" ") : text;
