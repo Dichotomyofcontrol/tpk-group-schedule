@@ -2,6 +2,7 @@ import { excerpt, recapPlain, type RecapPatch } from "./recap";
 import { cadenceDates, horizonEnd, occurrenceInstant } from "./recurrence";
 import { partsInZone, weekdayIndex, ymdInZone, zonedTimeToUtc } from "./time";
 import { withAttendance } from "./attendance";
+import { cyclePick, choiceOf } from "./poll-choice";
 import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Role, Session, SessionFile, User } from "./types";
 
 export function campaignById(state: AppState, cid: string): Campaign | undefined {
@@ -371,21 +372,31 @@ export function toggleVote(state: AppState, pollId: string, optionId: string, ui
     polls: state.polls.map((p) => {
       if (p.id !== pollId || p.status !== "open") return p;
       const mine = p.votes[uid] ?? { picks: {}, updatedAt: new Date().toISOString() };
-      const picks = { ...mine.picks, [optionId]: !mine.picks[optionId] };
-      return { ...p, votes: { ...p.votes, [uid]: { picks, updatedAt: new Date().toISOString() } } };
+      const picks = { ...mine.picks };
+      const next = cyclePick(picks[optionId]);
+      if (next === undefined) delete picks[optionId];
+      else picks[optionId] = next;
+      return { ...p, votes: { ...p.votes, [uid]: { ...mine, picks, updatedAt: new Date().toISOString() } } };
     }),
   };
 }
 
-export function rankedOptions(poll: Poll, cadence: Cadence | null): { option: Poll["options"][number]; yes: number }[] {
+export function rankedOptions(poll: Poll, cadence: Cadence | null): { option: Poll["options"][number]; yes: number; best: number }[] {
   return poll.options
     .map((option) => {
       let yes = 0;
-      for (const vote of Object.values(poll.votes)) if (vote.picks[option.id]) yes += 1;
-      return { option, yes };
+      let best = 0;
+      for (const vote of Object.values(poll.votes)) {
+        const choice = choiceOf(vote?.picks?.[option.id]);
+        if (!choice) continue;
+        yes += 1;
+        if (choice === "best") best += 1;
+      }
+      return { option, yes, best };
     })
     .sort((a, b) => {
       if (b.yes !== a.yes) return b.yes - a.yes;
+      if (b.best !== a.best) return b.best - a.best;
       const aUsual = cadence ? usualScore(a.option.startsAt, cadence) : 0;
       const bUsual = cadence ? usualScore(b.option.startsAt, cadence) : 0;
       if (bUsual !== aUsual) return bUsual - aUsual;

@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
 import { groupMemberPolls, pollDisplayTitle } from "@/lib/poll-lists";
+import { choiceOf } from "@/lib/poll-choice";
 import { memberYesCount, mergeVoteSeats, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
 import { linkShareData } from "@/lib/share-link";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
+import { PollDateRow } from "./poll-date";
 import { Avatar, Icon, BackBar } from "./ui";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
@@ -219,39 +221,31 @@ function PollCard({ poll }: { poll: Poll }) {
       <span className="ribbon" />
       <div className="eyebrow">{worldFor(campaign).word} · {campaign.kind === "oneshot" ? "One-shot" : campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
       <h2>{pollDisplayTitle(poll, campaign)}</h2>
-      <p className="note" style={{ margin: 0 }}>Pick every date that works. {staff ? "You can lock the winner." : "The organizer locks the winner."}</p>
+      <p className="note" style={{ margin: 0 }}>Pick every date that works. Tap twice for your favorite.</p>
       <div className="opts">
         {ranked.map((row, i) => {
           const when = formatDayHeading(row.option.startsAt, POLL_DISPLAY_TZ);
           const time = optionTimeLabel(row.option);
-          const picked = !!mine[row.option.id];
+          const choice = choiceOf(mine[row.option.id]);
           const lead = i === 0 && row.yes > 0;
           const everyone = members.length > 1 && memberYesCount(poll, members, row.option.id) >= members.length;
-          const names = summary.namesFor(row.option.id);
-          const who = names.length > 3 ? `${names.slice(0, 3).join(", ")} +${names.length - 3}` : names.join(", ");
           return (
-            <button
+            <PollDateRow
               key={row.option.id}
-              aria-pressed={picked}
-              aria-label={`${when.dow} ${when.mon} ${when.day} ${time}: ${row.yes} ${row.yes === 1 ? "vote" : "votes"}${everyone ? ", works for everyone" : lead ? ", leading" : ""}${names.length ? ` (${names.join(", ")})` : ""}`}
-              className={`opt${picked ? " mine" : ""}${i === 0 && row.yes > 0 ? " lead" : ""}`}
+              dow={when.dow}
+              day={when.day}
+              mon={when.mon}
+              time={time}
+              can={row.yes}
+              best={row.best}
+              max={max}
+              names={summary.namesFor(row.option.id)}
+              choice={choice}
+              lead={lead}
+              everyone={everyone}
               disabled={poll.status !== "open"}
-              onClick={() => store.toggleVote(poll.id, row.option.id)}
-            >
-              <span className="fill" style={{ width: `${Math.round((row.yes / max) * 100)}%` }} />
-              <span className="chk">{picked && <Icon name="check" />}</span>
-              <span className="dt">
-                <span className="dline">
-                  <span className="dw">{when.dow}</span>
-                  <span className="dn">{when.day}</span>
-                  <span className="dm">{when.mon}</span>
-                </span>
-                {everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}
-                <span className="tm">{time}</span>
-              </span>
-              <span className="t">{who && <span className="who">{who}</span>}</span>
-              <span className="n">{row.yes}</span>
-            </button>
+              onCycle={poll.status === "open" ? () => store.toggleVote(poll.id, row.option.id) : undefined}
+            />
           );
         })}
       </div>
