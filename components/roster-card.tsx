@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { rosterJoinPath, seatLabel, unifyPlayers, type RosterInput, type RosterPlayer, type TableSeat } from "@/lib/roster";
 import { useStore } from "@/lib/store";
 import type { Member, Role } from "@/lib/types";
+import { CharacterName } from "./character-sheet";
 import { sharePollLink } from "./poll-view";
 import { Icon } from "./ui";
 
@@ -180,7 +181,7 @@ export function RosterCard({ cid, manage, members, canInvite = false }: { cid: s
                   <>
                     <div className="mi">
                       <b>{seat.name}</b>
-                      {character && <span className="sub">{character}</span>}
+                      {character && <CharacterName cid={cid} name={character} className="sub" />}
                     </div>
                     <span className={label === "Joined" ? "rpill joined" : label === "Link copied" ? "rpill copied" : "rpill"}>{label}</span>
                     {manage && (

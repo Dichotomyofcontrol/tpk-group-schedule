@@ -1,3 +1,4 @@
+import { rememberCharacter } from "./character-summary";
 import { excerpt, recapPlain, type RecapPatch } from "./recap";
 import { cadenceDates, horizonEnd, occurrenceInstant } from "./recurrence";
 import { partsInZone, weekdayIndex, ymdInZone, zonedTimeToUtc } from "./time";
@@ -288,7 +289,9 @@ export function setCampaignPatch(state: AppState, cid: string, patch: Partial<Ca
 
 export function setMember(state: AppState, cid: string, memberId: string, patch: Partial<Member>): AppState {
   const list = membersOf(state, cid).map((m) => (m.id === memberId ? { ...m, ...patch } : m));
-  return { ...state, members: { ...state.members, [cid]: list } };
+  const next = { ...state, members: { ...state.members, [cid]: list } };
+  const name = typeof patch.characterName === "string" ? patch.characterName.trim() : "";
+  return name ? rememberCharacter(next, cid, name) : next;
 }
 
 /** Exactly one organizer. The previous organizer becomes a co-organizer. */
@@ -516,11 +519,12 @@ export function acceptInvite(state: AppState, token: string, person: { id: strin
     tags: [],
     joinedAt: new Date().toISOString(),
   };
-  return {
+  const joined: AppState = {
     ...state,
-    invites: state.invites.map((i) => (i.token === token ? { ...i, status: "accepted", uses: i.uses + 1 } : i)),
+    invites: state.invites.map((i) => (i.token === token ? { ...i, status: "accepted" as const, uses: i.uses + 1 } : i)),
     members: { ...state.members, [invite.cid]: [...membersOf(state, invite.cid), member] },
   };
+  return person.characterName?.trim() ? rememberCharacter(joined, invite.cid, person.characterName) : joined;
 }
 
 export function upcomingSessions(state: AppState, cid?: string, now = new Date()): Session[] {

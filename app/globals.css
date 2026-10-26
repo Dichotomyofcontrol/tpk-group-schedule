@@ -110,7 +110,7 @@ main.cm { padding-top: 0; }
 :root[data-theme="night"] .card { border-color: rgba(255,255,255,.06); }
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   padding: 6px 8px calc(6px + var(--safe-b));
   background: var(--glass2);
   backdrop-filter: blur(20px) saturate(1.6);

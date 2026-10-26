@@ -1,5 +1,5 @@
 import { cadenceDates, occurrenceInstant } from "./recurrence";
-import type { AppState, Attendance, Campaign, Invite, Member, Poll, Session, TableCharacter, User } from "./types";
+import type { AppState, Attendance, Campaign, CharacterSummary, Invite, Member, Poll, Session, TableCharacter, User } from "./types";
 
 const TZ = "America/Los_Angeles";
 
@@ -632,10 +632,40 @@ export function buildDemo(personaId = "giada"): AppState {
     polls: [saltPoll(), buildPoll(), amyOpenPoll(), sethLockedPoll(), amyLockedPoll()],
     invites: INVITES.map((i) => ({ ...i })),
     hiddenCids: ["special"],
+    characterSummaries: { strahd: strahdSummaries() },
     groupStartedOn: "2024-10-18",
   };
 }
 
 export function freshDemo(personaId = "giada"): AppState {
   return buildDemo(personaId);
+}
+
+const PENDING_AT = "2026-10-01T00:00:00.000Z";
+
+function pendingSummary(name: string): CharacterSummary {
+  return { name, status: "pending", updatedAt: PENDING_AT };
+}
+
+/** Ichabod's prose is stored fixture data, the way the Archivist would write it. Nothing here calls a model. */
+function strahdSummaries(): CharacterSummary[] {
+  return [
+    pendingSummary("Aralyth"),
+    pendingSummary("Vloskev"),
+    pendingSummary("Lysander"),
+    pendingSummary("Lizbeth"),
+    pendingSummary("Giada"),
+    {
+      name: "Ichabod",
+      status: "ready",
+      updatedAt: "2026-10-10T00:00:00.000Z",
+      text: "Ichabod carries the third gem from the Wizard of Wines and will not hand it over. He stands at the front when the road turns hostile, quieter since the vineyard burned. The Abbot's smile stayed with him longer than the smoke. The rest of the party has learned not to ask what the gem is for.",
+      facts: {
+        class: "Fighter",
+        ancestry: "Human",
+        role: "Holds the front, and the gem",
+        moment: "Kept the gem when the vineyard burned",
+      },
+    },
+  ];
 }
