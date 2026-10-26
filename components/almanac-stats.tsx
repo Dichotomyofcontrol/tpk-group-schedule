@@ -2,15 +2,11 @@ import { CharacterName } from "./character-sheet";
 import {
   byWhom,
   campaignAwards,
-  combinedLedger,
   floorHolders,
   type Award,
-  type LedgerRow,
-  groupTotals,
   recordDate,
   recordedCampaign,
   thousandWords,
-  tpkAwards,
   type RecordedCampaign,
 } from "@/lib/almanac-stats";
 
@@ -49,13 +45,6 @@ export function RecordedLedger({ cid, kicker, withAwards = true }: { cid: string
   );
 }
 
-/** The full original ledger, every stat summed across the player's recorded tables. */
-export function CombinedLedger({ campaignIds }: { campaignIds: string[] }) {
-  const row = combinedLedger(campaignIds);
-  if (!row) return null;
-  return <LedgerBody row={row} heading={row.span ? "All tables" : "Stats"} floorShown={!row.span} />;
-}
-
 function AwardGrid({ awards }: { awards: Award[] }) {
   return (
     <div className="award-grid">
@@ -71,7 +60,7 @@ function AwardGrid({ awards }: { awards: Award[] }) {
   );
 }
 
-function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: LedgerRow | RecordedCampaign; heading?: string; floorShown?: boolean }) {
+function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: RecordedCampaign; heading?: string; floorShown?: boolean }) {
   const floor = floorHolders(row);
   const topNpc = maxCount(row.npcs);
   const topPlace = maxCount(row.locations);
@@ -96,7 +85,7 @@ function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: Ledger
             )}
             {row.deaths.map((death) => (
               <li key={death.name} className={death.returned ? "back" : "stayed"}>
-                <CharacterName cid={("cid" in death && death.cid) || row.id} name={death.name} className="death-name" />
+                <CharacterName cid={row.id} name={death.name} className="death-name" />
                 <i>{death.line}</i>
               </li>
             ))}
@@ -118,28 +107,6 @@ function LedgerBody({ row, heading = "Stats", floorShown = true }: { row: Ledger
         )}
       </div>
       <p className="rec-long">Longest night: <b>{row.longest.title}</b> · {recordDate(row.longest.date)} · {row.longest.hours} h</p>
-    </section>
-  );
-}
-
-export function TpkCeremony({ campaignIds }: { campaignIds: string[] }) {
-  const totals = groupTotals(campaignIds);
-  const awards = tpkAwards(campaignIds);
-  if (!totals) return null;
-  return (
-    <section className="tpk-ledger" aria-label="The TPK awards">
-      <h2 className="lt">The TPK</h2>
-      <div className="tpk-totals">
-        <div><b>{totals.sessions.toLocaleString()}</b><span>sessions</span></div>
-        <div><b>{totals.hours.toLocaleString()}</b><span>hours</span></div>
-        <div><b>{totals.wordsLabel}</b><span>words</span></div>
-      </div>
-      {awards.length > 0 && (
-        <>
-          <h2 className="lt tpk-awards-h">Awards</h2>
-          <AwardGrid awards={awards} />
-        </>
-      )}
     </section>
   );
 }

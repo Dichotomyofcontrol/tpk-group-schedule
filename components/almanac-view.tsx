@@ -9,7 +9,8 @@ import { formatDayHeading, formatZone, relativeWhen } from "@/lib/time";
 import type { LedgerEntry } from "@/lib/types";
 import { accentVar, worldFor } from "@/lib/world";
 import type { CSSProperties } from "react";
-import { CombinedLedger, RecordedLedger, TpkCeremony } from "./almanac-stats";
+import { ForYouLedger } from "./almanac-me";
+import { RecordedLedger } from "./almanac-stats";
 import { CampaignTabs } from "./campaign-tabs";
 import { CharacterName } from "./character-sheet";
 import { Avatar, BackBar, CampaignCover, Icon, Skeleton, Watermark } from "./ui";
@@ -31,22 +32,7 @@ export function AlmanacView() {
           <h1 className="lt">Almanac</h1>
         </div>
       </div>
-      {(() => {
-        const keys = spreads
-          .map((spread) => state.campaigns.find((item) => item.id === spread.id))
-          .map((campaign) => (campaign ? recordedKey(campaign) : null))
-          .filter((key): key is string => !!key);
-        if (!keys.length) return null;
-        return (
-          <>
-            <TpkCeremony campaignIds={keys} />
-            <CombinedLedger campaignIds={keys} />
-            {keys.length > 1 && keys.map((key, index) => (
-              <RecordedLedger key={key} cid={key} withAwards={false} kicker={`Ledger ${String(index + 1).padStart(2, "0")} / ${String(keys.length).padStart(2, "0")}`} />
-            ))}
-          </>
-        );
-      })()}
+      <ForYouLedger state={state} />
       {state.syncing && spreads.length === 0 && <Skeleton rows={2} hero={false} />}
       {!state.syncing && spreads.length === 0 && (
         <div className="card empty-card">
@@ -59,7 +45,15 @@ export function AlmanacView() {
         {spreads.map((spread) => {
           const campaign = state.campaigns.find((item) => item.id === spread.id);
           if (!campaign) return null;
-          return <Spread key={spread.id} spread={spread} cover={<CampaignCover campaign={campaign} />} />;
+          const key = recordedKey(campaign);
+          return (
+            <Spread
+              key={spread.id}
+              spread={spread}
+              cover={<CampaignCover campaign={campaign} />}
+              stats={key ? <RecordedLedger cid={key} /> : null}
+            />
+          );
         })}
       </div>
     </>
@@ -213,7 +207,7 @@ export function CampaignAlmanac({ cid }: { cid: string }) {
   );
 }
 
-function Spread({ spread, cover }: { spread: AlmanacSpread; cover: ReactNode }) {
+function Spread({ spread, cover, stats }: { spread: AlmanacSpread; cover: ReactNode; stats?: ReactNode }) {
   const campaign = { id: spread.id, name: spread.name };
   const faces = spread.party.length
     ? spread.party
@@ -261,6 +255,12 @@ function Spread({ spread, cover }: { spread: AlmanacSpread; cover: ReactNode }) 
           <Link className="lnk" href={`/campaigns/${spread.id}`}>The table</Link>
         </p>
       </div>
+      {stats && (
+        <details className="spread-stats">
+          <summary>Stats</summary>
+          {stats}
+        </details>
+      )}
     </article>
   );
 }
