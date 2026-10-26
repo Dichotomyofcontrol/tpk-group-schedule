@@ -23,6 +23,7 @@ import {
   writeBatch,
   type DocumentData,
 } from "firebase/firestore";
+import { cadencePatchForMerge, campaignPatchForMerge } from "./cover-doc";
 import { firebaseConfigured, getFirebase } from "./firebase-client";
 import { applyTheme, readStoredTheme } from "./theme";
 import { countPdfPages, nestedRecapPath, validatePdf } from "./recap";
@@ -145,6 +146,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
   const toastId = useRef(1);
   const stateRef = useRef<AppState | null>(null);
   const coverCache = useRef(new Map<string, string>());
+  // createCampaign's document write is in flight until this resolves. Cover uploads wait for it.
+  const creatingRef = useRef(new Map<string, Promise<void>>());
   const detachRef = useRef<(cid: string) => void>(() => undefined);
   stateRef.current = state;
 
@@ -419,6 +422,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         flash(result.error, "err");
         return null;
       }
+      stateRef.current = result;
       setState(result);
       return result;
     };
@@ -549,25 +553,39 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       coverUrl: async (path) => {
         const hit = coverCache.current.get(path);
         if (hit) return hit;
-        try {
-          const { storage } = getFirebase();
-          const { getBlob, ref } = await import("firebase/storage");
-          const url = URL.createObjectURL(await getBlob(ref(storage, path)));
-          coverCache.current.set(path, url);
-          return url;
-        } catch {
-          return null;
+        const { storage, auth } = getFirebase();
+        const { getDownloadURL, ref } = await import("firebase/storage");
+        // getBlob pulls the bytes through XHR and, on a miss, the hero paints the
+        // empty default. A download URL is what an <img> can load after refresh.
+        for (let attempt = 0; attempt < 4; attempt++) {
+          try {
+            if (auth.currentUser) await auth.currentUser.getIdToken();
+            const url = await getDownloadURL(ref(storage, path));
+            coverCache.current.set(path, url);
+            return url;
+          } catch {
+            await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
+          }
         }
+        return null;
       },
       uploadCover: async (cid, image) => {
+        // The create write replaces the whole document. Wait until it has landed
+        // so it cannot overwrite this cover with { path: null }.
+        const gate = creatingRef.current.get(cid);
+        if (gate) {
+          try { await gate; } catch { return false; }
+        }
         const path = `campaigns/${cid}/cover-${Date.now()}.jpg`;
         try {
           const { storage, db } = getFirebase();
-          const { ref, uploadBytes, deleteObject } = await import("firebase/storage");
-          await uploadBytes(ref(storage, path), image, { contentType: "image/jpeg" });
-          coverCache.current.set(path, URL.createObjectURL(image));
+          const { ref, uploadBytes, deleteObject, getDownloadURL } = await import("firebase/storage");
+          const stored = ref(storage, path);
+          await uploadBytes(stored, image, { contentType: "image/jpeg" });
+          const src = await getDownloadURL(stored).catch(() => "");
+          coverCache.current.set(path, src || URL.createObjectURL(image));
           const before = stateRef.current?.campaigns.find((c) => c.id === cid)?.cover?.path;
-          const cover = { src: "", path, focalX: 0.5, focalY: 0.5 };
+          const cover = { src, path, focalX: 0.5, focalY: 0.5 };
           applyLocal((s) => setCampaignPatch(s, cid, { cover }));
           await setDoc(doc(db, "campaigns", cid), { cover }, { merge: true });
           if (before && before !== path) await deleteObject(ref(storage, before)).catch(() => undefined);
@@ -647,7 +665,9 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         if (!next) return;
         const { db } = getFirebase();
         const campaign = next.campaigns.find((c) => c.id === cid);
-        if (campaign) void setDoc(doc(db, "campaigns", cid), campaign);
+        // Merge the schedule only. A full setDoc replaced cover.path and the
+        // hero fell back to the empty strip after refresh.
+        if (campaign) void setDoc(doc(db, "campaigns", cid), cadencePatchForMerge(campaign), { merge: true });
         const batch = writeBatch(db);
         for (const session of next.sessions.filter((s) => s.cid === cid)) {
           batch.set(doc(db, "campaigns", cid, "sessions", session.id), { ...session, attendance: attendanceMap(session.attendance) });
@@ -656,11 +676,11 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       },
       patchCampaign: (cid, patch) => {
         const next = applyLocal((s) => setCampaignPatch(s, cid, patch));
-        const campaign = next?.campaigns.find((c) => c.id === cid);
-        if (campaign) {
-          const { db } = getFirebase();
-          void setDoc(doc(db, "campaigns", cid), campaign);
-        }
+        if (!next) return;
+        const data = campaignPatchForMerge(patch);
+        if (!Object.keys(data).length) return;
+        const { db } = getFirebase();
+        void setDoc(doc(db, "campaigns", cid), data, { merge: true });
       },
       patchMember: (cid, memberId, patch) => {
         const next = applyLocal((s) => setMember(s, cid, memberId, patch));
@@ -686,16 +706,23 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           return null;
         }
         setState(next);
+        stateRef.current = next;
         const created = next.campaigns[next.campaigns.length - 1];
         const { db } = getFirebase();
-        void (async () => {
-          await setDoc(doc(db, "campaigns", created.id), created);
+        const pending = (async () => {
+          await setDoc(doc(db, "campaigns", created.id), omitUndefined(created));
           const member = next.members[created.id]?.[0];
           if (member) await setDoc(doc(db, "campaigns", created.id, "members", member.id), { ...member, uid: authUser.uid });
           for (const session of next.sessions.filter((s) => s.cid === created.id)) {
             await setDoc(doc(db, "campaigns", created.id, "sessions", session.id), omitUndefined({ ...session, attendance: attendanceMap(session.attendance) }));
           }
         })();
+        const gated = pending.catch(() => {
+          flash("Couldn't save that campaign. Check your connection and try again.", "err");
+          throw new Error("create");
+        });
+        creatingRef.current.set(created.id, gated);
+        void gated.catch(() => undefined);
         return created.id;
       },
       toggleVote: (pollId, optionId) => {
@@ -750,19 +777,22 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         const polled = addPoll(made, created.id, "Which night works?", input.options);
         if ("error" in polled) { flash(polled.error, "err"); return null; }
         setState(polled);
+        stateRef.current = polled;
         const poll = polled.polls[polled.polls.length - 1];
         const member = polled.members[created.id]?.[0];
         const { db } = getFirebase();
         // In order: the rules only let the organizer write the poll once their member doc exists.
-        void (async () => {
-          try {
-            await setDoc(doc(db, "campaigns", created.id), created);
-            if (member) await setDoc(doc(db, "campaigns", created.id, "members", member.id), { ...member, uid: authUser.uid });
-            await setDoc(doc(db, "campaigns", created.id, "polls", poll.id), poll);
-          } catch {
-            flash("Couldn't save the one-shot. Check your connection and try again.", "err");
-          }
+        const pending = (async () => {
+          await setDoc(doc(db, "campaigns", created.id), omitUndefined(created));
+          if (member) await setDoc(doc(db, "campaigns", created.id, "members", member.id), { ...member, uid: authUser.uid });
+          await setDoc(doc(db, "campaigns", created.id, "polls", poll.id), poll);
         })();
+        const gated = pending.catch(() => {
+          flash("Couldn't save the one-shot. Check your connection and try again.", "err");
+          throw new Error("create");
+        });
+        creatingRef.current.set(created.id, gated);
+        void gated.catch(() => undefined);
         return created.id;
       },
       nudge: (pollId, uid) => {
