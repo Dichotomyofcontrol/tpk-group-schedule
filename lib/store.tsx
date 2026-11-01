@@ -107,3 +107,8 @@ export function useStore(): StoreApi {
   if (!ctx) throw new Error("useStore outside provider");
   return ctx;
 }
+
+/** Null until a data provider mounts (the landing renders before Firebase loads). */
+export function useOptionalStore(): StoreApi | null {
+  return useContext(StoreContext);
+}
