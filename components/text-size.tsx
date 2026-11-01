@@ -16,7 +16,7 @@ export function TextSize() {
   return (
     <div className="txt-size" role="group" aria-label="Text size">
       <button type="button" aria-pressed={!big} onClick={() => set(false)}>A</button>
-      <button type="button" aria-pressed={big} onClick={() => set(true)} aria-label="Larger text">A+</button>
+      <button type="button" aria-pressed={big} onClick={() => set(true)} title="Larger text">A+</button>
     </div>
   );
 }
