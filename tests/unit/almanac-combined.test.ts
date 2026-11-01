@@ -12,14 +12,18 @@ test("who holds the floor stays per campaign with percent shares", () => {
   }
 });
 
-test("recorded key matches by slug or name and per-campaign awards exist", () => {
-  assert.equal(recordedKey({ id: "x1", slug: "curse-of-strahd", name: "Curse of Strahd" }), "strahd");
+test("recorded key is the exact campaign id only and per-campaign awards exist", () => {
+  assert.equal(recordedKey({ id: "strahd" }), "strahd");
+  assert.equal(recordedKey({ id: "x1", slug: "curse-of-strahd", name: "Curse of Strahd" } as { id: string }), null);
   assert.equal(recordedKey({ id: "zzz", slug: "other", name: "Homebrew" }), null);
   assert.ok(campaignAwards("frostmaiden").length >= 4);
 });
 
 import { buildDemo } from "../../lib/demo-data.ts";
 import { forYou } from "../../lib/almanac-me.ts";
+import { setRecorded } from "../../lib/almanac-stats.ts";
+import { DEMO_RECORDED, recordedPayload } from "../../lib/almanac-records.server.ts";
+setRecorded(recordedPayload(Object.keys(DEMO_RECORDED), DEMO_RECORDED));
 
 test("for you finds Seth's characters, talk share, deaths and awards from real data", () => {
   const me = forYou(buildDemo("seth"), new Date("2026-10-25T12:00:00Z"));
