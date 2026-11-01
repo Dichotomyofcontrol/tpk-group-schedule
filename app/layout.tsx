@@ -40,8 +40,8 @@ const mono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: SITE_NAME,
-  description: "Sessions, RSVPs, and recaps for your table.",
+  title: { default: `${SITE_NAME}: game night scheduling for tabletop groups`, template: `%s | ${SITE_NAME}` },
+  description: "Plan sessions, track who is in, and keep recaps with the campaign. Built for tabletop groups.",
   metadataBase: new URL(SITE_ORIGIN),
   openGraph: { siteName: SITE_NAME, type: "website" },
   twitter: { card: "summary_large_image" },
@@ -58,7 +58,7 @@ export const viewport: Viewport = {
 };
 
 // Almanac ink is the default. v3 moves everyone onto it once; an explicit paper choice sticks after that.
-const themeBoot = `try{var t=localStorage.getItem('tpk-theme');if(!localStorage.getItem('tpk-theme-v3')){t='dark';localStorage.setItem('tpk-theme','dark');localStorage.setItem('tpk-theme-v3','1');}if(t==='system'){t='dark';localStorage.setItem('tpk-theme','dark');}var night=t!=='light';document.documentElement.dataset.theme=night?'night':'cream';document.documentElement.classList.add('js');var c=night?'#0b0a0c':'#efe7da';addEventListener('DOMContentLoaded',function(){document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=c})});}catch(e){}`;
+const themeBoot = `try{if(localStorage.getItem('tpk-text')==='lg')document.documentElement.classList.add('txl');var t=localStorage.getItem('tpk-theme');if(!localStorage.getItem('tpk-theme-v3')){t='dark';localStorage.setItem('tpk-theme','dark');localStorage.setItem('tpk-theme-v3','1');}if(t==='system'){t='dark';localStorage.setItem('tpk-theme','dark');}var night=t!=='light';document.documentElement.dataset.theme=night?'night':'cream';document.documentElement.classList.add('js');var c=night?'#0b0a0c':'#efe7da';addEventListener('DOMContentLoaded',function(){document.querySelectorAll('meta[name=theme-color]').forEach(function(m){m.content=c})});}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
