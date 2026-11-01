@@ -1,7 +1,14 @@
-import raw from "../data/almanac-stats.json";
+/**
+ * Recorded Almanac stats: pure helpers over a payload the server hands out.
+ * The raw stats live in lib/almanac-records.server.ts and are served only to
+ * signed-in members of each campaign (GET /api/almanac/recorded). Nothing in
+ * here imports the data, so it never ships in client JS.
+ */
+type RawFile = typeof import("../data/almanac-stats.json");
+type RawRow = RawFile["campaigns"][keyof RawFile["campaigns"]];
 
 /** One mined campaign. `sessions` is the count; `sessionsList` is every recorded night. */
-export type RecordedCampaign = (typeof raw.campaigns)[keyof typeof raw.campaigns] & { id: string };
+export type RecordedCampaign = RawRow & { id: string };
 
 export type FloorHolder = { name: string; share: number; width: number };
 
@@ -24,30 +31,38 @@ export type GroupTotals = {
   full: boolean;
 };
 
-const CAMPAIGNS = raw.campaigns as Record<string, (typeof raw.campaigns)[keyof typeof raw.campaigns]>;
-const RECORDED_IDS = Object.keys(CAMPAIGNS);
+/** What the server returns: only the campaigns this viewer is a member of, keyed by Firestore campaign id. */
+export type RecordedPayload = {
+  recorded: string;
+  /** How many recorded campaigns exist in all, so "full" can be told without listing the others. */
+  total: number;
+  campaigns: Record<string, RawRow>;
+  moments: Omit<Award, "n">[];
+};
+
+let CAMPAIGNS: Record<string, RawRow> = {};
+let TOTAL = 0;
+let SPAN = "";
+
+/** Load (or clear, with null) the stats this viewer may see. */
+export function setRecorded(payload: RecordedPayload | null): void {
+  CAMPAIGNS = payload ? { ...payload.campaigns } : {};
+  MOMENTS = payload ? [...payload.moments] : [];
+  TOTAL = payload ? payload.total : 0;
+  SPAN = payload ? payload.recorded : "";
+}
 
 const SMALL = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
 
 export function recordedCampaign(cid: string): RecordedCampaign | null {
-  const row = CAMPAIGNS[cid];
+  const row = Object.prototype.hasOwnProperty.call(CAMPAIGNS, cid) ? CAMPAIGNS[cid] : undefined;
   if (!row) return null;
   return { id: cid, ...row };
 }
 
-function norm(value: string | undefined | null): string {
-  return (value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-/** The recorded key for a campaign, matched by id, then slug, then name, so a renamed id still finds its numbers. */
-export function recordedKey(campaign: { id: string; slug?: string | null; name?: string | null }): string | null {
-  if (CAMPAIGNS[campaign.id]) return campaign.id;
-  const wanted = [norm(campaign.id), norm(campaign.slug), norm(campaign.name)].filter(Boolean);
-  for (const [key, row] of Object.entries(CAMPAIGNS)) {
-    const names = [norm(key), norm(row.sourceKey), norm(row.name), norm(row.short)];
-    if (wanted.some((w) => names.includes(w) || names.some((n) => n.length > 3 && w.includes(n)))) return key;
-  }
-  return null;
+/** The recorded key for a campaign: its exact Firestore id, or nothing. No name or slug matching. */
+export function recordedKey(campaign: { id: string }): string | null {
+  return Object.prototype.hasOwnProperty.call(CAMPAIGNS, campaign.id) ? campaign.id : null;
 }
 
 /** A ledger row: one campaign, or several combined. Deaths carry their own campaign for the character link. */
@@ -161,37 +176,8 @@ function series(names: string[]): string {
 
 type Draft = Omit<Award, "n">;
 
-/** Story moments cited in the Archivist record, in ceremony order per table. */
-const MOMENTS: Draft[] = [
-  {
-    title: "Coup de Grâce",
-    who: "Rosie",
-    body: "A crystal-tipped dart to the neck froze Sephek Kaltro solid and ended the campaign's first boss fight. (Rime S3)",
-    evidence: "Transcript",
-    campaignId: "frostmaiden",
-  },
-  {
-    title: "Bedside Manner",
-    who: "Vloskev",
-    body: "Emergency surgery on Lysander at a wolf-ringed portcullis, then identified the burgomaster's \"salted meat\" as human thigh. (Strahd S1)",
-    evidence: "Transcript",
-    campaignId: "strahd",
-  },
-  {
-    title: "Nosebleed Seats",
-    who: "Giada",
-    body: "Hit Strahd with a psychic burst that drew blood from his nose, in his first appearance. (Strahd S7)",
-    evidence: "Archivist handout",
-    campaignId: "strahd",
-  },
-  {
-    title: "Hostile Takeover",
-    who: "Gor",
-    body: "Dominated by an undead spellcaster and turned on his friends, then broke free and knocked it flat. (Saltmarsh S5)",
-    evidence: "Archivist handout",
-    campaignId: "saltmarsh",
-  },
-];
+/** Story moments for the tables in view. Loaded with the stats; never bundled. */
+let MOMENTS: Draft[] = [];
 
 function number(rows: Draft[], limit: number): Award[] {
   return rows.slice(0, limit).map((award, index) => ({ ...award, n: String(index + 1).padStart(2, "0") }));
@@ -353,10 +339,12 @@ export function groupTotals(memberIds: string[]): GroupTotals | null {
     hours: Math.round(rows.reduce((sum, row) => sum + row.hours, 0)),
     wordsLabel: `${millions.toFixed(2)}M`,
     campaigns: rows.length,
-    full: RECORDED_IDS.every((id) => memberIds.includes(id)),
+    full: TOTAL > 0 && rows.length >= TOTAL,
   };
 }
 
-export const RECORDED_SPAN = raw.recorded;
+export function recordedSpan(): string {
+  return SPAN;
+}
 
 export const RECORDING_NOTE = "Mentions, not rolls: counts of the phrases \"nat 20\" and \"nat 1\" (and spelled-out forms) in machine transcripts. Hours come from transcript end times. Talk shares use only the sessions whose transcripts name the speakers. NPC and place counts are exact-name matches.";

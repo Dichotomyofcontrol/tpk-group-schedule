@@ -12,10 +12,12 @@ import type { CSSProperties } from "react";
 import { ForYouLedger } from "./almanac-me";
 import { OverallAwards, RecordedLedger, TopTiles } from "./almanac-stats";
 import { CampaignTabs } from "./campaign-tabs";
+import { useRecorded } from "./use-recorded";
 import { BackBar, Icon, Skeleton } from "./ui";
 
 export function AlmanacView() {
   const { state } = useStore();
+  useRecorded();
   const spreads = almanacSpreads(state);
   const recordedIds = spreads
     .map((spread) => state.campaigns.find((item) => item.id === spread.id))
@@ -112,6 +114,7 @@ function CampaignSwitcher({ spreads, campaigns }: { spreads: AlmanacSpread[]; ca
 
 export function CampaignAlmanac({ cid }: { cid: string }) {
   const { state } = useStore();
+  useRecorded();
   const campaign = state.campaigns.find((item) => item.id === cid);
   const book = campaignBook(state, cid);
   const toneId = campaign && book ? campaign.id : "";
