@@ -1,0 +1,119 @@
+name: iOS (TestFlight)
+
+# Manual only: never runs on push to main and never touches Vercel/production data.
+# Without signing secrets it does an unsigned simulator build as a smoke test.
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: Upload the signed IPA to App Store Connect / TestFlight
+        type: boolean
+        default: false
+  pull_request:
+    paths: ["ios/**", "capacitor.config.ts", "native-shell/**", ".github/workflows/ios.yml"]
+
+jobs:
+  ios:
+    runs-on: macos-15
+    env:
+      BUNDLE_ID: ${{ vars.TAVERNING_BUNDLE_ID || 'com.taverning.app' }}
+      HAS_SIGNING: ${{ secrets.BUILD_CERTIFICATE_BASE64 != '' && secrets.BUILD_PROVISION_PROFILE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with: { xcode-version: "26.0" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Capacitor sync
+        run: npx cap sync ios
+
+      - name: Wire entitlements, version, Info.plist
+        run: |
+          gem install xcodeproj --no-document
+          ruby -e '
+            require "xcodeproj"
+            p = Xcodeproj::Project.open("ios/App/App.xcodeproj")
+            t = p.targets.find { |x| x.name == "App" }
+            g = p.main_group.find_subpath("App", false)
+            g.new_file("App.entitlements") unless g.files.any? { |f| f.path == "App.entitlements" }
+            t.build_configurations.each do |c|
+              c.build_settings["CODE_SIGN_ENTITLEMENTS"] = "App/App.entitlements"
+              c.build_settings["PRODUCT_BUNDLE_IDENTIFIER"] = ENV["BUNDLE_ID"]
+              c.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = "15.0"
+              c.build_settings["TARGETED_DEVICE_FAMILY"] = "1"
+            end
+            p.save'
+          P=ios/App/App/Info.plist
+          set_or_add() { /usr/libexec/PlistBuddy -c "Set :$1 $3" $P 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :$1 $2 $3" $P; }
+          set_or_add CFBundleVersion string ${{ github.run_number }}
+          set_or_add CFBundleShortVersionString string 1.0.0
+          set_or_add CFBundleDisplayName string Taverning
+          set_or_add ITSAppUsesNonExemptEncryption bool false
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" $P 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string remote-notification" $P 2>/dev/null || true
+
+      - name: Unsigned simulator build (smoke test)
+        if: env.HAS_SIGNING != 'true'
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphonesimulator \
+            -configuration Debug -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -20
+
+      - name: Install signing certificate and profile
+        if: env.HAS_SIGNING == 'true'
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT=$RUNNER_TEMP/c.p12; PP=$RUNNER_TEMP/p.mobileprovision; KC=$RUNNER_TEMP/s.keychain-db
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 -D > $CERT
+          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 -D > $PP
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KC
+          security set-keychain-settings -lut 21600 $KC
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KC
+          security import $CERT -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KC
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KC
+          security list-keychain -d user -s $KC
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< "$(security cms -D -i $PP)")
+          cp $PP ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          echo "PROFILE_UUID=$UUID" >> $GITHUB_ENV
+
+      - name: Archive and export IPA
+        if: env.HAS_SIGNING == 'true'
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          PROFILE_NAME: ${{ secrets.PROVISIONING_PROFILE_NAME }}
+        run: |
+          sed -i '' -e "s/__BUNDLE_ID__/$BUNDLE_ID/" -e "s/__PROFILE_NAME__/$PROFILE_NAME/" ios/exportOptions.plist
+          xcodebuild -workspace ios/App/App.xcworkspace -scheme App -sdk iphoneos -configuration Release \
+            -destination generic/platform=iOS -archivePath $RUNNER_TEMP/App.xcarchive archive \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" | tail -20
+          xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive \
+            -exportOptionsPlist ios/exportOptions.plist -exportPath $RUNNER_TEMP/out
+
+      - name: Upload to TestFlight
+        if: env.HAS_SIGNING == 'true' && github.event_name == 'workflow_dispatch' && inputs.upload_to_testflight
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+        run: |
+          mkdir -p ~/private_keys
+          echo -n "$APPLE_API_KEY_BASE64" | base64 -D > ~/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8
+          xcrun altool --upload-app --type ios --file "$RUNNER_TEMP/out/App.ipa" \
+            --apiKey "$APPLE_API_KEY_ID" --apiIssuer "$APPLE_API_ISSUER_ID"
+
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_SIGNING == 'true'
+        with: { name: taverning-ios, path: "${{ runner.temp }}/out/", retention-days: 14 }
+
+      - name: Clean up
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/s.keychain-db 2>/dev/null || true
+          rm -rf ~/private_keys ~/Library/MobileDevice/Provisioning\ Profiles/*.mobileprovision

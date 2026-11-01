@@ -1088,3 +1088,10 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
   .alm-switch { top: 68px; margin: 32px 0 16px; padding: 12px 0; }
   .alm-strip { flex-wrap: wrap; overflow: visible; padding: 0; -webkit-mask-image: none; mask-image: none; }
 }
+
+/* iOS app (Capacitor): feel native, not like a page. */
+html.native-app, html.native-app body { -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+html.native-app body { -webkit-user-select: none; user-select: none; }
+html.native-app input, html.native-app textarea, html.native-app [contenteditable] { -webkit-user-select: text; user-select: text; }
+/* 16px inputs stop iOS focus-zoom. */
+html.native-app input, html.native-app select, html.native-app textarea { font-size: max(16px, 1em); }

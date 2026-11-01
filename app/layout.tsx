@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Suspense } from "react";
 import { Providers } from "@/components/providers";
+import { NativeBridge } from "@/components/native-bridge";
 import { SITE_NAME, SITE_ORIGIN } from "@/lib/site";
 import "./globals.css";
 import "./almanac.css";
@@ -50,6 +51,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   themeColor: "#0b0a0c",
 };
@@ -64,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
       <body>
+        <NativeBridge />
         <Providers allowFixture={process.env.VERCEL_ENV !== "production"}>
           <Suspense fallback={<p style={{ padding: 24 }}>Loading your table…</p>}>
             {children}
