@@ -54,7 +54,12 @@ test("membership check: only real members of each campaign", async () => {
   assert.deepEqual(await liveMemberCampaigns(db, ""), []);
 });
 
-test("route (demo): non-members and anonymous callers get nothing", async () => {
+test("route (demo): non-members and anonymous callers get nothing", async (t) => {
+  // This test sets its own environment. A shell or CI step with VERCEL_ENV=production (or admin
+  // credentials) would otherwise send the route down its production branch and fail the demo checks.
+  const saved = { ...process.env };
+  t.after(() => { process.env = saved; });
+  delete process.env.VERCEL_ENV;
   delete process.env.FIREBASE_SERVICE_ACCOUNT;
   delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
   delete process.env.FIRESTORE_EMULATOR_HOST;

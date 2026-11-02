@@ -216,7 +216,7 @@ function MissRow({ miss: m, onDismiss }: { miss: Miss; onDismiss: (m: Miss) => P
     <div className="tpkr">
       <DateBlock dow={when.dow} day={when.day} mon={when.mon} />
       <div className="tpkr-b">
-        <Link className="tpkr-s" href={`/campaigns/${m.cid}/sessions/${m.sid}`}><b>{m.title}</b></Link>
+        <Link className="tpkr-s" href={`/campaigns/${encodeURIComponent(m.cid)}/sessions/${encodeURIComponent(m.sid)}`}><b>{m.title}</b></Link>
         <span className="note">{formatTime(new Date(m.startsAt), m.tz)} · {m.location || "No place set"}{m.title !== m.campaign ? ` · ${m.campaign}` : ""}</span>
         <div className="tpkr-acts">
           <a className="btn sec sm" href={TPK_BOOK_URL} target="_blank" rel="noreferrer">Book on TPK</a>

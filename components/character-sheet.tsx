@@ -94,7 +94,7 @@ const CharacterPanel = forwardRef<CharacterPanelHandle, { cid: string; name: str
               const when = formatDayHeading(night.startsAt, night.tz);
               return (
                 <li key={night.id}>
-                  <Link href={`/campaigns/${cid}/sessions/${night.id}`} onClick={() => setOpen(false)}>
+                  <Link href={`/campaigns/${encodeURIComponent(cid)}/sessions/${encodeURIComponent(night.id)}`} onClick={() => setOpen(false)}>
                     <b>{night.title}</b>
                     <span>{when.mon} {when.day}</span>
                   </Link>

@@ -34,7 +34,7 @@ export function quorumLine(campaign: Campaign, session: Session, members: Member
 }
 
 export function sessionHref(session: Session): string {
-  return `/campaigns/${session.cid}/sessions/${session.id}`;
+  return `/campaigns/${encodeURIComponent(session.cid)}/sessions/${encodeURIComponent(session.id)}`;
 }
 
 /** List title: the session's own name with any "Session #N" numbering dropped, else the campaign name. */
