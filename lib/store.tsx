@@ -97,6 +97,10 @@ export type StoreApi = {
   /** Completes an email-link landing on /auth/finish. */
   finishMagicLink: (email?: string) => Promise<"ok" | "need-email" | "not-link">;
   signOut: () => Promise<void>;
+  /** Campaigns that block deletion, and campaigns that would be deleted because this person is the only player. */
+  accountDeletionPlan: () => Promise<{ blocking: { id: string; name: string }[]; deleting: { id: string; name: string }[] } | { error: string }>;
+  /** Deletes the signed-in account. The server ignores any other uid. */
+  deleteAccount: () => Promise<{ ok: true } | { ok: false; error: string; blocking?: { id: string; name: string }[] }>;
   signedIn: boolean;
   /** True once Firebase has answered and nobody is signed in (live mode only). */
   signedOutConfirmed?: boolean;

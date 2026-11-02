@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
 
 export function adminConfigured(): boolean {
   return Boolean(process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.FIRESTORE_EMULATOR_HOST);
@@ -42,8 +43,6 @@ export async function verifyBearer(request: Request): Promise<{ uid: string; ema
 }
 
 export function adminBucket() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getStorage } = require("firebase-admin/storage") as typeof import("firebase-admin/storage");
   const name = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || "";
   return getStorage(adminApp()).bucket(name || undefined);
 }

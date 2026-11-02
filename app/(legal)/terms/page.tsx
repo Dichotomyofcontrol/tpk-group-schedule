@@ -4,7 +4,7 @@ import { SITE_ORIGIN } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: "The rules Taverning actually enforces today, and the legal terms the owner still has to set.",
+  description: "The rules for using Taverning, including accounts, campaigns, and Oregon law.",
   alternates: { canonical: `${SITE_ORIGIN}/terms` },
 };
 
@@ -14,8 +14,8 @@ const sections: LegalSection[] = [
     title: "The service",
     body: (
       <>
-        <p>Taverning is a website, and an iOS shell around that website, for a tabletop group to schedule sessions, track who is coming, vote on dates, keep a player list, and store recaps. The operator&apos;s legal name is <Confirm />. These terms are a draft and are not in effect.</p>
-        <p>The product behavior below is what the code does today. It is not a promise that a feature will stay. <Confirm /> how changes to these terms will be announced. This page shows the date it was last updated.</p>
+        <p>Taverning is a website, and an iOS shell around that website, for a tabletop group to schedule sessions, track who is coming, vote on dates, keep a player list, and store recaps. Seth Thomas operates it. These terms are a draft and are not in effect until they are published.</p>
+        <p>The product behavior below is what the code does today. It is not a promise that a feature will stay. When these terms change in a material way, the date at the top of this page is updated and players are emailed.</p>
       </>
     ),
   },
@@ -25,8 +25,8 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>You sign in with an email link from noreply@mail.taverning.com, sent through Resend, unless the server&apos;s EMAIL_FROM setting replaces that address. There is no password. The iOS app uses the same email sign-in. It does not offer Sign in with Apple.</p>
-        <p>The site does not ask your age. <Confirm /> the minimum age required to have an account.</p>
-        <p>You choose a display name. That name is shown to the campaigns you belong to. You can sign out from the account screen. Signing out ends the session in this browser and does not delete the account. <Confirm /> the process for deleting an account. Details of what is stored are on the <a href="/privacy">privacy page</a>.</p>
+        <p>You must be 13 or older to have an account. The site does not ask for a date of birth.</p>
+        <p>You choose a display name. That name is shown to the campaigns you belong to. You can sign out from the account screen. Signing out ends the session in this browser and does not delete the account. Delete my account, on that same screen, removes the account after you type DELETE. Details are on the <a href="/privacy">privacy page</a>.</p>
       </>
     ),
   },
@@ -57,8 +57,8 @@ const sections: LegalSection[] = [
     title: "What you write",
     body: (
       <>
-        <p>The table writes session notes, recaps, character names, attendance, and votes. The site stores that so the members of the campaign can read it. <Confirm /> who owns that text, and what permission the operator has to host it and show it to those members.</p>
-        <p>Recorded Almanac numbers and short quotes are taken from session recordings and stored for the members of those campaigns. The recordings themselves are not in this repository. <Confirm /> the basis for keeping the recordings, the transcripts, and the stats made from them.</p>
+        <p>You own the text you write: session notes, recaps, character names, attendance, and votes. Taverning only hosts that text so the members of the campaign can read it. Account and campaign data is kept until that account or that campaign is deleted.</p>
+        <p>Recorded Almanac numbers and short quotes are taken from session recordings and hosted for the members of those campaigns. The audio and the machine transcripts are not in this repository. <Confirm /> where those source files are kept and who can open them.</p>
         <p>The app does not send campaign data to Discord. Fields for a Discord bot exist and are unused.</p>
       </>
     ),
@@ -68,8 +68,8 @@ const sections: LegalSection[] = [
     title: "Stopping and availability",
     body: (
       <>
-        <p>You may stop using the site at any time. Leave a campaign from that campaign&apos;s page if you are not the organizer. Sign out from the account page. Neither step deletes the Firebase account. <Confirm /> how to request deletion.</p>
-        <p>The repository states no uptime, support hours, or backup guarantee. <Confirm /> any warranty, any limit on liability, the governing law, and the place where a dispute would be heard. This draft sets none of those.</p>
+        <p>You may stop using the site at any time. Leave a campaign from that campaign&apos;s page if you are not the organizer. Delete the whole account from the account page. If you organize a campaign that still has other players, the account is not deleted until you transfer that campaign. If you are the only player, that campaign is deleted with the account.</p>
+        <p>These terms are governed by the laws of Oregon. A dispute is heard in the courts of Oregon. <Confirm /> any warranty and any limit on liability. This draft sets neither.</p>
       </>
     ),
   },
@@ -78,7 +78,7 @@ const sections: LegalSection[] = [
     title: "Contact",
     body: (
       <>
-        <p>Write to the owner at <Confirm />. That is the contact for these terms and for the privacy page. No other address is published in the app.</p>
+        <p>Write to Seth Thomas at <a href="mailto:privacy@taverning.com">privacy@taverning.com</a>. That is the contact for these terms and for the privacy page.</p>
       </>
     ),
   },

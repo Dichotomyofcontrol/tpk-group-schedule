@@ -15,11 +15,12 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>You sign in with an email address. There is no password. You enter the address, and the server asks Firebase Authentication to create a one-time sign-in link. The server also makes a 6-digit code. It stores the email, a hash of the code, the link, an expiry 15 minutes out, and a count of wrong tries. That record is deleted when the code works, when it expires, or after too many wrong tries. The browser app cannot read it.</p>
-        <p>Resend delivers the message. The code&apos;s default From address is Taverning &lt;noreply@mail.taverning.com&gt;. A server setting named EMAIL_FROM can replace it. <Confirm /> whether production uses that default.</p>
+        <p>Resend delivers the message. The only From address in this repository is Taverning &lt;noreply@mail.taverning.com&gt;. <Confirm /> whether the host overrides it with the EMAIL_FROM setting.</p>
         <p>Opening the link signs you into Firebase Authentication for the Firebase project tpk-group-8cdc8. The first time, the app writes a user record with your email, an empty display name, the time zone reported by your browser, and an empty list of campaigns hidden from your calendar. It also creates a random calendar token. You set the display name yourself (40 characters at most). That name is what the table sees.</p>
         <p>If a campaign already has a seat or a pending membership with the same email, the first sign-in attaches it to this account.</p>
         <p>The iOS app is a shell that loads this website. Sign-in there is the same email link. The app code does not include Sign in with Apple, and the iOS notes still list it as unfinished, so the app does not receive an Apple ID.</p>
-        <p>The legal name of the operator is <Confirm />. The address for privacy requests is <Confirm />.</p>
+        <p>You must be 13 or older to have an account.</p>
+        <p>Taverning is operated by Seth Thomas. Privacy requests go to <a href="mailto:privacy@taverning.com">privacy@taverning.com</a>.</p>
       </>
     ),
   },
@@ -65,7 +66,13 @@ const sections: LegalSection[] = [
         <p>The Almanac also counts nights, hours, and recaps from the sessions you can already see.</p>
         <p>Separate recorded stats are stored in the app for specific campaigns. They were counted from session recordings. For those campaigns the file includes session counts, hours, word counts, character names, deaths, NPC names, place names, session titles and dates, natural 20 and natural 1 counts, and speaker labels that pair a person&apos;s name with a character and a word count. Short quoted moments cite a transcript or a handout.</p>
         <p>The server returns a campaign&apos;s recorded stats only to a signed-in member of that campaign. A pending membership does not receive them. The file is not included in the browser bundle.</p>
-        <p>The recording files themselves are not in this repository. <Confirm /> where those recordings and transcripts are stored, who can open them, and how long they are kept.</p>
+        <p>What this repository actually stores from those recordings:</p>
+        <ul>
+          <li>The counts live in data/almanac-stats.json. The file&apos;s own note says they were mined from the Archivist recordings. One server module reads that file. GET /api/almanac/recorded returns a campaign&apos;s counts only to a signed-in member of that campaign who is not pending. The file is not shipped in the browser bundle.</li>
+          <li>The counts are built from machine transcripts: hours from transcript end times, talk shares from sessions whose transcripts name the speakers, and natural 20 and natural 1 counts from the phrases said out loud. Short quoted moments in the server module cite a transcript or an Archivist handout.</li>
+          <li>Recap text and a PDF can be written by POST /api/import/recap, and a character summary by POST /api/import/character-summary. Both require a server secret. The summary route does not call an AI API. The prose is whatever the caller sends. Recaps are stored on the session and in Cloud Storage. Character summaries are stored on the campaign. Members of that campaign can read them.</li>
+        </ul>
+        <p>The audio files and the machine transcripts themselves are not in this repository, and no config here names a bucket or folder for them. <Confirm /> where those source files are stored and who can open them.</p>
       </>
     ),
   },
@@ -75,8 +82,8 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>Sign-in email is described above. Resend receives the recipient address, the link, and the 6-digit code in order to send that message.</p>
-        <p>A route can email members three days before a session and again three hours before. It skips anyone marked out, and anyone who turned reminders off for that campaign. The message includes the campaign name, the session time and place, the note, who is out, and the &quot;previously on&quot; line. It sends only when the server has a Resend key and a reminder From address, and only when something calls the route with the cron secret. This repository does not schedule that call. <Confirm /> whether production sends reminder email, and the From address it uses.</p>
-        <p>If you allow notifications in the iOS app, the app sends an Apple push device token to the server. The server stores it on your user record with the platform set to iOS. You can turn that off, which deletes the stored token. This repository does not include the code that sends the pushes. <Confirm /> whether a sender runs outside this repository.</p>
+        <p>A route can email members three days before a session and again three hours before. It skips anyone marked out, and anyone who turned reminders off for that campaign. The message includes the campaign name, the session time and place, the note, who is out, and the &quot;previously on&quot; line. It sends only when the server has a Resend key and a reminder From address, and only when something calls the route with the cron secret. This repository does not schedule that call, and it does not name the reminder From address. <Confirm /> whether the host schedules that route or sets a From address outside the repository.</p>
+        <p>If you allow notifications in the iOS app, the app sends an Apple push device token to the server. The server stores it on your user record with the platform set to iOS. Turning notifications off deletes that stored token. This repository does not send those pushes. The iOS notes list a sender as still to be built.</p>
         <p>The iOS app also opens this site, plays a short haptic tap, and follows links for taverning.com inside the app. Subscribing to the calendar link hands that URL to the calendar app you choose. A place link opens Apple Maps or Google Maps on your device. The server does not send a separate copy of the campaign to Apple for those links.</p>
       </>
     ),
@@ -94,7 +101,7 @@ const sections: LegalSection[] = [
           <li>which recaps this browser has already opened</li>
         </ul>
         <p>Session storage holds in-progress join details and which tab you came from. It is cleared when the tab closes.</p>
-        <p>A cookie named __tpk_token is read only for the paths /maloren and /iven. This repository does not set that cookie. <Confirm /> whether anything still sets it.</p>
+        <p>The older single-file page sets a cookie named __tpk_token to the Firebase sign-in token, for one hour, so /maloren and /iven can check who is signed in. The Next.js app does not set that cookie. It only reads it on those two paths.</p>
       </>
     ),
   },
@@ -104,7 +111,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>The home page can store an invite request: your email, an optional line about the table (140 characters), the word &quot;landing,&quot; the deploy environment, the time, and how many times that email was submitted. A hidden field is ignored. The browser cannot read this list.</p>
-        <p>Sign-in, invite requests, roster edits, and public votes are rate limited. The limit uses the IP address from the request, and sometimes the email, the poll, or the guest token. The server stores a hash of that key, a count, and an expiry time. It does not store the raw IP in the document. <Confirm /> whether the database is set to delete those rows when the expiry time passes. The rules file does not turn that on.</p>
+        <p>Sign-in, invite requests, roster edits, and public votes are rate limited. The limit uses the IP address from the request, and sometimes the email, the poll, or the guest token. The server stores a hash of that key, a count, and an expiry time. It does not store the raw IP in the document. Nothing in this repository deletes those rows. <Confirm /> whether the Firebase console is set to delete them when the expiry time passes.</p>
       </>
     ),
   },
@@ -138,10 +145,11 @@ const sections: LegalSection[] = [
     title: "How long data is kept, and deletion",
     body: (
       <>
-        <p>Sign-in codes last 15 minutes and are deleted as described above. <Confirm /> how long accounts, campaigns, sessions, polls, roster rows, invite requests, portraits, PDFs, and calendar tokens are kept. This repository has no retention period and no deletion job for them.</p>
-        <p>You can sign out. Signing out does not delete the account. The account screen has no delete control, and the database rules reject a client delete of the user record. A player who is not the organizer can leave a campaign. The organizer can remove a player, archive the campaign, or delete it. <Confirm /> how to ask for the rest of an account, an invite request, or a recording to be deleted, and how long that takes.</p>
-        <p>The site does not ask for a date of birth and does not check an age. <Confirm /> the minimum age.</p>
-        <p><Confirm /> the governing law. See the <a href="/terms">terms</a>.</p>
+        <p>Account and campaign data is kept until that account or that campaign is deleted. Sign-in codes are the exception: they are deleted within 15 minutes, as described above.</p>
+        <p>On the account screen, Delete my account asks you to type DELETE. The server checks the signed-in user and ignores any other id. It then deletes that user&apos;s record, devices, calendar token, memberships, roster seats, votes, attendance marks, and a portrait whose character sheet names their email. It then deletes the Firebase Authentication user.</p>
+        <p>If you organize a campaign that still has other players, deletion stops and nothing is removed. Transfer that campaign first. If you are the only player, that campaign is deleted with the account, including its sessions, polls, invites, and uploaded files. A player who is not the organizer can also leave one campaign without deleting the account. The organizer can remove a player, archive a campaign, or delete that campaign from its page.</p>
+        <p>You must be 13 or older. The site does not ask for a date of birth.</p>
+        <p>These terms are governed by Oregon law, and disputes are heard in the courts of Oregon. See the <a href="/terms">terms</a>.</p>
       </>
     ),
   },
