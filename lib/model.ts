@@ -385,22 +385,21 @@ export function toggleVote(state: AppState, pollId: string, optionId: string, ui
   };
 }
 
-export function rankedOptions(poll: Poll, cadence: Cadence | null): { option: Poll["options"][number]; yes: number; best: number }[] {
+export function rankedOptions(poll: Poll, cadence: Cadence | null): { option: Poll["options"][number]; yes: number; maybe: number }[] {
   return poll.options
     .map((option) => {
       let yes = 0;
-      let best = 0;
+      let maybe = 0;
       for (const vote of Object.values(poll.votes)) {
         const choice = choiceOf(vote?.picks?.[option.id]);
-        if (!choice) continue;
-        yes += 1;
-        if (choice === "best") best += 1;
+        if (choice === "yes") yes += 1;
+        else if (choice === "maybe") maybe += 1;
       }
-      return { option, yes, best };
+      return { option, yes, maybe };
     })
     .sort((a, b) => {
       if (b.yes !== a.yes) return b.yes - a.yes;
-      if (b.best !== a.best) return b.best - a.best;
+      if (b.maybe !== a.maybe) return b.maybe - a.maybe;
       const aUsual = cadence ? usualScore(a.option.startsAt, cadence) : 0;
       const bUsual = cadence ? usualScore(b.option.startsAt, cadence) : 0;
       if (bUsual !== aUsual) return bUsual - aUsual;

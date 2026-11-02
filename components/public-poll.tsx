@@ -39,7 +39,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
   const [seat, setSeat] = useState("");
   const [unlisted, setUnlisted] = useState(false);
   const [picks, setPicks] = useState<string[]>([]);
-  const [best, setBest] = useState<string[]>([]);
+  const [maybe, setMaybe] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<"saved" | "updated" | null>(null);
@@ -62,7 +62,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
         setName(next.mine.name);
       }
       setPicks(next.mine.picks);
-      setBest(next.mine.best || []);
+      setMaybe(next.mine.maybe || []);
     } else if (!name && savedName) {
       const match = next.players.find((player) => player.name.toLowerCase() === savedName.toLowerCase() && !player.taken);
       if (match) { setSeat(match.id); setName(match.name); setUnlisted(false); }
@@ -119,17 +119,17 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
 
   function cycle(id: string) {
     const on = picks.includes(id);
-    const favorite = best.includes(id);
+    const unsure = maybe.includes(id);
     if (!on) setPicks([...picks, id]);
-    else if (!favorite) setBest([...best, id]);
+    else if (!unsure) setMaybe([...maybe, id]);
     else {
-      setBest(best.filter((item) => item !== id));
+      setMaybe(maybe.filter((item) => item !== id));
       setPicks(picks.filter((item) => item !== id));
     }
     setError("");
   }
 
-  async function voteLocally(token: string, ballotName: string, ballotPicks: string[], ballotBest: string[], rosterId?: string) {
+  async function voteLocally(token: string, ballotName: string, ballotPicks: string[], ballotMaybe: string[], rosterId?: string) {
     const state = stateRef.current;
     const poll = state.polls.find((item) => item.id === pid && item.cid === cid);
     const campaign = state.campaigns.find((item) => item.id === cid);
@@ -142,7 +142,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
     }));
     const roster = seatsFromRoster(await store.rosterList(cid));
     const seats = voteSeats({ members, roster: roster.length ? roster : undefined });
-    const result = await applyGuestVote(poll, { token, name: ballotName, picks: ballotPicks, best: ballotBest, rosterId }, seats);
+    const result = await applyGuestVote(poll, { token, name: ballotName, picks: ballotPicks, maybe: ballotMaybe, rosterId }, seats);
     if ("error" in result) {
       setError(result.error);
       return true;
@@ -155,7 +155,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
     setView(next);
     setName(next.mine?.name || ballotName);
     setPicks(next.mine?.picks || ballotPicks);
-    setBest(next.mine?.best || ballotBest);
+    setMaybe(next.mine?.maybe || ballotMaybe);
     window.localStorage.setItem(NAME_KEY, next.mine?.name || ballotName);
     return true;
   }
@@ -168,14 +168,14 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
     const ballotName = chosen ? chosen.name : name.trim();
     if (chosen?.taken) { setError(`${chosen.name.split(" ")[0]} already voted.`); return; }
     if (!ballotName) { setError(view.players.length ? "Pick your name." : "Enter your name."); return; }
-    if (!picks.length) { setError("Pick at least one date that works."); return; }
+    if (!picks.length) { setError("Answer at least one date."); return; }
     setBusy(true);
     const token = tokenRef.current || readGuestToken();
     try {
       const res = await fetch(`/api/polls/${encodeURIComponent(cid)}/${encodeURIComponent(pid)}`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-guest-token": token },
-        body: JSON.stringify({ token, name: ballotName, picks, best, rosterId: chosen ? chosen.id : undefined }),
+        body: JSON.stringify({ token, name: ballotName, picks, maybe, rosterId: chosen ? chosen.id : undefined }),
       });
       const body = await res.json().catch(() => ({})) as PublicPollView & { error?: string };
       if (res.ok && Array.isArray(body.options)) {
@@ -185,19 +185,19 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
         setView(body);
         setName(body.mine?.name || ballotName);
         setPicks(body.mine?.picks || picks);
-        setBest(body.mine?.best || best);
+        setMaybe(body.mine?.maybe || maybe);
         window.localStorage.setItem(NAME_KEY, body.mine?.name || ballotName);
         if (store.mode === "demo" && body.guestBallots?.length) store.mergeGuestBallots(pid, body.guestBallots);
         return;
       }
       if (res.status === 404 && store.mode === "demo") {
-        const handled = await voteLocally(token, ballotName, picks, best, chosen?.id);
+        const handled = await voteLocally(token, ballotName, picks, maybe, chosen?.id);
         if (handled) return;
       }
       setError(body.error || "Couldn't save that vote.");
     } catch {
       if (store.mode === "demo") {
-        const handled = await voteLocally(token, ballotName, picks, best, chosen?.id);
+        const handled = await voteLocally(token, ballotName, picks, maybe, chosen?.id);
         if (handled) return;
       }
       setError("Couldn't save that vote.");
@@ -231,7 +231,7 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
         <div className="eyebrow">{view.kind === "oneshot" ? "One-shot" : view.campaignName}</div>
         <h1>{view.kind === "oneshot" ? view.campaignName : view.title}</h1>
         <p className="note" style={{ margin: 0 }}>
-          {locked ? "The organizer locked the winner." : "Pick every date that works. Tap twice for your favorite."}
+          {locked ? "The organizer locked the winner." : "Tap a date for Yes, again for Maybe, again to clear."}
         </p>
         {view.lockedLabel && <p className="status ok lockd" style={{ marginTop: 12 }}><Icon name="check" className="ic sm" />Locked · {view.lockedLabel}</p>}
         {banner === "saved" && <p className="gvoted" role="status">Your vote is in. The table can see {view.mine?.name || name}.</p>}
@@ -291,8 +291,8 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
             </div>
           )}
           <div className="opts" role="group" aria-label="Dates that work">
-            {view.options.map((option, index) => {
-              const choice = best.includes(option.id) ? "best" : picks.includes(option.id) ? "works" : null;
+            {view.options.map((option) => {
+              const choice = maybe.includes(option.id) ? "maybe" : picks.includes(option.id) ? "yes" : null;
               return (
                 <PollDateRow
                   key={option.id}
@@ -300,12 +300,12 @@ export function PublicPoll({ cid, pid }: { cid: string; pid: string }) {
                   day={option.day}
                   mon={option.mon}
                   time={option.time}
-                  can={option.yes}
-                  best={option.best}
+                  yes={option.yes}
+                  maybe={option.maybe}
                   max={max}
                   names={option.names}
                   choice={taken ? null : choice}
-                  lead={index === 0 && option.yes > 0}
+                  lead={option.lead}
                   everyone={option.everyone}
                   disabled={locked || taken}
                   onCycle={!locked && !taken ? () => cycle(option.id) : undefined}

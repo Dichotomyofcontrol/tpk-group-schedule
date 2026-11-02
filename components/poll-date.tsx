@@ -8,16 +8,16 @@ function whoLabel(names: string[]): string {
   return names.length > 3 ? `${names.slice(0, 3).join(", ")} +${names.length - 3}` : names.join(", ");
 }
 
-/** One date. A tap cycles Works, Best, then cleared. Unpicked means can't. */
+/** One date. A tap cycles Yes, Maybe, then cleared (No). Rows stay in calendar order. */
 export function PollDateRow({
-  dow, day, mon, time, can, best, max, names, choice, lead, everyone, disabled, onCycle,
+  dow, day, mon, time, yes, maybe, max, names, choice, lead, everyone, disabled, onCycle,
 }: {
   dow: string;
   day: string;
   mon: string;
   time: string;
-  can: number;
-  best: number;
+  yes: number;
+  maybe: number;
   max: number;
   names: string[];
   choice: PollChoice | null;
@@ -27,14 +27,14 @@ export function PollDateRow({
   onCycle?: () => void;
 }) {
   const who = whoLabel(names);
-  const state = choice === "best" ? "Best" : choice === "works" ? "Works" : "Not picked";
-  const tally = tallyText(can, best);
+  const state = choice === "yes" ? "You said yes" : choice === "maybe" ? "You said maybe" : "No answer";
+  const tally = tallyText(yes, maybe);
   const label = `${dow} ${mon} ${day} ${time}: ${state}. ${tally}${everyone ? ", works for everyone" : lead ? ", leading" : ""}${names.length ? ` (${names.join(", ")})` : ""}`;
-  const className = `opt${choice ? " mine" : ""}${choice === "best" ? " fav" : ""}${lead ? " lead" : ""}${everyone ? " all" : ""}`;
+  const className = `opt${choice ? " mine" : ""}${choice === "maybe" ? " maybe" : ""}${lead ? " lead" : ""}${everyone ? " all" : ""}`;
   const body = (
     <>
-      <span className="fill" style={{ width: `${Math.round((can / Math.max(1, max)) * 100)}%` }} />
-      <span className="chk">{choice && <Icon name="check" />}</span>
+      <span className="fill" style={{ width: `${Math.round((yes / Math.max(1, max)) * 100)}%` }} />
+      <span className="chk">{choice === "yes" ? <Icon name="check" /> : choice === "maybe" ? <b aria-hidden="true">?</b> : null}</span>
       <span className="dt">
         <span className="dline">
           <span className="dw">{dow}</span>
@@ -44,7 +44,7 @@ export function PollDateRow({
         {everyone ? <b className="lead-t all">Works for everyone</b> : lead && <b className="lead-t">Leading</b>}
         <span className="tm">
           {time}
-          {choice === "best" && <b className="mine-best">Best</b>}
+          {choice && <b className={`mine-best${choice === "maybe" ? " is-maybe" : ""}`}>{choice === "yes" ? "Yes" : "Maybe"}</b>}
         </span>
       </span>
       <span className="t">{who && <span className="who">{who}</span>}</span>

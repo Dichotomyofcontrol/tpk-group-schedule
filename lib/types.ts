@@ -168,8 +168,8 @@ export type PollOption = {
   tz: string;
 };
 
-/** `true` is Works, including every yes saved before Best. `"best"` can attend and is a favorite. */
-export type PollPick = boolean | "best";
+/** `true` is Yes. `"maybe"` is Maybe. Legacy `"best"` (from the old Works/Best ballot) reads as Yes. */
+export type PollPick = boolean | "best" | "maybe";
 
 export type PollVote = {
   picks: Record<string, PollPick>;

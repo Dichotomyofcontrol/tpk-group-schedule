@@ -325,8 +325,9 @@ label { display: block; font: 600 0.8125rem/1rem var(--ui); margin-bottom: 8px; 
 .opt .n { flex: 0 0 auto; min-width: 1.75rem; text-align: right; font: 500 1.25rem/1 var(--serif); font-variant-numeric: tabular-nums lining-nums; color: var(--ink); }
 .opt .n.tally { min-width: 0; font: 500 0.75rem/1.25 var(--ui); letter-spacing: 0; text-transform: none; color: var(--ink2); white-space: nowrap; }
 .opt .dt { max-width: calc(100% - 9.25rem); }
-.opt.fav { border-color: var(--ver); }
-.opt.fav .chk { background: var(--ver); border-color: var(--ver); color: var(--onbtn); }
+.opt.maybe { border-style: dashed; }
+.opt.maybe .chk { background: transparent; border-color: var(--ink2); color: var(--ink); font: 700 0.875rem/1 var(--ui); }
+.opt .mine-best.is-maybe { color: var(--ink2); }
 .opt .mine-best { margin-left: 8px; color: var(--ver); font: 600 0.6875rem/1 var(--ui); letter-spacing: .06em; text-transform: uppercase; }
 .opt.all { box-shadow: inset 3px 0 0 var(--moss); }
 .chk { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--rule2); display: grid; place-items: center; flex: none; background: transparent; }
@@ -695,7 +696,7 @@ form.ib > .field { margin: 0; }
 .opt { transition: border-color .2s ease, box-shadow .2s ease, transform .12s ease; -webkit-tap-highlight-color: transparent; }
 .opt:active:not(:disabled) { transform: scale(.985); }
 .opt.mine .chk { color: var(--onbtn); }
-.opt.fav .chk { background: var(--ver); border-color: var(--ver); color: var(--onbtn); }
+.opt.maybe .chk { background: transparent; border-color: var(--ink2); color: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .opt, .opt .fill { transition: none; } .opt:active { transform: none; } }
 
 /* Sessions rows: your own RSVP when it needs attention. */
