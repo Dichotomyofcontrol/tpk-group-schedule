@@ -1095,3 +1095,8 @@ html.native-app body { -webkit-user-select: none; user-select: none; }
 html.native-app input, html.native-app textarea, html.native-app [contenteditable] { -webkit-user-select: text; user-select: text; }
 /* 16px inputs stop iOS focus-zoom. */
 html.native-app input, html.native-app select, html.native-app textarea { font-size: max(16px, 1em); }
+
+/* iOS app: the bottom tab bar stays the primary navigation at every width (landscape, large phones). */
+html.native-app .tabs { display: grid !important; }
+html.native-app .dnav { display: none !important; }
+html.native-app .tabs a { -webkit-user-select: none; user-select: none; }

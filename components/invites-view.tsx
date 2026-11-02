@@ -1,5 +1,7 @@
 "use client";
 
+import { nativeShare } from "@/lib/native-share";
+
 import { useEffect, useState } from "react";
 import { canInvite, isOrganizer, isStaff, memberCampaigns, membersOf } from "@/lib/model";
 import { useStore } from "@/lib/store";
@@ -28,6 +30,8 @@ export function InvitesView({ initialCampaign }: { initialCampaign?: string }) {
   const [canShare, setCanShare] = useState(false);
   useEffect(() => setCanShare(typeof navigator.share === "function" && window.matchMedia("(pointer: coarse)").matches), []);
   const handOff = async (url: string) => {
+    const native = await nativeShare({ title: campaign ? `Join ${campaign.name}` : "Join my table", text: campaign ? `Pull up a chair at ${campaign.name}.` : "Pull up a chair at the table.", url });
+    if (native) return;
     if (canShare) {
       try {
         await navigator.share({ title: campaign ? `Join ${campaign.name}` : "Join my table", text: campaign ? `Pull up a chair at ${campaign.name}.` : "Pull up a chair at the table.", url });

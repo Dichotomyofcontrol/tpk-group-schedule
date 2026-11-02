@@ -1,5 +1,7 @@
 "use client";
 
+import { nativeShare } from "@/lib/native-share";
+
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
@@ -23,6 +25,9 @@ function leadLabel(iso: string): string {
 }
 
 export async function sharePollLink(url: string, title: string, text?: string, copyValue = url): Promise<"shared" | "copied" | "aborted" | "failed"> {
+  const native = await nativeShare({ title, text, url });
+  if (native === "shared") return "shared";
+  if (native === "cancelled") return "aborted";
   const coarse = window.matchMedia("(pointer: coarse)").matches;
   if (coarse && typeof navigator.share === "function") {
     try {
@@ -418,6 +423,7 @@ function OneShotForm() {
             if (!token) return;
             const url = `${window.location.origin}/invite/${token}`;
             const text = `Join ${name}: ${url}`;
+            if (await nativeShare({ title: `Join ${name}`, text: `Join ${name}`, url })) return;
             if (window.matchMedia("(pointer: coarse)").matches && typeof navigator.share === "function") {
               try { await navigator.share({ text }); return; } catch (err) { if ((err as Error)?.name === "AbortError") return; }
             }
