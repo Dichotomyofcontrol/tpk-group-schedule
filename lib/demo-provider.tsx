@@ -13,6 +13,7 @@ import {
   createInvite,
   editSession,
   lockPoll,
+  unlockPoll,
   saveRecap,
   markAttendance,
   moveSession,
@@ -279,6 +280,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         else {
           setState(result);
           flash("Locked in. It's a real session now.");
+        }
+      },
+      unlockPoll: (pollId) => {
+        const result = unlockPoll(stateRef.current, pollId);
+        if ("error" in result) flash(result.error, "err");
+        else {
+          setState(result.state);
+          flash("Voting is open again. Pick a new date when you're ready.");
         }
       },
       addPoll: (cid, title, options: Poll["options"]) => {

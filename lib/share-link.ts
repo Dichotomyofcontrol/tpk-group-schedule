@@ -28,3 +28,16 @@ function proseWithoutLink(text: string | undefined, url: string): string {
   const stripped = url ? text.split(url).join(" ") : text;
   return stripped.replace(/\s+/g, " ").trim().replace(/[:\-–—]\s*$/, "").trim();
 }
+
+/** Short plain group-chat note for a locked date: campaign, date, time, place, link. */
+export function lockedDateMessage(input: { campaignName: string; startsAt: string; endsAt?: string | null; tz: string; location?: string | null; url: string }): string {
+  const start = new Date(input.startsAt);
+  const date = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: input.tz }).format(start);
+  const t = (d: Date) => new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: input.tz }).format(d).replace(":00", "");
+  const end = input.endsAt ? new Date(input.endsAt) : null;
+  const time = end && end.getTime() > start.getTime() ? `${t(start)}–${t(end)}` : t(start);
+  const lines = [`${input.campaignName} is on: ${date}, ${time}`];
+  if (input.location?.trim()) lines.push(`Where: ${input.location.trim()}`);
+  lines.push(input.url);
+  return lines.join("\n");
+}

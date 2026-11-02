@@ -53,3 +53,10 @@ test("a poll reminder names who hasn't voted and includes the link once", () => 
   assert.equal(shared.url, url);
   assert.equal(linkCount(shared), 1);
 });
+
+import { lockedDateMessage } from "../../lib/share-link";
+test("locked date message is short and plain", () => {
+  const m = lockedDateMessage({ campaignName: "Ghosts of Saltmarsh", startsAt: "2026-11-21T19:00:00.000Z", endsAt: "2026-11-21T23:00:00.000Z", tz: "America/Los_Angeles", location: "TPK Brewing", url: "https://taverning.com/p/x" });
+  assert.equal(m, "Ghosts of Saltmarsh is on: Saturday, Nov 21, 11 AM–3 PM\nWhere: TPK Brewing\nhttps://taverning.com/p/x");
+  assert.ok(!lockedDateMessage({ campaignName: "A", startsAt: "2026-11-21T19:00:00.000Z", tz: "UTC", url: "u" }).includes("Where"));
+});
