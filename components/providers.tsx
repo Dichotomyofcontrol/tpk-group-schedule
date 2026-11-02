@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { DemoProvider } from "@/lib/demo-provider";
 
 export function Providers({ children, allowFixture = false }: { children: ReactNode; allowFixture?: boolean }) {
   const builtLive = process.env.NEXT_PUBLIC_DATA_MODE === "live";
   const [choice, setChoice] = useState<"demo" | "live">(builtLive ? "live" : "demo");
+  const path = usePathname();
   const [Live, setLive] = useState<ComponentType<{ children: ReactNode }> | null>(null);
   // Offline: a small service worker keeps the app shell openable without a connection (production only).
   useEffect(() => {
@@ -25,6 +27,7 @@ export function Providers({ children, allowFixture = false }: { children: ReactN
     void import("@/lib/firebase-provider").then((mod) => setLive(() => mod.FirebaseProvider));
   }, [builtLive, allowFixture]);
   if (!builtLive || choice === "demo") return <DemoProvider>{children}</DemoProvider>;
-  if (!Live) return null;
+  // The landing does not read the store, so it can paint before Firebase loads.
+  if (!Live) return path === "/" ? <>{children}</> : null;
   return <Live>{children}</Live>;
 }

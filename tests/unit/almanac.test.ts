@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { campaignBook, campaignsInAlmanac, characterSpotlights } from "../../lib/almanac.ts";
 import { buildDemo } from "../../lib/demo-data.ts";
+import { setRecorded } from "../../lib/almanac-stats.ts";
+import { DEMO_RECORDED, recordedPayload } from "../../lib/almanac-records.server.ts";
+setRecorded(recordedPayload(Object.keys(DEMO_RECORDED), DEMO_RECORDED));
 
 const NOW = new Date("2026-10-26T20:00:00.000Z");
 

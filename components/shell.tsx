@@ -1,5 +1,7 @@
 "use client";
 
+import { TextSize } from "./text-size";
+
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -134,6 +136,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {!store.online && <div className="offline">You&apos;re offline. Showing your last-synced schedule.</div>}
       <header className={landing ? "hdr clear" : "hdr"}>
         <Brand href={signedIn ? "/sessions" : "/"} />
+        {!signedIn && <><span className="sp" /><TextSize /></>}
         {signedIn && !bare && (
           <>
             <span className="sp" />
