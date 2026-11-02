@@ -1100,3 +1100,9 @@ html.native-app input, html.native-app select, html.native-app textarea { font-s
 html.native-app .tabs { display: grid !important; }
 html.native-app .dnav { display: none !important; }
 html.native-app .tabs a { -webkit-user-select: none; user-select: none; }
+/* Sign in with Apple (iOS app only). */
+.apple-si { margin-bottom: 16px; }
+.btn.apple { width: 100%; min-height: 50px; justify-content: center; gap: 8px; background: #000; color: #fff; border-radius: 12px; font: 600 1.0625rem/1 -apple-system, system-ui, sans-serif; }
+:root[data-theme="night"] .btn.apple { background: #fff; color: #000; }
+.apple-si .or { display: flex; align-items: center; gap: 12px; color: var(--ink3); font-size: .8125rem; margin: 16px 0 0; }
+.apple-si .or::before, .apple-si .or::after { content: ""; flex: 1; height: .5px; background: var(--rule2); }

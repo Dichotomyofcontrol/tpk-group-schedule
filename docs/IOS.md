@@ -6,11 +6,12 @@
 - Native APNs push: poll is up, game tomorrow, Previously on is ready. Tapping a notification deep-links inside the app.
 - Universal links: `taverning.com/join/*`, `/invite/*`, `/polls/*` and others open in the app (`/.well-known/apple-app-site-association`).
 - Haptics on taps, a native splash screen, a status bar that follows the theme, and safe areas (`viewport-fit=cover`).
-- No pinch or focus zoom inside the app only (set by the bridge at runtime; the website keeps pinch zoom), no text selection or callouts outside inputs, no rubber-band overscroll, and an offline screen.
+- No pinch or focus zoom (site-wide viewport lock, kept by Seth's decision 2026-11-01), no text selection or callouts outside inputs, no rubber-band overscroll, and an offline screen.
 - Bottom tab bar (Sessions / Campaigns / Almanac / Polls / Invites) is the only navigation in the app at every width, with selection haptics.
 - Native iOS share sheet (`@capacitor/share`, `lib/native-share.ts`) for invite and poll links.
 - Icon and splash come from the Taverning d20 mark (`node scripts/ios-assets.mjs` rebuilds them).
-- Still nice before App Store review: native date picker and action sheets, Sign in with Apple (required by Guideline 4.8 only if Google sign-in is offered in the app), and a notification settings screen. TestFlight builds are fine without these.
+- Sign in with Apple on the sign-in screen (app only): native Apple sheet via `@capacitor-community/apple-sign-in`, then Firebase `signInWithCredential` with the `apple.com` provider and a SHA-256 nonce (`lib/apple-sign-in.ts`). Needs the Apple provider enabled in Firebase Auth (tpk-group-8cdc8). An Apple account with a hidden relay email is a separate Taverning account from an email sign-in.
+- Still nice before App Store review: native date picker and action sheets, and a notification settings screen. TestFlight builds are fine without these.
 
 **Build.** `.github/workflows/ios.yml` runs on GitHub's macOS runners. With no signing secrets it builds an unsigned simulator app as a smoke test. When the secrets are present, a manual run signs the app, archives it and uploads it to TestFlight. It never runs on pushes to main.
 

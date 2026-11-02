@@ -19,8 +19,6 @@ export function NativeBridge() {
       const { Capacitor } = await import("@capacitor/core");
       if (!Capacitor.isNativePlatform() || cancelled) return;
       document.documentElement.classList.add("native-app");
-      // Zoom lock only inside the app; the website keeps pinch zoom (WCAG 1.4.4).
-      document.querySelector('meta[name="viewport"]')?.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");
       const [{ App }, { Haptics, ImpactStyle }, { SplashScreen }, { StatusBar, Style }, { PushNotifications }] = await Promise.all([
         import("@capacitor/app"), import("@capacitor/haptics"), import("@capacitor/splash-screen"),
         import("@capacitor/status-bar"), import("@capacitor/push-notifications"),
