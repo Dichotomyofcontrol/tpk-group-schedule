@@ -11,6 +11,8 @@ import {
 import {
   collection,
   collectionGroup,
+  deleteDoc,
+  deleteField,
   doc,
   getDoc,
   onSnapshot,
@@ -34,6 +36,7 @@ import {
   createInvite,
   editSession,
   lockPoll,
+  unlockPoll,
   saveRecap,
   markAttendance,
   moveSession,
@@ -379,6 +382,7 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     createCampaign: () => null,
     toggleVote: () => undefined,
     lockPoll: () => undefined,
+    unlockPoll: () => undefined,
     addPoll: () => null,
     replacePoll: () => undefined,
     mergeGuestBallots: () => undefined,
@@ -781,6 +785,25 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
         }
         if (session) void persistSession(session);
         flash("Locked in. It's a real session now.");
+      },
+      unlockPoll: (pollId) => {
+        const result = unlockPoll(stateRef.current || state, pollId);
+        if ("error" in result) {
+          flash(result.error, "err");
+          return;
+        }
+        const poll = (stateRef.current || state).polls.find((p) => p.id === pollId);
+        setState(result.state);
+        if (!poll) return;
+        const { db } = getFirebase();
+        // Firestore rules allow this only for an Organizer or Co-organizer of the campaign.
+        void updateDoc(doc(db, "campaigns", poll.cid, "polls", poll.id), { status: "open", chosenOptionId: deleteField(), sessionId: deleteField() })
+          .then(async () => {
+            if (result.removedSessionId) await deleteDoc(doc(db, "campaigns", poll.cid, "sessions", result.removedSessionId));
+            if (result.cancelledSession) await persistSession(result.cancelledSession);
+          })
+          .catch(() => flash("Couldn't reopen that poll. Try again.", "err"));
+        flash("Voting is open again. Pick a new date when you're ready.");
       },
       addPoll: (cid, title, options) => {
         const result = addPoll(stateRef.current || state, cid, title, options);

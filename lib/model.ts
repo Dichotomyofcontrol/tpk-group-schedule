@@ -451,6 +451,36 @@ export function lockPoll(state: AppState, pollId: string, optionId: string): App
   };
 }
 
+/** Has anyone touched this session since the lock made it (RSVPs, a recap, files)? */
+export function sessionHasActivity(session: Session): boolean {
+  return session.attendance.length > 0 || Boolean(session.recapText || session.recapHtml || session.recapMarkdown || session.pdfPath || session.pdfName);
+}
+
+/**
+ * Reopen a locked poll so the organizer can change the date. Votes stay.
+ * The session the lock made is removed when nobody has used it yet; otherwise it is cancelled so RSVPs and recaps survive.
+ */
+export function unlockPoll(state: AppState, pollId: string): { state: AppState; removedSessionId: string | null; cancelledSession: Session | null } | { error: string } {
+  const poll = state.polls.find((p) => p.id === pollId);
+  if (!poll) return { error: "That poll is gone." };
+  if (!isStaff(state, poll.cid)) return { error: "Only an Organizer or Co-organizer can change a locked date." };
+  if (poll.status !== "locked") return { error: "That poll is already open." };
+  const session = poll.sessionId ? state.sessions.find((s) => s.id === poll.sessionId) ?? null : null;
+  const keep = session ? sessionHasActivity(session) : false;
+  const cancelled = session && keep ? { ...session, status: "cancelled" as const, seq: (session.seq ?? 0) + 1 } : null;
+  const sessions = !session ? state.sessions : keep
+    ? state.sessions.map((s) => (s.id === session.id ? cancelled! : s))
+    : state.sessions.filter((s) => s.id !== session.id);
+  const reopened: Poll = { ...poll, status: "open" };
+  delete reopened.chosenOptionId;
+  delete reopened.sessionId;
+  return {
+    state: { ...state, sessions, polls: state.polls.map((p) => (p.id === pollId ? reopened : p)) },
+    removedSessionId: session && !keep ? session.id : null,
+    cancelledSession: cancelled,
+  };
+}
+
 export function addPoll(state: AppState, cid: string, title: string, options: Poll["options"]): AppState | { error: string } {
   if (!isStaff(state, cid)) return { error: "Only an Organizer or Co-organizer can start a poll." };
   if (options.length < 2) return { error: "Add at least two dates." };
