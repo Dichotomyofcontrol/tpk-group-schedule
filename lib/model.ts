@@ -4,6 +4,7 @@ import { cadenceDates, horizonEnd, occurrenceInstant } from "./recurrence";
 import { partsInZone, weekdayIndex, ymdInZone, zonedTimeToUtc } from "./time";
 import { withAttendance } from "./attendance";
 import { cyclePick, choiceOf } from "./poll-choice";
+import { safeIdPart } from "./route-param";
 import type { AppState, AttendanceState, Cadence, Campaign, Invite, Member, Poll, Role, Session, SessionFile, User } from "./types";
 
 export function campaignById(state: AppState, cid: string): Campaign | undefined {
@@ -425,7 +426,7 @@ export function lockPoll(state: AppState, pollId: string, optionId: string): App
   if (!option) return { error: "Pick one of the dates first." };
   const campaign = campaignById(state, poll.cid);
   const session: Session = {
-    id: `${poll.cid}-poll-${option.id}`,
+    id: `${poll.cid}-poll-${safeIdPart(option.id)}`,
     cid: poll.cid,
     seriesId: null,
     occurrenceKey: null,
@@ -434,7 +435,8 @@ export function lockPoll(state: AppState, pollId: string, optionId: string): App
       ? option.endsAt
       : new Date(new Date(option.startsAt).getTime() + 4 * 3600_000).toISOString(),
     tz: option.tz,
-    title: poll.title.replace(/dates$/i, "").trim() || campaign?.name || "Session",
+    // Sessions are named after their campaign, like every other session. The poll title ("Options?") is not a session name.
+    title: campaign?.name || "Session",
     location: campaign?.defaultLocation ?? "",
     status: "scheduled",
     exception: null,
