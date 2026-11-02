@@ -573,10 +573,12 @@ function amyLockedPoll(): Poll {
 
 function buildPoll(): Poll {
   const options = POLL_DATES.flatMap((ymd) => POLL_TIMES.map((hm) => pollOption(`${ymd}-${hm}`, ymd, hm)));
-  const yes = (ids: string[], best: string[] = []) => {
+  // `best` reproduces ballots saved before Yes/Maybe (they read as Yes); `maybe` is the new choice.
+  const yes = (ids: string[], best: string[] = [], maybe: string[] = []) => {
     const favorites = new Set(best);
-    const picks: Record<string, boolean | "best"> = {};
+    const picks: Record<string, boolean | "best" | "maybe"> = {};
     for (const id of ids) picks[id] = favorites.has(id) ? "best" : true;
+    for (const id of maybe) picks[id] = "maybe";
     return { picks, updatedAt: "2026-10-19T00:00:00.000Z" };
   };
   return {
@@ -592,8 +594,8 @@ function buildPoll(): Poll {
       seth: yes(["2026-12-07-18:00", "2026-12-07-19:00", "2026-12-04-18:00", "2026-12-11-18:00", "2026-12-12-14:00", "2026-12-12-18:00", "2026-12-12-19:00", "2026-12-14-18:00"], ["2026-12-07-18:00"]),
       amy: yes(["2026-12-07-18:00", "2026-12-04-18:00", "2026-12-11-18:00", "2026-12-11-16:00", "2026-12-12-18:00", "2026-12-14-18:00", "2026-12-07-16:00"], ["2026-12-07-18:00"]),
       ben: yes(["2026-12-07-18:00", "2026-12-07-19:00", "2026-12-11-14:00", "2026-12-12-20:00", "2026-12-04-18:00", "2026-12-14-18:00", "2026-12-11-18:00"], ["2026-12-07-18:00"]),
-      giada: yes(["2026-12-07-18:00", "2026-12-07-19:00", "2026-12-11-19:00", "2026-12-04-19:00", "2026-12-12-16:00", "2026-12-12-19:00"]),
-      lizbeth: yes(["2026-12-07-18:00"]),
+      giada: yes(["2026-12-07-18:00", "2026-12-07-19:00", "2026-12-11-19:00", "2026-12-04-19:00", "2026-12-12-16:00", "2026-12-12-19:00"], [], ["2026-12-14-18:00"]),
+      lizbeth: yes(["2026-12-07-18:00"], [], ["2026-12-04-18:00", "2026-12-11-18:00"]),
     },
   };
 }

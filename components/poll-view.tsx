@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { isStaff, membersOf, rankedOptions } from "@/lib/model";
 import { groupMemberPolls, pollDisplayTitle } from "@/lib/poll-lists";
-import { choiceOf } from "@/lib/poll-choice";
+import { calendarOrder, choiceOf, leaderId } from "@/lib/poll-choice";
 import { memberYesCount, mergeVoteSeats, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
 import { linkShareData, lockedDateMessage, pollReminderMessage } from "@/lib/share-link";
@@ -217,6 +217,9 @@ function PollCard({ poll }: { poll: Poll }) {
   const members: PollPlayer[] = roster && roster.length ? mergeVoteSeats(accountSeats, seatsFromRoster(roster)) : accountSeats;
   const ranked = rankedOptions(poll, campaign.cadence);
   const max = Math.max(1, ...ranked.map((r) => r.yes));
+  const leader = leaderId(ranked);
+  const leaderRow = ranked.find((r) => r.option.id === leader) ?? null;
+  const ordered = calendarOrder(ranked);
   const mine = poll.votes[store.state.me.id]?.picks ?? {};
   const summary = summarizePoll(poll, members, store.state.me.id);
   const quiet = members.filter((m) => !voteHasYes(poll.votes[m.id]));
@@ -234,14 +237,14 @@ function PollCard({ poll }: { poll: Poll }) {
       {locked && lockedWhen && chosen ? (
         <p className="status ok lockd" style={{ margin: 0 }}><Icon name="check" className="ic sm" />Locked · {lockedWhen.dow} {lockedWhen.day} {lockedWhen.mon} · {optionTimeLabel(chosen)}</p>
       ) : (
-        <p className="note" style={{ margin: 0 }}>Pick every date that works. Tap twice for your favorite.</p>
+        <p className="note" style={{ margin: 0 }}>Tap a date for Yes, again for Maybe, again to clear.</p>
       )}
       <div className="opts">
-        {ranked.map((row, i) => {
+        {ordered.map((row) => {
           const when = formatDayHeading(row.option.startsAt, POLL_DISPLAY_TZ);
           const time = optionTimeLabel(row.option);
           const choice = choiceOf(mine[row.option.id]);
-          const lead = i === 0 && row.yes > 0;
+          const lead = row.option.id === leader;
           const everyone = members.length > 1 && memberYesCount(poll, members, row.option.id) >= members.length;
           return (
             <PollDateRow
@@ -250,8 +253,8 @@ function PollCard({ poll }: { poll: Poll }) {
               day={when.day}
               mon={when.mon}
               time={time}
-              can={row.yes}
-              best={row.best}
+              yes={row.yes}
+              maybe={row.maybe}
               max={max}
               names={summary.namesFor(row.option.id)}
               choice={choice}
@@ -269,13 +272,13 @@ function PollCard({ poll }: { poll: Poll }) {
       </div>
       {staff && poll.status === "open" && (
         <div className="poll-actions">
-          {ranked[0] && ranked[0].yes > 0 && (
-            <button type="button" className="btn pri sm" onClick={() => store.lockPoll(poll.id, ranked[0].option.id)}>
-              Lock in {leadLabel(ranked[0].option.startsAt)}
+          {leaderRow && (
+            <button type="button" className="btn pri sm" onClick={() => store.lockPoll(poll.id, leaderRow.option.id)}>
+              Lock in {leadLabel(leaderRow.option.startsAt)}
             </button>
           )}
           <LockPicker
-            options={ranked.map((r) => ({ id: r.option.id, label: `${leadLabel(r.option.startsAt)} · ${optionTimeLabel(r.option)}`, yes: memberYesCount(poll, members, r.option.id) }))}
+            options={ordered.map((r) => ({ id: r.option.id, label: `${leadLabel(r.option.startsAt)} · ${optionTimeLabel(r.option)}`, yes: memberYesCount(poll, members, r.option.id) }))}
             total={members.length}
             onLock={(optionId) => store.lockPoll(poll.id, optionId)}
           />
@@ -334,7 +337,7 @@ function LockPicker({ options, total, onLock }: { options: { id: string; label: 
       {chosen ? (
         <div role="alertdialog" aria-labelledby="lock-q">
           <p id="lock-q" className="poll-confirm-q">Lock in {chosen.label}?</p>
-          <p className="note" style={{ margin: 0 }}>Only {chosen.yes} of {total} can make this one. The top date has {top}.</p>
+          <p className="note" style={{ margin: 0 }}>{chosen.yes === 0 ? `Nobody has said yes to this one yet. The top date has ${top} of ${total}.` : `Only ${chosen.yes} of ${total} can make this one. The top date has ${top}.`}</p>
           <div className="poll-actions" style={{ marginTop: 12 }}>
             <button type="button" className="btn pri sm" onClick={() => { onLock(chosen.id); setOpen(false); setPending(null); }}>Lock it in</button>
             <button type="button" className="btn sec sm" autoFocus onClick={() => setPending(null)}>Pick another</button>

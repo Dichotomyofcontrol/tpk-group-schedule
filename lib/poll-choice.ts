@@ -1,27 +1,45 @@
-/** Works, Best, or unpicked. Unpicked means can't. Older ballots store `true` for Works. */
+/**
+ * Yes, Maybe, or unanswered (no). Stored values: `true` is Yes, `"maybe"` is Maybe.
+ * Older ballots stored `"best"` (could attend and liked it most); that reads as Yes,
+ * so no earlier vote is lost or downgraded.
+ */
 
-export type PollChoice = "works" | "best";
+export type PollChoice = "yes" | "maybe";
 
-/** `true` is Works. `"best"` is Best. Anything else, including `false`, is unpicked. */
 export function choiceOf(value: unknown): PollChoice | null {
-  if (value === "best") return "best";
-  if (value === true) return "works";
+  if (value === true || value === "best") return "yes";
+  if (value === "maybe") return "maybe";
   return null;
 }
 
-/** Tap once for Works, again for Best, again to clear. */
-export function cyclePick(value: unknown): true | "best" | undefined {
+/** Tap once for Yes, again for Maybe, again to clear. */
+export function cyclePick(value: unknown): true | "maybe" | undefined {
   const current = choiceOf(value);
   if (current === null) return true;
-  if (current === "works") return "best";
+  if (current === "yes") return "maybe";
   return undefined;
 }
 
-export function tallyText(can: number, best: number): string {
-  return `${can} can · ${best} best`;
+export function tallyText(yes: number, maybe: number): string {
+  return maybe > 0 ? `${yes} yes · ${maybe} maybe` : `${yes} yes`;
 }
 
-export function bestIds(vote: { picks?: Record<string, unknown> } | undefined): string[] {
+export function maybeIds(vote: { picks?: Record<string, unknown> } | undefined): string[] {
   if (!vote?.picks) return [];
-  return Object.entries(vote.picks).filter(([, value]) => value === "best").map(([id]) => id);
+  return Object.entries(vote.picks).filter(([, value]) => choiceOf(value) === "maybe").map(([id]) => id);
+}
+
+/** The leading option: most Yes, then most Maybe, then earliest. Null when nobody said Yes. */
+export function leaderId(rows: { option: { id: string; startsAt: string }; yes: number; maybe: number }[]): string | null {
+  let best: (typeof rows)[number] | null = null;
+  for (const row of rows) {
+    if (row.yes < 1) continue;
+    if (!best || row.yes > best.yes || (row.yes === best.yes && (row.maybe > best.maybe || (row.maybe === best.maybe && row.option.startsAt < best.option.startsAt)))) best = row;
+  }
+  return best ? best.option.id : null;
+}
+
+/** Calendar order, so dates never jump around while people vote. */
+export function calendarOrder<T extends { option: { startsAt: string } }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => a.option.startsAt.localeCompare(b.option.startsAt));
 }
