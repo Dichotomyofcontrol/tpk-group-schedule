@@ -57,8 +57,7 @@ const sections: LegalSection[] = [
     title: "What you write",
     body: (
       <>
-        <p>You own the text you write: session notes, recaps, character names, attendance, and votes. Taverning only hosts that text so the members of the campaign can read it. Account and campaign data is kept until that account or that campaign is deleted.</p>
-        <p>Recorded Almanac numbers and short quotes are taken from session recordings and hosted for the members of those campaigns. The audio and the machine transcripts are not in this repository. <Confirm /> where those source files are kept and who can open them.</p>
+        <p>You own the text you write: session notes, recaps, character names, attendance, and votes. Taverning only hosts that text so the members of the campaign can read it. Campaign recaps and stats are visible only to that campaign&apos;s members. Account and campaign data is kept until that account or that campaign is deleted.</p>
         <p>The app does not send campaign data to Discord. Fields for a Discord bot exist and are unused.</p>
       </>
     ),

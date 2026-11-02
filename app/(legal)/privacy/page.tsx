@@ -53,26 +53,9 @@ const sections: LegalSection[] = [
           <li>A seat link shows the campaign name and the name and character on that seat.</li>
           <li>A calendar link is a secret URL. Anyone with it can read the session times, titles, and places for the campaigns on that account.</li>
         </ul>
-        <p>Recap PDFs and campaign covers can be read by members of that campaign. Portrait files stored under recaps/avatars can be read by any signed-in user, not only members of one campaign.</p>
+        <p>Campaign recaps and stats are visible only to that campaign&apos;s members.</p>
+        <p>Campaign covers can be read by members of that campaign. Portrait files stored under recaps/avatars can be read by any signed-in user, not only members of one campaign.</p>
         <p>Any signed-in user can read the list of emails allowed to create campaigns. That list is not campaign notes. Only those addresses, or an address with a creator record, can create a campaign.</p>
-      </>
-    ),
-  },
-  {
-    id: "almanac",
-    title: "Almanac stats from recordings",
-    body: (
-      <>
-        <p>The Almanac also counts nights, hours, and recaps from the sessions you can already see.</p>
-        <p>Separate recorded stats are stored in the app for specific campaigns. They were counted from session recordings. For those campaigns the file includes session counts, hours, word counts, character names, deaths, NPC names, place names, session titles and dates, natural 20 and natural 1 counts, and speaker labels that pair a person&apos;s name with a character and a word count. Short quoted moments cite a transcript or a handout.</p>
-        <p>The server returns a campaign&apos;s recorded stats only to a signed-in member of that campaign. A pending membership does not receive them. The file is not included in the browser bundle.</p>
-        <p>What this repository actually stores from those recordings:</p>
-        <ul>
-          <li>The counts live in data/almanac-stats.json. The file&apos;s own note says they were mined from the Archivist recordings. One server module reads that file. GET /api/almanac/recorded returns a campaign&apos;s counts only to a signed-in member of that campaign who is not pending. The file is not shipped in the browser bundle.</li>
-          <li>The counts are built from machine transcripts: hours from transcript end times, talk shares from sessions whose transcripts name the speakers, and natural 20 and natural 1 counts from the phrases said out loud. Short quoted moments in the server module cite a transcript or an Archivist handout.</li>
-          <li>Recap text and a PDF can be written by POST /api/import/recap, and a character summary by POST /api/import/character-summary. Both require a server secret. The summary route does not call an AI API. The prose is whatever the caller sends. Recaps are stored on the session and in Cloud Storage. Character summaries are stored on the campaign. Members of that campaign can read them.</li>
-        </ul>
-        <p>The audio files and the machine transcripts themselves are not in this repository, and no config here names a bucket or folder for them. <Confirm /> where those source files are stored and who can open them.</p>
       </>
     ),
   },
