@@ -64,6 +64,8 @@ export type StoreApi = {
   createCampaign: (input: CampaignInput) => string | null;
   toggleVote: (pollId: string, optionId: string) => void;
   lockPoll: (pollId: string, optionId: string) => void;
+  /** Reopen a locked poll (organizers only). Votes stay; the lock's session goes away or is cancelled if it has RSVPs. */
+  unlockPoll: (pollId: string) => void;
   addPoll: (cid: string, title: string, options: Poll["options"]) => string | null;
   /** Drop a newer copy of a poll into local state (demo fallback for a public vote). */
   replacePoll: (poll: Poll) => void;

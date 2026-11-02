@@ -9,7 +9,7 @@ import { groupMemberPolls, pollDisplayTitle } from "@/lib/poll-lists";
 import { choiceOf } from "@/lib/poll-choice";
 import { memberYesCount, mergeVoteSeats, optionTimeLabel, POLL_DISPLAY_TZ, pollPublicPath, summarizePoll, voteHasYes, type GuestBallot, type PollPlayer } from "@/lib/poll-public";
 import { seatsFromRoster, type RosterPlayer } from "@/lib/roster";
-import { linkShareData, pollReminderMessage } from "@/lib/share-link";
+import { linkShareData, lockedDateMessage, pollReminderMessage } from "@/lib/share-link";
 import { useStore } from "@/lib/store";
 import { formatDayHeading, zonedTimeToUtc } from "@/lib/time";
 import type { Poll } from "@/lib/types";
@@ -227,12 +227,20 @@ function PollCard({ poll }: { poll: Poll }) {
   const quiet = members.filter((m) => !voteHasYes(poll.votes[m.id]));
   const staff = isStaff(store.state, poll.cid);
   const path = pollPublicPath(poll.cid, poll.id);
+  const locked = poll.status === "locked";
+  const chosen = locked ? poll.options.find((o) => o.id === poll.chosenOptionId) ?? null : null;
+  const lockedSession = locked && poll.sessionId ? store.state.sessions.find((s) => s.id === poll.sessionId) ?? null : null;
+  const lockedWhen = chosen ? formatDayHeading(chosen.startsAt, POLL_DISPLAY_TZ) : null;
   return (
     <article className="card poll rise" data-world={worldFor(campaign).id} style={accentVar(campaign) as CSSProperties}>
       <span className="ribbon" />
       <div className="eyebrow">{worldFor(campaign).word} · {campaign.kind === "oneshot" ? "One-shot" : campaign.name}{poll.closesAt ? ` · closes ${new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: campaign.tz }).format(new Date(poll.closesAt))}` : ""}</div>
       <h2>{pollDisplayTitle(poll, campaign)}</h2>
-      <p className="note" style={{ margin: 0 }}>Pick every date that works. Tap twice for your favorite.</p>
+      {locked && lockedWhen && chosen ? (
+        <p className="status ok lockd" style={{ margin: 0 }}><Icon name="check" className="ic sm" />Locked · {lockedWhen.dow} {lockedWhen.day} {lockedWhen.mon} · {optionTimeLabel(chosen)}</p>
+      ) : (
+        <p className="note" style={{ margin: 0 }}>Pick every date that works. Tap twice for your favorite.</p>
+      )}
       <div className="opts">
         {ranked.map((row, i) => {
           const when = formatDayHeading(row.option.startsAt, POLL_DISPLAY_TZ);
@@ -271,6 +279,11 @@ function PollCard({ poll }: { poll: Poll }) {
               Lock in {leadLabel(ranked[0].option.startsAt)}
             </button>
           )}
+          <LockPicker
+            options={ranked.map((r) => ({ id: r.option.id, label: `${leadLabel(r.option.startsAt)} · ${optionTimeLabel(r.option)}`, yes: memberYesCount(poll, members, r.option.id) }))}
+            total={members.length}
+            onLock={(optionId) => store.lockPoll(poll.id, optionId)}
+          />
           <button type="button" className="btn sec sm" onClick={async () => {
             const url = `${window.location.origin}${path}`;
             const result = await sharePollLink(url, poll.title, `Pick every date that works for ${campaign.name}`);
@@ -289,7 +302,94 @@ function PollCard({ poll }: { poll: Poll }) {
           )}
         </div>
       )}
+      {locked && chosen && (
+        <LockedActions
+          staff={staff}
+          onCopy={async () => {
+            const url = `${window.location.origin}${path}`;
+            const text = lockedDateMessage({
+              campaignName: campaign.kind === "oneshot" ? pollDisplayTitle(poll, campaign) : campaign.name,
+              startsAt: lockedSession?.startsAt ?? chosen.startsAt,
+              endsAt: lockedSession?.endsAt ?? chosen.endsAt,
+              tz: lockedSession?.tz || campaign.tz || POLL_DISPLAY_TZ,
+              location: lockedSession?.location ?? campaign.defaultLocation,
+              url,
+            });
+            const result = await sharePollLink(url, campaign.name, text, text);
+            if (result === "copied") store.flash("Details copied. Paste them in the group chat.");
+            else if (result === "failed") store.flash("Couldn't copy the details.", "err");
+          }}
+          hasRsvps={Boolean(lockedSession && lockedSession.attendance.length > 0)}
+          onUnlock={() => store.unlockPoll(poll.id)}
+        />
+      )}
     </article>
+  );
+}
+
+/** Organizer picks any date to lock. A date that isn't the leader asks first. */
+function LockPicker({ options, total, onLock }: { options: { id: string; label: string; yes: number }[]; total: number; onLock: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState<string | null>(null);
+  const top = Math.max(0, ...options.map((o) => o.yes));
+  if (!open) return <button type="button" className="btn sec sm" aria-expanded={false} onClick={() => setOpen(true)}>Lock a different date…</button>;
+  const chosen = options.find((o) => o.id === pending);
+  return (
+    <div className="lock-pick" style={{ flexBasis: "100%" }}>
+      {chosen ? (
+        <div role="alertdialog" aria-labelledby="lock-q">
+          <p id="lock-q" className="poll-confirm-q">Lock in {chosen.label}?</p>
+          <p className="note" style={{ margin: 0 }}>Only {chosen.yes} of {total} can make this one. The top date has {top}.</p>
+          <div className="poll-actions" style={{ marginTop: 12 }}>
+            <button type="button" className="btn pri sm" onClick={() => { onLock(chosen.id); setOpen(false); setPending(null); }}>Lock it in</button>
+            <button type="button" className="btn sec sm" autoFocus onClick={() => setPending(null)}>Pick another</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p className="poll-confirm-q">Which date?</p>
+          <ul>
+            {options.map((o) => (
+              <li key={o.id}>
+                <button type="button" onClick={() => (o.yes >= top && top > 0 ? onLock(o.id) : setPending(o.id))}>
+                  <span>{o.label}</span><span className="note">{o.yes} of {total}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="poll-actions" style={{ marginTop: 12 }}>
+            <button type="button" className="btn sec sm" onClick={() => setOpen(false)}>Cancel</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Footer for a locked poll: everyone can copy the details; organizers can reopen voting after a confirm. */
+function LockedActions({ staff, onCopy, onUnlock, hasRsvps }: { staff: boolean; onCopy: () => void; onUnlock: () => void; hasRsvps: boolean }) {
+  const [confirming, setConfirming] = useState(false);
+  const keepRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (confirming) keepRef.current?.focus(); }, [confirming]);
+  if (confirming) {
+    return (
+      <div className="poll-confirm" role="alertdialog" aria-labelledby="unlock-q" aria-describedby="unlock-d">
+        <p id="unlock-q" className="poll-confirm-q">Change the locked date?</p>
+        <p id="unlock-d" className="note" style={{ margin: 0 }}>
+          Voting reopens with everyone&apos;s picks kept. {hasRsvps ? "The session already has RSVPs, so it will be marked cancelled." : "The session it made comes off the calendar."} Nobody gets an email.
+        </p>
+        <div className="poll-actions">
+          <button type="button" className="btn danger sm" onClick={() => { setConfirming(false); onUnlock(); }}>Reopen voting</button>
+          <button type="button" ref={keepRef} className="btn sec sm" onClick={() => setConfirming(false)}>Keep this date</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="poll-actions">
+      <button type="button" className="btn pri sm" onClick={onCopy}><Icon name="link" className="ic sm" />Copy details</button>
+      {staff && <button type="button" className="btn sec sm" onClick={() => setConfirming(true)}>Change date…</button>}
+    </div>
   );
 }
 

@@ -1060,6 +1060,15 @@ section.mgroup:not(.open) + section.mgroup:not(.open) > .mhd { margin-top: 0; bo
 .poll-voted { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
 .poll-voted .note { font-size: 0.8125rem; }
 .poll-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+@media (min-width: 561px) { .poll-actions > .btn { flex: 1 1 0; } }
+.lock-pick { margin-top: 16px; padding: 14px 16px; border-radius: 14px; background: var(--paper2); border: .5px solid var(--rule2); }
+.lock-pick ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.lock-pick li button { width: 100%; min-height: 44px; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; border: .5px solid var(--rule2); background: var(--paper); color: var(--ink); font: inherit; cursor: pointer; text-align: left; }
+.lock-pick li button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.lock-pick li .note { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.poll-confirm { margin-top: 16px; padding: 14px 16px; border-radius: 14px; background: var(--paper2); border: .5px solid var(--rule2); }
+.poll-confirm .poll-actions { margin-top: 12px; }
+.poll-confirm-q { margin: 0 0 4px; font-weight: 600; color: var(--ink); }
 .poll-actions .btn { height: 44px; margin: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 @media (max-width: 560px) {
   .poll-actions { flex-direction: column; }
