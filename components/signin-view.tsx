@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Icon } from "./ui";
+import { AppleSignInButton } from "./apple-sign-in-button";
 
 export function SignInView() {
   const store = useStore();
@@ -54,6 +55,8 @@ export function SignInView() {
             <button className="btn ghost" type="button" onClick={() => { setSent(false); setCode(""); setError(""); }}>Use a different email</button>
           </form>
         ) : (
+          <>
+          <AppleSignInButton onDone={() => router.push("/sessions")} />
           <form className="card form" onSubmit={async (e) => {
             e.preventDefault();
             if (busy) return;
@@ -67,6 +70,7 @@ export function SignInView() {
             <button className="btn pri" type="submit" disabled={busy}>{busy ? "Sending…" : <>Email me a sign-in code <Icon name="arrow" className="ic sm" /></>}</button>
             {error && <p className="note ver" role="alert">{error}</p>}
           </form>
+          </>
         )}
         <ol className="steps">
           <li><b>01</b>We email a 6-digit code and a link.</li>

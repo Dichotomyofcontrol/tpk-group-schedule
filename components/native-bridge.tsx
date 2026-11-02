@@ -45,6 +45,7 @@ export function NativeBridge() {
 
       const tap = (e: Event) => {
         const el = (e.target as HTMLElement | null)?.closest("button, [role=button], a[href], [data-haptic]");
+        if (el?.closest(".tabs")) { void Haptics.selectionStart().then(() => Haptics.selectionChanged()).then(() => Haptics.selectionEnd()).catch(() => undefined); return; }
         if (el) void Haptics.impact({ style: ImpactStyle.Light }).catch(() => undefined);
       };
       document.addEventListener("click", tap, { passive: true, capture: true });
