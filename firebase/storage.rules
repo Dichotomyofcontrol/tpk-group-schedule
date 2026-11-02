@@ -8,6 +8,18 @@ service firebase.storage {
       return signedIn()
         && firestore.exists(/databases/(default)/documents/campaigns/$(cid)/members/$(request.auth.uid));
     }
+    function isCampaignOwner(cid) {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/campaigns/$(cid))
+        && firestore.get(/databases/(default)/documents/campaigns/$(cid)).data.ownerUid == request.auth.uid;
+    }
+    // Legacy uploads are recaps/avatars/{campaignId}_{character}.ext
+    function avatarCampaign(file) {
+      return file.split('_')[0];
+    }
+    function canSeeAvatar(file) {
+      return isMember(avatarCampaign(file)) || isCampaignOwner(avatarCampaign(file));
+    }
     function isStaff(cid) {
       return isMember(cid)
         && firestore.get(/databases/(default)/documents/campaigns/$(cid)/members/$(request.auth.uid)).data.role in ['organizer', 'coorganizer'];
@@ -17,12 +29,13 @@ service firebase.storage {
         && request.resource.contentType == 'application/pdf';
     }
 
-    // Portraits. Signed-in only. Not treated as session recaps.
+    // Portraits. Members of that campaign, or its owner. Not every signed-in user.
     match /recaps/avatars/{file} {
-      allow read: if signedIn();
-      allow write: if signedIn()
+      allow read: if canSeeAvatar(file);
+      allow create, update: if canSeeAvatar(file)
         && request.resource.size < 5 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
+      allow delete: if canSeeAvatar(file);
     }
 
     function isOrganizer(cid) {
