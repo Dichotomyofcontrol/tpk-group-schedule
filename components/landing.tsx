@@ -120,7 +120,13 @@ export function Landing() {
         <p className="invite-note">We open seats a few groups at a time. Leave your email and we&apos;ll write when yours is ready.</p>
         <WaitlistForm />
       </section>
-      <footer className="foot"><span>© 2026 Taverning</span><span>Made for the table</span></footer>
+      <footer className="foot">
+        <span>© 2026 Taverning</span>
+        <nav className="foot-nav" aria-label="Footer">
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+        </nav>
+      </footer>
     </main>
   );
 }

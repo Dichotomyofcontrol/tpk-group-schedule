@@ -484,6 +484,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         document.body.dataset.persona = me.id;
         return "ok";
       },
+      accountDeletionPlan: async () => ({ error: "This sample table is not a real account." }),
+      deleteAccount: async () => ({ ok: false, error: "This sample table is not a real account." }),
       signOut: async () => {
         setState({
           ...stateRef.current,

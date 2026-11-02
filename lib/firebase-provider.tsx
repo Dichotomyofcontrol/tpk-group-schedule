@@ -397,6 +397,8 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
     claimSeat: async () => ({ ok: false, error: "Sign in first." }),
     acceptInvite: () => false,
     signOut: async () => undefined,
+    accountDeletionPlan: async () => ({ error: "Sign in first." }),
+    deleteAccount: async () => ({ ok: false, error: "Sign in first." }),
     sendMagicLink: async (email: string, inviteToken?: string, seatToken?: string) => {
       if (!firebaseConfigured()) {
         const message = "Firebase isn't configured on this deploy yet.";
@@ -943,6 +945,18 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
       finishMagicLink: signedOut.finishMagicLink,
       signOut: async () => {
         await firebaseSignOut(getFirebase().auth);
+      },
+      accountDeletionPlan: async () => {
+        const res = await authedFetch("/api/account").catch(() => null);
+        if (!res?.ok) return { error: "Couldn't check this account." };
+        return await res.json() as { blocking: { id: string; name: string }[]; deleting: { id: string; name: string }[] };
+      },
+      deleteAccount: async () => {
+        const res = await authedFetch("/api/account", { method: "DELETE", headers: { "content-type": "application/json" }, body: "{}" }).catch(() => null);
+        const body = res ? await res.json().catch(() => ({})) as { error?: string; blocking?: { id: string; name: string }[] } : {};
+        if (!res || !res.ok) return { ok: false, error: body.error || "Couldn't delete the account.", blocking: body.blocking };
+        await firebaseSignOut(getFirebase().auth).catch(() => undefined);
+        return { ok: true };
       },
     };
   }, [state, authUser, signedOut, flash, persistSession]);

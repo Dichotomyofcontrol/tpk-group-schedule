@@ -9,6 +9,8 @@ export function Providers({ children, allowFixture = false }: { children: ReactN
   const [choice, setChoice] = useState<"demo" | "live">(builtLive ? "live" : "demo");
   const path = usePathname();
   const [Live, setLive] = useState<ComponentType<{ children: ReactNode }> | null>(null);
+  // These pages do not read the store. The server must send their HTML before Firebase loads.
+  const immediate = path === "/" || path === "/privacy" || path === "/terms";
   // Offline: a small service worker keeps the app shell openable without a connection (production only).
   useEffect(() => {
     if (!builtLive || allowFixture || !("serviceWorker" in navigator)) return;
@@ -27,7 +29,6 @@ export function Providers({ children, allowFixture = false }: { children: ReactN
     void import("@/lib/firebase-provider").then((mod) => setLive(() => mod.FirebaseProvider));
   }, [builtLive, allowFixture]);
   if (!builtLive || choice === "demo") return <DemoProvider>{children}</DemoProvider>;
-  // The landing does not read the store, so it can paint before Firebase loads.
-  if (!Live) return path === "/" ? <>{children}</> : null;
+  if (!Live) return immediate ? <>{children}</> : null;
   return <Live>{children}</Live>;
 }
