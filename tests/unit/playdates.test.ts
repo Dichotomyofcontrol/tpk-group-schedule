@@ -153,7 +153,7 @@ test("locking a poll creates one session and does not invent quorum", () => {
   assert.ok(!("error" in next));
   if ("error" in next) return;
   assert.equal(next.polls.find((item) => item.id === "frost-dec")?.status, "locked");
-  assert.ok(next.sessions.some((session) => session.id === "frostmaiden-poll-2026-12-07-18:00"));
+  assert.ok(next.sessions.some((session) => session.id === "frostmaiden-poll-2026-12-07-1800"));
   const rules = readFileSync(new URL("../../firebase/firestore.rules", import.meta.url), "utf8");
   assert.match(rules, /allowMemberInvites|isOrganizer/);
   assert.match(rules, /coorganizer/);

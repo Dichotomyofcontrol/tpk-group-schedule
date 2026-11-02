@@ -1,3 +1,4 @@
+import { routeParam } from "@/lib/route-param";
 import { CampaignView } from "@/components/campaign-view";
 import { Shell } from "@/components/shell";
 
@@ -8,7 +9,8 @@ export default async function Page({
   params: Promise<{ cid: string }>;
   searchParams: Promise<{ welcome?: string }>;
 }) {
-  const { cid } = await params;
+  const raw = await params;
+  const { cid } = { cid: routeParam(raw.cid) };
   const { welcome } = await searchParams;
   return (
     <Shell>

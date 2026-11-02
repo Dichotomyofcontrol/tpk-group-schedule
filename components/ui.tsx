@@ -154,19 +154,33 @@ export function CampaignCover({ campaign, className = "", onAdd }: { campaign: C
   const durable = durableCoverSrc(campaign.cover?.src);
   const inline = !path && !durable && hasUploadedCover(campaign) ? campaign.cover.src : "";
   const [url, setUrl] = useState<string | null>(durable || inline || null);
+  // Bumped when the image fails or the device comes back online, so a cover that
+  // missed once loads again instead of staying a gradient or a broken-image icon.
+  const [tries, setTries] = useState(0);
   useEffect(() => {
     let live = true;
     if (durable) { setUrl(durable); return; }
     if (!path) { setUrl(inline || null); return; }
-    void store.coverUrl(path).then((u) => { if (live) setUrl(u); });
+    void store.coverUrl(path, tries > 0).then((u) => { if (live) setUrl(u); });
     return () => { live = false; };
     // The store identity changes every sync. coverUrl reads refs, so the path is enough.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [path, durable, inline]);
+  }, [path, durable, inline, tries]);
+  useEffect(() => {
+    if (!path || durable || url) return;
+    const again = () => { if (document.visibilityState === "visible") setTries((n) => n + 1); };
+    window.addEventListener("online", again);
+    document.addEventListener("visibilitychange", again);
+    return () => { window.removeEventListener("online", again); document.removeEventListener("visibilitychange", again); };
+  }, [path, durable, url]);
+  const failed = () => {
+    setUrl(null);
+    if (path && tries < 3) setTimeout(() => setTries((n) => n + 1), 1000 * (tries + 1));
+  };
   if (!url) return <DefaultCover color={campaign.color} className={className} onAdd={onAdd} />;
   return (
     <div className={`ucover ${className}`.trim()}>
-      <img src={url} alt="" />
+      <img src={url} alt="" onError={failed} />
     </div>
   );
 }

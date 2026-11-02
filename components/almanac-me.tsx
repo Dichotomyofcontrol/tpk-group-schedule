@@ -48,7 +48,7 @@ export function ForYouLedger({ state }: { state: AppState }) {
         <article>
           <ul className="for-you-list">
             {me.next && (
-              <li><span>Next</span><Link href={`/campaigns/${me.next.cid}/sessions/${me.next.sid}`}>{me.next.title}</Link><em>{me.next.campaign} · {when(me.next.startsAt, me.next.tz)}</em></li>
+              <li><span>Next</span><Link href={`/campaigns/${encodeURIComponent(me.next.cid)}/sessions/${encodeURIComponent(me.next.sid)}`}>{me.next.title}</Link><em>{me.next.campaign} · {when(me.next.startsAt, me.next.tz)}</em></li>
             )}
             {me.streak && (
               <li><span>Streak</span><b>{me.streak.count} in a row</b><em>{me.streak.campaign}</em></li>

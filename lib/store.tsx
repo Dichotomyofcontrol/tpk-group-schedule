@@ -47,7 +47,7 @@ export type StoreApi = {
   /** A short-lived URL for one recap file (a signed URL on the live site). */
   fileUrl: (sessionId: string, path: string, download?: boolean) => Promise<string | null>;
   /** Object URL for a campaign cover in Storage. */
-  coverUrl: (path: string) => Promise<string | null>;
+  coverUrl: (path: string, fresh?: boolean) => Promise<string | null>;
   uploadCover: (cid: string, image: Blob) => Promise<boolean>;
   removeCover: (cid: string) => void;
   archiveCampaign: (cid: string, archived: boolean) => void;

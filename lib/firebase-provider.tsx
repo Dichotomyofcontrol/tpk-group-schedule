@@ -578,21 +578,24 @@ export function FirebaseProvider({ children }: { children: React.ReactNode }) {
           return null;
         }
       },
-      coverUrl: async (path) => {
+      coverUrl: async (path, fresh = false) => {
         const hit = coverCache.current.get(path);
-        if (hit) return hit;
+        if (hit && !fresh) return hit;
+        if (fresh) coverCache.current.delete(path);
         const { storage, auth } = getFirebase();
         const { getDownloadURL, ref } = await import("firebase/storage");
-        // getBlob pulls the bytes through XHR and, on a miss, the hero paints the
-        // empty default. A download URL is what an <img> can load after refresh.
-        for (let attempt = 0; attempt < 4; attempt++) {
+        // The campaign list paints from the offline cache before auth and the network
+        // are back (a home-screen app resuming on a weak signal). Wait for auth, then
+        // keep retrying for about half a minute instead of giving up after 3 seconds.
+        await auth.authStateReady().catch(() => undefined);
+        for (let attempt = 0; attempt < 8; attempt++) {
           try {
             if (auth.currentUser) await auth.currentUser.getIdToken();
             const url = await getDownloadURL(ref(storage, path));
             coverCache.current.set(path, url);
             return url;
           } catch {
-            await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
+            await new Promise((resolve) => setTimeout(resolve, Math.min(8000, 500 * 2 ** attempt)));
           }
         }
         return null;
